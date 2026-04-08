@@ -501,6 +501,45 @@ static void DrawNpcAiDebug(const GameState& state)
 {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
 
+    for (const TopdownInvestigationContextRuntime& ctx : state.topdown.runtime.investigationContexts) {
+        if (!ctx.active) {
+            continue;
+        }
+
+        const Vector2 anchorScreen = TopdownWorldToScreen(state, ctx.anchor);
+        DrawCircleLines(
+                static_cast<int>(std::round(anchorScreen.x)),
+                static_cast<int>(std::round(anchorScreen.y)),
+                12.0f,
+                Color{255, 220, 90, 200});
+
+        for (int i = 0; i < static_cast<int>(ctx.slots.size()); ++i) {
+            const TopdownInvestigationSlotRuntime& slot = ctx.slots[i];
+            if (!slot.valid) {
+                continue;
+            }
+
+            const Color slotColor =
+                    (slot.reservedByNpcHandle == -1)
+                    ? Color{255, 220, 90, 130}
+                    : Color{255, 90, 90, 190};
+
+            const Vector2 slotScreen = TopdownWorldToScreen(state, slot.position);
+            DrawCircleLines(
+                    static_cast<int>(std::round(slotScreen.x)),
+                    static_cast<int>(std::round(slotScreen.y)),
+                    7.0f,
+                    slotColor);
+            DrawLineEx(anchorScreen, slotScreen, 1.0f, Color{255, 220, 90, 80});
+            DrawText(
+                    TextFormat("%d", i),
+                    static_cast<int>(slotScreen.x + 6.0f),
+                    static_cast<int>(slotScreen.y - 6.0f),
+                    14,
+                    slotColor);
+        }
+    }
+
     for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active || !npc.visible) {
             continue;
@@ -594,6 +633,15 @@ static void DrawNpcAiDebug(const GameState& state)
                            npc.loseTargetTimerMs),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 70.0f),
+                16,
+                baseColor);
+
+        DrawText(
+                TextFormat("invCtx=%d  invSlot=%d",
+                           npc.investigationContextHandle,
+                           npc.investigationSlotIndex),
+                static_cast<int>(npcScreen.x + 10.0f),
+                static_cast<int>(npcScreen.y + 88.0f),
                 16,
                 baseColor);
     }

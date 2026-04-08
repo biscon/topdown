@@ -23,6 +23,145 @@ static float ComputeRemainingNpcPathDistance(const TopdownNpcMoveState& move, Ve
     return total;
 }
 
+static Vector2 BuildNpcRuntimeVelocity(const TopdownNpcRuntime& npc)
+{
+    if (TopdownLengthSqr(npc.knockbackVelocity) > 0.000001f) {
+        return npc.knockbackVelocity;
+    }
+
+    if (npc.move.active && npc.moving && npc.move.currentSpeed > 0.0f) {
+        return TopdownMul(npc.facing, npc.move.currentSpeed);
+    }
+
+    return {};
+}
+
+static Vector2 BuildNpcOrcaLikeVelocity(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        Vector2 preferredVelocity)
+{
+    const float preferredSpeed = TopdownLength(preferredVelocity);
+    if (preferredSpeed <= 0.000001f) {
+        return preferredVelocity;
+    }
+
+    const float neighborRadius = 160.0f;
+    const float neighborRadiusSqr = neighborRadius * neighborRadius;
+    const float predictionTime = 0.45f;
+    const float softBuffer = 26.0f;
+
+    const Vector2 preferredDir = TopdownMul(preferredVelocity, 1.0f / preferredSpeed);
+    const Vector2 lateralDir{ -preferredDir.y, preferredDir.x };
+
+    Vector2 bestVelocity = preferredVelocity;
+    float bestScore = 0.0f;
+    bool hasBest = false;
+
+    for (int angleStep = 0; angleStep < 16; ++angleStep) {
+        const float angleRadians = (2.0f * PI * static_cast<float>(angleStep)) / 16.0f;
+        const float ca = std::cos(angleRadians);
+        const float sa = std::sin(angleRadians);
+
+        const Vector2 dir = TopdownNormalizeOrZero(
+                TopdownAdd(
+                        TopdownMul(preferredDir, ca),
+                        TopdownMul(lateralDir, sa)));
+
+        if (TopdownLengthSqr(dir) <= 0.000001f) {
+            continue;
+        }
+
+        for (int speedBand = 0; speedBand < 3; ++speedBand) {
+            float speedScale = 1.0f;
+            if (speedBand == 1) {
+                speedScale = 0.72f;
+            } else if (speedBand == 2) {
+                speedScale = 0.38f;
+            }
+
+            Vector2 candidateVelocity = TopdownMul(dir, preferredSpeed * speedScale);
+            float score = TopdownLengthSqr(TopdownSub(candidateVelocity, preferredVelocity)) * 0.08f;
+
+            for (const TopdownNpcRuntime& otherNpc : state.topdown.runtime.npcs) {
+                if (!otherNpc.active || otherNpc.corpse || otherNpc.dead) {
+                    continue;
+                }
+
+                if (otherNpc.handle == npc.handle) {
+                    continue;
+                }
+
+                const Vector2 offsetNow = TopdownSub(otherNpc.position, npc.position);
+                if (TopdownLengthSqr(offsetNow) > neighborRadiusSqr) {
+                    continue;
+                }
+
+                const Vector2 otherVelocity = BuildNpcRuntimeVelocity(otherNpc);
+                const Vector2 futureSelf =
+                        TopdownAdd(npc.position, TopdownMul(candidateVelocity, predictionTime));
+                const Vector2 futureOther =
+                        TopdownAdd(otherNpc.position, TopdownMul(otherVelocity, predictionTime));
+
+                const float minDist = npc.collisionRadius + otherNpc.collisionRadius;
+                const float futureDist = TopdownLength(TopdownSub(futureSelf, futureOther));
+
+                if (futureDist < minDist) {
+                    score += (minDist - futureDist) * 9000.0f;
+                } else if (futureDist < minDist + softBuffer) {
+                    score += (minDist + softBuffer - futureDist) * 380.0f;
+                }
+            }
+
+            const float forward = TopdownDot(
+                    TopdownNormalizeOrZero(candidateVelocity),
+                    preferredDir);
+            score += (1.0f - forward) * 35.0f;
+            score += TopdownLengthSqr(
+                    TopdownSub(candidateVelocity, npc.localAvoidanceVelocity)) * 0.02f;
+
+            if (!hasBest || score < bestScore) {
+                hasBest = true;
+                bestScore = score;
+                bestVelocity = candidateVelocity;
+            }
+        }
+    }
+
+    const float stopScore = preferredSpeed * preferredSpeed * 0.3f;
+    if (hasBest && bestScore > stopScore) {
+        // If every sampled velocity looks like an imminent collision, yield briefly.
+        return TopdownMul(preferredVelocity, 0.2f);
+    }
+
+    return hasBest ? bestVelocity : preferredVelocity;
+}
+
+static void RotateNpcTowardDirection(TopdownNpcRuntime& npc, Vector2 direction, float dt)
+{
+    if (TopdownLengthSqr(direction) <= 0.000001f) {
+        return;
+    }
+
+    const Vector2 desiredDir = TopdownNormalizeOrZero(direction);
+    if (TopdownLengthSqr(desiredDir) <= 0.000001f) {
+        return;
+    }
+
+    const float desiredAngle = std::atan2(desiredDir.y, desiredDir.x);
+    const float maxTurnRate = 9.0f;
+    npc.rotationRadians = MoveTowardsAngle(
+            npc.rotationRadians,
+            desiredAngle,
+            maxTurnRate * dt);
+
+    npc.facing = Vector2{
+            std::cos(npc.rotationRadians),
+            std::sin(npc.rotationRadians)
+    };
+    npc.facing = TopdownNormalizeOrZero(npc.facing);
+}
+
 static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
@@ -36,7 +175,8 @@ static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string&
 static void UpdateNpcMovementAndCollision(
         GameState& state,
         TopdownNpcRuntime& npc,
-        float dt)
+        float dt,
+        Vector2 desiredDirection)
 {
     if (!npc.active || npc.dead) {
         return;
@@ -49,7 +189,30 @@ static void UpdateNpcMovementAndCollision(
     Vector2 velocity{};
 
     if (npc.move.active && npc.moving) {
-        velocity = TopdownMul(npc.facing, npc.move.currentSpeed);
+        Vector2 steerDir = TopdownNormalizeOrZero(desiredDirection);
+        if (TopdownLengthSqr(steerDir) <= 0.000001f) {
+            steerDir = npc.facing;
+        }
+        if (TopdownLengthSqr(steerDir) <= 0.000001f) {
+            steerDir = Vector2{1.0f, 0.0f};
+        }
+
+        const Vector2 preferredVelocity = TopdownMul(steerDir, npc.move.currentSpeed);
+        const Vector2 selectedVelocity =
+                BuildNpcOrcaLikeVelocity(state, npc, preferredVelocity);
+
+        velocity = TopdownAdd(
+                TopdownMul(selectedVelocity, 0.78f),
+                TopdownMul(npc.localAvoidanceVelocity, 0.22f));
+
+        const float maxSpeed = std::max(1.0f, npc.move.currentSpeed);
+        const float speed = TopdownLength(velocity);
+        if (speed > maxSpeed) {
+            velocity = TopdownMul(velocity, maxSpeed / speed);
+        }
+
+    } else {
+        npc.localAvoidanceVelocity = {};
     }
 
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
@@ -104,6 +267,12 @@ static void UpdateNpcMovementAndCollision(
                     otherNpc.collisionRadius,
                     preferredVsNpc);
         }
+    }
+
+    if (TopdownLengthSqr(velocity) <= 0.000001f) {
+        npc.localAvoidanceVelocity = {};
+    } else {
+        npc.localAvoidanceVelocity = velocity;
     }
 }
 
@@ -171,12 +340,11 @@ static void UpdateSingleNpcScriptedMovement(GameState& state, TopdownNpcRuntime&
         }
 
         const Vector2 dir = TopdownNormalizeOrZero(delta);
-        npc.facing = dir;
-        npc.rotationRadians = std::atan2(dir.y, dir.x);
+        RotateNpcTowardDirection(npc, dir, dt);
         npc.moving = true;
         npc.running = move.running;
 
-        UpdateNpcMovementAndCollision(state, npc, dt);
+        UpdateNpcMovementAndCollision(state, npc, dt, dir);
         return;
     }
 

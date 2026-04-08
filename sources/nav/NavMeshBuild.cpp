@@ -11,6 +11,7 @@
 #include "utils/earcut.h"
 #include "clipper2/clipper.h"
 #include "raylib.h"
+#include "utils/ScopeTimer.h"
 
 using namespace Clipper2Lib;
 
@@ -411,20 +412,23 @@ static void TriangulatePolygonWithHoles(
 
 bool BuildNavMesh(NavMeshData& navMesh, float agentRadius)
 {
-    navMesh.vertices.clear();
-    navMesh.triangles.clear();
-    navMesh.built = false;
+    {
+        ScopeTimer t("BuildNavMesh");
+        navMesh.vertices.clear();
+        navMesh.triangles.clear();
+        navMesh.built = false;
 
-    std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash> edgeMap;
+        std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash> edgeMap;
 
-    const std::vector<TriangulationPolygon> finalPolys =
-            BuildFinalWalkablePolygons(navMesh, std::max(0.0f, agentRadius));
+        const std::vector<TriangulationPolygon> finalPolys =
+                BuildFinalWalkablePolygons(navMesh, std::max(0.0f, agentRadius));
 
-    for (const TriangulationPolygon& poly : finalPolys) {
-        TriangulatePolygonWithHoles(poly, navMesh, edgeMap);
+        for (const TriangulationPolygon &poly: finalPolys) {
+            TriangulatePolygonWithHoles(poly, navMesh, edgeMap);
+        }
+
+        navMesh.built = !navMesh.triangles.empty();
     }
-
-    navMesh.built = !navMesh.triangles.empty();
     return true;
 }
 

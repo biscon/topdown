@@ -833,6 +833,12 @@ bool TopdownSpawnNpcRuntime(
     npc.lastKnownPlayerPosition = {};
     npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
+    npc.investigationContextHandle = -1;
+    npc.investigationSlotIndex = -1;
+    npc.investigationReassignCooldownMs = 0.0f;
+    npc.localAvoidanceVelocity = {};
+    npc.lastProgressPosition = position;
+    npc.blockedProgressTimerMs = 0.0f;
 
     npc.attackHitPending = false;
     npc.attackHitApplied = false;
