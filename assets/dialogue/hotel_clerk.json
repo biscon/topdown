@@ -1,0 +1,21 @@
+{
+    "choiceSets": [
+        {
+            "id": "hotel_clerk_intro",
+            "options": [
+                { "id": "need_room", "text": "I need a room for the night." },
+                { "id": "who_are_you", "text": "Do you run this place?" },
+                { "id": "about_town", "text": "Quiet town." },
+                { "id": "friend", "text": "I'm looking for a friend." },
+                { "id": "goodbye", "text": "Never mind." }
+            ]
+        },
+        {
+            "id": "hotel_clerk_room_followup",
+            "options": [
+                { "id": "confront_ledger", "text": "The store ledger tells a different story." },
+                { "id": "leave_it", "text": "Very well. Good day to you." }
+            ]
+        }
+    ]
+}

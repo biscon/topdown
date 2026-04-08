@@ -1,0 +1,17 @@
+{
+    "choiceSets": [
+        {
+            "id": "npc_actor_intro",
+            "options": [
+                { "id": "who_are_you", "text": "Who are you?" },
+                { "id": "what_happened", "text": "What happened here?" },
+                { "id": "rusty_key", "text": "About that rusty key..." },
+                { "id": "sausage", "text": "About this sausage..." },
+                { "id": "insult", "text": "You seem like an asshole." },
+                { "id": "apologize", "text": "Sorry about that." },
+                { "id": "give_sausage", "text": "You can have the sausage." },
+                { "id": "goodbye", "text": "Never mind." }
+            ]
+        }
+    ]
+}

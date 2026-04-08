@@ -1,0 +1,2992 @@
+{ "compressionlevel":-1,
+ "height":1,
+ "infinite":false,
+ "layers":[
+        {
+         "id":4,
+         "layers":[
+                {
+                 "id":9,
+                 "image":"town_square_bg.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "name":"back1",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"background",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":3,
+         "layers":[],
+         "name":"foreground",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":7,
+         "name":"hotspots",
+         "objects":[
+                {
+                 "height":0,
+                 "id":26,
+                 "name":"hotel_sign",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        },
+                    
+                        {
+                         "x":0.50463000000002,
+                         "y":-60.6365
+                        },
+                    
+                        {
+                         "x":84.5,
+                         "y":-60.7486
+                        },
+                    
+                        {
+                         "x":81.9815,
+                         "y":2.11350999999999
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Adrift Inn sign"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"Dirty old window that doesn't allow any light to shrine through. You can barely make out the gray and solemn streets of the once proud city."
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":362
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":272
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":333,
+                 "y":124.5
+                },
+            
+                {
+                 "height":0,
+                 "id":27,
+                 "name":"store_sign",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-0.909090909090907,
+                         "y":2.36363636363637
+                        },
+                    
+                        {
+                         "x":-1.34308520710059,
+                         "y":-31.7541434782849
+                        },
+                    
+                        {
+                         "x":110.181818181818,
+                         "y":-29.6327105194731
+                        },
+                    
+                        {
+                         "x":109.994206562668,
+                         "y":2.5930358441633
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"O'Malley's sign"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"sign"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":119
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":266
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":49,
+                 "y":138.475019610382
+                },
+            
+                {
+                 "height":0,
+                 "id":28,
+                 "name":"alley",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        },
+                    
+                        {
+                         "x":0.239873431952662,
+                         "y":-76.0700258552409
+                        },
+                    
+                        {
+                         "x":40.1666666666666,
+                         "y":-76.2106581459961
+                        },
+                    
+                        {
+                         "x":38.9695098619329,
+                         "y":2.65145185400395
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"A narrow alley"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"alley"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":512
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":259
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":517,
+                 "y":187.128724812663
+                },
+            
+                {
+                 "height":0,
+                 "id":29,
+                 "name":"anchors",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":11.4142386538922,
+                         "y":31.11364
+                        },
+                    
+                        {
+                         "x":3.94427171609456,
+                         "y":22.8709
+                        },
+                    
+                        {
+                         "x":6.0410841643039,
+                         "y":5.07479080838647
+                        },
+                    
+                        {
+                         "x":10.0141682828357,
+                         "y":-4.09038870261796
+                        },
+                    
+                        {
+                         "x":19.3888895390925,
+                         "y":-4.25782999691722
+                        },
+                    
+                        {
+                         "x":24.6573011389115,
+                         "y":0.0162014135298136
+                        },
+                    
+                        {
+                         "x":31.3735882571334,
+                         "y":-10.3503403916962
+                        },
+                    
+                        {
+                         "x":39.7193617160945,
+                         "y":-8.7577
+                        },
+                    
+                        {
+                         "x":46.499076279248,
+                         "y":2.21804
+                        },
+                    
+                        {
+                         "x":46.853910855549,
+                         "y":10.3987313228956
+                        },
+                    
+                        {
+                         "x":55.9028618914599,
+                         "y":10.1964033094968
+                        },
+                    
+                        {
+                         "x":51.1168557831096,
+                         "y":25.6692068473887
+                        },
+                    
+                        {
+                         "x":29.7605977853355,
+                         "y":30.5085038539812
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Rusty anchors"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"anchors"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":166
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":249
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":130.670971617239,
+                 "y":204.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":19,
+         "name":"props",
+         "objects":[],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":5,
+         "name":"exits",
+         "objects":[
+                {
+                 "height":0,
+                 "id":24,
+                 "name":"to_hotel_lobby",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-9.88859454545457,
+                         "y":-3.48883818181818
+                        },
+                    
+                        {
+                         "x":30.8279818181818,
+                         "y":-3.45454545454547
+                        },
+                    
+                        {
+                         "x":30.0797545454545,
+                         "y":72.5793636363636
+                        },
+                    
+                        {
+                         "x":-10.1475081818182,
+                         "y":72.3975454545455
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Hotel entrance"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"hotel"
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"hotel_lobby"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"default"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":365
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":243
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":358.333333333333,
+                 "y":159.666666666667
+                },
+            
+                {
+                 "height":0,
+                 "id":25,
+                 "name":"to_store",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-9.88859,
+                         "y":-3.48884
+                        },
+                    
+                        {
+                         "x":30.828,
+                         "y":-3.45455
+                        },
+                    
+                        {
+                         "x":30.0798,
+                         "y":72.5794
+                        },
+                    
+                        {
+                         "x":-10.1475,
+                         "y":72.3975
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Store door                      "
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"A small store. Probably the only place here that still does business."
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"store"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"default"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":114
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":232
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":95.060606060606,
+                 "y":151.151515151515
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":6,
+         "name":"spawns",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"default",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":-35.6666666666667,
+                 "y":278.787878788333
+                },
+            
+                {
+                 "height":0,
+                 "id":22,
+                 "name":"from_hotel_lobby",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":366.666666666667,
+                 "y":240.333333333334
+                },
+            
+                {
+                 "height":0,
+                 "id":23,
+                 "name":"from_store",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":126,
+                 "y":247.333333333333
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":16,
+         "name":"effect_regions",
+         "objects":[
+                {
+                 "height":71.9426,
+                 "id":32,
+                 "name":"square_ground_fog",
+                 "opacity":0.45,
+                 "polygon":[
+                        {
+                         "x":-39.25,
+                         "y":137.53893
+                        },
+                    
+                        {
+                         "x":52.917,
+                         "y":156.68339
+                        },
+                    
+                        {
+                         "x":129.730701997222,
+                         "y":132.021524013048
+                        },
+                    
+                        {
+                         "x":173.243384366685,
+                         "y":134.272647515322
+                        },
+                    
+                        {
+                         "x":207.165488760624,
+                         "y":140.310622415883
+                        },
+                    
+                        {
+                         "x":235.969946460026,
+                         "y":129.237946107816
+                        },
+                    
+                        {
+                         "x":277.992282983736,
+                         "y":125.972472013767
+                        },
+                    
+                        {
+                         "x":306.067380465651,
+                         "y":121.066509791003
+                        },
+                    
+                        {
+                         "x":348.743666666667,
+                         "y":124.225333333333
+                        },
+                    
+                        {
+                         "x":418.027666666667,
+                         "y":140.591333333333
+                        },
+                    
+                        {
+                         "x":404.908,
+                         "y":218.091
+                        },
+                    
+                        {
+                         "x":-319.3966,
+                         "y":230.163
+                        },
+                    
+                        {
+                         "x":-312.031,
+                         "y":67.485
+                        },
+                    
+                        {
+                         "x":-213.914,
+                         "y":110.949
+                        },
+                    
+                        {
+                         "x":-123.727805404713,
+                         "y":110.374003098836
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 3 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.002
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.05
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.4
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":1.4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":273.6665,
+                 "y":170.0287
+                },
+            
+                {
+                 "height":71.9426,
+                 "id":33,
+                 "name":"square_ground_fog_detail",
+                 "opacity":0.38,
+                 "polygon":[
+                        {
+                         "x":24.25,
+                         "y":131.039
+                        },
+                    
+                        {
+                         "x":58.917,
+                         "y":139.683
+                        },
+                    
+                        {
+                         "x":116.432379375694,
+                         "y":123.691986897874
+                        },
+                    
+                        {
+                         "x":134.803,
+                         "y":122.9046
+                        },
+                    
+                        {
+                         "x":176.411671814736,
+                         "y":125.598524667921
+                        },
+                    
+                        {
+                         "x":205.284560492703,
+                         "y":131.591333889414
+                        },
+                    
+                        {
+                         "x":234.746794501103,
+                         "y":121.756839706479
+                        },
+                    
+                        {
+                         "x":275.51,
+                         "y":118.497
+                        },
+                    
+                        {
+                         "x":308.077,
+                         "y":111.392
+                        },
+                    
+                        {
+                         "x":400.527666666667,
+                         "y":127.258
+                        },
+                    
+                        {
+                         "x":404.908,
+                         "y":218.091
+                        },
+                    
+                        {
+                         "x":-319.397,
+                         "y":230.163
+                        },
+                    
+                        {
+                         "x":-311.531,
+                         "y":73.985
+                        },
+                    
+                        {
+                         "x":-207.735946970995,
+                         "y":103.826657395291
+                        },
+                    
+                        {
+                         "x":-121.914,
+                         "y":102.449
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.018
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":-0.001
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":3
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":0.8
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":3
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":274.1665,
+                 "y":170.5287
+                },
+            
+                {
+                 "height":360,
+                 "id":34,
+                 "name":"mood_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":-0.035
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.05
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":0.75
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":1000
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.08
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.96
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":0.92
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":640,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "height":148.333666666667,
+                 "id":36,
+                 "name":"hotel_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.2
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":500
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":159.5,
+                 "x":289.916666666667,
+                 "y":110.333166666667
+                },
+            
+                {
+                 "height":71.9426,
+                 "id":37,
+                 "name":"alley_fog",
+                 "opacity":0.65,
+                 "polygon":[
+                        {
+                         "x":44.2225326932709,
+                         "y":254.757387570353
+                        },
+                    
+                        {
+                         "x":50.2862029695826,
+                         "y":283.960485311527
+                        },
+                    
+                        {
+                         "x":8.17229950683065,
+                         "y":300.03650835197
+                        },
+                    
+                        {
+                         "x":-97.6340476677785,
+                         "y":299.296894411796
+                        },
+                    
+                        {
+                         "x":-133.25890168088,
+                         "y":287.950878787879
+                        },
+                    
+                        {
+                         "x":-121.284727727615,
+                         "y":261.375382703145
+                        },
+                    
+                        {
+                         "x":-33.5088852566446,
+                         "y":179.747063099249
+                        },
+                    
+                        {
+                         "x":10.5167266934324,
+                         "y":179.438561166522
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 6 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":0.5
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":3
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":23.7698756302018,
+                 "x":547.392038044516,
+                 "y":-23.3046333333333
+                },
+            
+                {
+                 "height":0,
+                 "id":38,
+                 "name":"background_desat_grade_left",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-6.5,
+                         "y":-3.25
+                        },
+                    
+                        {
+                         "x":37.5,
+                         "y":46.75
+                        },
+                    
+                        {
+                         "x":33.5,
+                         "y":51.75
+                        },
+                    
+                        {
+                         "x":30,
+                         "y":55
+                        },
+                    
+                        {
+                         "x":30.75,
+                         "y":181.25
+                        },
+                    
+                        {
+                         "x":154,
+                         "y":184
+                        },
+                    
+                        {
+                         "x":152.5,
+                         "y":51.75
+                        },
+                    
+                        {
+                         "x":139,
+                         "y":43.25
+                        },
+                    
+                        {
+                         "x":181.75,
+                         "y":-4.25
+                        }],
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":-0.005
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":0.8
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":137.25,
+                 "y":0
+                },
+            
+                {
+                 "height":0,
+                 "id":39,
+                 "name":"background_desat_grade_right",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":25.4048804780876,
+                         "y":0.683266932270916
+                        },
+                    
+                        {
+                         "x":30.2699203187251,
+                         "y":28.7868525896414
+                        },
+                    
+                        {
+                         "x":26.0094621513944,
+                         "y":32.8222111553785
+                        },
+                    
+                        {
+                         "x":26.1409362549801,
+                         "y":45.1389442231076
+                        },
+                    
+                        {
+                         "x":39.9163346613547,
+                         "y":58.8754980079681
+                        },
+                    
+                        {
+                         "x":47.8401394422311,
+                         "y":74.8261952191235
+                        },
+                    
+                        {
+                         "x":47.8824977731578,
+                         "y":88.9385465793054
+                        },
+                    
+                        {
+                         "x":59.8276396938446,
+                         "y":89.160720583352
+                        },
+                    
+                        {
+                         "x":59.7431318705403,
+                         "y":68.3978840973751
+                        },
+                    
+                        {
+                         "x":57.0393426294821,
+                         "y":68.3222111553785
+                        },
+                    
+                        {
+                         "x":61.082171314741,
+                         "y":41.5996015936255
+                        },
+                    
+                        {
+                         "x":61.3055257495878,
+                         "y":26.2664224129794
+                        },
+                    
+                        {
+                         "x":68.033898522048,
+                         "y":26.1139728771399
+                        },
+                    
+                        {
+                         "x":69.0298804780876,
+                         "y":0.451195219123505
+                        }],
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":-0.035
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":0.8
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":0.25
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":484.220119521912,
+                 "y":-2.45119521912351
+                },
+            
+                {
+                 "height":71.9426,
+                 "id":40,
+                 "name":"alley_fog_detail",
+                 "opacity":0.65,
+                 "polygon":[
+                        {
+                         "x":32.2225333333332,
+                         "y":254.090333333333
+                        },
+                    
+                        {
+                         "x":34.805133203618,
+                         "y":270.404206767044
+                        },
+                    
+                        {
+                         "x":2.50559999999996,
+                         "y":284.37
+                        },
+                    
+                        {
+                         "x":-67.6340333333333,
+                         "y":288.297333333333
+                        },
+                    
+                        {
+                         "x":-110.259,
+                         "y":276.951333333333
+                        },
+                    
+                        {
+                         "x":-104.618,
+                         "y":252.709
+                        },
+                    
+                        {
+                         "x":-35.5723187200487,
+                         "y":173.837942306757
+                        },
+                    
+                        {
+                         "x":5.92229313128735,
+                         "y":174.589426310726
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.3
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.015
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.03
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":0.25
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":6
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":23.7699,
+                 "x":551.11505,
+                 "y":-19.4713
+                },
+            
+                {
+                 "height":151.334,
+                 "id":41,
+                 "name":"store_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.04
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":1.4
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":500
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.02
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":160.5,
+                 "x":22.25,
+                 "y":96.833
+                },
+            
+                {
+                 "height":0,
+                 "id":42,
+                 "name":"alley_grade",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-13.6860090909091,
+                         "y":-111.862187545455
+                        },
+                    
+                        {
+                         "x":-27.3902272727273,
+                         "y":112.393045454545
+                        },
+                    
+                        {
+                         "x":105.100327272727,
+                         "y":112.615245454545
+                        },
+                    
+                        {
+                         "x":98.2069994634583,
+                         "y":-107.779446973756
+                        },
+                    
+                        {
+                         "x":70.562009989549,
+                         "y":-52.1815127172884
+                        },
+                    
+                        {
+                         "x":58.8480818181819,
+                         "y":-52.0942595454545
+                        },
+                    
+                        {
+                         "x":49.6559059135145,
+                         "y":-63.204675592949
+                        }],
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":-0.08
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.03
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":0.88
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.15
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.06
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.97
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":0.92
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":472.666666666667,
+                 "y":138
+                },
+            
+                {
+                 "height":360,
+                 "id":43,
+                 "name":"scene_air_haze",
+                 "opacity":0.08,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 3 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.008
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.002
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":900
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.5
+                        },
+                    
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":640,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "height":71.9426,
+                 "id":44,
+                 "name":"fog_patch",
+                 "opacity":0.5,
+                 "polygon":[
+                        {
+                         "x":7.36950000000002,
+                         "y":266.21
+                        },
+                    
+                        {
+                         "x":41.4614059222812,
+                         "y":260.825030366601
+                        },
+                    
+                        {
+                         "x":85.7635641320564,
+                         "y":264.4027482548
+                        },
+                    
+                        {
+                         "x":101.440999300657,
+                         "y":271.517102576638
+                        },
+                    
+                        {
+                         "x":107.496,
+                         "y":309.351
+                        },
+                    
+                        {
+                         "x":91.0759871426395,
+                         "y":328.937835401011
+                        },
+                    
+                        {
+                         "x":66.3550029557781,
+                         "y":337.284370920122
+                        },
+                    
+                        {
+                         "x":11.7741343140128,
+                         "y":335.591303951097
+                        },
+                    
+                        {
+                         "x":-13.4944,
+                         "y":324.12
+                        },
+                    
+                        {
+                         "x":-19.3332251574235,
+                         "y":309.207405805886
+                        },
+                    
+                        {
+                         "x":-14.5625514712669,
+                         "y":292.079375143909
+                        },
+                    
+                        {
+                         "x":-7.21474823054737,
+                         "y":274.675086351329
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":23.7699,
+                 "x":152,
+                 "y":-89
+                },
+            
+                {
+                 "height":57.8286435004381,
+                 "id":45,
+                 "name":"fog_patch2",
+                 "opacity":0.61,
+                 "polygon":[
+                        {
+                         "x":6.43980873016624,
+                         "y":213.983970363201
+                        },
+                    
+                        {
+                         "x":36.2308821066442,
+                         "y":209.655418917328
+                        },
+                    
+                        {
+                         "x":74.9441861741618,
+                         "y":212.53147408415
+                        },
+                    
+                        {
+                         "x":88.6438208015189,
+                         "y":218.249824127964
+                        },
+                    
+                        {
+                         "x":93.9349588517471,
+                         "y":248.661414732079
+                        },
+                    
+                        {
+                         "x":79.5864061209879,
+                         "y":264.405767038544
+                        },
+                    
+                        {
+                         "x":57.9840570310307,
+                         "y":271.114418917328
+                        },
+                    
+                        {
+                         "x":10.2887512001968,
+                         "y":269.753557710668
+                        },
+                    
+                        {
+                         "x":-11.7920286218,
+                         "y":260.532979505356
+                        },
+                    
+                        {
+                         "x":-16.8942411482529,
+                         "y":248.545665166952
+                        },
+                    
+                        {
+                         "x":-12.7254710107767,
+                         "y":234.777897448306
+                        },
+                    
+                        {
+                         "x":-6.30458104837057,
+                         "y":220.7882763965
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.7
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":20.7712340776414,
+                 "x":264.176091148253,
+                 "y":-19.8017189173282
+                },
+            
+                {
+                 "height":57.8286,
+                 "id":46,
+                 "name":"fog_patch3",
+                 "opacity":0.62,
+                 "polygon":[
+                        {
+                         "x":6.43981,
+                         "y":213.984
+                        },
+                    
+                        {
+                         "x":36.2309,
+                         "y":209.655
+                        },
+                    
+                        {
+                         "x":74.9442,
+                         "y":212.531
+                        },
+                    
+                        {
+                         "x":88.6438,
+                         "y":218.25
+                        },
+                    
+                        {
+                         "x":93.935,
+                         "y":248.661
+                        },
+                    
+                        {
+                         "x":79.5864,
+                         "y":264.406
+                        },
+                    
+                        {
+                         "x":57.9841,
+                         "y":271.114
+                        },
+                    
+                        {
+                         "x":10.2888,
+                         "y":269.754
+                        },
+                    
+                        {
+                         "x":-11.792,
+                         "y":260.533
+                        },
+                    
+                        {
+                         "x":-16.8942,
+                         "y":248.546
+                        },
+                    
+                        {
+                         "x":-12.7255,
+                         "y":234.778
+                        },
+                    
+                        {
+                         "x":-6.30458,
+                         "y":220.788
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.87
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":20.7712,
+                 "x":397.1144,
+                 "y":-15.9143
+                },
+            
+                {
+                 "height":57.8286,
+                 "id":47,
+                 "name":"fog_patch4",
+                 "opacity":0.5,
+                 "polygon":[
+                        {
+                         "x":6.43981,
+                         "y":213.984
+                        },
+                    
+                        {
+                         "x":36.2309,
+                         "y":209.655
+                        },
+                    
+                        {
+                         "x":74.9442,
+                         "y":212.531
+                        },
+                    
+                        {
+                         "x":88.6438,
+                         "y":218.25
+                        },
+                    
+                        {
+                         "x":93.935,
+                         "y":248.661
+                        },
+                    
+                        {
+                         "x":79.5864,
+                         "y":264.406
+                        },
+                    
+                        {
+                         "x":57.9841,
+                         "y":271.114
+                        },
+                    
+                        {
+                         "x":10.2888,
+                         "y":269.754
+                        },
+                    
+                        {
+                         "x":-11.792,
+                         "y":260.533
+                        },
+                    
+                        {
+                         "x":-16.8942,
+                         "y":248.546
+                        },
+                    
+                        {
+                         "x":-12.7255,
+                         "y":234.778
+                        },
+                    
+                        {
+                         "x":-6.30458,
+                         "y":220.788
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 17 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.7
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":20.7712,
+                 "x":0,
+                 "y":8
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":2,
+         "layers":[
+                {
+                 "draworder":"topdown",
+                 "id":8,
+                 "name":"navmesh",
+                 "objects":[
+                        {
+                         "height":0,
+                         "id":7,
+                         "name":"",
+                         "opacity":1,
+                         "polygon":[
+                                {
+                                 "x":-3.70789643354033,
+                                 "y":11.6717737283247
+                                },
+                            
+                                {
+                                 "x":-22.1693796594268,
+                                 "y":12.037225074632
+                                },
+                            
+                                {
+                                 "x":-22.4818580252815,
+                                 "y":-10.7196580396902
+                                },
+                            
+                                {
+                                 "x":-141.719603651295,
+                                 "y":-10.4638772947843
+                                },
+                            
+                                {
+                                 "x":-139.749110915365,
+                                 "y":-45.6884331704735
+                                },
+                            
+                                {
+                                 "x":-3.12219620618274,
+                                 "y":-41.9591435067359
+                                },
+                            
+                                {
+                                 "x":-2.61923015760338,
+                                 "y":-48.4686863795291
+                                },
+                            
+                                {
+                                 "x":20.9032671013941,
+                                 "y":-48.4194190367044
+                                },
+                            
+                                {
+                                 "x":21.6578904308279,
+                                 "y":-64.0518451312023
+                                },
+                            
+                                {
+                                 "x":21.8336431942858,
+                                 "y":-76.5505560518036
+                                },
+                            
+                                {
+                                 "x":33.8267331772371,
+                                 "y":-77.2126302215888
+                                },
+                            
+                                {
+                                 "x":34.0232956666331,
+                                 "y":-62.4988801791714
+                                },
+                            
+                                {
+                                 "x":99.235425324914,
+                                 "y":-62.1472464734003
+                                },
+                            
+                                {
+                                 "x":99.9124400029469,
+                                 "y":-76.0365901794622
+                                },
+                            
+                                {
+                                 "x":131.821233668951,
+                                 "y":-74.9864433900424
+                                },
+                            
+                                {
+                                 "x":131.585485352242,
+                                 "y":-81.2032846936976
+                                },
+                            
+                                {
+                                 "x":168.821401064721,
+                                 "y":-81.2521911769116
+                                },
+                            
+                                {
+                                 "x":168.916666666667,
+                                 "y":-52.3333333333333
+                                },
+                            
+                                {
+                                 "x":203.100233954886,
+                                 "y":-52.7371031088408
+                                },
+                            
+                                {
+                                 "x":203.596129169289,
+                                 "y":-44.0506447686611
+                                },
+                            
+                                {
+                                 "x":235.462636081082,
+                                 "y":-44.1196671774953
+                                },
+                            
+                                {
+                                 "x":235.25,
+                                 "y":-48.8333333333333
+                                },
+                            
+                                {
+                                 "x":259.146111167668,
+                                 "y":-48.6352777494993
+                                },
+                            
+                                {
+                                 "x":260.090184711966,
+                                 "y":-62.187879872755
+                                },
+                            
+                                {
+                                 "x":275.137773393713,
+                                 "y":-62.2055597297371
+                                },
+                            
+                                {
+                                 "x":275.022245204318,
+                                 "y":-70.2803582588957
+                                },
+                            
+                                {
+                                 "x":293.706697829499,
+                                 "y":-69.596696803222
+                                },
+                            
+                                {
+                                 "x":294.073364474018,
+                                 "y":-44.1710994052842
+                                },
+                            
+                                {
+                                 "x":338.583333333334,
+                                 "y":-43.25
+                                },
+                            
+                                {
+                                 "x":338.75,
+                                 "y":-33.8333333333334
+                                },
+                            
+                                {
+                                 "x":395.5,
+                                 "y":-34.0833333333334
+                                },
+                            
+                                {
+                                 "x":397.471836272231,
+                                 "y":-66.265664851085
+                                },
+                            
+                                {
+                                 "x":410.960325801806,
+                                 "y":-66.5868013179904
+                                },
+                            
+                                {
+                                 "x":411.044461588673,
+                                 "y":-83.0630057490999
+                                },
+                            
+                                {
+                                 "x":421.41272027258,
+                                 "y":-83.4086843608572
+                                },
+                            
+                                {
+                                 "x":421.021608638788,
+                                 "y":-94.0834980287295
+                                },
+                            
+                                {
+                                 "x":431.560000782431,
+                                 "y":-94.257543100757
+                                },
+                            
+                                {
+                                 "x":432.183337667282,
+                                 "y":-104.311729834959
+                                },
+                            
+                                {
+                                 "x":437.736335222897,
+                                 "y":-104.313190313795
+                                },
+                            
+                                {
+                                 "x":437.669078202824,
+                                 "y":-112.034738071586
+                                },
+                            
+                                {
+                                 "x":453.416666666667,
+                                 "y":-111.833333333333
+                                },
+                            
+                                {
+                                 "x":453.320159187436,
+                                 "y":-99.9605043715821
+                                },
+                            
+                                {
+                                 "x":447.11983322727,
+                                 "y":-99.6713402758039
+                                },
+                            
+                                {
+                                 "x":445.424832632268,
+                                 "y":-85.1773416026935
+                                },
+                            
+                                {
+                                 "x":439.163676030992,
+                                 "y":-84.5942605827719
+                                },
+                            
+                                {
+                                 "x":439.67685734092,
+                                 "y":-66.0310867182842
+                                },
+                            
+                                {
+                                 "x":473.5,
+                                 "y":-65.8333333333334
+                                },
+                            
+                                {
+                                 "x":473.333333333333,
+                                 "y":-51.1666666666667
+                                },
+                            
+                                {
+                                 "x":552.166666666667,
+                                 "y":-51
+                                },
+                            
+                                {
+                                 "x":553.583333333333,
+                                 "y":48.3333333333333
+                                },
+                            
+                                {
+                                 "x":-3.33333333333331,
+                                 "y":48.6666666666666
+                                }],
+                         "rotation":0,
+                         "type":"",
+                         "visible":true,
+                         "width":0,
+                         "x":85.9569038650782,
+                         "y":302.26258101734
+                        }],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "draworder":"topdown",
+                 "id":11,
+                 "name":"blockers",
+                 "objects":[],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"navigation",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":12,
+         "layers":[],
+         "name":"effects_back",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":13,
+         "layers":[],
+         "name":"effects_front",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":14,
+         "layers":[
+                {
+                 "id":20,
+                 "image":"..\/..\/effects\/vignette01.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "name":"vignette",
+                 "opacity":0.5,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "id":21,
+                 "image":"..\/..\/effects\/black_screen_quad.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "name":"black_screen_quad",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":false,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"effects_overlay",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":22,
+ "nextobjectid":48,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.12.0",
+ "tileheight":360,
+ "tilesets":[],
+ "tilewidth":640,
+ "type":"map",
+ "version":"1.10",
+ "width":1
+}

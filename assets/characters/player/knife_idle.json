@@ -1,0 +1,176 @@
+{ "frames": {
+   "knife_idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 1": {
+    "frame": { "x": 289, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 2": {
+    "frame": { "x": 578, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 3": {
+    "frame": { "x": 867, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 4": {
+    "frame": { "x": 0, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 5": {
+    "frame": { "x": 289, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 6": {
+    "frame": { "x": 578, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 7": {
+    "frame": { "x": 867, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 8": {
+    "frame": { "x": 0, "y": 448, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 9": {
+    "frame": { "x": 289, "y": 448, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 10": {
+    "frame": { "x": 578, "y": 448, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 11": {
+    "frame": { "x": 289, "y": 448, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 12": {
+    "frame": { "x": 0, "y": 448, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 13": {
+    "frame": { "x": 867, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 14": {
+    "frame": { "x": 578, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 15": {
+    "frame": { "x": 289, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 16": {
+    "frame": { "x": 0, "y": 224, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 17": {
+    "frame": { "x": 867, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 18": {
+    "frame": { "x": 578, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   },
+   "knife_idle 19": {
+    "frame": { "x": 289, "y": 0, "w": 289, "h": 224 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 289, "h": 224 },
+    "sourceSize": { "w": 289, "h": 224 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "knife_idle.png",
+  "format": "RGBA8888",
+  "size": { "w": 1156, "h": 672 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

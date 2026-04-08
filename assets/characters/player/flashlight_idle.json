@@ -1,0 +1,176 @@
+{ "frames": {
+   "flashlight_idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 1": {
+    "frame": { "x": 303, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 2": {
+    "frame": { "x": 606, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 3": {
+    "frame": { "x": 909, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 4": {
+    "frame": { "x": 0, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 5": {
+    "frame": { "x": 303, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 6": {
+    "frame": { "x": 606, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 7": {
+    "frame": { "x": 909, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 8": {
+    "frame": { "x": 0, "y": 446, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 9": {
+    "frame": { "x": 303, "y": 446, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 10": {
+    "frame": { "x": 606, "y": 446, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 11": {
+    "frame": { "x": 303, "y": 446, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 12": {
+    "frame": { "x": 0, "y": 446, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 13": {
+    "frame": { "x": 909, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 14": {
+    "frame": { "x": 606, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 15": {
+    "frame": { "x": 303, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 16": {
+    "frame": { "x": 0, "y": 223, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 17": {
+    "frame": { "x": 909, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 18": {
+    "frame": { "x": 606, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   },
+   "flashlight_idle 19": {
+    "frame": { "x": 303, "y": 0, "w": 303, "h": 223 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 303, "h": 223 },
+    "sourceSize": { "w": 303, "h": 223 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "flashlight_idle.png",
+  "format": "RGBA8888",
+  "size": { "w": 1212, "h": 669 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

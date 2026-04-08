@@ -1,0 +1,136 @@
+{ "frames": {
+   "handgun_meleeattack 0": {
+    "frame": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 1": {
+    "frame": { "x": 291, "y": 0, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 2": {
+    "frame": { "x": 582, "y": 0, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 3": {
+    "frame": { "x": 873, "y": 0, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 4": {
+    "frame": { "x": 0, "y": 256, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 5": {
+    "frame": { "x": 291, "y": 256, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 6": {
+    "frame": { "x": 582, "y": 256, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 20
+   },
+   "handgun_meleeattack 7": {
+    "frame": { "x": 873, "y": 256, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 20
+   },
+   "handgun_meleeattack 8": {
+    "frame": { "x": 0, "y": 512, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 20
+   },
+   "handgun_meleeattack 9": {
+    "frame": { "x": 291, "y": 512, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 20
+   },
+   "handgun_meleeattack 10": {
+    "frame": { "x": 582, "y": 512, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 20
+   },
+   "handgun_meleeattack 11": {
+    "frame": { "x": 873, "y": 512, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 12": {
+    "frame": { "x": 0, "y": 768, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 13": {
+    "frame": { "x": 291, "y": 768, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   },
+   "handgun_meleeattack 14": {
+    "frame": { "x": 582, "y": 768, "w": 291, "h": 256 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 291, "h": 256 },
+    "sourceSize": { "w": 291, "h": 256 },
+    "duration": 40
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "handgun_meleeattack.png",
+  "format": "RGBA8888",
+  "size": { "w": 1164, "h": 1024 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

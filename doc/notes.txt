@@ -1,0 +1,59 @@
+Practical authoring cheat sheet:
+
+1. Add
+==============================================
+Use when you want:
+
+    glow
+    lamp bloom
+    furnace light
+    moonbeam lightening
+
+Author as:
+
+    colored bright center
+    fade to transparent
+
+Examples:
+
+    orange → transparent
+    blue → transparent
+    pale yellow → transparent
+
+2. Multiply
+==============================================
+    Use when you want:
+    shadow
+    dark falloff
+    dimming band
+    under-object darkness
+
+Author as:
+
+    white where there should be no change
+    dark gray / black where there should be shadow
+
+Examples:
+
+    white edges, soft dark center
+    white top, darker lower band
+    white outside, dark soft oval inside
+    You can still include alpha, but the main thing doing the shadowing is the RGB being darker than white.
+
+3. Normal
+==============================================
+Use when you want:
+
+    painted dark veil
+    fog
+    colored overlay
+    subtle haze
+    soft mask that should just visually sit on top
+
+Author as:
+
+    ordinary image with transparency
+    black/colored translucent areas where effect exists
+    transparent elsewhere
+
+This is the most direct “artist says so” mode.

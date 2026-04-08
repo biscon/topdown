@@ -1,0 +1,409 @@
+{ "frames": {
+   "npc_actor (base) #walk_right 0": {
+    "frame": { "x": 324, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 1": {
+    "frame": { "x": 162, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 2": {
+    "frame": { "x": 216, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 3": {
+    "frame": { "x": 270, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 4": {
+    "frame": { "x": 324, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 5": {
+    "frame": { "x": 0, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 6": {
+    "frame": { "x": 54, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_right 7": {
+    "frame": { "x": 108, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 0": {
+    "frame": { "x": 162, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 1": {
+    "frame": { "x": 216, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 2": {
+    "frame": { "x": 270, "y": 320, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 3": {
+    "frame": { "x": 108, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 4": {
+    "frame": { "x": 0, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 5": {
+    "frame": { "x": 54, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 6": {
+    "frame": { "x": 108, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_back 7": {
+    "frame": { "x": 162, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 0": {
+    "frame": { "x": 216, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 1": {
+    "frame": { "x": 270, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 2": {
+    "frame": { "x": 324, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 3": {
+    "frame": { "x": 0, "y": 480, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 4": {
+    "frame": { "x": 54, "y": 480, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 5": {
+    "frame": { "x": 108, "y": 480, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 6": {
+    "frame": { "x": 270, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #walk_front 7": {
+    "frame": { "x": 54, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 100
+   },
+   "npc_actor (base) #idle_front 0": {
+    "frame": { "x": 108, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #idle_front 1": {
+    "frame": { "x": 162, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #idle_front 2": {
+    "frame": { "x": 216, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #idle_front 3": {
+    "frame": { "x": 162, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #idle_back 0": {
+    "frame": { "x": 108, "y": 400, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_back 1": {
+    "frame": { "x": 270, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_back 2": {
+    "frame": { "x": 324, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_back 3": {
+    "frame": { "x": 0, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_right 0": {
+    "frame": { "x": 54, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_right 1": {
+    "frame": { "x": 108, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_right 2": {
+    "frame": { "x": 162, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #idle_right 3": {
+    "frame": { "x": 216, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 250
+   },
+   "npc_actor (base) #talk_right 0": {
+    "frame": { "x": 54, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #talk_right 1": {
+    "frame": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #talk_right 2": {
+    "frame": { "x": 324, "y": 80, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #talk_right 3": {
+    "frame": { "x": 0, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #pickup_right 0": {
+    "frame": { "x": 54, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #pickup_right 1": {
+    "frame": { "x": 108, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #pickup_right 2": {
+    "frame": { "x": 162, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #pickup_right 3": {
+    "frame": { "x": 216, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #reach_right 0": {
+    "frame": { "x": 270, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #reach_right 1": {
+    "frame": { "x": 324, "y": 160, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #reach_right 2": {
+    "frame": { "x": 0, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   },
+   "npc_actor (base) #reach_right 3": {
+    "frame": { "x": 54, "y": 240, "w": 54, "h": 80 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 54, "h": 80 },
+    "sourceSize": { "w": 54, "h": 80 },
+    "duration": 200
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-dev",
+  "image": "npc_actor.png",
+  "format": "RGBA8888",
+  "size": { "w": 378, "h": 560 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "walk_right", "from": 0, "to": 7, "direction": "forward", "color": "#000000ff" },
+   { "name": "walk_back", "from": 8, "to": 15, "direction": "forward", "color": "#000000ff" },
+   { "name": "walk_front", "from": 16, "to": 23, "direction": "forward", "color": "#000000ff" },
+   { "name": "idle_front", "from": 24, "to": 27, "direction": "forward", "color": "#000000ff" },
+   { "name": "idle_back", "from": 28, "to": 31, "direction": "forward", "color": "#000000ff" },
+   { "name": "idle_right", "from": 32, "to": 35, "direction": "forward", "color": "#000000ff" },
+   { "name": "talk_right", "from": 36, "to": 39, "direction": "forward", "color": "#000000ff" },
+   { "name": "pickup_right", "from": 40, "to": 43, "direction": "pingpong", "repeat": "2", "color": "#000000ff" },
+   { "name": "reach_right", "from": 44, "to": 47, "direction": "pingpong", "repeat": "2", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "base", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

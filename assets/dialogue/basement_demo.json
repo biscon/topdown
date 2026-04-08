@@ -1,0 +1,12 @@
+{
+    "choiceSets": [
+        {
+            "id": "test_dialogue",
+            "options": [
+                { "id": "who_are_you", "text": "Who are you?" },
+                { "id": "what_happened", "text": "What happened here?" },
+                { "id": "goodbye", "text": "Never mind." }
+            ]
+        }
+    ]
+}

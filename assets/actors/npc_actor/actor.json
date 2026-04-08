@@ -1,0 +1,12 @@
+{
+    "actorId": "npc_actor",
+    "displayName": "Npc Actor",
+    "spriteAsset": "npc_actor.actor.json",
+    "talkColor": "GREEN",
+    "walkSpeed": 250.0,
+    "fastMoveMultiplier": 2.0,
+    "idleDelayMs": 200.0,
+    "controllable": true,
+    "horizHitboxScale": 0.5,
+    "vertHitboxScale": 0.95
+}

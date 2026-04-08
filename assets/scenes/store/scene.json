@@ -1,0 +1,21 @@
+{
+    "sceneId": "store",
+    "saveName": "General Store",
+    "tiledFile": "store.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 3,
+    "worldWidth": 1920,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 1600,
+        "y": 930
+    },
+
+    "scale": {
+        "nearY": 930,
+        "farY": 825,
+        "nearScale": 1.0,
+        "farScale": 1.0
+    }
+}

@@ -1,0 +1,176 @@
+{ "frames": {
+   "handgun_idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 1": {
+    "frame": { "x": 253, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 2": {
+    "frame": { "x": 506, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 3": {
+    "frame": { "x": 759, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 4": {
+    "frame": { "x": 0, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 5": {
+    "frame": { "x": 253, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 6": {
+    "frame": { "x": 506, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 7": {
+    "frame": { "x": 759, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 8": {
+    "frame": { "x": 0, "y": 432, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 9": {
+    "frame": { "x": 253, "y": 432, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 10": {
+    "frame": { "x": 506, "y": 432, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 11": {
+    "frame": { "x": 253, "y": 432, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 12": {
+    "frame": { "x": 0, "y": 432, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 13": {
+    "frame": { "x": 759, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 14": {
+    "frame": { "x": 506, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 15": {
+    "frame": { "x": 253, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 16": {
+    "frame": { "x": 0, "y": 216, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 17": {
+    "frame": { "x": 759, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 18": {
+    "frame": { "x": 506, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   },
+   "handgun_idle 19": {
+    "frame": { "x": 253, "y": 0, "w": 253, "h": 216 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 253, "h": 216 },
+    "sourceSize": { "w": 253, "h": 216 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "handgun_idle.png",
+  "format": "RGBA8888",
+  "size": { "w": 1012, "h": 648 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

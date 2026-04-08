@@ -1,0 +1,49 @@
+{ "frames": {
+   "furnace_fire (Flattened) #idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 59, "h": 67 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 59, "h": 67 },
+    "sourceSize": { "w": 59, "h": 67 },
+    "duration": 100
+   },
+   "furnace_fire (Flattened) #idle 1": {
+    "frame": { "x": 59, "y": 0, "w": 59, "h": 67 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 59, "h": 67 },
+    "sourceSize": { "w": 59, "h": 67 },
+    "duration": 100
+   },
+   "furnace_fire (Flattened) #idle 2": {
+    "frame": { "x": 0, "y": 67, "w": 59, "h": 67 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 59, "h": 67 },
+    "sourceSize": { "w": 59, "h": 67 },
+    "duration": 100
+   },
+   "furnace_fire (Flattened) #idle 3": {
+    "frame": { "x": 59, "y": 67, "w": 59, "h": 67 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 59, "h": 67 },
+    "sourceSize": { "w": 59, "h": 67 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "furnace_fire.png",
+  "format": "RGBA8888",
+  "size": { "w": 118, "h": 134 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "idle", "from": 0, "to": 3, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Flattened", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

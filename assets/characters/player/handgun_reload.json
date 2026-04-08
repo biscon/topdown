@@ -1,0 +1,136 @@
+{ "frames": {
+   "handgun_reload 0": {
+    "frame": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 1": {
+    "frame": { "x": 260, "y": 0, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 2": {
+    "frame": { "x": 520, "y": 0, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 3": {
+    "frame": { "x": 780, "y": 0, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 4": {
+    "frame": { "x": 0, "y": 230, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 5": {
+    "frame": { "x": 260, "y": 230, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 6": {
+    "frame": { "x": 520, "y": 230, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 7": {
+    "frame": { "x": 780, "y": 230, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 8": {
+    "frame": { "x": 0, "y": 460, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 9": {
+    "frame": { "x": 260, "y": 460, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 10": {
+    "frame": { "x": 520, "y": 460, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 11": {
+    "frame": { "x": 780, "y": 460, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 12": {
+    "frame": { "x": 0, "y": 690, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 13": {
+    "frame": { "x": 260, "y": 690, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   },
+   "handgun_reload 14": {
+    "frame": { "x": 520, "y": 690, "w": 260, "h": 230 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 260, "h": 230 },
+    "sourceSize": { "w": 260, "h": 230 },
+    "duration": 75
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "handgun_reload.png",
+  "format": "RGBA8888",
+  "size": { "w": 1040, "h": 920 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

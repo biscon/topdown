@@ -1,0 +1,63 @@
+[Copy to clipboard]
+
+We are building a custom 2D top-down game engine in C++ using raylib.
+
+This project originally started as a point-and-click adventure engine, but we are now transitioning it into a pure top-down engine. The adventure system is no longer the goal — it is being cannibalized for useful subsystems such as rendering, scripting, asset loading, effects, and general engine structure.
+
+The only requirement for the old adventure code is that it must continue to compile. It does not need to function correctly or be maintained as a working mode. Over time, the goal is to completely remove the adventure system once all useful parts have been extracted and re-integrated into the top-down architecture.
+
+This is a personal engine, not a general-purpose framework. The focus is on simplicity, control, and iteration speed rather than abstraction or extensibility.
+
+Code style and architecture principles:
+
+* The engine uses a data-oriented and procedural style.
+* There is a central GameState struct that owns all runtime data.
+* Subsystems are grouped into structs inside GameState (e.g. topdown, rendering, scripting, etc).
+* Data is stored in plain structs, typically defined in *Data.h files.
+* Integer handles are preferred over raw pointers for referencing runtime objects.
+* Avoid polymorphism unless required by external libraries.
+* Avoid inheritance-heavy designs.
+* Keep systems explicit and easy to debug rather than abstract and generic.
+* Prefer simple control flow over “clever” solutions.
+* Changes should be patch-style and localized — do not rewrite unrelated systems.
+* Preserve existing structure unless explicitly changing it.
+
+Assets are loaded from external files (JSON, Tiled, Aseprite exports), and runtime data is built from authored data at load time. There is a clear separation between authored data (what comes from files) and runtime data (what is used during gameplay).
+
+The engine uses a layered rendering approach with render targets and explicit composition. Effects, image layers, and other rendering features are treated as data-driven systems rather than hardcoded behavior.
+
+Scripting is done through Lua, with engine functions exposed as a simple API. Scripts are expected to orchestrate behavior, not implement complex engine logic.
+
+NPCs, player, and other entities are represented using simple runtime structs. Behavior is driven by a combination of engine systems (movement, animation, etc.) and scripting.
+
+The overall development approach is iterative:
+
+* Build a minimal working version of a system
+* Integrate it into the engine
+* Expand it step by step
+* Avoid over-engineering early
+
+The current focus is on the top-down engine. The adventure system is only kept around as a source of reusable code and must not influence new design decisions.
+
+We are not trying to maintain backwards compatibility with the adventure gameplay model.
+
+---
+
+Next task:
+
+We want to fix the NPC animation system.
+
+Specifically, we want to introduce two distinct scripting behaviors:
+
+1. setNpcAnimation
+
+   * Sets a looping animation
+   * Persists until explicitly changed
+   * Used for states like idle, walk, run, etc.
+
+2. playNpcAnimation
+
+   * Plays a one-shot animation
+   * When finished, automatically returns to the appropriate looping animation (typically idle or locomotion-driven)
+
+The goal is to implement this cleanly in the engine, without hacks such as manual override flags that must be cleared from Lua.

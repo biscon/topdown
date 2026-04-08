@@ -1,0 +1,223 @@
+{
+    "audio": [
+        {
+            "id": "ui_click",
+            "file": "ui/click.ogg",
+            "type": "sound",
+            "volume": 0.4
+        },
+        {
+            "id": "item_added",
+            "file": "ui/item_added.ogg",
+            "type": "sound",
+            "volume": 0.6
+        },
+        {
+            "id": "door_open",
+            "file": "sfx/door_open.ogg",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "door_close",
+            "file": "sfx/door_close.ogg",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "metal_pipe",
+            "file": "sfx/metal_pipe.wav",
+            "type": "sound",
+            "volume": 0.4
+        },
+        {
+            "id": "metal_pipe2",
+            "file": "sfx/metal_pipe2.mp3",
+            "type": "sound",
+            "volume": 0.7
+        },
+        {
+            "id": "seagull1",
+            "file": "sfx/seagull_01.wav",
+            "type": "sound",
+            "volume": 0.8
+        },
+        {
+            "id": "seagull2",
+            "file": "sfx/seagull_02.wav",
+            "type": "sound",
+            "volume": 0.8
+        },
+        {
+            "id": "wood_creak1",
+            "file": "sfx/wood_creak_01.wav",
+            "type": "sound",
+            "volume": 0.8
+        },
+        {
+            "id": "wood_creak2",
+            "file": "sfx/wood_creak_02.wav",
+            "type": "sound",
+            "volume": 0.8
+        },
+        {
+            "id": "dog_bark1",
+            "file": "sfx/dog_bark_01.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "dog_bark2",
+            "file": "sfx/dog_bark_02.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "dog_bark3",
+            "file": "sfx/dog_bark_03.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "wind_ambience",
+            "file": "ambience/wind.ogg",
+            "type": "sound",
+            "volume": 0.45,
+            "loop": true
+        },
+        {
+            "id": "wind_ambience_inside",
+            "file": "ambience/wind_inside.ogg",
+            "type": "sound",
+            "volume": 0.6,
+            "loop": true
+        },
+        {
+            "id": "room_tone_01",
+            "file": "ambience/room_tone_01.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": true
+        },
+        {
+            "id": "room_tone_02",
+            "file": "ambience/room_tone_02.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": true
+        },
+        {
+            "id": "dark_ambience_01",
+            "file": "ambience/dark_ambience_01.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "minimal_piano",
+            "file": "music/minimal_piano.mp3",
+            "type": "music",
+            "volume": 0.8,
+            "loop": false
+        },
+        {
+            "id": "knife_swing",
+            "file": "sfx/weapons/knife/knife_swing.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "knife_hit",
+            "file": "sfx/weapons/knife/knife_hit.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "melee_hit",
+            "file": "sfx/weapons/melee_hit_02.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "pistol_shot",
+            "file": "sfx/weapons/pistol/pistol_shot_01.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "shotgun_shot",
+            "file": "sfx/weapons/shotgun/shotgun_shot_02.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "rifle_full_auto_start",
+            "file": "sfx/weapons/rifle/full_auto_start.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "rifle_full_auto_loop",
+            "file": "sfx/weapons/rifle/full_auto_loop.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": true
+        },
+        {
+            "id": "rifle_full_auto_end",
+            "file": "sfx/weapons/rifle/full_auto_end.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_01",
+            "file": "sfx/pain/human_pain_01.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_02",
+            "file": "sfx/pain/human_pain_02.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_03",
+            "file": "sfx/pain/human_pain_03.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_04",
+            "file": "sfx/pain/human_pain_04.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_05",
+            "file": "sfx/pain/human_pain_05.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "human_pain_06",
+            "file": "sfx/pain/human_pain_06.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        }
+
+    ]
+}

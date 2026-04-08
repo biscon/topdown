@@ -1,0 +1,21 @@
+{
+    "sceneId": "basement_demo",
+    "saveName": "Dank Basement",
+    "tiledFile": "test_scene_360p.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 3,
+    "worldWidth": 1920,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 1600,
+        "y": 930
+    },
+
+    "scale": {
+        "nearY": 980,
+        "farY": 400,
+        "nearScale": 1.0,
+        "farScale": 0.57
+    }
+}

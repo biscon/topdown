@@ -1,0 +1,18 @@
+{
+    "audio": [
+        {
+            "id": "dog_whine",
+            "type": "sound",
+            "file": "dog_whine.wav",
+            "group": "sound",
+            "volume": 0.8
+        },
+        {
+            "id": "dog_snoring",
+            "type": "sound",
+            "file": "dog_snoring.ogg",
+            "group": "sound",
+            "volume": 1.0
+        }
+    ]
+}

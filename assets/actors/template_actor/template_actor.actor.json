@@ -1,0 +1,9 @@
+{
+    "asepriteJson": "template_actor.json",
+    "feetPivot": {
+        "x": 23,
+        "y": 95
+    },
+    "baseDrawScale": 5.4,
+    "useRightForLeft": false
+}

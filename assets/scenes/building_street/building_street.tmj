@@ -1,0 +1,369 @@
+{ "compressionlevel":-1,
+ "height":1,
+ "infinite":false,
+ "layers":[
+        {
+         "id":4,
+         "layers":[
+                {
+                 "id":9,
+                 "image":"building_street_background.png",
+                 "imageheight":180,
+                 "imagewidth":640,
+                 "name":"back1",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"background",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":3,
+         "layers":[],
+         "name":"foreground",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":7,
+         "name":"hotspots",
+         "objects":[],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":5,
+         "name":"exits",
+         "objects":[
+                {
+                 "height":0,
+                 "id":4,
+                 "name":"to_first_floor",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-3.5,
+                         "y":-1.5
+                        },
+                    
+                        {
+                         "x":55.2727272727273,
+                         "y":-0.818181818181813
+                        },
+                    
+                        {
+                         "x":55.6136363636364,
+                         "y":72.6136363636364
+                        },
+                    
+                        {
+                         "x":-3.06818181818176,
+                         "y":72.4090909090909
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Main entrance"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"Its the main entrance to the apartment building."
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"first_floor"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"default"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":322
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":157
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":295.272727272727,
+                 "y":81.4545454545455
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":6,
+         "name":"spawns",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"default",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"right"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":24.727272727273,
+                 "y":169.454545454545
+                },
+            
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"doors",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":321.636363636364,
+                 "y":160.727272727273
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":2,
+         "layers":[
+                {
+                 "draworder":"topdown",
+                 "id":8,
+                 "name":"navmesh",
+                 "objects":[
+                        {
+                         "height":0,
+                         "id":1,
+                         "name":"",
+                         "opacity":1,
+                         "polygon":[
+                                {
+                                 "x":-1.75,
+                                 "y":5.75
+                                },
+                            
+                                {
+                                 "x":251.566768251991,
+                                 "y":5.45841304444545
+                                },
+                            
+                                {
+                                 "x":257.150420429773,
+                                 "y":1.33317391110916
+                                },
+                            
+                                {
+                                 "x":277.87397117053,
+                                 "y":1.15264492592428
+                                },
+                            
+                                {
+                                 "x":286.429739289051,
+                                 "y":-1.98629710370599
+                                },
+                            
+                                {
+                                 "x":354.405681363171,
+                                 "y":-2.23629710370599
+                                },
+                            
+                                {
+                                 "x":365.878275570583,
+                                 "y":2.15264492592428
+                                },
+                            
+                                {
+                                 "x":385.07394225208,
+                                 "y":2.04158695555458
+                                },
+                            
+                                {
+                                 "x":391.699181385416,
+                                 "y":5.80576811852117
+                                },
+                            
+                                {
+                                 "x":638.627007607777,
+                                 "y":5.34735507407572
+                                },
+                            
+                                {
+                                 "x":637.877007607777,
+                                 "y":17.1810072518575
+                                },
+                            
+                                {
+                                 "x":-0.819471014815144,
+                                 "y":17.222594207412
+                                }],
+                         "rotation":0,
+                         "type":"",
+                         "visible":true,
+                         "width":0,
+                         "x":1.13894202963029,
+                         "y":158.882413133425
+                        }],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "draworder":"topdown",
+                 "id":11,
+                 "name":"blockers",
+                 "objects":[
+                        {
+                         "height":0,
+                         "id":5,
+                         "name":"",
+                         "opacity":1,
+                         "polygon":[
+                                {
+                                 "x":0,
+                                 "y":0
+                                },
+                            
+                                {
+                                 "x":0,
+                                 "y":-7.5
+                                },
+                            
+                                {
+                                 "x":41,
+                                 "y":-7.5
+                                },
+                            
+                                {
+                                 "x":40.75,
+                                 "y":-0.25
+                                }],
+                         "rotation":0,
+                         "type":"",
+                         "visible":true,
+                         "width":0,
+                         "x":174,
+                         "y":173
+                        }],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"navigation",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":12,
+         "layers":[],
+         "name":"effects_back",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":13,
+         "layers":[],
+         "name":"effects_front",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":14,
+         "layers":[],
+         "name":"effects_overlay",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":16,
+ "nextobjectid":7,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.12.0",
+ "tileheight":180,
+ "tilesets":[],
+ "tilewidth":640,
+ "type":"map",
+ "version":"1.10",
+ "width":1
+}

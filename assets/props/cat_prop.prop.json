@@ -1,0 +1,9 @@
+{
+    "asepriteJson": "cat_prop.json",
+    "feetPivot": {
+        "x": 17,
+        "y": 24
+    },
+    "baseDrawScale": 6.0,
+    "useRightForLeft": true
+}

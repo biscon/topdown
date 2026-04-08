@@ -1,0 +1,22 @@
+{
+    "sceneId": "building_street",
+    "tiledFile": "building_street.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 6,
+    "worldWidth": 3840,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 1600,
+        "y": 930
+    },
+
+    "scale": {
+        "nearY": 980,
+        "farY": 840,
+        "nearScale": 1.0,
+        "farScale": 0.85
+    },
+
+    "playerActorAsset": "../../actors/main_actor/main_actor.actor.json"
+}

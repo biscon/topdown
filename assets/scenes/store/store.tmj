@@ -1,0 +1,2663 @@
+{ "compressionlevel":-1,
+ "height":1,
+ "infinite":false,
+ "layers":[
+        {
+         "id":4,
+         "layers":[
+                {
+                 "id":9,
+                 "image":"store_bg.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "name":"back1",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"background",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":3,
+         "layers":[],
+         "name":"foreground",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":7,
+         "name":"hotspots",
+         "objects":[
+                {
+                 "height":0,
+                 "id":27,
+                 "name":"notice_board",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":4.15993814276921,
+                         "y":2.00454714711172
+                        },
+                    
+                        {
+                         "x":0.348081104120413,
+                         "y":-88.0039566765826
+                        },
+                    
+                        {
+                         "x":215.854832456288,
+                         "y":-88.7372498223291
+                        },
+                    
+                        {
+                         "x":215.97482680412,
+                         "y":2.74113017767092
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Notice board"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"override"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":335
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":314
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":175.45297319588,
+                 "y":194.691249822329
+                },
+            
+                {
+                 "height":0,
+                 "id":28,
+                 "name":"ledger",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0.369002329550767,
+                         "y":-12.3122180531553
+                        },
+                    
+                        {
+                         "x":10.4058760943361,
+                         "y":-17.9695567334909
+                        },
+                    
+                        {
+                         "x":18.6471506428426,
+                         "y":-17.7546833072488
+                        },
+                    
+                        {
+                         "x":36.8911783358351,
+                         "y":-16.1792860584023
+                        },
+                    
+                        {
+                         "x":38.3908697128904,
+                         "y":-9.89904411254614
+                        },
+                    
+                        {
+                         "x":28.1074134923791,
+                         "y":-4.03391694058271
+                        },
+                    
+                        {
+                         "x":0.282795094336109,
+                         "y":-5.27635330724883
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Ledger"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"left"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"override"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":329
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":291
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":256.317204905664,
+                 "y":219.392483307249
+                },
+            
+                {
+                 "height":0,
+                 "id":29,
+                 "name":"shelves",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":7.47401221624928,
+                         "y":-2.89980800478648
+                        },
+                    
+                        {
+                         "x":7.84578695355644,
+                         "y":-128.771675943946
+                        },
+                    
+                        {
+                         "x":146.410954710522,
+                         "y":-125.905626591667
+                        },
+                    
+                        {
+                         "x":155.206315806324,
+                         "y":-93.9763808639636
+                        },
+                    
+                        {
+                         "x":141.444946291733,
+                         "y":-80.1920985281733
+                        },
+                    
+                        {
+                         "x":106.216737115062,
+                         "y":-81.1490180439974
+                        },
+                    
+                        {
+                         "x":106.139372620223,
+                         "y":-1.76062992500081
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Shelves"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"override"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":113
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":304
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":59.8356273797769,
+                 "y":171.168426591667
+                },
+            
+                {
+                 "height":0,
+                 "id":30,
+                 "name":"file_cabinet",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":67.4932733333333,
+                         "y":123.00455
+                        },
+                    
+                        {
+                         "x":69.0147476666667,
+                         "y":3.99599999999998
+                        },
+                    
+                        {
+                         "x":124.521666666667,
+                         "y":3.59613333333334
+                        },
+                    
+                        {
+                         "x":136.641666666667,
+                         "y":9.74113
+                        },
+                    
+                        {
+                         "x":135.713926145596,
+                         "y":135.158682528981
+                        },
+                    
+                        {
+                         "x":76.1016091995793,
+                         "y":134.300658162099
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"File cabinet"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"override"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":437
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":314
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":331.333333333333,
+                 "y":148
+                },
+            
+                {
+                 "height":0,
+                 "id":32,
+                 "name":"dog",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":1.47830979036926,
+                         "y":0.821256645169408
+                        },
+                    
+                        {
+                         "x":0.123696868258081,
+                         "y":-36.0549099805386
+                        },
+                    
+                        {
+                         "x":76.7079717015527,
+                         "y":-36.3552992809991
+                        },
+                    
+                        {
+                         "x":76.7506158682581,
+                         "y":1.12303071900088
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Dog"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"left"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"A young german shepard."
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":120
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":340
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":13.2243841317419,
+                 "y":352.618099280999
+                },
+            
+                {
+                 "height":0,
+                 "id":33,
+                 "name":"bell",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":8.91445654545456,
+                         "y":-8.67583636363636
+                        },
+                    
+                        {
+                         "x":10.0422636363636,
+                         "y":-17.4241454545455
+                        },
+                    
+                        {
+                         "x":17.9199272727273,
+                         "y":-21.2092454545455
+                        },
+                    
+                        {
+                         "x":24.5275636363636,
+                         "y":-17.0883909090909
+                        },
+                    
+                        {
+                         "x":26.9363545454545,
+                         "y":-11.7172218181818
+                        },
+                    
+                        {
+                         "x":25.0164909090909,
+                         "y":-4.57937454545453
+                        },
+                    
+                        {
+                         "x":11.7373404545455,
+                         "y":-4.91271363636366
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Bell"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"For summoning the owner, if we wasn't already present."
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":171
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":318
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":156,
+                 "y":228.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":5,
+         "name":"exits",
+         "objects":[
+                {
+                 "height":0,
+                 "id":24,
+                 "name":"to_town_square",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-19.0081509941509,
+                         "y":-7.493063528558
+                        },
+                    
+                        {
+                         "x":59.258527135586,
+                         "y":-7.419418090993
+                        },
+                    
+                        {
+                         "x":57.8203141473011,
+                         "y":155.880480350094
+                        },
+                    
+                        {
+                         "x":-19.5058357372635,
+                         "y":155.489809452075
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Exit"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"The door leads back outside to the town square."
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"town_square"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"from_store"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":536
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":296
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":518.856452402233,
+                 "y":113.895974181787
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":6,
+         "name":"spawns",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"default",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":536.752926804439,
+                 "y":296.909328446842
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":19,
+         "name":"props",
+         "objects":[
+                {
+                 "height":0,
+                 "id":25,
+                 "name":"store_desk_prop",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/props\/store_desk.png"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"depthSorted"
+                        },
+                    
+                        {
+                         "name":"depthScaling",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"flipX",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"visualType",
+                         "type":"string",
+                         "value":"image"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":204,
+                 "y":309
+                },
+            
+                {
+                 "height":0,
+                 "id":31,
+                 "name":"german_shepard",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"animation",
+                         "type":"string",
+                         "value":"sleep"
+                        },
+                    
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/props\/german_shepard.prop.json"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"depthSorted"
+                        },
+                    
+                        {
+                         "name":"depthScaling",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"flipX",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"visualType",
+                         "type":"string",
+                         "value":"sprite"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":51,
+                 "y":341
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":20,
+         "name":"actors",
+         "objects":[
+                {
+                 "height":0,
+                 "id":26,
+                 "name":"store_clerk",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"right"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":215,
+                 "y":291
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":16,
+         "name":"effect_regions",
+         "objects":[
+                {
+                 "height":124.5,
+                 "id":34,
+                 "name":"day_light",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":18.75,
+                         "y":0.5
+                        },
+                    
+                        {
+                         "x":66.417,
+                         "y":0.75
+                        },
+                    
+                        {
+                         "x":111.167,
+                         "y":197
+                        },
+                    
+                        {
+                         "x":101.361230619128,
+                         "y":209.369943481682
+                        },
+                    
+                        {
+                         "x":81.1300143823767,
+                         "y":220.488411970674
+                        },
+                    
+                        {
+                         "x":44.0738682095872,
+                         "y":223.833804321689
+                        },
+                    
+                        {
+                         "x":5.58163959916038,
+                         "y":218.535625614548
+                        },
+                    
+                        {
+                         "x":-15.2806716583676,
+                         "y":210.195513360427
+                        },
+                    
+                        {
+                         "x":-25.25,
+                         "y":196.25
+                        }],
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.05
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.04
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":0.75
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.075
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":100
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.98
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.08
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":496.4165,
+                 "y":119.75
+                },
+            
+                {
+                 "height":124.5,
+                 "id":37,
+                 "name":"light_shaft_dust",
+                 "opacity":0.25,
+                 "polygon":[
+                        {
+                         "x":18.75,
+                         "y":0.5
+                        },
+                    
+                        {
+                         "x":66.417,
+                         "y":0.75
+                        },
+                    
+                        {
+                         "x":98.111,
+                         "y":140.62
+                        },
+                    
+                        {
+                         "x":76.8799999999999,
+                         "y":160.238
+                        },
+                    
+                        {
+                         "x":39.8239,
+                         "y":163.584
+                        },
+                    
+                        {
+                         "x":1.33163999999999,
+                         "y":158.286
+                        },
+                    
+                        {
+                         "x":-18.5307,
+                         "y":141.446
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Alpha\/Grainy 6 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.04
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":-0.015
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.2
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.22
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":1.2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":496.6665,
+                 "y":120.25
+                },
+            
+                {
+                 "height":124.5,
+                 "id":38,
+                 "name":"light_shaft_dust2",
+                 "opacity":0.25,
+                 "polygon":[
+                        {
+                         "x":18.75,
+                         "y":0.5
+                        },
+                    
+                        {
+                         "x":66.417,
+                         "y":0.75
+                        },
+                    
+                        {
+                         "x":99.111,
+                         "y":140.87
+                        },
+                    
+                        {
+                         "x":77.8799999999999,
+                         "y":160.488
+                        },
+                    
+                        {
+                         "x":40.8239,
+                         "y":163.834
+                        },
+                    
+                        {
+                         "x":2.33163999999999,
+                         "y":158.536
+                        },
+                    
+                        {
+                         "x":-17.5307,
+                         "y":141.696
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Alpha\/Grainy 6 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.2
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":-0.03
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.22
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.2
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":1.2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":496.1665,
+                 "y":119.75
+                },
+            
+                {
+                 "height":31.25,
+                 "id":40,
+                 "name":"lamp_glow1",
+                 "opacity":0.5,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/light_bulb.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.08
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":28.667,
+                 "x":233.25,
+                 "y":59.25
+                },
+            
+                {
+                 "height":182,
+                 "id":41,
+                 "name":"lamp_glow2",
+                 "opacity":0.5,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/light_bulb_halo.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.04
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.8
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":190.917,
+                 "x":154.6665,
+                 "y":-13.25
+                },
+            
+                {
+                 "height":256,
+                 "id":42,
+                 "name":"lamp_glow3",
+                 "opacity":0.35,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/light_bulb_halo.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.8
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.9
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":280.917,
+                 "x":111.4165,
+                 "y":-44.875
+                },
+            
+                {
+                 "height":283.833,
+                 "id":43,
+                 "name":"lamp_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.03
+                        },
+                    
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.03
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"front"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":1.1
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.28
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":100
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.92
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1.03
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":342.5,
+                 "x":77.75,
+                 "y":-46.4165
+                },
+            
+                {
+                 "height":71.9426376058916,
+                 "id":44,
+                 "name":"lamp_dust",
+                 "opacity":0.25,
+                 "polygon":[
+                        {
+                         "x":-12.25,
+                         "y":-2.46107374455465
+                        },
+                    
+                        {
+                         "x":83.417,
+                         "y":-2.31661061683198
+                        },
+                    
+                        {
+                         "x":175.076997232101,
+                         "y":130.891707125871
+                        },
+                    
+                        {
+                         "x":180.861,
+                         "y":155.75762008145
+                        },
+                    
+                        {
+                         "x":159.407517851305,
+                         "y":170.091245014319
+                        },
+                    
+                        {
+                         "x":113.414241327254,
+                         "y":177.265700276757
+                        },
+                    
+                        {
+                         "x":-47.1647210341905,
+                         "y":175.581171012874
+                        },
+                    
+                        {
+                         "x":-98.8966337093584,
+                         "y":171.163224496624
+                        },
+                    
+                        {
+                         "x":-116.0307,
+                         "y":161.484926255445
+                        },
+                    
+                        {
+                         "x":-110.913975267409,
+                         "y":139.448778850298
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Alpha\/Grainy 6 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.005
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.0025
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.22
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.4
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":1.4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":210.6665,
+                 "y":35.4610737445547
+                },
+            
+                {
+                 "height":71.9426,
+                 "id":45,
+                 "name":"lamp_dust2",
+                 "opacity":0.3,
+                 "polygon":[
+                        {
+                         "x":-12.25,
+                         "y":-2.46107
+                        },
+                    
+                        {
+                         "x":83.417,
+                         "y":-2.31661
+                        },
+                    
+                        {
+                         "x":175.077,
+                         "y":130.892
+                        },
+                    
+                        {
+                         "x":180.861,
+                         "y":155.758
+                        },
+                    
+                        {
+                         "x":159.408,
+                         "y":170.091
+                        },
+                    
+                        {
+                         "x":113.414,
+                         "y":177.266
+                        },
+                    
+                        {
+                         "x":-47.1647,
+                         "y":175.581
+                        },
+                    
+                        {
+                         "x":-98.8966,
+                         "y":171.163
+                        },
+                    
+                        {
+                         "x":-116.031,
+                         "y":161.485
+                        },
+                    
+                        {
+                         "x":-110.914,
+                         "y":139.449
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Alpha\/Grainy 6 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        },
+                    
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.6
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":-0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.005
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.3
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1.22
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.4
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":1.4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":85.667,
+                 "x":211.1665,
+                 "y":35.0287
+                },
+            
+                {
+                 "height":57.8286,
+                 "id":46,
+                 "name":"window_fog1",
+                 "opacity":0.4,
+                 "polygon":[
+                        {
+                         "x":16.6892,
+                         "y":182.697
+                        },
+                    
+                        {
+                         "x":63.8609,
+                         "y":182.614
+                        },
+                    
+                        {
+                         "x":63.8591,
+                         "y":240.614
+                        },
+                    
+                        {
+                         "x":16.6221,
+                         "y":241.129
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Perlin\/Perlin 3 - 256x256.png"
+                        },
+                    
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        },
+                    
+                        {
+                         "name":"depthMode",
+                         "type":"string",
+                         "value":"back      "
+                        },
+                    
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":1.7
+                        },
+                    
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        },
+                    
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.02
+                        },
+                    
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        },
+                    
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        },
+                    
+                        {
+                         "name":"sortOrder",
+                         "type":"int",
+                         "value":2
+                        },
+                    
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        },
+                    
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":0.25
+                        },
+                    
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":0.25
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":20.7712,
+                 "x":498.281066666667,
+                 "y":-61.9143
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":23,
+         "name":"sound_emitters",
+         "objects":[
+                {
+                 "height":0,
+                 "id":47,
+                 "name":"store_room_tone",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"room_tone_02"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":220,
+                 "y":276.666666666667
+                },
+            
+                {
+                 "height":0,
+                 "id":48,
+                 "name":"floor_creak_upstairs",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wood_creak2"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":429.333333333333,
+                 "y":76.6666666666667
+                },
+            
+                {
+                 "height":0,
+                 "id":49,
+                 "name":"floor_creak_left",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wood_creak2"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":58,
+                 "y":152
+                },
+            
+                {
+                 "height":0,
+                 "id":50,
+                 "name":"wall_creak_right",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wood_creak2"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":624,
+                 "y":227.333333333333
+                },
+            
+                {
+                 "height":0,
+                 "id":51,
+                 "name":"dog_bark1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"dog_bark1"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":76,
+                 "y":328
+                },
+            
+                {
+                 "height":0,
+                 "id":52,
+                 "name":"dog_bark2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"dog_bark2"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":70,
+                 "y":290.666666666667
+                },
+            
+                {
+                 "height":0,
+                 "id":53,
+                 "name":"dog_bark3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"dog_bark3"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":74.6666666666667,
+                 "y":296
+                },
+            
+                {
+                 "height":0,
+                 "id":54,
+                 "name":"wind_inside_ambience",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":600
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wind_ambience_inside"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":536,
+                 "y":278
+                },
+            
+                {
+                 "height":0,
+                 "id":55,
+                 "name":"dog_snoring",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"dog_snoring"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":80.6666666666667,
+                 "y":333.333333333333
+                },
+            
+                {
+                 "height":0,
+                 "id":56,
+                 "name":"dog_whine",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1800
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"dog_whine"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.4
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":85.3333333333333,
+                 "y":338.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":2,
+         "layers":[
+                {
+                 "draworder":"topdown",
+                 "id":8,
+                 "name":"navmesh",
+                 "objects":[
+                        {
+                         "height":0,
+                         "id":23,
+                         "name":"floor_nav",
+                         "opacity":1,
+                         "polygon":[
+                                {
+                                 "x":0,
+                                 "y":0
+                                },
+                            
+                                {
+                                 "x":0,
+                                 "y":6.51532118497403
+                                },
+                            
+                                {
+                                 "x":23.4551562659066,
+                                 "y":6.51532118497403
+                                },
+                            
+                                {
+                                 "x":23.8895110115715,
+                                 "y":15.2024160982727
+                                },
+                            
+                                {
+                                 "x":59.0722454104314,
+                                 "y":15.2024160982727
+                                },
+                            
+                                {
+                                 "x":59.9409549017612,
+                                 "y":70.7998235433845
+                                },
+                            
+                                {
+                                 "x":-558.580202925108,
+                                 "y":68.6280498150599
+                                },
+                            
+                                {
+                                 "x":-559.014557670773,
+                                 "y":36.4857986358546
+                                },
+                            
+                                {
+                                 "x":-503.851504971326,
+                                 "y":37.3545081271845
+                                },
+                            
+                                {
+                                 "x":-503.851504971326,
+                                 "y":28.6674132138858
+                                },
+                            
+                                {
+                                 "x":-466.062642098476,
+                                 "y":28.6674132138858
+                                },
+                            
+                                {
+                                 "x":-466.062642098476,
+                                 "y":11.7275781329533
+                                },
+                            
+                                {
+                                 "x":-447.819742780549,
+                                 "y":11.7275781329533
+                                },
+                            
+                                {
+                                 "x":-437.601812597814,
+                                 "y":2.78363930215249
+                                },
+                            
+                                {
+                                 "x":-419.842164647596,
+                                 "y":-0.0224218670467167
+                                },
+                            
+                                {
+                                 "x":-317.722446437857,
+                                 "y":-0.698438898904556
+                                },
+                            
+                                {
+                                 "x":-317.131365930311,
+                                 "y":14.1614593672982
+                                },
+                            
+                                {
+                                 "x":-436.19880255719,
+                                 "y":16.3426631606355
+                                },
+                            
+                                {
+                                 "x":-436.526519393261,
+                                 "y":35.6170891445248
+                                },
+                            
+                                {
+                                 "x":-269.29994231226,
+                                 "y":34.3140249075299
+                                },
+                            
+                                {
+                                 "x":-268.43123282093,
+                                 "y":22.5864467745767
+                                },
+                            
+                                {
+                                 "x":-258.006718924972,
+                                 "y":22.5864467745767
+                                },
+                            
+                                {
+                                 "x":-257.138009433642,
+                                 "y":9.99015915029355
+                                },
+                            
+                                {
+                                 "x":-245.844786046354,
+                                 "y":10.4245138959585
+                                },
+                            
+                                {
+                                 "x":-246.279140792019,
+                                 "y":1.73741898265973
+                                },
+                            
+                                {
+                                 "x":-176.348026739964,
+                                 "y":2.6061284739896
+                                },
+                            
+                                {
+                                 "x":-176.348026739964,
+                                 "y":12.1619328786182
+                                },
+                            
+                                {
+                                 "x":-48.6477315144728,
+                                 "y":11.2932233872883
+                                },
+                            
+                                {
+                                 "x":-49.5164410058027,
+                                 "y":-1.73741898265973
+                                }],
+                         "rotation":0,
+                         "type":"",
+                         "visible":true,
+                         "width":0,
+                         "x":565.529878855747,
+                         "y":280.158810953884
+                        }],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "draworder":"topdown",
+                 "id":11,
+                 "name":"blockers",
+                 "objects":[],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"navigation",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":12,
+         "layers":[
+                {
+                 "id":22,
+                 "image":"shadow_back.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "mode":"multiply",
+                 "name":"shadow_back",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"effects_back",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":13,
+         "layers":[],
+         "name":"effects_front",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":14,
+         "layers":[
+                {
+                 "id":21,
+                 "image":"shadow_front.png",
+                 "imageheight":360,
+                 "imagewidth":640,
+                 "mode":"multiply",
+                 "name":"shadow_front",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"effects_overlay",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":24,
+ "nextobjectid":57,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.12.0",
+ "tileheight":360,
+ "tilesets":[],
+ "tilewidth":640,
+ "type":"map",
+ "version":"1.10",
+ "width":1
+}

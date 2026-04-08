@@ -1,0 +1,15 @@
+{
+    "choiceSets": [
+        {
+            "id": "store_clerk_intro",
+            "options": [
+                { "id": "buy_supplies", "text": "Do you sell provisions?" },
+                { "id": "about_town", "text": "I passed a church on my way in." },
+                { "id": "inn", "text": "The inn seems empty." },
+                { "id": "friend", "text": "I'm looking for someone." },
+                { "id": "hotel_deliveries", "text": "The hotel seems to be receiving plenty of supplies." },
+                { "id": "goodbye", "text": "I'll leave you to it." }
+            ]
+        }
+    ]
+}

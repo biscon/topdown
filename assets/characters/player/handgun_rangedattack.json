@@ -1,0 +1,40 @@
+{ "frames": {
+   "handgun_shoot 0": {
+    "frame": { "x": 0, "y": 0, "w": 255, "h": 215 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 255, "h": 215 },
+    "sourceSize": { "w": 255, "h": 215 },
+    "duration": 100
+   },
+   "handgun_shoot 1": {
+    "frame": { "x": 255, "y": 0, "w": 255, "h": 215 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 255, "h": 215 },
+    "sourceSize": { "w": 255, "h": 215 },
+    "duration": 50
+   },
+   "handgun_shoot 2": {
+    "frame": { "x": 0, "y": 215, "w": 255, "h": 215 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 255, "h": 215 },
+    "sourceSize": { "w": 255, "h": 215 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "handgun_rangedattack.png",
+  "format": "RGBA8888",
+  "size": { "w": 510, "h": 430 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

@@ -1,0 +1,76 @@
+{
+    "npcs": [
+        {
+            "assetId": "zombie",
+            "baseDrawScale": 1.0,
+            "collisionRadius": 38.0,
+            "walkSpeed": 200,
+            "runSpeed": 320,
+            "hurtStunMs": 300,
+            "maxHealth": 100,
+            "corpseExpirationMs": 250,
+
+            "hostile": true,
+            "aiMode": "seek_and_destroy",
+
+            "visionRange": 520.0,
+            "hearingRange": 260.0,
+            "visionHalfAngleDegrees": 70.0,
+
+            "attackRange": 25.0,
+            "attackCooldownMs": 1100.0,
+            "attackDamage": 20.0,
+            "attackHitNormalizedTime": 0.7,
+            "attackRecoverMs": 300.0,
+
+            "chaseRepathIntervalMs": 250.0,
+            "loseTargetTimeoutMs": 1400.0,
+
+            "meleeHitPosX": 135,
+            "meleeHitPosY": 76,
+
+            "sounds": {
+                "attackStart": "knife_swing",
+                "attackConnect": "melee_hit",
+                "hitReaction": [
+                    "human_pain_01",
+                    "human_pain_02",
+                    "human_pain_03",
+                    "human_pain_04",
+                    "human_pain_05",
+                    "human_pain_06"
+                ]
+            },
+
+            "attackEffects": {
+                "bloodImpactParticleCount": 8,
+                "bloodImpactParticleSpeedMin": 45.0,
+                "bloodImpactParticleSpeedMax": 120.0,
+                "bloodImpactParticleLifetimeMsMin": 180.0,
+                "bloodImpactParticleLifetimeMsMax": 320.0,
+                "bloodImpactParticleSizeMin": 2.5,
+                "bloodImpactParticleSizeMax": 5.0,
+                "bloodImpactSpreadDegrees": 70.0,
+
+                "bloodDecalCountMin": 2,
+                "bloodDecalCountMax": 4,
+                "bloodDecalDistanceMin": 8.0,
+                "bloodDecalDistanceMax": 55.0,
+                "bloodDecalRadiusMin": 7.0,
+                "bloodDecalRadiusMax": 14.0,
+                "bloodDecalSpreadDegrees": 45.0,
+                "bloodDecalWallPadding": 6.0,
+                "bloodDecalOpacityMin": 0.75,
+                "bloodDecalOpacityMax": 0.95
+            },
+
+            "animations": [
+                {
+                    "asepriteJson": "zombie/zombie.json",
+                    "originX": 80,
+                    "originY": 80
+                }
+            ]
+        }
+    ]
+}

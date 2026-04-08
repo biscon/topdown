@@ -1,0 +1,9 @@
+{
+    "asepriteJson": "furnace_fire.json",
+    "feetPivot": {
+        "x": 1,
+        "y": 1
+    },
+    "baseDrawScale": 3.0,
+    "useRightForLeft": true
+}

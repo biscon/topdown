@@ -1,0 +1,24 @@
+{ "frames": {
+   "feet_idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 132, "h": 155 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 132, "h": 155 },
+    "sourceSize": { "w": 132, "h": 155 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "feet_idle.png",
+  "format": "RGBA8888",
+  "size": { "w": 132, "h": 155 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

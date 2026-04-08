@@ -1,0 +1,433 @@
+Your direction is good. Not stupid at all. It actually fits the engine you’ve built pretty well.
+
+You already have most of the boring hard parts in place:
+
+animation playback
+scriptable one-shots vs loops
+pathing
+collision
+facing / aiming
+equipment-set driven player upper-body visuals
+NPC runtime/state foundation
+
+That means combat is no longer “build everything from scratch.” It is mostly about introducing a combat state layer cleanly, then iterating.
+
+The screenshot also helps. The game reads more tactical than twitch-bullet-hell, so your instinct to avoid slow floating projectiles as the default is good. The art/camera angle wants snappy, readable shots.
+
+My take on the combat model
+
+Overall: solid.
+
+The parts I think are especially right:
+
+fixed weapon slots on number keys
+low TTK for both enemies and player
+no floating damage numbers or MMO bars
+ranged shots blocked by vision blockers / solid blockers
+melee and ranged both existing as first-class attacks
+corpses/blood later, not first
+simple enemy archetypes first, richer AI later
+interaction key separate from attack
+
+That all feels coherent.
+
+A few pushes / adjustments
+1. Left click shoot, right click melee
+
+This is okay, but I would think of it as:
+
+left mouse = primary attack
+right mouse = alternate attack
+
+That way:
+
+knife: left = stab/slash, right maybe none or heavy stab later
+handgun: left = shoot, right = pistol whip
+shotgun: left = shoot, right = bash
+rifle: left = shoot, right = buttstroke/melee
+
+Same input model, cleaner mental model.
+
+2. Don’t add ammo, reloads, melee hit logic, enemy damage, enemy AI, weapon switching all at once
+
+That would absolutely bloat the first pass and make feel-testing harder.
+
+You already know this, but I’d be strict about it.
+
+3. For shooting visuals, start with “fast tracers / hit-scan feel,” not physical bullets
+
+I agree with you completely here.
+
+I would not start with Doom-style slow projectiles for guns.
+
+For your game, first implementation should probably be:
+
+attack starts
+shot is resolved immediately against world/enemy
+visual effect is a short-lived tracer line or streak
+maybe muzzle flash later
+maybe impact spark/dust later
+
+So mechanically it is hitscan, visually it still has readable travel.
+
+That gives:
+
+responsiveness
+tactical feel
+readable directionality
+no frogger nonsense
+
+You can still add actual projectile weapons later for special enemies or weird weapons.
+
+4. Do not put reload into the first milestone
+
+Even if the animation exists.
+
+First get:
+
+weapon switching
+attack inputs
+attack animation triggering
+shot trace / melee swing representation
+
+Then damage.
+Then ammo/reload.
+
+Reload is one of those systems that sounds small but immediately drags in:
+
+clip sizes
+reserve ammo
+can attack while reloading?
+interrupt rules
+switching while reloading
+dry fire behavior
+UI feedback
+
+That is second or third milestone stuff.
+
+5. Do not stun the player early
+
+I’d avoid player hitstun in first implementation.
+
+Enemy stun-on-hit is useful.
+Player stun-on-hit is a feel trap.
+
+It is very easy for that to become annoying before the rest of the combat is balanced. Knockback on player maybe later, very lightly, but not hard stun yet.
+
+6. For enemy AI architecture: enum first
+
+You do not need function-pointer-winamp-plugin architecture yet.
+
+An enum is enough at first.
+
+Something like:
+
+None
+SeekAndMelee
+SeekAndShoot later
+
+Then a switch in update.
+
+That is procedural, explicit, easy to debug, and fits your code style better right now.
+
+You can always refactor to function pointers later if it starts getting ugly.
+
+Best milestone order
+
+This is the order I’d recommend.
+
+Milestone 1: player combat presentation only
+
+Goal: make the player feel armed.
+
+Implement:
+
+numeric weapon switching
+current weapon/equipment slot runtime state
+left/right attack input mapping
+play correct player attack animation
+prevent spam with basic attack timers / attack-in-progress state
+for ranged: spawn a short-lived tracer visual to cursor direction
+for melee: spawn a short-lived melee swing state / attack event
+
+No damage yet.
+No ammo yet.
+No AI yet.
+
+This gives you immediate feel-testing:
+
+does weapon switching feel good?
+do the animations line up?
+is left/right attack mapping good?
+does shotgun bash feel conceptually right?
+do tracers look good from this camera?
+
+This is the correct first milestone.
+
+Milestone 2: hit detection and damaging NPCs
+
+Goal: attacks can affect enemies.
+
+Implement:
+
+player attacks can hit NPCs
+NPCs get HP
+NPC hurt reaction / death
+corpses can just be “dead npc stays there” at first
+optional enemy knockback/stun config
+ranged shot blocked by blockers
+melee range check / cone / arc
+
+Still no AI needed.
+
+This lets you shoot practice dummies or passive zombies and tune:
+
+weapon damage
+range
+knockback
+hit feel
+tracer readability
+Milestone 3: simplest melee AI
+
+Goal: enemies attack back.
+
+Implement:
+
+line-of-sight detection
+aggro state
+seek player
+melee attack in range
+enemy attack cooldown
+player HP
+player death
+
+This is your zombie milestone.
+
+Very good candidate for first enemy.
+
+Milestone 4: ammo / reload / weapon resource layer
+
+Goal: combat gets proper pressure.
+
+Implement:
+
+ammo types
+current mag / reserve
+reload action
+out-of-ammo switching pressure
+dry fire feedback
+
+Only after core combat already feels good.
+
+Milestone 5: ranged AI
+
+Goal: shooter enemies.
+
+Implement:
+
+maintain distance or stop at fire range
+line of sight check
+shoot cooldown
+maybe simple repositioning later
+
+Not before melee enemies are good.
+
+About the actual shot representation
+
+I think you have three viable options.
+
+Option A: pure hitscan + short tracer streak
+
+This is what I’d start with.
+
+Mechanics:
+
+instantaneous hit resolution
+
+Visual:
+
+a line or stretched sprite for maybe 0.03 to 0.08 sec
+
+Pros:
+
+feels responsive
+easy to implement
+looks readable in topdown
+easy to stop on blockers
+
+This is my recommendation.
+
+Option B: very fast simulated projectile
+
+Mechanics:
+
+actual projectile update with very high speed
+
+Visual:
+
+same tracer feel, but technically travels
+
+Pros:
+
+more extensible later
+can support dodging barely, if desired
+
+Cons:
+
+more complexity now
+risk of getting weird with frame rate/collision
+
+I would not start here.
+
+Option C: muzzle flash + impact only, no visible travel
+
+Mechanics:
+
+hitscan
+
+Visual:
+
+no tracer, only gun flash and hit effect
+
+Pros:
+
+simple
+
+Cons:
+
+less readable from topdown
+
+I think this is weaker for your game.
+
+So yeah: Option A.
+
+Melee hit logic thoughts
+
+Distance-only circle check is okay for first pass, but I would slightly upgrade it even early.
+
+Best first-pass melee check:
+
+max range
+and front-facing angle / cone check
+
+Because pure distance can look dumb in topdown:
+
+enemy behind you gets hit
+bash connects through awkward side positions
+
+So I’d use:
+
+circle/radius check
+dot product or angle threshold against facing
+
+That is still simple, but feels much better.
+
+For shotgun bash:
+
+short range
+wider cone
+modest knockback
+
+For knife:
+
+short range
+narrower cone
+maybe more damage, less knockback
+Health model
+
+Your instincts are good.
+
+I’d keep it simple:
+
+player HP
+npc HP
+weapon damage
+maybe armor/variants later
+
+No need for body-part damage, crits, or anything fancy.
+
+And yes:
+
+normal enemies die in 1–2 good hits
+player dies in 2–3 hits
+
+That kind of lethality matches the feel you described.
+
+Interaction with blockers
+
+You said bullets should stop on Blockers but not MovementBlockers.
+
+That makes sense and is a good distinction.
+
+I’d formalize that now before combat code spreads:
+
+movement collision uses movement segments
+bullet raycast uses vision-blocking segments, or a dedicated projectile-blocking set if needed later
+
+Since your current MovementAndVision obstacle kind already exists, that maps nicely.
+
+On AI spotting
+
+Also good.
+
+For first enemy:
+
+LOS + max distance
+aggro latch once seen
+pathfind toward player
+attack in range
+
+You do not need patrols, hearing, searching, cover, or memory yet.
+
+My biggest warning
+
+The main thing I would avoid is letting combat logic leak directly into:
+
+player animation code
+NPC animation code
+movement code
+
+Instead add a dedicated combat/runtime layer, even if tiny.
+
+For example, very roughly:
+
+player combat state
+npc combat state
+transient attack events / tracer effects
+
+Not because abstraction is cool, but because otherwise you’ll end up with attack booleans smeared across movement, render, input, and AI code.
+
+Given your style, I’d keep it dead simple and explicit, but still separate.
+
+My recommended first concrete scope
+
+I would define the first milestone exactly like this:
+
+First playable combat milestone
+number key switching between equipment sets
+left click primary attack
+right click alt/melee attack
+player attack state/cooldown
+play correct player attack animation
+spawn visible shot tracer for ranged attacks
+spawn visible melee swing window/event for melee attacks
+no damage yet
+no reload yet
+no enemy retaliation yet
+
+That is enough to stand in the level, switch:
+
+knife
+handgun
+shotgun
+
+and answer:
+
+does it feel good?
+does shotgun bash feel good on RMB?
+do tracers look good?
+do weapon swaps feel readable?
+
+That is the right next step.
+
+So overall: your combat model is good, your milestone instincts are good, and the one thing I’d push hardest is keep the first pass focused on attack feel and presentation before adding the rest of the simulation stack.

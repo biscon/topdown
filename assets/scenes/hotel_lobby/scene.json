@@ -1,0 +1,21 @@
+{
+    "sceneId": "hotel_lobby",
+    "saveName": "Hotel Lobby",
+    "tiledFile": "hotel_lobby.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 3,
+    "worldWidth": 1920,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 1600,
+        "y": 930
+    },
+
+    "scale": {
+        "nearY": 843,
+        "farY": 546,
+        "nearScale": 1.0,
+        "farScale": 0.65
+    }
+}

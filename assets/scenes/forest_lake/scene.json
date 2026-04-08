@@ -1,0 +1,20 @@
+{
+    "sceneId": "forest_lake",
+    "tiledFile": "forest_lake.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 3,
+    "worldWidth": 3840,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 1600,
+        "y": 930
+    },
+
+    "scale": {
+        "nearY": 980,
+        "farY": 540,
+        "nearScale": 1.0,
+        "farScale": 0.55
+    }
+}

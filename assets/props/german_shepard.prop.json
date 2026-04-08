@@ -1,0 +1,9 @@
+{
+    "asepriteJson": "german_shepard.json",
+    "feetPivot": {
+        "x": 32,
+        "y": 43
+    },
+    "baseDrawScale": 6.0,
+    "useRightForLeft": true
+}

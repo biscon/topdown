@@ -1,0 +1,11 @@
+{
+    "audio": [
+        {
+            "id": "furnace_crackle",
+            "type": "sound",
+            "file": "furnace_crackle.ogg",
+            "group": "sound",
+            "volume": 0.8
+        }
+    ]
+}

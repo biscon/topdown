@@ -1,0 +1,82 @@
+function Level_onEnter()
+    log("running onEnter")
+    --startScript("WalkAround")
+    --startScript("ZombiePatrol")
+    spawnNpc("knifethug_1", "knifethug", "patrol_1")
+    startScript("ThugPatrol")
+end
+
+function WalkAround()
+    disableControls()
+    while true do
+        runTo(800, 727)
+        delay(2000)
+        walkTo(796, -228)
+        delay(3000)
+        walkTo(1831, 859)
+        delay(2000)
+    end
+    enableControls()
+end
+
+function ZombiePatrol()
+    spawnNpc("zombie_a", "zombie", "patrol_1")
+    spawnNpc("zombie_b", "zombie", "patrol_2")
+    spawnNpc("zombie_c", "zombie", "patrol_3")
+    spawnNpc("zombie_d", "zombie", "patrol_4")
+    while true do
+        startWalkNpcToSpawn("zombie_a", "patrol_1")
+        startWalkNpcToSpawn("zombie_b", "patrol_2")
+        startWalkNpcToSpawn("zombie_c", "patrol_3")
+        startWalkNpcToSpawn("zombie_d", "patrol_4")
+        delay(10000)
+        startWalkNpcToSpawn("zombie_a", "patrol_2")
+        startWalkNpcToSpawn("zombie_b", "patrol_3")
+        startWalkNpcToSpawn("zombie_c", "patrol_4")
+        startWalkNpcToSpawn("zombie_d", "patrol_1")
+        delay(10000)
+        startWalkNpcToSpawn("zombie_a", "patrol_3")
+        startWalkNpcToSpawn("zombie_b", "patrol_4")
+        startWalkNpcToSpawn("zombie_c", "patrol_1")
+        startWalkNpcToSpawn("zombie_d", "patrol_2")
+        delay(10000)
+        startWalkNpcToSpawn("zombie_a", "patrol_4")
+        startWalkNpcToSpawn("zombie_b", "patrol_1")
+        startWalkNpcToSpawn("zombie_c", "patrol_2")
+        startWalkNpcToSpawn("zombie_d", "patrol_3")
+        delay(10000)
+    end
+end
+
+function ThugPatrol()
+    spawnNpc("knifethug_a", "knifethug", "patrol_1")
+    spawnNpc("knifethug_b", "knifethug", "patrol_2")
+    spawnNpc("knifethug_c", "knifethug", "patrol_3")
+    spawnNpc("knifethug_d", "knifethug", "patrol_4")
+    while true do
+        startWalkNpcToSpawn("knifethug_a", "patrol_1")
+        startWalkNpcToSpawn("knifethug_b", "patrol_2")
+        startWalkNpcToSpawn("knifethug_c", "patrol_3")
+        startWalkNpcToSpawn("knifethug_d", "patrol_4")
+        delay(10000)
+        startWalkNpcToSpawn("knifethug_a", "patrol_2")
+        startWalkNpcToSpawn("knifethug_b", "patrol_3")
+        startWalkNpcToSpawn("knifethug_c", "patrol_4")
+        startWalkNpcToSpawn("knifethug_d", "patrol_1")
+        delay(10000)
+        startWalkNpcToSpawn("knifethug_a", "patrol_3")
+        startWalkNpcToSpawn("knifethug_b", "patrol_4")
+        startWalkNpcToSpawn("knifethug_c", "patrol_1")
+        startWalkNpcToSpawn("knifethug_d", "patrol_2")
+        delay(10000)
+        startWalkNpcToSpawn("knifethug_a", "patrol_4")
+        startWalkNpcToSpawn("knifethug_b", "patrol_1")
+        startWalkNpcToSpawn("knifethug_c", "patrol_2")
+        startWalkNpcToSpawn("knifethug_d", "patrol_3")
+        delay(10000)
+    end
+end
+
+function Level_onExit()
+    log("running onExit")
+end

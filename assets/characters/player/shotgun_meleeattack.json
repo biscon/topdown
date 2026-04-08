@@ -1,0 +1,136 @@
+{ "frames": {
+   "shotgun_meleeattack 0": {
+    "frame": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 1": {
+    "frame": { "x": 358, "y": 0, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 2": {
+    "frame": { "x": 716, "y": 0, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 3": {
+    "frame": { "x": 1074, "y": 0, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 4": {
+    "frame": { "x": 0, "y": 353, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 5": {
+    "frame": { "x": 358, "y": 353, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 6": {
+    "frame": { "x": 716, "y": 353, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 7": {
+    "frame": { "x": 1074, "y": 353, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 8": {
+    "frame": { "x": 0, "y": 706, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 9": {
+    "frame": { "x": 358, "y": 706, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 10": {
+    "frame": { "x": 716, "y": 706, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 11": {
+    "frame": { "x": 1074, "y": 706, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 20
+   },
+   "shotgun_meleeattack 12": {
+    "frame": { "x": 0, "y": 1059, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 13": {
+    "frame": { "x": 358, "y": 1059, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   },
+   "shotgun_meleeattack 14": {
+    "frame": { "x": 716, "y": 1059, "w": 358, "h": 353 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 358, "h": 353 },
+    "sourceSize": { "w": 358, "h": 353 },
+    "duration": 40
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "shotgun_meleeattack.png",
+  "format": "RGBA8888",
+  "size": { "w": 1432, "h": 1412 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

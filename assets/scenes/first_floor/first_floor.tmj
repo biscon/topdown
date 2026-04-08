@@ -1,0 +1,659 @@
+{ "compressionlevel":-1,
+ "height":1,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[0],
+         "height":1,
+         "id":1,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":1,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":6,
+         "layers":[
+                {
+                 "id":8,
+                 "image":"first_floor_background.png",
+                 "imageheight":180,
+                 "imagewidth":480,
+                 "name":"back1",
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"background",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":5,
+         "layers":[],
+         "name":"foreground",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "id":7,
+         "layers":[
+                {
+                 "draworder":"topdown",
+                 "id":9,
+                 "name":"navmesh",
+                 "objects":[
+                        {
+                         "height":0,
+                         "id":1,
+                         "name":"",
+                         "opacity":1,
+                         "polygon":[
+                                {
+                                 "x":0,
+                                 "y":0
+                                },
+                            
+                                {
+                                 "x":64.4925924278151,
+                                 "y":-31.1785380611292
+                                },
+                            
+                                {
+                                 "x":114.890777238955,
+                                 "y":-31.1785380611292
+                                },
+                            
+                                {
+                                 "x":121.297326155626,
+                                 "y":-37.1579837166882
+                                },
+                            
+                                {
+                                 "x":279.325532766828,
+                                 "y":-37.5850869777995
+                                },
+                            
+                                {
+                                 "x":283.596565377942,
+                                 "y":-33.7411576277973
+                                },
+                            
+                                {
+                                 "x":321.608755616853,
+                                 "y":-34.1682608889087
+                                },
+                            
+                                {
+                                 "x":328.015304533523,
+                                 "y":-38.4392935000222
+                                },
+                            
+                                {
+                                 "x":394.643413266895,
+                                 "y":-38.8663967611336
+                                },
+                            
+                                {
+                                 "x":398.060239355786,
+                                 "y":-37.1579837166882
+                                },
+                            
+                                {
+                                 "x":415.998576322463,
+                                 "y":-37.1579837166882
+                                },
+                            
+                                {
+                                 "x":419.842505672465,
+                                 "y":-35.0224674111314
+                                },
+                            
+                                {
+                                 "x":427.957467633581,
+                                 "y":-35.0224674111314
+                                },
+                            
+                                {
+                                 "x":430.947190461361,
+                                 "y":-38.4392935000222
+                                },
+                            
+                                {
+                                 "x":442.051875250256,
+                                 "y":-38.0121902389109
+                                },
+                            
+                                {
+                                 "x":442.051875250256,
+                                 "y":-0.854206522222711
+                                }],
+                         "rotation":0,
+                         "type":"",
+                         "visible":true,
+                         "width":0,
+                         "x":36.7308804555768,
+                         "y":179.383369666771
+                        }],
+                 "opacity":1,
+                 "type":"objectgroup",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }],
+         "name":"navigation",
+         "opacity":1,
+         "type":"group",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":2,
+         "name":"exits",
+         "objects":[
+                {
+                 "height":0,
+                 "id":4,
+                 "name":"to_basement",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-3.5,
+                         "y":-1.5
+                        },
+                    
+                        {
+                         "x":62,
+                         "y":-1
+                        },
+                    
+                        {
+                         "x":61.25,
+                         "y":68.25
+                        },
+                    
+                        {
+                         "x":-3.25,
+                         "y":67.5
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Basement door"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"Its big and heavy door, behind it is the stairs leading down into the basement."
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"basement_demo"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"top_stairs"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":399
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":145
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":370.298527383548,
+                 "y":71.7533478667082
+                },
+            
+                {
+                 "height":0,
+                 "id":6,
+                 "name":"to_building_street",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-3.5,
+                         "y":-1.5
+                        },
+                    
+                        {
+                         "x":42.3333333333333,
+                         "y":2
+                        },
+                    
+                        {
+                         "x":41.9166666666667,
+                         "y":81.9166666666667
+                        },
+                    
+                        {
+                         "x":-1.58333333333334,
+                         "y":98.5
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Main entrance"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"left"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"It is the main entrance leading to the street outside."
+                        },
+                    
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"building_street"
+                        },
+                    
+                        {
+                         "name":"targetSpawn",
+                         "type":"string",
+                         "value":"doors"
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":87
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":164
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":40,
+                 "y":67
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":3,
+         "name":"hotspots",
+         "objects":[
+                {
+                 "height":0,
+                 "id":5,
+                 "name":"fire_ext",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":2.75,
+                         "y":-0.125
+                        },
+                    
+                        {
+                         "x":1.62705282704994,
+                         "y":-20.3964059810047
+                        },
+                    
+                        {
+                         "x":6.25,
+                         "y":-27.375
+                        },
+                    
+                        {
+                         "x":13.75,
+                         "y":-28.5
+                        },
+                    
+                        {
+                         "x":14,
+                         "y":-0.25
+                        }],
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Fire extinguisher"
+                        },
+                    
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"back"
+                        },
+                    
+                        {
+                         "name":"lookText",
+                         "type":"string",
+                         "value":"Handy if I need to put out a fire somewhere."
+                        },
+                    
+                        {
+                         "name":"walkToX",
+                         "type":"float",
+                         "value":169
+                        },
+                    
+                        {
+                         "name":"walkToY",
+                         "type":"float",
+                         "value":149
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":161.75,
+                 "y":142
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":4,
+         "name":"spawns",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"default",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"right"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":86.7019620056058,
+                 "y":160.590826177871
+                },
+            
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"stairs",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":396.778929572452,
+                 "y":145.215108777862
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":10,
+         "name":"sound_emitters",
+         "objects":[
+                {
+                 "height":0,
+                 "id":7,
+                 "name":"ping1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"item_added"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":285.333333333333,
+                 "y":113.333333333333
+                },
+            
+                {
+                 "height":0,
+                 "id":8,
+                 "name":"ping2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"ui_click"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":443.666666666667,
+                 "y":109.333333333333
+                },
+            
+                {
+                 "height":0,
+                 "id":9,
+                 "name":"ping3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        },
+                    
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        },
+                    
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"ui_click"
+                        },
+                    
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":148,
+                 "y":111.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+    
+        {
+         "draworder":"topdown",
+         "id":11,
+         "name":"actors",
+         "objects":[
+                {
+                 "height":0,
+                 "id":10,
+                 "name":"template_actor",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"front"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":287,
+                 "y":161.333333333333
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":12,
+ "nextobjectid":11,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.12.0",
+ "tileheight":180,
+ "tilesets":[],
+ "tilewidth":480,
+ "type":"map",
+ "version":"1.10",
+ "width":1
+}

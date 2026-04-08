@@ -1,0 +1,176 @@
+{ "frames": {
+   "feet_walk 0": {
+    "frame": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 1": {
+    "frame": { "x": 172, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 2": {
+    "frame": { "x": 344, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 3": {
+    "frame": { "x": 516, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 4": {
+    "frame": { "x": 0, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 5": {
+    "frame": { "x": 172, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 6": {
+    "frame": { "x": 344, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 7": {
+    "frame": { "x": 516, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 8": {
+    "frame": { "x": 0, "y": 248, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 9": {
+    "frame": { "x": 172, "y": 248, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 10": {
+    "frame": { "x": 344, "y": 248, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 11": {
+    "frame": { "x": 172, "y": 248, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 12": {
+    "frame": { "x": 516, "y": 248, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 13": {
+    "frame": { "x": 516, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 14": {
+    "frame": { "x": 344, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 15": {
+    "frame": { "x": 172, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 16": {
+    "frame": { "x": 0, "y": 124, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 17": {
+    "frame": { "x": 516, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 18": {
+    "frame": { "x": 344, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   },
+   "feet_walk 19": {
+    "frame": { "x": 172, "y": 0, "w": 172, "h": 124 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 172, "h": 124 },
+    "sourceSize": { "w": 172, "h": 124 },
+    "duration": 50
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "feet_walk.png",
+  "format": "RGBA8888",
+  "size": { "w": 688, "h": 372 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

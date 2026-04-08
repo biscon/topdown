@@ -1,0 +1,21 @@
+{
+    "sceneId": "intro",
+    "saveName": "Introduction",
+    "tiledFile": "intro.tmj",
+    "script": "scene.lua",
+    "baseAssetScale": 3,
+    "worldWidth": 1980,
+    "worldHeight": 1080,
+
+    "playerSpawn": {
+        "x": 960,
+        "y": 540
+    },
+
+    "scale": {
+        "nearY": 980,
+        "farY": 840,
+        "nearScale": 1.0,
+        "farScale": 0.85
+    }
+}

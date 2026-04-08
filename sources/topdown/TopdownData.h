@@ -1,0 +1,1007 @@
+#pragma once
+
+#include <string>
+#include <vector>
+#include "raylib.h"
+#include "resources/ResourceData.h"
+#include "render/EffectTypes.h"
+#include "nav/NavMeshData.h"
+
+using TopdownObstacleHandle = int;
+using TopdownImageLayerHandle = int;
+using TopdownCharacterHandle = int;
+
+enum class TopdownObstacleKind {
+    MovementAndVision,
+    MovementOnly
+};
+
+enum class TopdownImageLayerKind {
+    Bottom,
+    Top
+};
+
+enum class TopdownEffectPlacement {
+    AfterBottom,
+    AfterCharacters,
+    Final
+};
+
+enum class TopdownBloodDecalKind {
+    Spatter,
+    Pool
+};
+
+enum class TopdownAttackType {
+    None,
+    Melee,
+    Ranged
+};
+
+enum class TopdownAttackInput {
+    Primary,
+    Secondary
+};
+
+enum class TopdownTracerStyle {
+    None,
+    Handgun,
+    Shotgun,
+    Rifle
+};
+
+enum class TopdownPlayerAttackState {
+    Idle,
+    Recover
+};
+
+enum class TopdownFireMode {
+    SemiAuto,
+    FullAuto,
+    Burst
+};
+
+enum class TopdownGameOverState {
+    None,
+    FadingIn,
+    WaitingForMenu
+};
+
+enum class TopdownNpcAiMode {
+    None,
+    SeekAndDestroy
+};
+
+enum class TopdownNpcAwarenessState {
+    Idle,
+    Suspicious,
+    Alerted
+};
+
+enum class TopdownNpcCombatState {
+    None,
+    Chase,
+    Attack,
+    Recover
+};
+
+enum class TopdownPlayerLifeState {
+    Alive,
+    Dying,
+    Dead,
+    GameOver
+};
+
+struct TopdownSegment {
+    Vector2 a{};
+    Vector2 b{};
+};
+
+struct TopdownAuthoredPolygon {
+    int tiledObjectId = -1;
+    TopdownObstacleKind kind = TopdownObstacleKind::MovementAndVision;
+    std::string name;
+    std::vector<Vector2> points;
+    bool visible = true;
+};
+
+struct TopdownAuthoredImageLayer {
+    int tiledLayerId = -1;
+    TopdownImageLayerKind kind = TopdownImageLayerKind::Bottom;
+    std::string name;
+    std::string imagePath;
+
+    Vector2 position{};
+    Vector2 imageSize{};
+    float scale = 1.0f;
+
+    float opacity = 1.0f;
+    bool visible = true;
+    Color tint = WHITE;
+
+    EffectBlendMode blendMode = EffectBlendMode::Normal;
+
+    EffectShaderType shaderType = EffectShaderType::None;
+    std::string shaderIdString;
+    EffectShaderParams shaderParams{};
+
+    TextureHandle textureHandle = -1;
+};
+
+struct TopdownAuthoredSpawn {
+    int tiledObjectId = -1;
+    std::string id;
+    Vector2 position{};
+    float orientationDegrees = 0.0f;
+    bool visible = true;
+};
+
+struct TopdownAuthoredNpc {
+    int tiledObjectId = -1;
+    std::string id;
+    std::string assetId;
+    Vector2 position{};
+    float orientationDegrees = 0.0f;
+    bool visible = true;
+};
+
+struct TopdownAuthoredEffectRegion {
+    int tiledObjectId = -1;
+    std::string id;
+
+    bool usePolygon = false;
+    std::vector<Vector2> polygon;
+    Rectangle worldRect{};
+
+    bool hasOcclusionOriginOverride = false;
+    Vector2 occlusionOrigin{};
+
+    bool visible = true;
+    float opacity = 1.0f;
+    Color tint = WHITE;
+
+    TopdownEffectPlacement placement = TopdownEffectPlacement::AfterBottom;
+    int sortIndex = 0;
+
+    EffectBlendMode blendMode = EffectBlendMode::Normal;
+    bool occludedByWalls = false;
+
+    EffectShaderType shaderType = EffectShaderType::None;
+    std::string shaderIdString;
+    EffectShaderParams shaderParams{};
+
+    std::string imagePath;
+    TextureHandle textureHandle = -1;
+};
+
+struct TopdownAuthoredLevelData {
+    bool loaded = false;
+
+    std::string levelId;
+    std::string saveName;
+    std::string tiledFilePath;
+
+    int baseAssetScale = 1;
+
+    std::vector<Vector2> levelBoundary;
+    std::vector<TopdownAuthoredPolygon> obstacles;
+    std::vector<TopdownAuthoredImageLayer> imageLayers;
+    std::vector<TopdownAuthoredSpawn> spawns;
+    std::vector<TopdownAuthoredEffectRegion> effectRegions;
+    std::vector<TopdownAuthoredNpc> npcs;
+};
+
+struct TopdownRuntimeObstacle {
+    TopdownObstacleHandle handle = -1;
+    int tiledObjectId = -1;
+    TopdownObstacleKind kind = TopdownObstacleKind::MovementAndVision;
+    std::string name;
+
+    std::vector<Vector2> polygon;
+    std::vector<TopdownSegment> edges;
+
+    Rectangle bounds{};
+    bool visible = true;
+};
+
+struct TopdownRuntimeImageLayer {
+    TopdownImageLayerHandle handle = -1;
+    int authoredIndex = -1;
+    TopdownImageLayerKind kind = TopdownImageLayerKind::Bottom;
+
+    TextureHandle textureHandle = -1;
+
+    Vector2 position{};
+    Vector2 imageSize{};
+    float scale = 1.0f;
+
+    float opacity = 1.0f;
+    bool visible = true;
+    Color tint = WHITE;
+
+    EffectBlendMode blendMode = EffectBlendMode::Normal;
+
+    EffectShaderType shaderType = EffectShaderType::None;
+    EffectShaderParams shaderParams{};
+};
+
+using TopdownEffectRegionHandle = int;
+
+struct TopdownRuntimeEffectRegion {
+    TopdownEffectRegionHandle handle = -1;
+    int authoredIndex = -1;
+
+    bool visible = true;
+    float opacity = 1.0f;
+    Color tint = WHITE;
+
+    EffectShaderType shaderType = EffectShaderType::None;
+    EffectShaderParams shaderParams{};
+
+    bool occludedByWalls = false;
+
+    bool hasWallOcclusionPolygon = false;
+    std::vector<Vector2> wallOcclusionPolygon;
+};
+
+struct TopdownBloodStamp {
+    Texture2D texture{};
+    bool loaded = false;
+    bool isStreak = false;
+};
+
+struct TopdownBloodStampLibrary {
+    bool generated = false;
+    std::vector<TopdownBloodStamp> splats;
+    std::vector<TopdownBloodStamp> streaks;
+    std::vector<TopdownBloodStamp> particles;
+};
+
+struct TopdownTracerEffect {
+    bool active = false;
+
+    Vector2 start{};
+    Vector2 end{};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 50.0f;
+
+    float thickness = 4.0f;
+    TopdownTracerStyle style = TopdownTracerStyle::Handgun;
+
+    bool anchorStartToPlayer = false;
+    Vector2 localStartOffset{};
+};
+
+enum class TopdownHitscanHitType {
+    None,
+    Npc,
+    Wall
+};
+
+struct TopdownWallImpactParticle {
+    bool active = false;
+
+    Vector2 position{};
+    Vector2 velocity{};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 0.0f;
+
+    float size = 2.0f;
+    unsigned char alpha = 255;
+
+    Color color = Color{160, 160, 160, 255};
+};
+
+struct TopdownMuzzleFlashEffect {
+    bool active = false;
+
+    Vector2 position{};
+    Vector2 direction{1.0f, 0.0f};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 28.0f;
+
+    float forwardLength = 42.0f;
+    float sideWidth = 14.0f;
+
+    bool anchoredToPlayer = false;
+    Vector2 localOffset{}; // relative to player.position
+};
+
+struct TopdownMuzzleSmokeParticle {
+    bool active = false;
+
+    Vector2 position{};
+    Vector2 velocity{};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 220.0f;
+
+    float size = 6.0f;
+    float alpha = 1.0f;
+
+    Color color = Color{210, 210, 210, 255};
+};
+
+struct TopdownBloodDecal {
+    bool active = false;
+    TopdownBloodDecalKind kind = TopdownBloodDecalKind::Spatter;
+
+    Vector2 position{};
+
+    float rotationRadians = 0.0f;
+
+    float radius = 20.0f;
+    float targetRadius = 20.0f;
+    float growthRate = 0.0f;
+
+    float opacity = 1.0f;
+    float ageMs = 0.0f;
+
+    unsigned int variantSeed = 0;
+
+    bool useGeneratedStamp = false;
+    bool preferStreakStamp = false;
+    int stampIndex = -1;
+    float stretch = 1.0f;
+};
+
+struct TopdownBloodImpactParticle {
+    bool active = false;
+
+    Vector2 position{};
+    Vector2 velocity{};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 140.0f;
+
+    float size = 3.0f;
+    float alpha = 1.0f;
+
+    Color color = Color{170, 24, 24, 255};
+
+    bool useGeneratedStamp = false;
+    int stampIndex = -1;
+    float rotationRadians = 0.0f;
+    float stretch = 1.0f;
+};
+
+struct TopdownSpatialCell {
+    std::vector<int> movementSegmentIndices;
+    std::vector<int> visionSegmentIndices;
+    std::vector<int> obstacleIndices;
+};
+
+struct TopdownSpatialGrid {
+    bool built = false;
+
+    Vector2 origin{};
+    float cellSize = 128.0f;
+
+    int width = 0;
+    int height = 0;
+
+    std::vector<TopdownSpatialCell> cells;
+};
+
+struct TopdownCollisionWorld {
+    std::vector<TopdownRuntimeObstacle> obstacles;
+
+    std::vector<TopdownSegment> movementSegments;
+    std::vector<TopdownSegment> visionSegments;
+    std::vector<TopdownSegment> boundarySegments;
+
+    TopdownSpatialGrid spatialGrid;
+
+    int nextObstacleHandle = 1;
+};
+
+struct TopdownNavWorld {
+    bool valid = false;
+
+    std::vector<Vector2> levelBoundary;
+    std::vector<std::vector<Vector2>> holePolygons;
+
+    NavMeshData navMesh;
+    float agentRadius = 0.0f;
+};
+
+struct TopdownNpcAttackEffectsConfig {
+    int bloodImpactParticleCount = 8;
+    float bloodImpactParticleSpeedMin = 45.0f;
+    float bloodImpactParticleSpeedMax = 120.0f;
+    float bloodImpactParticleLifetimeMsMin = 180.0f;
+    float bloodImpactParticleLifetimeMsMax = 320.0f;
+    float bloodImpactParticleSizeMin = 2.5f;
+    float bloodImpactParticleSizeMax = 5.0f;
+    float bloodImpactSpreadDegrees = 70.0f;
+
+    int bloodDecalCountMin = 2;
+    int bloodDecalCountMax = 4;
+    float bloodDecalDistanceMin = 8.0f;
+    float bloodDecalDistanceMax = 55.0f;
+    float bloodDecalRadiusMin = 7.0f;
+    float bloodDecalRadiusMax = 14.0f;
+    float bloodDecalSpreadDegrees = 45.0f;
+    float bloodDecalWallPadding = 6.0f;
+    float bloodDecalOpacityMin = 0.75f;
+    float bloodDecalOpacityMax = 0.95f;
+};
+
+struct TopdownPlayerWeaponConfig {
+    std::string equipmentSetId;
+    int slot = 0;
+
+    TopdownAttackType primaryAttackType = TopdownAttackType::None;
+    TopdownAttackType secondaryAttackType = TopdownAttackType::None;
+
+    float primaryCooldownMs = 0.0f;
+    float secondaryCooldownMs = 0.0f;
+
+    float rangedDamage = 0.0f;
+    float meleeDamage = 0.0f;
+
+    float maxRange = 0.0f;
+
+    int pelletCount = 1;
+    float spreadDegrees = 0.0f;
+
+    float meleeRange = 0.0f;
+    float meleeArcDegrees = 0.0f;
+
+    float rangedKnockback = 0.0f;
+    float meleeKnockback = 0.0f;
+
+    Vector2 muzzleOrigin{};
+
+    TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
+
+    int wallImpactParticleCount = 6;
+    float wallImpactParticleSpeedMin = 70.0f;
+    float wallImpactParticleSpeedMax = 180.0f;
+    float wallImpactParticleLifetimeMsMin = 120.0f;
+    float wallImpactParticleLifetimeMsMax = 260.0f;
+    float wallImpactParticleSizeMin = 2.0f;
+    float wallImpactParticleSizeMax = 5.0f;
+    float wallImpactSpreadDegrees = 65.0f;
+
+    float muzzleFlashLifetimeMs = 28.0f;
+    float muzzleFlashForwardLength = 42.0f;
+    float muzzleFlashSideWidth = 14.0f;
+
+    int muzzleSmokeParticleCount = 3;
+    float muzzleSmokeSpeedMin = 18.0f;
+    float muzzleSmokeSpeedMax = 55.0f;
+    float muzzleSmokeLifetimeMsMin = 180.0f;
+    float muzzleSmokeLifetimeMsMax = 320.0f;
+    float muzzleSmokeSizeMin = 4.0f;
+    float muzzleSmokeSizeMax = 9.0f;
+    float muzzleSmokeSpreadDegrees = 85.0f;
+    float muzzleSmokeForwardBias = 0.35f;
+
+    int bloodImpactParticleCount = 8;
+    float bloodImpactParticleSpeedMin = 50.0f;
+    float bloodImpactParticleSpeedMax = 140.0f;
+    float bloodImpactParticleLifetimeMsMin = 90.0f;
+    float bloodImpactParticleLifetimeMsMax = 180.0f;
+    float bloodImpactParticleSizeMin = 2.0f;
+    float bloodImpactParticleSizeMax = 5.0f;
+    float bloodImpactSpreadDegrees = 80.0f;
+
+    int bloodDecalCountMin = 4;
+    int bloodDecalCountMax = 7;
+    float bloodDecalDistanceMin = 18.0f;
+    float bloodDecalDistanceMax = 110.0f;
+    float bloodDecalRadiusMin = 8.0f;
+    float bloodDecalRadiusMax = 18.0f;
+    float bloodDecalSpreadDegrees = 85.0f;
+    float bloodDecalWallPadding = 6.0f;
+    float bloodDecalOpacityMin = 0.72f;
+    float bloodDecalOpacityMax = 0.95f;
+
+    std::vector<TopdownFireMode> supportedFireModes;
+    TopdownFireMode defaultFireMode = TopdownFireMode::SemiAuto;
+
+    int burstCount = 3;
+    float burstIntervalMs = 70.0f;
+};
+
+struct TopdownPendingBloodDecalSpawn {
+    bool active = false;
+    Vector2 hitPoint{};
+    Vector2 incomingShotDir{};
+    TopdownPlayerWeaponConfig weaponConfig{};
+    float delayMs = 0.0f;
+    float elapsedMs = 0.0f;
+};
+
+struct TopdownRenderWorld {
+    std::vector<TopdownRuntimeImageLayer> bottomLayers;
+    std::vector<TopdownRuntimeImageLayer> topLayers;
+
+    std::vector<TopdownRuntimeEffectRegion> effectRegions;
+    std::vector<TopdownBloodDecal> bloodDecals;
+    std::vector<TopdownBloodImpactParticle> bloodImpactParticles;
+    std::vector<TopdownTracerEffect> tracers;
+    std::vector<TopdownWallImpactParticle> wallImpactParticles;
+    std::vector<TopdownMuzzleFlashEffect> muzzleFlashes;
+    std::vector<TopdownMuzzleSmokeParticle> muzzleSmokeParticles;
+
+    std::vector<TopdownPendingBloodDecalSpawn> pendingBloodDecalSpawns;
+
+    std::vector<int> afterBottomEffectRegionIndices;
+    std::vector<int> afterCharactersEffectRegionIndices;
+    std::vector<int> finalEffectRegionIndices;
+
+    int nextImageLayerHandle = 1;
+    int nextEffectRegionHandle = 1;
+};
+
+struct TopdownPlayerRuntime {
+    Vector2 position{};
+    Vector2 velocity{};
+    Vector2 desiredVelocity{};
+    Vector2 facing{1.0f, 0.0f};
+
+    float radius = 45.0f;
+
+    float walkSpeed = 450.0f;
+    float runSpeed = 700.0f;
+    float backwardSpeed = 300.0f;
+    float strafeSpeed = 350.0f;
+
+    float acceleration = 2800.0f;
+    float deceleration = 3200.0f;
+
+    bool wantsRun = false;
+
+    float moveInputForward = 0.0f;
+    float moveInputRight = 0.0f;
+
+    float health = 100.0f;
+    float maxHealth = 100.0f;
+
+    float hurtCooldownRemainingMs = 0.0f;
+
+    float hitSlowdownRemainingMs = 0.0f;
+    float hitSlowdownMultiplier = 1.0f;
+
+    float damageFlashRemainingMs = 0.0f;
+    float lowHealthEffectWeight = 0.0f;
+
+    TopdownPlayerLifeState lifeState = TopdownPlayerLifeState::Alive;
+};
+
+struct TopdownCameraData {
+    float viewportWidth = 1920.0f;
+    float viewportHeight = 1080.0f;
+
+    float deadzoneWidth = 160.0f;
+    float deadzoneHeight = 40.0f;
+
+    float smoothing = 10.0f;
+};
+
+struct TopdownCameraRuntime {
+    Vector2 position{};
+    Vector2 targetPosition{};
+    Vector2 aimOffset{};
+};
+
+enum class TopdownLocomotionType {
+    Idle,
+    Forward,
+    Backward,
+    StrafeLeft,
+    StrafeRight
+};
+
+struct TopdownPlayerAnimationEntry {
+    std::string id;
+    SpriteAssetHandle spriteHandle = -1;
+
+    bool hasMuzzle = false;
+    Vector2 muzzle{};
+};
+
+struct TopdownCharacterAssetData {
+    bool loaded = false;
+    std::string id;
+
+    float maxHealth = 100.0f;
+    float hurtCooldownMs = 150.0f;
+    float meleeHitSlowdownMs = 100.0f;
+    float meleeHitSlowdownMultiplier = 0.65f;
+
+    std::vector<TopdownPlayerAnimationEntry> animations;
+    std::vector<TopdownPlayerWeaponConfig> weaponConfigs;
+};
+
+struct TopdownCharacterRuntime {
+    bool active = false;
+
+    std::string equippedSetId = "handgun";
+
+    TopdownLocomotionType locomotion = TopdownLocomotionType::Idle;
+    bool running = false;
+
+    float bodyFacingRadians = 0.0f;
+    float desiredAimRadians = 0.0f;
+    float feetRotationRadians = 0.0f;
+    float upperRotationRadians = 0.0f;
+
+    float turnSpeedRadians = 7.0f;
+    float maxUpperBodyTwistRadians = 85.0f * DEG2RAD;
+
+    float minAimDistanceEnter = 24.0f;
+    float minAimDistanceExit = 40.0f;
+    bool aimFrozen = false;
+
+    float feetAnimationTimeMs = 0.0f;
+    float upperAnimationTimeMs = 0.0f;
+
+    SpriteAssetHandle currentFeetHandle = -1;
+    SpriteAssetHandle currentUpperHandle = -1;
+};
+
+struct TopdownPlayerAttackRuntime {
+    bool active = false;
+
+    TopdownPlayerAttackState state = TopdownPlayerAttackState::Idle;
+    TopdownAttackInput input = TopdownAttackInput::Primary;
+    TopdownAttackType attackType = TopdownAttackType::None;
+
+    float stateTimeMs = 0.0f;
+    float animationDurationMs = 0.0f;
+    float cooldownRemainingMs = 0.0f;
+
+    std::string equipmentSetId;
+
+    TopdownFireMode currentFireMode = TopdownFireMode::SemiAuto;
+
+    bool triggerHeld = false;
+    bool wantsTriggerRelease = false;
+
+    int burstShotsRemaining = 0;
+    float burstShotTimerMs = 0.0f;
+
+    bool pendingPrimaryAttack = false;
+    bool pendingSecondaryAttack = false;
+
+    float fullAutoShakeCooldownMs = 0.0f;
+
+    bool meleeHitPending = false;
+    bool meleeHitApplied = false;
+
+    bool rifleLoopPlaying = false;
+};
+
+enum class TopdownNpcAnimationMode {
+    AutomaticLocomotion,
+    ScriptLoop
+};
+
+struct TopdownNpcMoveState {
+    bool active = false;
+    bool running = false;
+
+    std::vector<Vector2> pathPoints;
+    int currentPoint = 0;
+
+    float currentSpeed = 0.0f;
+    float acceleration = 1800.0f;
+    float deceleration = 2200.0f;
+    float arrivalRadius = 6.0f;
+    float stopDistance = 140.0f;
+};
+
+struct TopdownNpcAnimationSourceDefinition {
+    std::string asepriteJsonPath;
+    bool hasOrigin = false;
+    Vector2 origin{};
+};
+
+struct TopdownNpcAssetDefinition {
+    std::string assetId;
+    float baseDrawScale = 1.0f;
+    float collisionRadius = 32.0f;
+
+    float walkSpeed = 450.0f;
+    float runSpeed = 700.0f;
+    float hurtStunMs = 0.0f;
+    float maxHealth = 100.0f;
+    float corpseExpirationMs = -1.0f;
+
+    bool hostile = true;
+    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+
+    float visionRange = 700.0f;
+    float hearingRange = 220.0f;
+    float visionHalfAngleDegrees = 65.0f;
+
+    float attackRange = 95.0f;
+    float attackCooldownMs = 900.0f;
+    float attackDamage = 25.0f;
+    float attackHitNormalizedTime = 0.7f;
+    float attackRecoverMs = 250.0f;
+
+    float chaseRepathIntervalMs = 250.0f;
+    float loseTargetTimeoutMs = 1200.0f;
+
+    float meleeHitPosX = 0.0f;
+    float meleeHitPosY = 0.0f;
+    std::string attackStartSoundId;
+    std::string attackConnectSoundId;
+    std::vector<std::string> hitReactionSoundIds;
+
+    TopdownNpcAttackEffectsConfig attackEffects;
+
+    std::vector<TopdownNpcAnimationSourceDefinition> animations;
+};
+
+struct TopdownNpcClipRef {
+    SpriteAssetHandle spriteHandle = -1;
+    int clipIndex = -1;
+    std::string clipName;
+};
+
+struct TopdownNpcAssetRuntime {
+    bool loaded = false;
+
+    std::string assetId;
+
+    TopdownNpcClipRef idleClip;
+    TopdownNpcClipRef walkClip;
+    TopdownNpcClipRef runClip;
+    TopdownNpcClipRef hurtClip;
+    TopdownNpcClipRef deathClip;
+    TopdownNpcClipRef rangedAttackClip;
+    TopdownNpcClipRef meleeAttackClip;
+
+    std::vector<SpriteAssetHandle> spriteHandles;
+
+    float baseDrawScale = 1.0f;
+    float collisionRadius = 32.0f;
+
+    float walkSpeed = 450.0f;
+    float runSpeed = 700.0f;
+    float hurtStunMs = 0.0f;
+    float maxHealth = 100.0f;
+    float corpseExpirationMs = -1.0f;
+
+    bool hostile = true;
+    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+
+    float visionRange = 700.0f;
+    float hearingRange = 220.0f;
+    float visionHalfAngleDegrees = 65.0f;
+
+    float attackRange = 95.0f;
+    float attackCooldownMs = 900.0f;
+    float attackDamage = 25.0f;
+    float attackHitNormalizedTime = 0.7f;
+    float attackRecoverMs = 250.0f;
+
+    float chaseRepathIntervalMs = 250.0f;
+    float loseTargetTimeoutMs = 1200.0f;
+
+    float meleeHitPosX = 0.0f;
+    float meleeHitPosY = 0.0f;
+    std::string attackStartSoundId;
+    std::string attackConnectSoundId;
+    std::vector<std::string> hitReactionSoundIds;
+
+    TopdownNpcAttackEffectsConfig attackEffects;
+};
+
+struct TopdownNpcRuntime {
+    TopdownCharacterHandle handle = -1;
+
+    std::string id;
+    std::string assetId;
+
+    bool active = false;
+    bool visible = true;
+    bool dead = false;
+    bool corpse = false;
+
+    bool hostile = true;
+    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+    TopdownNpcAwarenessState awarenessState = TopdownNpcAwarenessState::Idle;
+    TopdownNpcCombatState combatState = TopdownNpcCombatState::None;
+
+    float health = 100.0f;
+    float corpseExpirationMs = -1.0f;
+    float corpseElapsedMs = 0.0f;
+
+    float visionRange = 700.0f;
+    float hearingRange = 220.0f;
+    float visionHalfAngleDegrees = 65.0f;
+
+    float attackRange = 95.0f;
+    float attackCooldownMs = 900.0f;
+    float attackCooldownRemainingMs = 0.0f;
+    float attackDamage = 25.0f;
+    float attackHitNormalizedTime = 0.7f;
+    float attackRecoverMs = 250.0f;
+
+    float chaseRepathIntervalMs = 250.0f;
+    float loseTargetTimeoutMs = 1200.0f;
+
+    bool hasPlayerTarget = false;
+    Vector2 lastKnownPlayerPosition{};
+    float loseTargetTimerMs = 0.0f;
+    float repathTimerMs = 0.0f;
+
+    bool attackHitPending = false;
+    bool attackHitApplied = false;
+    float attackStateTimeMs = 0.0f;
+    float attackAnimationDurationMs = 0.0f;
+
+    float renderOpacity = 1.0f;
+
+    Vector2 position{};
+    Vector2 facing{1.0f, 0.0f};
+
+    float collisionRadius = 32.0f;
+
+    float rotationRadians = 0.0f;
+
+    TopdownNpcAnimationMode animationMode = TopdownNpcAnimationMode::AutomaticLocomotion;
+
+    TopdownNpcClipRef automaticLoopClip;
+    float automaticLoopTimeMs = 0.0f;
+
+    TopdownNpcClipRef scriptLoopClip;
+    float scriptLoopTimeMs = 0.0f;
+
+    bool oneShotActive = false;
+    TopdownNpcClipRef oneShotClip;
+    float oneShotTimeMs = 0.0f;
+
+    float hurtStunRemainingMs = 0.0f;
+
+    Vector2 knockbackVelocity{};
+    float knockbackDeceleration = 5000.0f;
+
+    TopdownNpcMoveState move;
+
+    bool moving = false;
+    bool running = false;
+    float painSoundCooldownMs = 0.0f;
+
+    float meleeHitPosX = 0.0f;
+    float meleeHitPosY = 0.0f;
+    std::string attackStartSoundId;
+    std::string attackConnectSoundId;
+    std::vector<std::string> hitReactionSoundIds;
+
+    TopdownNpcAttackEffectsConfig attackEffects;
+};
+
+struct TopdownLevelRegistryEntry {
+    std::string levelId;
+    std::string saveName;
+    std::string metadataFilePath;
+    std::string tiledFilePath;
+    std::string levelDirectoryPath;
+    int baseAssetScale = 1;
+};
+
+struct TopdownDebugData {
+    bool showBlockers = false;
+    bool showSpatialGrid = false;
+    bool showNav = false;
+    bool showPlayer = false;
+    bool showSpawnPoints = false;
+    bool showEffects = false;
+    bool showImageLayers = false;
+    bool showScriptDebug = false;
+    bool showCombatDebug = false;
+    bool showAiDebug = false;
+};
+
+struct TopdownScriptMoveState {
+    bool active = false;
+    bool running = false;
+
+    std::vector<Vector2> pathPoints;
+    int currentPoint = 0;
+
+    float currentSpeed = 0.0f;
+    float acceleration = 1800.0f;
+    float deceleration = 2200.0f;
+    float arrivalRadius = 6.0f;
+    float stopDistance = 140.0f;
+};
+
+
+struct TopdownScreenShakeState {
+    bool active = false;
+
+    float durationMs = 0.0f;
+    float elapsedMs = 0.0f;
+
+    float strengthX = 0.0f;
+    float strengthY = 0.0f;
+
+    float frequencyHz = 30.0f;
+    float sampleTimerMs = 0.0f;
+
+    bool smooth = false;
+    Vector2 previousOffset{};
+    Vector2 sampledOffset{};
+    Vector2 currentOffset{};
+};
+
+struct TopdownBloodRenderTarget {
+    RenderTexture2D target{};
+    RenderTexture2D blurredTarget{};
+    bool loaded = false;
+
+    int width = 0;
+    int height = 0;
+
+    bool dirty = true;
+
+    bool hasLastCameraPosition = false;
+    Vector2 lastCameraPosition{};
+};
+
+struct TopdownRuntimeData {
+    bool levelActive = false;
+    bool controlsEnabled = true;
+
+    bool aiFrozen = false;
+    bool godMode = false;
+
+    bool gameOverActive = false;
+    float gameOverElapsedMs = 0.0f;
+    bool returnToMenuRequested = false;
+
+    TopdownCollisionWorld collision;
+    TopdownNavWorld nav;
+    TopdownRenderWorld render;
+
+    TopdownPlayerRuntime player;
+    TopdownCharacterRuntime playerCharacter;
+    TopdownPlayerAttackRuntime playerAttack;
+    TopdownCameraRuntime camera;
+    TopdownDebugData debug;
+
+    TopdownScriptMoveState scriptedMove;
+
+    std::vector<TopdownNpcRuntime> npcs;
+
+    int nextNpcHandle = 1;
+    TopdownScreenShakeState screenShake{};
+    TopdownBloodRenderTarget bloodRenderTarget{};
+};
+
+struct TopdownData {
+    TopdownCameraData camera;
+
+    TopdownCharacterAssetData playerCharacterAsset;
+
+    std::vector<TopdownNpcAssetDefinition> npcAssetRegistry;
+    std::vector<TopdownNpcAssetRuntime> npcAssets;
+
+    std::vector<TopdownLevelRegistryEntry> levelRegistry;
+
+    TopdownBloodStampLibrary bloodStampLibrary;
+
+    std::string currentLevelId;
+    std::string currentLevelSaveName;
+    std::string currentLevelTiledFilePath;
+    std::string currentLevelScriptFilePath;
+    int currentLevelBaseAssetScale = 1;
+
+    TopdownAuthoredLevelData authored;
+    TopdownRuntimeData runtime;
+
+    bool hasPendingLevelChange = false;
+    std::string pendingLevelId;
+    std::string pendingSpawnId;
+};

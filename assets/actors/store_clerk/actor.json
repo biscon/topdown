@@ -1,0 +1,12 @@
+{
+    "actorId": "store_clerk",
+    "displayName": "Store clerk",
+    "spriteAsset": "store_clerk.actor.json",
+    "talkColor": "GREEN",
+    "walkSpeed": 400.0,
+    "fastMoveMultiplier": 2.0,
+    "idleDelayMs": 200.0,
+    "controllable": false,
+    "horizHitboxScale": 0.5,
+    "vertHitboxScale": 0.95
+}
