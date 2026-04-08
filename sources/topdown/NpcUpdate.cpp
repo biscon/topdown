@@ -175,7 +175,8 @@ static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string&
 static void UpdateNpcMovementAndCollision(
         GameState& state,
         TopdownNpcRuntime& npc,
-        float dt)
+        float dt,
+        Vector2 desiredDirection)
 {
     if (!npc.active || npc.dead) {
         return;
@@ -188,13 +189,21 @@ static void UpdateNpcMovementAndCollision(
     Vector2 velocity{};
 
     if (npc.move.active && npc.moving) {
-        const Vector2 preferredVelocity = TopdownMul(npc.facing, npc.move.currentSpeed);
+        Vector2 steerDir = TopdownNormalizeOrZero(desiredDirection);
+        if (TopdownLengthSqr(steerDir) <= 0.000001f) {
+            steerDir = npc.facing;
+        }
+        if (TopdownLengthSqr(steerDir) <= 0.000001f) {
+            steerDir = Vector2{1.0f, 0.0f};
+        }
+
+        const Vector2 preferredVelocity = TopdownMul(steerDir, npc.move.currentSpeed);
         const Vector2 selectedVelocity =
                 BuildNpcOrcaLikeVelocity(state, npc, preferredVelocity);
 
         velocity = TopdownAdd(
-                TopdownMul(selectedVelocity, 0.34f),
-                TopdownMul(npc.localAvoidanceVelocity, 0.66f));
+                TopdownMul(selectedVelocity, 0.78f),
+                TopdownMul(npc.localAvoidanceVelocity, 0.22f));
 
         const float maxSpeed = std::max(1.0f, npc.move.currentSpeed);
         const float speed = TopdownLength(velocity);
@@ -202,7 +211,6 @@ static void UpdateNpcMovementAndCollision(
             velocity = TopdownMul(velocity, maxSpeed / speed);
         }
 
-        npc.localAvoidanceVelocity = velocity;
     } else {
         npc.localAvoidanceVelocity = {};
     }
@@ -259,6 +267,12 @@ static void UpdateNpcMovementAndCollision(
                     otherNpc.collisionRadius,
                     preferredVsNpc);
         }
+    }
+
+    if (TopdownLengthSqr(velocity) <= 0.000001f) {
+        npc.localAvoidanceVelocity = {};
+    } else {
+        npc.localAvoidanceVelocity = velocity;
     }
 }
 
@@ -330,7 +344,7 @@ static void UpdateSingleNpcScriptedMovement(GameState& state, TopdownNpcRuntime&
         npc.moving = true;
         npc.running = move.running;
 
-        UpdateNpcMovementAndCollision(state, npc, dt);
+        UpdateNpcMovementAndCollision(state, npc, dt, dir);
         return;
     }
 
