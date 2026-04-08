@@ -54,3 +54,18 @@ void TopdownAlertNearbyNpcs(
         GameState& state,
         const TopdownNpcRuntime& sourceNpc,
         float radius);
+
+void TopdownUpdateInvestigationContexts(GameState& state, float dtMs);
+
+void TopdownAssignNpcInvestigationSlot(
+        GameState& state,
+        TopdownNpcRuntime& npc);
+
+void TopdownClearNpcInvestigationSlot(
+        GameState& state,
+        TopdownNpcRuntime& npc);
+
+bool TopdownGetNpcInvestigationDestination(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        Vector2& outDestination);

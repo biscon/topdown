@@ -133,10 +133,17 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
             TopdownMul(toPlayer, -player.radius * 0.55f));
 }
 
-static bool HasNpcReachedLastKnownPlayerPosition(const TopdownNpcRuntime& npc)
+static bool HasNpcReachedInvestigationDestination(
+        const GameState& state,
+        const TopdownNpcRuntime& npc)
 {
+    Vector2 destination = npc.lastKnownPlayerPosition;
+    if (TopdownGetNpcInvestigationDestination(state, npc, destination)) {
+        // Use assigned investigation slot when available.
+    }
+
     const float distSqr =
-            TopdownLengthSqr(TopdownSub(npc.lastKnownPlayerPosition, npc.position));
+            TopdownLengthSqr(TopdownSub(destination, npc.position));
 
     // Reuse the movement arrival radius if available, otherwise a sane fallback.
     const float arriveRadius =
@@ -173,13 +180,14 @@ static void UpdateNpcPerception(
             return;
         }
 
-        if (!HasNpcReachedLastKnownPlayerPosition(npc)) {
+        if (!HasNpcReachedInvestigationDestination(state, npc)) {
             return;
         }
 
         npc.hasPlayerTarget = false;
         npc.loseTargetTimerMs = 0.0f;
         npc.repathTimerMs = 0.0f;
+        TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
     }
 
@@ -335,6 +343,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         npc.hasPlayerTarget = false;
         npc.awarenessState = TopdownNpcAwarenessState::Idle;
         npc.combatState = TopdownNpcCombatState::None;
+        TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
         return;
     }
@@ -374,6 +383,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
     if (!npc.hasPlayerTarget) {
         npc.combatState = TopdownNpcCombatState::None;
+        TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
         return;
     }
@@ -404,7 +414,12 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     npc.combatState = TopdownNpcCombatState::Chase;
 
     if (!npc.move.active || npc.repathTimerMs <= 0.0f) {
-        TopdownBuildNpcPathToTarget(state, npc, npc.lastKnownPlayerPosition);
+        Vector2 destination = npc.lastKnownPlayerPosition;
+        if (npc.awarenessState == TopdownNpcAwarenessState::Suspicious) {
+            TopdownAssignNpcInvestigationSlot(state, npc);
+            TopdownGetNpcInvestigationDestination(state, npc, destination);
+        }
+        TopdownBuildNpcPathToTarget(state, npc, destination);
         npc.repathTimerMs = std::max(1.0f, npc.chaseRepathIntervalMs);
     }
 }

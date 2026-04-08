@@ -697,6 +697,28 @@ struct TopdownNpcMoveState {
     float stopDistance = 140.0f;
 };
 
+struct TopdownInvestigationSlotRuntime {
+    Vector2 position{};
+    bool valid = false;
+    int reservedByNpcHandle = -1;
+};
+
+struct TopdownInvestigationContextRuntime {
+    int handle = -1;
+
+    bool active = false;
+    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+    bool hostile = true;
+
+    Vector2 anchor{};
+    float elapsedMs = 0.0f;
+    float lastRefreshMs = 0.0f;
+
+    float radius = 120.0f;
+
+    std::vector<TopdownInvestigationSlotRuntime> slots;
+};
+
 struct TopdownNpcAnimationSourceDefinition {
     std::string asepriteJsonPath;
     bool hasOrigin = false;
@@ -834,6 +856,9 @@ struct TopdownNpcRuntime {
     Vector2 lastKnownPlayerPosition{};
     float loseTargetTimerMs = 0.0f;
     float repathTimerMs = 0.0f;
+    int investigationContextHandle = -1;
+    int investigationSlotIndex = -1;
+    float investigationReassignCooldownMs = 0.0f;
 
     bool attackHitPending = false;
     bool attackHitApplied = false;
@@ -974,8 +999,10 @@ struct TopdownRuntimeData {
     TopdownScriptMoveState scriptedMove;
 
     std::vector<TopdownNpcRuntime> npcs;
+    std::vector<TopdownInvestigationContextRuntime> investigationContexts;
 
     int nextNpcHandle = 1;
+    int nextInvestigationContextHandle = 1;
     TopdownScreenShakeState screenShake{};
     TopdownBloodRenderTarget bloodRenderTarget{};
 };

@@ -2,6 +2,9 @@
 
 void TopdownUpdateNpcAi(GameState& state, float dt)
 {
+    const float dtMs = dt * 1000.0f;
+    TopdownUpdateInvestigationContexts(state, dtMs);
+
     if (state.topdown.runtime.aiFrozen) {
         for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
             if (!npc.active || !npc.hostile) {
