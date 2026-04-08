@@ -859,6 +859,9 @@ struct TopdownNpcRuntime {
     int investigationContextHandle = -1;
     int investigationSlotIndex = -1;
     float investigationReassignCooldownMs = 0.0f;
+    Vector2 localAvoidanceVelocity{};
+    Vector2 lastProgressPosition{};
+    float blockedProgressTimerMs = 0.0f;
 
     bool attackHitPending = false;
     bool attackHitApplied = false;

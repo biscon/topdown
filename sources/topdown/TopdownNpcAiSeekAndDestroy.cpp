@@ -162,6 +162,8 @@ static void UpdateNpcPerception(
 
     if (seesPlayer || hearsPlayer) {
         TopdownAlertNpcToPlayer(state, npc);
+        npc.lastProgressPosition = npc.position;
+        npc.blockedProgressTimerMs = 0.0f;
 
         const float nearbyAlertRadius =
                 std::max(180.0f, npc.hearingRange);
@@ -187,6 +189,7 @@ static void UpdateNpcPerception(
         npc.hasPlayerTarget = false;
         npc.loseTargetTimerMs = 0.0f;
         npc.repathTimerMs = 0.0f;
+        npc.blockedProgressTimerMs = 0.0f;
         TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
     }
@@ -343,6 +346,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         npc.hasPlayerTarget = false;
         npc.awarenessState = TopdownNpcAwarenessState::Idle;
         npc.combatState = TopdownNpcCombatState::None;
+        npc.blockedProgressTimerMs = 0.0f;
         TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
         return;
@@ -383,6 +387,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
     if (!npc.hasPlayerTarget) {
         npc.combatState = TopdownNpcCombatState::None;
+        npc.blockedProgressTimerMs = 0.0f;
         TopdownClearNpcInvestigationSlot(state, npc);
         TopdownStopNpcMovement(npc);
         return;
@@ -412,6 +417,27 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     }
 
     npc.combatState = TopdownNpcCombatState::Chase;
+
+    if (npc.awarenessState == TopdownNpcAwarenessState::Suspicious) {
+        const float progressDistSqr =
+                TopdownLengthSqr(TopdownSub(npc.position, npc.lastProgressPosition));
+
+        if (progressDistSqr >= 14.0f * 14.0f) {
+            npc.lastProgressPosition = npc.position;
+            npc.blockedProgressTimerMs = 0.0f;
+        } else {
+            npc.blockedProgressTimerMs += dtMs;
+        }
+
+        if (npc.blockedProgressTimerMs >= 850.0f) {
+            npc.blockedProgressTimerMs = 0.0f;
+            TopdownClearNpcInvestigationSlot(state, npc);
+            npc.repathTimerMs = 0.0f;
+        }
+    } else {
+        npc.lastProgressPosition = npc.position;
+        npc.blockedProgressTimerMs = 0.0f;
+    }
 
     if (!npc.move.active || npc.repathTimerMs <= 0.0f) {
         Vector2 destination = npc.lastKnownPlayerPosition;

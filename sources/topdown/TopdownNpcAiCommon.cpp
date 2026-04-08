@@ -278,6 +278,7 @@ const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state)
 void TopdownStopNpcMovement(TopdownNpcRuntime& npc)
 {
     npc.move = {};
+    npc.localAvoidanceVelocity = {};
     npc.moving = false;
     npc.running = false;
 }
@@ -303,6 +304,8 @@ void TopdownAlertNpcToPlayer(
     npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
     npc.investigationReassignCooldownMs = 0.0f;
+    npc.lastProgressPosition = npc.position;
+    npc.blockedProgressTimerMs = 0.0f;
     npc.awarenessState = TopdownNpcAwarenessState::Alerted;
 
     npc.investigationContextHandle = FindOrCreateInvestigationContext(
@@ -337,6 +340,8 @@ void TopdownClearNpcInvestigationSlot(
     npc.investigationContextHandle = -1;
     npc.investigationSlotIndex = -1;
     npc.investigationReassignCooldownMs = 0.0f;
+    npc.lastProgressPosition = npc.position;
+    npc.blockedProgressTimerMs = 0.0f;
 }
 
 void TopdownAssignNpcInvestigationSlot(
@@ -390,11 +395,33 @@ void TopdownAssignNpcInvestigationSlot(
                 TopdownLengthSqr(TopdownSub(slot.position, ctx->anchor));
         const float distToNpc =
                 TopdownLengthSqr(TopdownSub(slot.position, npc.position));
+        float congestionPenalty = 0.0f;
+
+        for (const TopdownNpcRuntime& otherNpc : runtime.npcs) {
+            if (!otherNpc.active || otherNpc.dead || otherNpc.corpse) {
+                continue;
+            }
+
+            if (otherNpc.handle == npc.handle) {
+                continue;
+            }
+
+            if (!otherNpc.hasPlayerTarget) {
+                continue;
+            }
+
+            const float distToOther =
+                    TopdownLengthSqr(TopdownSub(slot.position, otherNpc.position));
+            if (distToOther < 80.0f * 80.0f) {
+                congestionPenalty += (80.0f * 80.0f - distToOther) * 0.45f;
+            }
+        }
 
         // Favor central, close, reachable slots with stable assignments.
         float score = 0.0f;
         score -= distToAnchor * 0.35f;
         score -= distToNpc * 0.65f;
+        score -= congestionPenalty;
 
         if (slot.reservedByNpcHandle == npc.handle) {
             score += 50000.0f;

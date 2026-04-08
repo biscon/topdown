@@ -117,6 +117,8 @@ static Vector2 BuildNpcOrcaLikeVelocity(
                     TopdownNormalizeOrZero(candidateVelocity),
                     preferredDir);
             score += (1.0f - forward) * 35.0f;
+            score += TopdownLengthSqr(
+                    TopdownSub(candidateVelocity, npc.localAvoidanceVelocity)) * 0.02f;
 
             if (!hasBest || score < bestScore) {
                 hasBest = true;
@@ -133,6 +135,31 @@ static Vector2 BuildNpcOrcaLikeVelocity(
     }
 
     return hasBest ? bestVelocity : preferredVelocity;
+}
+
+static void RotateNpcTowardDirection(TopdownNpcRuntime& npc, Vector2 direction, float dt)
+{
+    if (TopdownLengthSqr(direction) <= 0.000001f) {
+        return;
+    }
+
+    const Vector2 desiredDir = TopdownNormalizeOrZero(direction);
+    if (TopdownLengthSqr(desiredDir) <= 0.000001f) {
+        return;
+    }
+
+    const float desiredAngle = std::atan2(desiredDir.y, desiredDir.x);
+    const float maxTurnRate = 9.0f;
+    npc.rotationRadians = MoveTowardsAngle(
+            npc.rotationRadians,
+            desiredAngle,
+            maxTurnRate * dt);
+
+    npc.facing = Vector2{
+            std::cos(npc.rotationRadians),
+            std::sin(npc.rotationRadians)
+    };
+    npc.facing = TopdownNormalizeOrZero(npc.facing);
 }
 
 static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string& npcId)
@@ -161,14 +188,23 @@ static void UpdateNpcMovementAndCollision(
     Vector2 velocity{};
 
     if (npc.move.active && npc.moving) {
-        velocity = TopdownMul(npc.facing, npc.move.currentSpeed);
-        velocity = BuildNpcOrcaLikeVelocity(state, npc, velocity);
+        const Vector2 preferredVelocity = TopdownMul(npc.facing, npc.move.currentSpeed);
+        const Vector2 selectedVelocity =
+                BuildNpcOrcaLikeVelocity(state, npc, preferredVelocity);
 
-        if (TopdownLengthSqr(velocity) > 0.000001f) {
-            const Vector2 moveDir = TopdownNormalizeOrZero(velocity);
-            npc.facing = moveDir;
-            npc.rotationRadians = std::atan2(moveDir.y, moveDir.x);
+        velocity = TopdownAdd(
+                TopdownMul(selectedVelocity, 0.34f),
+                TopdownMul(npc.localAvoidanceVelocity, 0.66f));
+
+        const float maxSpeed = std::max(1.0f, npc.move.currentSpeed);
+        const float speed = TopdownLength(velocity);
+        if (speed > maxSpeed) {
+            velocity = TopdownMul(velocity, maxSpeed / speed);
         }
+
+        npc.localAvoidanceVelocity = velocity;
+    } else {
+        npc.localAvoidanceVelocity = {};
     }
 
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
@@ -290,8 +326,7 @@ static void UpdateSingleNpcScriptedMovement(GameState& state, TopdownNpcRuntime&
         }
 
         const Vector2 dir = TopdownNormalizeOrZero(delta);
-        npc.facing = dir;
-        npc.rotationRadians = std::atan2(dir.y, dir.x);
+        RotateNpcTowardDirection(npc, dir, dt);
         npc.moving = true;
         npc.running = move.running;
 
