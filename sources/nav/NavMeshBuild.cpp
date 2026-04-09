@@ -1,22 +1,46 @@
 #include "NavMeshBuild.h"
 
-#include <cmath>
-#include <cstdint>
-#include <unordered_map>
-#include <vector>
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstdint>
 #include <limits>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
-#include "utils/earcut.h"
 #include "clipper2/clipper.h"
+#include "utils/earcut.h"
 #include "raylib.h"
+
+#include "recast/Recast.h"
+#include "detour/DetourAlloc.h"
+#include "detour/DetourNavMesh.h"
+#include "detour/DetourNavMeshBuilder.h"
+#include "detour/DetourNavMeshQuery.h"
 
 using namespace Clipper2Lib;
 
 namespace
 {
     constexpr double CLIPPER_SCALE = 1000.0;
+
+    // Recast config.
+    constexpr float kCellSize = 12.0f;
+    constexpr float kCellHeight = 4.0f;
+
+    constexpr float kWalkableHeight = 2.0f;
+    constexpr float kWalkableClimb = 0.0f;
+    constexpr float kWalkableSlopeAngle = 45.0f;
+
+    constexpr float kMaxSimplificationError = 3.0f;
+    constexpr int   kMaxEdgeLenCells = 32;
+    constexpr int   kMinRegionAreaCells = 8;
+    constexpr int   kMergeRegionAreaCells = 20;
+    constexpr int   kMaxVertsPerPoly = 6;
+
+    constexpr float kDetailSampleDist = 0.0f;
+    constexpr float kDetailSampleMaxError = 1.0f;
 }
 
 struct EdgeOwner {
@@ -40,6 +64,30 @@ struct EdgeKeyHash {
         const uint64_t ua = static_cast<uint32_t>(k.a);
         const uint64_t ub = static_cast<uint32_t>(k.b);
         return static_cast<size_t>((ua << 32u) ^ ub);
+    }
+};
+
+struct TriangulationPolygon {
+    Path64 outer;
+    std::vector<Path64> holes;
+};
+
+struct RecastBuildContext : rcContext {
+    RecastBuildContext()
+            : rcContext(true)
+    {
+    }
+
+protected:
+    void doLog(const rcLogCategory category, const char* msg, const int /*len*/) override
+    {
+        switch (category) {
+            case RC_LOG_ERROR:   TraceLog(LOG_ERROR,   "Recast: %s", msg); break;
+            case RC_LOG_WARNING: TraceLog(LOG_WARNING, "Recast: %s", msg); break;
+            case RC_LOG_PROGRESS:
+            default:
+                break;
+        }
     }
 };
 
@@ -167,11 +215,6 @@ static bool PointInPath64(const Path64& path, const Point64& p)
     return inside;
 }
 
-struct TriangulationPolygon {
-    Path64 outer;
-    std::vector<Path64> holes;
-};
-
 static EndType GetClosedPolygonEndType()
 {
     return EndType::Polygon;
@@ -291,7 +334,6 @@ static std::vector<TriangulationPolygon> BuildFinalWalkablePolygons(
         result.push_back(poly);
     }
 
-    // Assign each hole to the smallest containing outer.
     for (const Path64& hole : holes) {
         if (hole.empty()) {
             continue;
@@ -322,10 +364,10 @@ static std::vector<TriangulationPolygon> BuildFinalWalkablePolygons(
     return result;
 }
 
-static void TriangulatePolygonWithHoles(
+static void AppendTriangulatedGeometry(
         const TriangulationPolygon& poly,
-        NavMeshData& navMesh,
-        std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash>& edgeMap)
+        std::vector<float>& outVerts,
+        std::vector<int>& outTris)
 {
     if (poly.outer.size() < 3) {
         return;
@@ -334,7 +376,7 @@ static void TriangulatePolygonWithHoles(
     std::vector<std::vector<std::array<double, 2>>> earcutInput;
     earcutInput.emplace_back();
 
-    const int baseVertexIndex = static_cast<int>(navMesh.vertices.size());
+    const int baseVertexIndex = static_cast<int>(outVerts.size() / 3u);
 
     earcutInput[0].reserve(poly.outer.size());
     for (const Point64& p : poly.outer) {
@@ -343,7 +385,10 @@ static void TriangulatePolygonWithHoles(
                 static_cast<double>(v.x),
                 static_cast<double>(v.y)
         });
-        navMesh.vertices.push_back(v);
+
+        outVerts.push_back(v.x);
+        outVerts.push_back(0.0f);
+        outVerts.push_back(v.y);
     }
 
     for (const Path64& hole : poly.holes) {
@@ -360,7 +405,10 @@ static void TriangulatePolygonWithHoles(
                     static_cast<double>(v.x),
                     static_cast<double>(v.y)
             });
-            navMesh.vertices.push_back(v);
+
+            outVerts.push_back(v.x);
+            outVerts.push_back(0.0f);
+            outVerts.push_back(v.y);
         }
     }
 
@@ -374,58 +422,474 @@ static void TriangulatePolygonWithHoles(
         const int ib = baseVertexIndex + static_cast<int>(indices[i + 1]);
         const int ic = baseVertexIndex + static_cast<int>(indices[i + 2]);
 
-        if (ia < 0 || ib < 0 || ic < 0 ||
-            ia >= static_cast<int>(navMesh.vertices.size()) ||
-            ib >= static_cast<int>(navMesh.vertices.size()) ||
-            ic >= static_cast<int>(navMesh.vertices.size())) {
+        if (ia == ib || ib == ic || ic == ia) {
             continue;
         }
 
-        const Vector2 a = navMesh.vertices[ia];
-        const Vector2 b = navMesh.vertices[ib];
-        const Vector2 c = navMesh.vertices[ic];
-
-        const float area2 = std::fabs(
-                (b.x - a.x) * (c.y - a.y) -
-                (b.y - a.y) * (c.x - a.x));
-
-        if (area2 <= 0.0001f) {
-            continue;
-        }
-
-        NavTriangle tri;
-        tri.vertexIndex0 = ia;
-        tri.vertexIndex1 = ib;
-        tri.vertexIndex2 = ic;
-        tri.centroid = ComputeTriangleCentroid(a, b, c);
-        tri.bounds = ComputeTriangleBounds(a, b, c);
-
-        const int triangleIndex = static_cast<int>(navMesh.triangles.size());
-        navMesh.triangles.push_back(tri);
-
-        RegisterTriangleEdge(edgeMap, navMesh.triangles, triangleIndex, 0, ia, ib);
-        RegisterTriangleEdge(edgeMap, navMesh.triangles, triangleIndex, 1, ib, ic);
-        RegisterTriangleEdge(edgeMap, navMesh.triangles, triangleIndex, 2, ic, ia);
+        // Recast expects walkable triangle normals to point upward (+Y).
+        // Our 2D nav data is mapped as:
+        //   world.x -> recast.x
+        //   world.y -> recast.z
+        //   recast.y = 0
+        //
+        // For triangles on the XZ plane, the winding needs to be reversed
+        // relative to ordinary 2D XY winding, otherwise the normal points
+        // downward and rcMarkWalkableTriangles marks it non-walkable.
+        outTris.push_back(ia);
+        outTris.push_back(ic);
+        outTris.push_back(ib);
     }
+}
+
+static std::shared_ptr<dtNavMesh> MakeNavMeshPtr(dtNavMesh* mesh)
+{
+    return std::shared_ptr<dtNavMesh>(
+            mesh,
+            [](dtNavMesh* p) {
+                if (p != nullptr) {
+                    dtFreeNavMesh(p);
+                }
+            });
+}
+
+static std::shared_ptr<dtNavMeshQuery> MakeNavMeshQueryPtr(dtNavMeshQuery* query)
+{
+    return std::shared_ptr<dtNavMeshQuery>(
+            query,
+            [](dtNavMeshQuery* p) {
+                if (p != nullptr) {
+                    dtFreeNavMeshQuery(p);
+                }
+            });
+}
+
+static void AppendDebugTriangle(
+        std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash>& edgeMap,
+        std::vector<NavTriangle>& triangles,
+        const std::vector<Vector2>& vertices,
+        int ia,
+        int ib,
+        int ic)
+{
+    if (ia == ib || ib == ic || ic == ia) {
+        return;
+    }
+
+    if (ia < 0 || ib < 0 || ic < 0 ||
+        ia >= static_cast<int>(vertices.size()) ||
+        ib >= static_cast<int>(vertices.size()) ||
+        ic >= static_cast<int>(vertices.size())) {
+        return;
+    }
+
+    const Vector2 a = vertices[ia];
+    const Vector2 b = vertices[ib];
+    const Vector2 c = vertices[ic];
+
+    const float area2 = std::fabs(
+            (b.x - a.x) * (c.y - a.y) -
+            (b.y - a.y) * (c.x - a.x));
+
+    if (area2 <= 0.0001f) {
+        return;
+    }
+
+    NavTriangle tri;
+    tri.vertexIndex0 = ia;
+    tri.vertexIndex1 = ib;
+    tri.vertexIndex2 = ic;
+    tri.centroid = ComputeTriangleCentroid(a, b, c);
+    tri.bounds = ComputeTriangleBounds(a, b, c);
+
+    const int triIndex = static_cast<int>(triangles.size());
+    triangles.push_back(tri);
+
+    RegisterTriangleEdge(edgeMap, triangles, triIndex, 0, ia, ib);
+    RegisterTriangleEdge(edgeMap, triangles, triIndex, 1, ib, ic);
+    RegisterTriangleEdge(edgeMap, triangles, triIndex, 2, ic, ia);
+}
+
+static bool BuildDebugTrianglesFromPolyMesh(
+        const rcPolyMesh& pmesh,
+        NavMeshData& navMesh)
+{
+    navMesh.vertices.clear();
+    navMesh.triangles.clear();
+
+    if (pmesh.nverts <= 0 || pmesh.npolys <= 0 || pmesh.nvp <= 0) {
+        return false;
+    }
+
+    navMesh.vertices.reserve(static_cast<size_t>(pmesh.nverts));
+    for (int i = 0; i < pmesh.nverts; ++i) {
+        const unsigned short* v = &pmesh.verts[static_cast<size_t>(i) * 3u];
+
+        Vector2 world{
+                pmesh.bmin[0] + static_cast<float>(v[0]) * pmesh.cs,
+                pmesh.bmin[2] + static_cast<float>(v[2]) * pmesh.cs
+        };
+
+        navMesh.vertices.push_back(world);
+    }
+
+    std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash> edgeMap;
+    navMesh.triangles.reserve(static_cast<size_t>(pmesh.npolys) * 4u);
+
+    for (int i = 0; i < pmesh.npolys; ++i) {
+        const unsigned short* poly =
+                &pmesh.polys[static_cast<size_t>(i) * static_cast<size_t>(pmesh.nvp * 2)];
+
+        std::vector<int> polyVerts;
+        polyVerts.reserve(static_cast<size_t>(pmesh.nvp));
+
+        for (int j = 0; j < pmesh.nvp; ++j) {
+            const unsigned short idx = poly[j];
+            if (idx == RC_MESH_NULL_IDX) {
+                break;
+            }
+
+            const int vi = static_cast<int>(idx);
+            if (vi < 0 || vi >= static_cast<int>(navMesh.vertices.size())) {
+                polyVerts.clear();
+                break;
+            }
+
+            polyVerts.push_back(vi);
+        }
+
+        if (polyVerts.size() < 3) {
+            continue;
+        }
+
+        if (polyVerts.size() == 3) {
+            AppendDebugTriangle(
+                    edgeMap,
+                    navMesh.triangles,
+                    navMesh.vertices,
+                    polyVerts[0],
+                    polyVerts[1],
+                    polyVerts[2]);
+            continue;
+        }
+
+        std::vector<std::array<double, 2>> ring;
+        ring.reserve(polyVerts.size());
+
+        for (int vi : polyVerts) {
+            const Vector2& v = navMesh.vertices[vi];
+            ring.push_back(std::array<double, 2>{
+                    static_cast<double>(v.x),
+                    static_cast<double>(v.y)
+            });
+        }
+
+        std::vector<std::vector<std::array<double, 2>>> earcutInput;
+        earcutInput.push_back(ring);
+
+        const std::vector<uint32_t> localIndices =
+                mapbox::earcut<uint32_t>(earcutInput);
+
+        if (localIndices.size() < 3 || (localIndices.size() % 3) != 0) {
+            continue;
+        }
+
+        for (size_t t = 0; t < localIndices.size(); t += 3) {
+            const uint32_t la = localIndices[t + 0];
+            const uint32_t lb = localIndices[t + 1];
+            const uint32_t lc = localIndices[t + 2];
+
+            if (la >= polyVerts.size() ||
+                lb >= polyVerts.size() ||
+                lc >= polyVerts.size()) {
+                continue;
+            }
+
+            AppendDebugTriangle(
+                    edgeMap,
+                    navMesh.triangles,
+                    navMesh.vertices,
+                    polyVerts[static_cast<size_t>(la)],
+                    polyVerts[static_cast<size_t>(lb)],
+                    polyVerts[static_cast<size_t>(lc)]);
+        }
+    }
+
+    return !navMesh.triangles.empty();
+}
+
+static bool BuildRecastDetourNavMesh(
+        NavMeshData& navMesh,
+        const std::vector<float>& geomVerts,
+        const std::vector<int>& geomTris)
+{
+    navMesh.detourNavMesh.reset();
+    navMesh.detourQuery.reset();
+
+    if (geomVerts.empty() || geomTris.empty()) {
+        return false;
+    }
+
+    const int geomVertCount = static_cast<int>(geomVerts.size() / 3u);
+    const int geomTriCount = static_cast<int>(geomTris.size() / 3u);
+
+    if (geomVertCount <= 0 || geomTriCount <= 0) {
+        return false;
+    }
+
+    RecastBuildContext ctx;
+
+    float bmin[3]{};
+    float bmax[3]{};
+    rcCalcBounds(geomVerts.data(), geomVertCount, bmin, bmax);
+
+    rcConfig cfg{};
+    cfg.cs = kCellSize;
+    cfg.ch = kCellHeight;
+    cfg.walkableSlopeAngle = kWalkableSlopeAngle;
+    cfg.walkableHeight = static_cast<int>(std::ceil(kWalkableHeight / cfg.ch));
+    cfg.walkableClimb = static_cast<int>(std::floor(kWalkableClimb / cfg.ch));
+    cfg.walkableRadius = 0; // already handled by clipper offset
+    cfg.maxEdgeLen = static_cast<int>(kMaxEdgeLenCells);
+    cfg.maxSimplificationError = kMaxSimplificationError;
+    cfg.minRegionArea = kMinRegionAreaCells;
+    cfg.mergeRegionArea = kMergeRegionAreaCells;
+    cfg.maxVertsPerPoly = kMaxVertsPerPoly;
+    cfg.detailSampleDist = kDetailSampleDist;
+    cfg.detailSampleMaxError = kDetailSampleMaxError;
+    cfg.borderSize = 0;
+
+    rcVcopy(cfg.bmin, bmin);
+    rcVcopy(cfg.bmax, bmax);
+    rcCalcGridSize(cfg.bmin, cfg.bmax, cfg.cs, &cfg.width, &cfg.height);
+
+    if (cfg.width <= 0 || cfg.height <= 0) {
+        TraceLog(LOG_ERROR, "Recast build failed: invalid grid size");
+        return false;
+    }
+
+    using HeightfieldPtr = std::unique_ptr<rcHeightfield, void(*)(rcHeightfield*)>;
+    using CompactHeightfieldPtr = std::unique_ptr<rcCompactHeightfield, void(*)(rcCompactHeightfield*)>;
+    using ContourSetPtr = std::unique_ptr<rcContourSet, void(*)(rcContourSet*)>;
+    using PolyMeshPtr = std::unique_ptr<rcPolyMesh, void(*)(rcPolyMesh*)>;
+
+    HeightfieldPtr solid(rcAllocHeightfield(), rcFreeHeightField);
+    CompactHeightfieldPtr chf(rcAllocCompactHeightfield(), rcFreeCompactHeightfield);
+    ContourSetPtr cset(rcAllocContourSet(), rcFreeContourSet);
+    PolyMeshPtr pmesh(rcAllocPolyMesh(), rcFreePolyMesh);
+
+    if (!solid || !chf || !cset || !pmesh) {
+        TraceLog(LOG_ERROR, "Recast build failed: allocation failed");
+        return false;
+    }
+
+    if (!rcCreateHeightfield(&ctx, *solid, cfg.width, cfg.height, cfg.bmin, cfg.bmax, cfg.cs, cfg.ch)) {
+        TraceLog(LOG_ERROR, "rcCreateHeightfield failed");
+        return false;
+    }
+
+    std::vector<unsigned char> triAreas(static_cast<size_t>(geomTriCount), 0);
+    rcMarkWalkableTriangles(&ctx,
+                            cfg.walkableSlopeAngle,
+                            geomVerts.data(),
+                            geomVertCount,
+                            geomTris.data(),
+                            geomTriCount,
+                            triAreas.data());
+
+    if (!rcRasterizeTriangles(&ctx,
+                              geomVerts.data(),
+                              geomVertCount,
+                              geomTris.data(),
+                              triAreas.data(),
+                              geomTriCount,
+                              *solid,
+                              cfg.walkableClimb)) {
+        TraceLog(LOG_ERROR, "rcRasterizeTriangles failed");
+        return false;
+    }
+
+    rcFilterLowHangingWalkableObstacles(&ctx, cfg.walkableClimb, *solid);
+    rcFilterLedgeSpans(&ctx, cfg.walkableHeight, cfg.walkableClimb, *solid);
+    rcFilterWalkableLowHeightSpans(&ctx, cfg.walkableHeight, *solid);
+
+    if (!rcBuildCompactHeightfield(&ctx,
+                                   cfg.walkableHeight,
+                                   cfg.walkableClimb,
+                                   *solid,
+                                   *chf)) {
+        TraceLog(LOG_ERROR, "rcBuildCompactHeightfield failed");
+        return false;
+    }
+
+    if (cfg.walkableRadius > 0) {
+        if (!rcErodeWalkableArea(&ctx, cfg.walkableRadius, *chf)) {
+            TraceLog(LOG_ERROR, "rcErodeWalkableArea failed");
+            return false;
+        }
+    }
+
+    if (!rcBuildDistanceField(&ctx, *chf)) {
+        TraceLog(LOG_ERROR, "rcBuildDistanceField failed");
+        return false;
+    }
+
+    if (!rcBuildRegions(&ctx,
+                        *chf,
+                        cfg.borderSize,
+                        cfg.minRegionArea,
+                        cfg.mergeRegionArea)) {
+        TraceLog(LOG_ERROR, "rcBuildRegions failed");
+        return false;
+    }
+
+    if (!rcBuildContours(&ctx,
+                         *chf,
+                         cfg.maxSimplificationError,
+                         cfg.maxEdgeLen,
+                         *cset)) {
+        TraceLog(LOG_ERROR, "rcBuildContours failed");
+        return false;
+    }
+
+    if (cset->nconts <= 0) {
+        TraceLog(LOG_ERROR, "Recast build failed: no contours");
+        return false;
+    }
+
+    if (!rcBuildPolyMesh(&ctx,
+                         *cset,
+                         cfg.maxVertsPerPoly,
+                         *pmesh)) {
+        TraceLog(LOG_ERROR, "rcBuildPolyMesh failed");
+        return false;
+    }
+
+    if (pmesh->npolys <= 0 || pmesh->nverts <= 0) {
+        TraceLog(LOG_ERROR, "Recast build failed: empty poly mesh");
+        return false;
+    }
+
+    for (int i = 0; i < pmesh->npolys; ++i) {
+        pmesh->flags[i] = 1;
+        if (pmesh->areas[i] == RC_NULL_AREA) {
+            pmesh->areas[i] = 0;
+        }
+    }
+
+    dtNavMeshCreateParams params{};
+    params.verts = pmesh->verts;
+    params.vertCount = pmesh->nverts;
+    params.polys = pmesh->polys;
+    params.polyAreas = pmesh->areas;
+    params.polyFlags = pmesh->flags;
+    params.polyCount = pmesh->npolys;
+    params.nvp = pmesh->nvp;
+
+    params.detailMeshes = nullptr;
+    params.detailVerts = nullptr;
+    params.detailVertsCount = 0;
+    params.detailTris = nullptr;
+    params.detailTriCount = 0;
+
+    params.walkableHeight = kWalkableHeight;
+    params.walkableRadius = 0.0f;
+    params.walkableClimb = kWalkableClimb;
+
+    rcVcopy(params.bmin, pmesh->bmin);
+    rcVcopy(params.bmax, pmesh->bmax);
+
+    params.cs = pmesh->cs;
+    params.ch = pmesh->ch;
+
+    params.buildBvTree = true;
+
+    unsigned char* navData = nullptr;
+    int navDataSize = 0;
+
+    if (!dtCreateNavMeshData(&params, &navData, &navDataSize) ||
+        navData == nullptr ||
+        navDataSize <= 0) {
+        TraceLog(LOG_ERROR, "dtCreateNavMeshData failed");
+        return false;
+    }
+
+    dtNavMesh* rawNavMesh = dtAllocNavMesh();
+    if (rawNavMesh == nullptr) {
+        dtFree(navData);
+        TraceLog(LOG_ERROR, "dtAllocNavMesh failed");
+        return false;
+    }
+
+    if (dtStatusFailed(rawNavMesh->init(navData, navDataSize, DT_TILE_FREE_DATA))) {
+        dtFreeNavMesh(rawNavMesh);
+        TraceLog(LOG_ERROR, "dtNavMesh::init failed");
+        return false;
+    }
+
+    dtNavMeshQuery* rawQuery = dtAllocNavMeshQuery();
+    if (rawQuery == nullptr) {
+        dtFreeNavMesh(rawNavMesh);
+        TraceLog(LOG_ERROR, "dtAllocNavMeshQuery failed");
+        return false;
+    }
+
+    if (dtStatusFailed(rawQuery->init(rawNavMesh, std::max(2048, pmesh->npolys * 8)))) {
+        dtFreeNavMeshQuery(rawQuery);
+        dtFreeNavMesh(rawNavMesh);
+        TraceLog(LOG_ERROR, "dtNavMeshQuery::init failed");
+        return false;
+    }
+
+    navMesh.detourNavMesh = MakeNavMeshPtr(rawNavMesh);
+    navMesh.detourQuery = MakeNavMeshQueryPtr(rawQuery);
+
+    if (!BuildDebugTrianglesFromPolyMesh(*pmesh, navMesh)) {
+        navMesh.detourNavMesh.reset();
+        navMesh.detourQuery.reset();
+        TraceLog(LOG_ERROR, "Failed to build debug triangles from Recast poly mesh");
+        return false;
+    }
+
+    return true;
 }
 
 bool BuildNavMesh(NavMeshData& navMesh, float agentRadius)
 {
     navMesh.vertices.clear();
     navMesh.triangles.clear();
+    navMesh.detourNavMesh.reset();
+    navMesh.detourQuery.reset();
     navMesh.built = false;
-
-    std::unordered_map<EdgeKey, EdgeOwner, EdgeKeyHash> edgeMap;
 
     const std::vector<TriangulationPolygon> finalPolys =
             BuildFinalWalkablePolygons(navMesh, std::max(0.0f, agentRadius));
 
-    for (const TriangulationPolygon& poly : finalPolys) {
-        TriangulatePolygonWithHoles(poly, navMesh, edgeMap);
+    if (finalPolys.empty()) {
+        return false;
     }
 
-    navMesh.built = !navMesh.triangles.empty();
-    return navMesh.built;
+    std::vector<float> geomVerts;
+    std::vector<int> geomTris;
+
+    for (const TriangulationPolygon& poly : finalPolys) {
+        AppendTriangulatedGeometry(poly, geomVerts, geomTris);
+    }
+
+    if (geomVerts.empty() || geomTris.empty()) {
+        return false;
+    }
+
+    if (!BuildRecastDetourNavMesh(navMesh, geomVerts, geomTris)) {
+        navMesh.vertices.clear();
+        navMesh.triangles.clear();
+        navMesh.detourNavMesh.reset();
+        navMesh.detourQuery.reset();
+        navMesh.built = false;
+        return false;
+    }
+
+    navMesh.built = true;
+    return true;
 }
 
 bool BuildNavMesh(NavMeshData& navMesh)

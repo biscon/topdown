@@ -54,3 +54,6 @@ void TopdownBuildDoorCorners(
         Vector2& outC,
         Vector2& outD);
 
+Vector2 TopdownBuildNpcPathSteeringTarget(
+        const TopdownNpcRuntime& npc,
+        float lookaheadDistance);

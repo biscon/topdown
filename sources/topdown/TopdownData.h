@@ -763,6 +763,7 @@ struct TopdownNpcMoveState {
     bool running = false;
     TopdownNpcMoveOwner owner = TopdownNpcMoveOwner::None;
 
+    std::vector<int> debugTrianglePath;
     std::vector<Vector2> pathPoints;
     int currentPoint = 0;
 
@@ -914,10 +915,6 @@ struct TopdownNpcRuntime {
     float loseTargetTimerMs = 0.0f;
     float repathTimerMs = 0.0f;
 
-    float investigationStuckTimerMs = 0.0f;
-    Vector2 investigationTarget{};
-    bool hasInvestigationTarget = false;
-
     bool attackHitPending = false;
     bool attackHitApplied = false;
     float attackStateTimeMs = 0.0f;
@@ -968,6 +965,9 @@ struct TopdownNpcRuntime {
     std::vector<std::string> hitReactionSoundIds;
 
     TopdownNpcAttackEffectsConfig attackEffects;
+
+    float lostTargetProgressTimerMs = 0.0f;
+    float lostTargetLastDistance = 0.0f;
 };
 
 struct TopdownLevelRegistryEntry {

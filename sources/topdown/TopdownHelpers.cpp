@@ -349,3 +349,59 @@ void TopdownBuildDoorCorners(
     outC = endRight;
     outD = endLeft;
 }
+
+Vector2 TopdownBuildNpcPathSteeringTarget(
+        const TopdownNpcRuntime& npc,
+        float lookaheadDistance)
+{
+    if (!npc.move.active ||
+        npc.move.currentPoint < 0 ||
+        npc.move.currentPoint >= static_cast<int>(npc.move.pathPoints.size())) {
+        return npc.position;
+    }
+
+    const std::vector<Vector2>& points = npc.move.pathPoints;
+    const int currentIndex = npc.move.currentPoint;
+
+    const Vector2 segmentEnd = points[currentIndex];
+
+    Vector2 segmentStart = npc.position;
+    if (currentIndex > 0) {
+        segmentStart = points[currentIndex - 1];
+    }
+
+    Vector2 segmentDelta = TopdownSub(segmentEnd, segmentStart);
+    const float segmentLenSqr = TopdownLengthSqr(segmentDelta);
+
+    Vector2 current = segmentStart;
+
+    if (segmentLenSqr > 0.000001f) {
+        const Vector2 fromStartToNpc = TopdownSub(npc.position, segmentStart);
+        float t = TopdownDot(fromStartToNpc, segmentDelta) / segmentLenSqr;
+        t = Clamp(t, 0.0f, 1.0f);
+        current = TopdownAdd(segmentStart, TopdownMul(segmentDelta, t));
+    }
+
+    float remaining = std::max(0.0f, lookaheadDistance);
+
+    for (int i = currentIndex; i < static_cast<int>(points.size()); ++i) {
+        const Vector2 next = points[i];
+        const Vector2 delta = TopdownSub(next, current);
+        const float segLen = TopdownLength(delta);
+
+        if (segLen <= 0.000001f) {
+            current = next;
+            continue;
+        }
+
+        if (remaining <= segLen) {
+            const float t = remaining / segLen;
+            return TopdownAdd(current, TopdownMul(delta, t));
+        }
+
+        remaining -= segLen;
+        current = next;
+    }
+
+    return points.back();
+}

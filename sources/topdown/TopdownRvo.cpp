@@ -76,7 +76,7 @@ static void ConfigureSimulatorDefaults(RVO::RVOSimulator& sim)
             12,     // maxNeighbors
             0.8f,   // timeHorizon
             0.8f,   // timeHorizonObst
-            32.0f,  // radius
+            40.0f,  // radius
             700.0f  // maxSpeed
     );
 }
@@ -197,16 +197,6 @@ static Vector2 BuildNpcFallbackPreferredVelocity(
         return Vector2{};
     }
 
-    const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
-    Vector2 toTarget = TopdownSub(target, npc.position);
-    const float dist = TopdownLength(toTarget);
-
-    if (dist <= std::max(1.0f, npc.move.arrivalRadius)) {
-        return Vector2{};
-    }
-
-    const Vector2 dir = TopdownMul(toTarget, 1.0f / dist);
-
     const TopdownNpcAssetRuntime* asset = FindNpcAssetForRvo(state, npc);
     const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
     const float runSpeed = asset ? asset->runSpeed : 700.0f;
@@ -216,6 +206,21 @@ static Vector2 BuildNpcFallbackPreferredVelocity(
             std::max(0.0f, npc.move.currentSpeed),
             maxSpeed);
 
+    const float lookaheadDistance = std::max(
+            100.0f,
+            npc.collisionRadius * 4.0f);
+
+    const Vector2 steeringTarget =
+            TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
+
+    const Vector2 toTarget = TopdownSub(steeringTarget, npc.position);
+    const float dist = TopdownLength(toTarget);
+
+    if (dist <= std::max(1.0f, npc.move.arrivalRadius)) {
+        return Vector2{};
+    }
+
+    const Vector2 dir = TopdownMul(toTarget, 1.0f / dist);
     return TopdownMul(dir, desiredSpeed);
 }
 

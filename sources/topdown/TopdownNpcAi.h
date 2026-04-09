@@ -56,11 +56,6 @@ void TopdownAlertNearbyNpcs(
         const TopdownNpcRuntime& sourceNpc,
         float radius);
 
-Vector2 TopdownBuildNpcInvestigationTargetAroundPoint(
-        const GameState& state,
-        const TopdownNpcRuntime& npc,
-        Vector2 center);
-
 bool TopdownHasNpcReachedPoint(
         const TopdownNpcRuntime& npc,
         Vector2 point,

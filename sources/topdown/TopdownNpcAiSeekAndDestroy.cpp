@@ -57,9 +57,8 @@ static void FinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
     npc.hasPlayerTarget = false;
     npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
-    npc.investigationStuckTimerMs = 0.0f;
-    npc.hasInvestigationTarget = false;
-    npc.investigationTarget = Vector2{};
+    npc.lostTargetProgressTimerMs = 0.0f;
+    npc.lostTargetLastDistance = 0.0f;
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
     npc.combatState = TopdownNpcCombatState::None;
 
@@ -217,16 +216,9 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
             TopdownMul(toPlayer, -player.radius * 0.55f));
 }
 
-static bool HasNpcReachedInvestigationDestination(const TopdownNpcRuntime& npc)
+static bool HasNpcReachedLastKnownTarget(const TopdownNpcRuntime& npc)
 {
-    const float arriveRadius = 200.0f;
-
-    if (npc.hasInvestigationTarget) {
-        return TopdownHasNpcReachedPoint(
-                npc,
-                npc.investigationTarget,
-                arriveRadius);
-    }
+    const float arriveRadius = 300.0f;
 
     return TopdownHasNpcReachedPoint(
             npc,
@@ -250,11 +242,9 @@ static void UpdateNpcPerception(
 
         npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
         npc.loseTargetTimerMs = 0.0f;
+        npc.lostTargetProgressTimerMs = 0.0f;
+        npc.lostTargetLastDistance = 0.0f;
         npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-
-        npc.investigationStuckTimerMs = 0.0f;
-        npc.hasInvestigationTarget = false;
-        npc.investigationTarget = Vector2{};
 
         const float nearbyAlertRadius =
                 std::max(180.0f, npc.hearingRange);
@@ -268,40 +258,48 @@ static void UpdateNpcPerception(
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
         if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-            const float nearLastKnownRadius = 100.0f;
-            const bool nearLastKnown =
-                    TopdownHasNpcReachedPoint(
-                            npc,
-                            npc.lastKnownPlayerPosition,
-                            nearLastKnownRadius);
+            if (HasNpcReachedLastKnownTarget(npc)) {
+                BeginNpcSearchState(npc);
+                return;
+            }
 
-            const bool barelyMoving =
-                    TopdownLengthSqr(npc.currentVelocity) < (20.0f * 20.0f);
+            const float currentDistance =
+                    TopdownLength(
+                            TopdownSub(
+                                    npc.lastKnownPlayerPosition,
+                                    npc.position));
 
-            if (nearLastKnown && barelyMoving) {
-                npc.investigationStuckTimerMs += dtMs;
+            if (npc.lostTargetProgressTimerMs <= 0.0f) {
+                npc.lostTargetLastDistance = currentDistance;
+                npc.lostTargetProgressTimerMs = dtMs;
             } else {
-                npc.investigationStuckTimerMs = 0.0f;
+                npc.lostTargetProgressTimerMs += dtMs;
             }
 
-            if (HasNpcReachedInvestigationDestination(npc)) {
-                BeginNpcSearchState(npc);
-                return;
-            }
+            if (npc.lostTargetProgressTimerMs >= 800.0f) {
+                const float progress =
+                        npc.lostTargetLastDistance - currentDistance;
 
-            if (npc.investigationStuckTimerMs >= 700.0f) {
-                BeginNpcSearchState(npc);
-                return;
+                const bool madeTooLittleProgress = progress < 20.0f;
+                if (madeTooLittleProgress) {
+                    BeginNpcSearchState(npc);
+                    return;
+                }
+
+                npc.lostTargetLastDistance = currentDistance;
+                npc.lostTargetProgressTimerMs = 0.0f;
             }
+        } else {
+            npc.lostTargetProgressTimerMs = 0.0f;
+            npc.lostTargetLastDistance = 0.0f;
         }
 
         return;
     }
 
+    npc.lostTargetProgressTimerMs = 0.0f;
+    npc.lostTargetLastDistance = 0.0f;
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.investigationStuckTimerMs = 0.0f;
-    npc.hasInvestigationTarget = false;
-    npc.investigationTarget = Vector2{};
 }
 
 static void StartNpcAttack(
@@ -455,6 +453,8 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
     if (!TopdownIsPlayerAlive(state)) {
         npc.hasPlayerTarget = false;
+        npc.lostTargetProgressTimerMs = 0.0f;
+        npc.lostTargetLastDistance = 0.0f;
         npc.awarenessState = TopdownNpcAwarenessState::Idle;
         npc.combatState = TopdownNpcCombatState::None;
         TopdownStopNpcMovement(npc);
@@ -555,17 +555,8 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
         if (currentlyDetectsPlayer) {
             chaseTarget = player.position;
-            npc.hasInvestigationTarget = false;
-            npc.investigationTarget = Vector2{};
-            npc.investigationStuckTimerMs = 0.0f;
         } else {
-            npc.investigationTarget =
-                    TopdownBuildNpcInvestigationTargetAroundPoint(
-                            state,
-                            npc,
-                            npc.lastKnownPlayerPosition);
-            npc.hasInvestigationTarget = true;
-            chaseTarget = npc.investigationTarget;
+            chaseTarget = npc.lastKnownPlayerPosition;
         }
 
         TopdownBuildNpcPathToTarget(

@@ -40,10 +40,6 @@ void TopdownStopNpcMovement(TopdownNpcRuntime& npc)
     npc.moving = false;
     npc.running = false;
     npc.currentVelocity = Vector2{};
-
-    npc.investigationStuckTimerMs = 0.0f;
-    npc.hasInvestigationTarget = false;
-    npc.investigationTarget = Vector2{};
 }
 
 bool TopdownHasNpcReachedPoint(
@@ -87,165 +83,6 @@ static bool HasDoorBetweenPoints(
             hitDistance);
 }
 
-static bool HasClearLineFromPointToPoint(
-        GameState& state,
-        Vector2 from,
-        Vector2 to)
-{
-    Vector2 delta = TopdownSub(to, from);
-    const float dist = TopdownLength(delta);
-
-    if (dist <= 0.000001f) {
-        return true;
-    }
-
-    const Vector2 dir = TopdownMul(delta, 1.0f / dist);
-
-    Vector2 hitPoint{};
-    Vector2 hitNormal{};
-    float hitDistance = dist;
-
-    if (RaycastClosestSegmentWithNormal(
-            from,
-            dir,
-            state.topdown.runtime.collision.visionSegments,
-            dist,
-            hitPoint,
-            hitNormal,
-            hitDistance)) {
-        return false;
-    }
-
-    hitDistance = dist;
-    if (RaycastClosestSegmentWithNormal(
-            from,
-            dir,
-            state.topdown.runtime.collision.boundarySegments,
-            dist,
-            hitPoint,
-            hitNormal,
-            hitDistance)) {
-        return false;
-    }
-
-    TopdownRuntimeDoor* hitDoor = nullptr;
-    hitDistance = dist;
-    if (RaycastClosestDoor(
-            state,
-            from,
-            dir,
-            dist,
-            hitDoor,
-            hitPoint,
-            hitNormal,
-            hitDistance)) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool CanBuildNpcPathToPoint(
-        GameState& state,
-        const TopdownNpcRuntime& npc,
-        Vector2 targetPos)
-{
-    if (!state.topdown.runtime.nav.valid) {
-        return true;
-    }
-
-    std::vector<Vector2> pathPoints;
-    std::vector<int> trianglePath;
-    Vector2 resolvedEndPos = targetPos;
-
-    return BuildNavPath(
-            state.topdown.runtime.nav.navMesh,
-            npc.position,
-            targetPos,
-            pathPoints,
-            &trianglePath,
-            &resolvedEndPos);
-}
-
-Vector2 TopdownBuildNpcInvestigationTargetAroundPoint(
-        const GameState& stateConst,
-        const TopdownNpcRuntime& npc,
-        Vector2 center)
-{
-    GameState& state = const_cast<GameState&>(stateConst);
-
-    static constexpr int kSlotsPerRing = 12;
-    static constexpr int kRingCount = 3;
-
-    // Wider than before so NPCs do not pile onto almost the same point.
-    const float baseRadius =
-            std::max(96.0f, npc.collisionRadius * 2.0f + 40.0f);
-
-    const float ringSpacing = 100.0f;
-
-    const int baseSlot =
-            (npc.handle >= 0)
-            ? (npc.handle % kSlotsPerRing)
-            : 0;
-
-    Vector2 bestCandidate = center;
-    float bestScore = 999999999.0f;
-    bool foundAnyValid = false;
-
-    for (int ring = 0; ring < kRingCount; ++ring) {
-        const float radius = baseRadius + static_cast<float>(ring) * ringSpacing;
-
-        for (int i = 0; i < kSlotsPerRing; ++i) {
-            const int slot = (baseSlot + i) % kSlotsPerRing;
-
-            const float angle =
-                    (2.0f * PI * static_cast<float>(slot)) /
-                    static_cast<float>(kSlotsPerRing);
-
-            Vector2 offset{
-                    std::cos(angle) * radius,
-                    std::sin(angle) * radius
-            };
-
-            Vector2 candidate = TopdownAdd(center, offset);
-
-            // Reject points hidden behind blockers relative to the last known point.
-            if (!HasClearLineFromPointToPoint(state, center, candidate)) {
-                continue;
-            }
-
-            // Reject points the NPC cannot actually path to.
-            if (!CanBuildNpcPathToPoint(state, npc, candidate)) {
-                continue;
-            }
-
-            // Prefer nearer rings and shorter travel from current NPC position.
-            const float travelDistSqr =
-                    TopdownLengthSqr(TopdownSub(candidate, npc.position));
-
-            const float ringBias = static_cast<float>(ring) * 1000000.0f;
-            const float score = ringBias + travelDistSqr;
-
-            if (!foundAnyValid || score < bestScore) {
-                bestCandidate = candidate;
-                bestScore = score;
-                foundAnyValid = true;
-            }
-        }
-
-        // As soon as we found at least one valid point on this ring,
-        // stop expanding outward.
-        if (foundAnyValid) {
-            return bestCandidate;
-        }
-    }
-
-    // Final fallback:
-    // if no ring candidate is both LOS-valid and nav-valid,
-    // keep the original investigation center.
-    return center;
-}
-
 void TopdownAlertNpcToPlayer(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -268,10 +105,6 @@ void TopdownAlertNpcToPlayer(
     npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
     npc.loseTargetTimerMs = 0.0f;
     npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-
-    npc.investigationStuckTimerMs = 0.0f;
-    npc.hasInvestigationTarget = false;
-    npc.investigationTarget = Vector2{};
 
     if (newlyAcquiredTarget) {
         npc.repathTimerMs = 0.0f;
@@ -670,6 +503,79 @@ void TopdownBuildNpcPathToTarget(
         }
     }
 
+    auto computePathLengthFrom = [](Vector2 start, const std::vector<Vector2>& points) -> float {
+        if (points.empty()) {
+            return 0.0f;
+        }
+
+        float total = TopdownLength(TopdownSub(points[0], start));
+        for (int i = 0; i + 1 < static_cast<int>(points.size()); ++i) {
+            total += TopdownLength(TopdownSub(points[i + 1], points[i]));
+        }
+        return total;
+    };
+
+    auto computeRemainingCurrentPathLength = [](const TopdownNpcRuntime& npcRuntime) -> float {
+        const TopdownNpcMoveState& move = npcRuntime.move;
+
+        if (!move.active ||
+            move.currentPoint < 0 ||
+            move.currentPoint >= static_cast<int>(move.pathPoints.size())) {
+            return 0.0f;
+        }
+
+        float total = TopdownLength(
+                TopdownSub(move.pathPoints[move.currentPoint], npcRuntime.position));
+
+        for (int i = move.currentPoint; i + 1 < static_cast<int>(move.pathPoints.size()); ++i) {
+            total += TopdownLength(
+                    TopdownSub(move.pathPoints[i + 1], move.pathPoints[i]));
+        }
+
+        return total;
+    };
+
+    // ---------------------------------------------------------------------
+    // AI repath hysteresis:
+    // Do not replace an existing chase path unless the new one is clearly
+    // better, the target moved a lot, or the old path is basically done.
+    // This prevents "flip to the other side of the lake" oscillation.
+    // ---------------------------------------------------------------------
+    if (owner == TopdownNpcMoveOwner::Ai &&
+        npc.move.active &&
+        npc.move.owner == TopdownNpcMoveOwner::Ai) {
+
+        const float currentRemaining = computeRemainingCurrentPathLength(npc);
+        const float newLength = computePathLengthFrom(npc.position, pathPoints);
+
+        const float targetShift =
+                TopdownLength(TopdownSub(resolvedEndPos, npc.move.finalTarget));
+
+        const bool oldPathAlmostDone =
+                currentRemaining <= 80.0f ||
+                npc.move.currentPoint >= static_cast<int>(npc.move.pathPoints.size()) - 1;
+
+        const bool targetMovedALot = targetShift >= 140.0f;
+
+        // Require the new path to be meaningfully better before switching.
+        // This avoids route flapping around large obstacles.
+        const float improvementRequired = 120.0f;
+        const bool newPathClearlyBetter =
+                newLength + improvementRequired < currentRemaining;
+
+        const bool currentPathInvalid =
+                !npc.move.hasFinalTarget ||
+                npc.move.currentPoint < 0 ||
+                npc.move.currentPoint >= static_cast<int>(npc.move.pathPoints.size());
+
+        if (!currentPathInvalid &&
+            !oldPathAlmostDone &&
+            !targetMovedALot &&
+            !newPathClearlyBetter) {
+            return;
+        }
+    }
+
     const float preservedSpeed = npc.move.currentSpeed;
 
     npc.move = {};
@@ -685,6 +591,7 @@ void TopdownBuildNpcPathToTarget(
     npc.move.deceleration = 2200.0f;
     npc.move.arrivalRadius = 12.0f;
     npc.move.stopDistance = (owner == TopdownNpcMoveOwner::Script) ? 100.0f : 12.0f;
+    npc.move.debugTrianglePath = trianglePath;
 
     npc.moving = npc.move.active;
     npc.running = npc.move.active;

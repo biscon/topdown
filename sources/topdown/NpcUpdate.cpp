@@ -45,8 +45,22 @@ static Vector2 BuildNpcFallbackPathVelocity(
         return Vector2{};
     }
 
-    const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
-    const Vector2 delta = TopdownSub(target, npc.position);
+    const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
+    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
+    const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
+    const float maxSpeed = npc.move.running ? runSpeed : walkSpeed;
+
+    const float speed = std::min(std::max(0.0f, npc.move.currentSpeed), maxSpeed);
+
+    // Look a bit ahead down the corridor instead of steering only to the next point.
+    const float lookaheadDistance = std::max(
+            80.0f,
+            npc.collisionRadius * 3.0f);
+
+    const Vector2 steeringTarget =
+            TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
+
+    const Vector2 delta = TopdownSub(steeringTarget, npc.position);
     const float dist = TopdownLength(delta);
 
     if (dist <= std::max(1.0f, npc.move.arrivalRadius)) {
@@ -54,13 +68,6 @@ static Vector2 BuildNpcFallbackPathVelocity(
     }
 
     const Vector2 dir = TopdownNormalizeOrZero(delta);
-
-    const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
-    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
-    const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
-    const float maxSpeed = npc.move.running ? runSpeed : walkSpeed;
-
-    const float speed = std::min(std::max(0.0f, npc.move.currentSpeed), maxSpeed);
     return TopdownMul(dir, speed);
 }
 
@@ -211,7 +218,11 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
             targetSpeed,
             ((targetSpeed > move.currentSpeed) ? move.acceleration : move.deceleration) * dt);
 
-    const Vector2 target = move.pathPoints[move.currentPoint];
+    const float lookaheadDistance = std::max(
+            80.0f,
+            npc.collisionRadius * 3.0f);
+
+    const Vector2 target = TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
     const Vector2 delta = TopdownSub(target, npc.position);
     const Vector2 dir = TopdownNormalizeOrZero(delta);
 

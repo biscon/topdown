@@ -2,14 +2,17 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <vector>
+
+#include "detour/DetourNavMesh.h"
+#include "detour/DetourNavMeshQuery.h"
 
 namespace
 {
+    constexpr float kNearestPolyHalfExtents[3] = { 96.0f, 32.0f, 96.0f };
+    constexpr int kMaxPathPolys = 4096;
+    constexpr int kMaxStraightPathPoints = 4096;
     constexpr float kPointEqualEps = 0.01f;
-    constexpr float kPointInTriangleEps = 0.01f;
-    constexpr float kAreaEps = 0.001f;
 }
 
 static bool NearlyEqual(float a, float b, float eps = 0.0001f)
@@ -22,258 +25,93 @@ static bool SamePoint(Vector2 a, Vector2 b, float eps = kPointEqualEps)
     return NearlyEqual(a.x, b.x, eps) && NearlyEqual(a.y, b.y, eps);
 }
 
-static float TriArea2(Vector2 a, Vector2 b, Vector2 c)
+static void ToDetourPos(Vector2 p, float outPos[3])
 {
-    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    outPos[0] = p.x;
+    outPos[1] = 0.0f;
+    outPos[2] = p.y;
 }
 
-static Vector2 ToMathSpace(Vector2 p)
+static Vector2 FromDetourPos(const float p[3])
 {
-    return Vector2{ p.x, -p.y };
+    return Vector2{ p[0], p[2] };
 }
 
-static float AreaMath(Vector2 a, Vector2 b, Vector2 c)
-{
-    a = ToMathSpace(a);
-    b = ToMathSpace(b);
-    c = ToMathSpace(c);
-    return TriArea2(a, b, c);
-}
-
-static float DistSqr(Vector2 a, Vector2 b)
-{
-    const float dx = a.x - b.x;
-    const float dy = a.y - b.y;
-    return dx * dx + dy * dy;
-}
-
-static float Dist(Vector2 a, Vector2 b)
-{
-    return std::sqrt(DistSqr(a, b));
-}
-
-static int SignWithEps(float v, float eps)
-{
-    if (v > eps) return 1;
-    if (v < -eps) return -1;
-    return 0;
-}
-
-static int FindThirdVertexIndex(const NavTriangle& tri, int edgeV0, int edgeV1)
-{
-    const int verts[3] = { tri.vertexIndex0, tri.vertexIndex1, tri.vertexIndex2 };
-    for (int v : verts) {
-        if (v != edgeV0 && v != edgeV1) {
-            return v;
-        }
-    }
-    return -1;
-}
-
-static bool PointInTriangleStrict(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
-{
-    const float d1 = TriArea2(p, a, b);
-    const float d2 = TriArea2(p, b, c);
-    const float d3 = TriArea2(p, c, a);
-
-    const bool hasNeg = (d1 < 0.0f) || (d2 < 0.0f) || (d3 < 0.0f);
-    const bool hasPos = (d1 > 0.0f) || (d2 > 0.0f) || (d3 > 0.0f);
-
-    return !(hasNeg && hasPos);
-}
-
-static bool PointInTriangleEps(Vector2 p, Vector2 a, Vector2 b, Vector2 c, float eps)
-{
-    const int s1 = SignWithEps(TriArea2(p, a, b), eps);
-    const int s2 = SignWithEps(TriArea2(p, b, c), eps);
-    const int s3 = SignWithEps(TriArea2(p, c, a), eps);
-
-    const bool hasNeg = (s1 < 0) || (s2 < 0) || (s3 < 0);
-    const bool hasPos = (s1 > 0) || (s2 > 0) || (s3 > 0);
-
-    return !(hasNeg && hasPos);
-}
-
-static Vector2 ClosestPointOnSegment(Vector2 p, Vector2 a, Vector2 b)
-{
-    const Vector2 ab{ b.x - a.x, b.y - a.y };
-    const float abLenSqr = ab.x * ab.x + ab.y * ab.y;
-    if (abLenSqr <= 0.000001f) {
-        return a;
-    }
-
-    const Vector2 ap{ p.x - a.x, p.y - a.y };
-    float t = (ap.x * ab.x + ap.y * ab.y) / abLenSqr;
-    t = std::clamp(t, 0.0f, 1.0f);
-
-    return Vector2{
-            a.x + ab.x * t,
-            a.y + ab.y * t
-    };
-}
-
-static bool GetTriangleEdgeVertexIndices(
-        const NavTriangle& tri,
-        int edgeSlot,
-        int& outV0,
-        int& outV1)
-{
-    switch (edgeSlot) {
-        case 0:
-            outV0 = tri.vertexIndex0;
-            outV1 = tri.vertexIndex1;
-            return true;
-
-        case 1:
-            outV0 = tri.vertexIndex1;
-            outV1 = tri.vertexIndex2;
-            return true;
-
-        case 2:
-            outV0 = tri.vertexIndex2;
-            outV1 = tri.vertexIndex0;
-            return true;
-
-        default:
-            break;
-    }
-
-    outV0 = -1;
-    outV1 = -1;
-    return false;
-}
-
-static int GetTriangleEdgeNeighbor(
-        const NavTriangle& tri,
-        int edgeSlot)
-{
-    switch (edgeSlot) {
-        case 0: return tri.neighbor0;
-        case 1: return tri.neighbor1;
-        case 2: return tri.neighbor2;
-        default: return -1;
-    }
-}
-
-static bool GetSharedEdge(
-        const NavTriangle& a,
-        int neighborIndex,
-        int& outV0,
-        int& outV1)
-{
-    if (a.neighbor0 == neighborIndex) {
-        outV0 = a.vertexIndex0;
-        outV1 = a.vertexIndex1;
-        return true;
-    }
-    if (a.neighbor1 == neighborIndex) {
-        outV0 = a.vertexIndex1;
-        outV1 = a.vertexIndex2;
-        return true;
-    }
-    if (a.neighbor2 == neighborIndex) {
-        outV0 = a.vertexIndex2;
-        outV1 = a.vertexIndex0;
-        return true;
-    }
-    return false;
-}
-
-static bool GetSharedEdgeMidpoint(
+static int FindTriangleIndexForPolyRef(
         const NavMeshData& navMesh,
-        const NavTriangle& tri,
-        int neighborIndex,
-        Vector2& outMidpoint)
+        dtPolyRef ref)
 {
-    int edgeV0 = -1;
-    int edgeV1 = -1;
-    if (!GetSharedEdge(tri, neighborIndex, edgeV0, edgeV1)) {
+    if (ref == 0 || navMesh.detourNavMesh == nullptr) {
+        return -1;
+    }
+
+    const dtMeshTile* tile = nullptr;
+    const dtPoly* poly = nullptr;
+
+    if (dtStatusFailed(navMesh.detourNavMesh->getTileAndPolyByRef(ref, &tile, &poly))) {
+        return -1;
+    }
+
+    if (tile == nullptr || poly == nullptr || tile->polys == nullptr || tile->header == nullptr) {
+        return -1;
+    }
+
+    const ptrdiff_t polyIndex = poly - tile->polys;
+    if (polyIndex < 0 || polyIndex >= tile->header->polyCount) {
+        return -1;
+    }
+
+    const int triIndex = static_cast<int>(polyIndex);
+    if (triIndex < 0 || triIndex >= static_cast<int>(navMesh.triangles.size())) {
+        return -1;
+    }
+
+    return triIndex;
+}
+
+static bool FindNearestPolyRef(
+        const NavMeshData& navMesh,
+        Vector2 p,
+        dtPolyRef& outRef,
+        float outNearest[3])
+{
+    outRef = 0;
+    outNearest[0] = 0.0f;
+    outNearest[1] = 0.0f;
+    outNearest[2] = 0.0f;
+
+    if (!navMesh.built ||
+        navMesh.detourNavMesh == nullptr ||
+        navMesh.detourQuery == nullptr) {
         return false;
     }
 
-    const Vector2 a = navMesh.vertices[edgeV0];
-    const Vector2 b = navMesh.vertices[edgeV1];
+    float pos[3];
+    ToDetourPos(p, pos);
 
-    outMidpoint = Vector2{
-            (a.x + b.x) * 0.5f,
-            (a.y + b.y) * 0.5f
-    };
-    return true;
-}
-
-static Vector2 GetTriangleReferencePoint(
-        const NavMeshData& navMesh,
-        int triangleIndex,
-        int startTri,
-        int endTri,
-        Vector2 startPos,
-        Vector2 endPos)
-{
-    if (triangleIndex == startTri) {
-        return startPos;
+    dtQueryFilter filter;
+    if (dtStatusFailed(navMesh.detourQuery->findNearestPoly(
+            pos,
+            kNearestPolyHalfExtents,
+            &filter,
+            &outRef,
+            outNearest))) {
+        return false;
     }
 
-    if (triangleIndex == endTri) {
-        return endPos;
-    }
-
-    return navMesh.triangles[triangleIndex].centroid;
+    return outRef != 0;
 }
 
 int FindTriangleContainingPoint(const NavMeshData& navMesh, Vector2 p)
 {
-    if (!navMesh.built) {
+    dtPolyRef ref = 0;
+    float nearest[3]{};
+
+    if (!FindNearestPolyRef(navMesh, p, ref, nearest)) {
         return -1;
     }
 
-    // First pass: strict test.
-    for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
-        const NavTriangle& tri = navMesh.triangles[i];
-
-        if (p.x < tri.bounds.x || p.x > tri.bounds.x + tri.bounds.width ||
-            p.y < tri.bounds.y || p.y > tri.bounds.y + tri.bounds.height) {
-            continue;
-        }
-
-        const Vector2 a = navMesh.vertices[tri.vertexIndex0];
-        const Vector2 b = navMesh.vertices[tri.vertexIndex1];
-        const Vector2 c = navMesh.vertices[tri.vertexIndex2];
-
-        if (PointInTriangleStrict(p, a, b, c)) {
-            return i;
-        }
-    }
-
-    // Second pass: tolerant test for points lying numerically on edges.
-    int bestTri = -1;
-    float bestCentroidDist = std::numeric_limits<float>::max();
-
-    for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
-        const NavTriangle& tri = navMesh.triangles[i];
-
-        if (p.x < tri.bounds.x - kPointInTriangleEps ||
-            p.x > tri.bounds.x + tri.bounds.width + kPointInTriangleEps ||
-            p.y < tri.bounds.y - kPointInTriangleEps ||
-            p.y > tri.bounds.y + tri.bounds.height + kPointInTriangleEps) {
-            continue;
-        }
-
-        const Vector2 a = navMesh.vertices[tri.vertexIndex0];
-        const Vector2 b = navMesh.vertices[tri.vertexIndex1];
-        const Vector2 c = navMesh.vertices[tri.vertexIndex2];
-
-        if (!PointInTriangleEps(p, a, b, c, kPointInTriangleEps)) {
-            continue;
-        }
-
-        const float d2 = DistSqr(p, tri.centroid);
-        if (bestTri < 0 || d2 < bestCentroidDist) {
-            bestTri = i;
-            bestCentroidDist = d2;
-        }
-    }
-
-    return bestTri;
+    return FindTriangleIndexForPolyRef(navMesh, ref);
 }
 
 Vector2 ProjectPointToNavMesh(
@@ -285,328 +123,33 @@ Vector2 ProjectPointToNavMesh(
         *outTriangleIndex = -1;
     }
 
-    const int containing = FindTriangleContainingPoint(navMesh, p);
-    if (containing >= 0) {
-        if (outTriangleIndex != nullptr) {
-            *outTriangleIndex = containing;
-        }
+    dtPolyRef ref = 0;
+    float nearest[3]{};
+
+    if (!FindNearestPolyRef(navMesh, p, ref, nearest)) {
         return p;
     }
 
-    Vector2 bestPoint{};
-    float bestDistSqr = std::numeric_limits<float>::max();
-    int bestTri = -1;
+    float closest[3]{};
+    bool posOverPoly = false;
 
-    auto tryEdges = [&](bool boundaryOnly) {
-        for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
-            const NavTriangle& tri = navMesh.triangles[i];
-
-            for (int edgeSlot = 0; edgeSlot < 3; ++edgeSlot) {
-                const int neighbor = GetTriangleEdgeNeighbor(tri, edgeSlot);
-                if (boundaryOnly && neighbor >= 0) {
-                    continue;
-                }
-
-                int v0 = -1;
-                int v1 = -1;
-                if (!GetTriangleEdgeVertexIndices(tri, edgeSlot, v0, v1)) {
-                    continue;
-                }
-
-                const Vector2 a = navMesh.vertices[v0];
-                const Vector2 b = navMesh.vertices[v1];
-                const Vector2 q = ClosestPointOnSegment(p, a, b);
-                const float d2 = DistSqr(p, q);
-
-                if (d2 < bestDistSqr) {
-                    bestDistSqr = d2;
-                    bestPoint = q;
-                    bestTri = i;
-                }
-            }
+    if (dtStatusFailed(navMesh.detourQuery->closestPointOnPoly(
+            ref,
+            nearest,
+            closest,
+            &posOverPoly))) {
+        if (outTriangleIndex != nullptr) {
+            *outTriangleIndex = FindTriangleIndexForPolyRef(navMesh, ref);
         }
-    };
-
-    // Prefer true navmesh boundary edges first.
-    tryEdges(true);
-
-    // Fallback only if something is seriously wrong and no boundary edge was found.
-    if (bestTri < 0) {
-        tryEdges(false);
-    }
-
-    if (bestTri >= 0) {
-        int containingTri = FindTriangleContainingPoint(navMesh, bestPoint);
-        if (containingTri >= 0) {
-            bestTri = containingTri;
-        }
+        return FromDetourPos(nearest);
     }
 
     if (outTriangleIndex != nullptr) {
-        *outTriangleIndex = bestTri;
+        *outTriangleIndex = FindTriangleIndexForPolyRef(navMesh, ref);
     }
 
-    return bestPoint;
-}
-
-static bool BuildTrianglePathAStar(
-        const NavMeshData& navMesh,
-        int startTri,
-        int endTri,
-        Vector2 startPos,
-        Vector2 endPos,
-        std::vector<int>& outTrianglePath)
-{
-    outTrianglePath.clear();
-
-    if (startTri < 0 || endTri < 0) {
-        return false;
-    }
-
-    if (startTri == endTri) {
-        outTrianglePath.push_back(startTri);
-        return true;
-    }
-
-    const int triCount = static_cast<int>(navMesh.triangles.size());
-
-    std::vector<float> gScore(triCount, std::numeric_limits<float>::max());
-    std::vector<float> fScore(triCount, std::numeric_limits<float>::max());
-    std::vector<int> cameFrom(triCount, -1);
-    std::vector<bool> openSet(triCount, false);
-    std::vector<bool> closedSet(triCount, false);
-
-    gScore[startTri] = 0.0f;
-    fScore[startTri] = Dist(startPos, endPos);
-    openSet[startTri] = true;
-
-    for (;;) {
-        int current = -1;
-        float bestF = std::numeric_limits<float>::max();
-
-        for (int i = 0; i < triCount; ++i) {
-            if (!openSet[i]) {
-                continue;
-            }
-
-            if (fScore[i] < bestF) {
-                bestF = fScore[i];
-                current = i;
-            }
-        }
-
-        if (current < 0) {
-            return false;
-        }
-
-        if (current == endTri) {
-            std::vector<int> reversed;
-            for (int n = current; n >= 0; n = cameFrom[n]) {
-                reversed.push_back(n);
-            }
-
-            outTrianglePath.assign(reversed.rbegin(), reversed.rend());
-            return true;
-        }
-
-        openSet[current] = false;
-        closedSet[current] = true;
-
-        const NavTriangle& tri = navMesh.triangles[current];
-        const int neighbors[3] = { tri.neighbor0, tri.neighbor1, tri.neighbor2 };
-
-        const Vector2 currentRef = GetTriangleReferencePoint(
-                navMesh,
-                current,
-                startTri,
-                endTri,
-                startPos,
-                endPos);
-
-        for (int nb : neighbors) {
-            if (nb < 0 || closedSet[nb]) {
-                continue;
-            }
-
-            const Vector2 nextRef = GetTriangleReferencePoint(
-                    navMesh,
-                    nb,
-                    startTri,
-                    endTri,
-                    startPos,
-                    endPos);
-
-            const float tentativeG = gScore[current] + Dist(currentRef, nextRef);
-            const float heuristic = Dist(nextRef, endPos);
-            const float tentativeF = tentativeG + heuristic;
-
-            const bool strictlyBetter = tentativeG + 0.0001f < gScore[nb];
-            const bool tieButBetterF = NearlyEqual(tentativeG, gScore[nb], 0.0001f) &&
-                                       tentativeF + 0.0001f < fScore[nb];
-
-            if (!openSet[nb] || strictlyBetter || tieButBetterF) {
-                cameFrom[nb] = current;
-                gScore[nb] = tentativeG;
-                fScore[nb] = tentativeF;
-                openSet[nb] = true;
-            }
-        }
-    }
-}
-
-struct Portal {
-    Vector2 left{};
-    Vector2 right{};
-};
-
-static void BuildPortals(
-        const NavMeshData& navMesh,
-        const std::vector<int>& trianglePath,
-        Vector2 startPos,
-        Vector2 endPos,
-        std::vector<Portal>& outPortals)
-{
-    outPortals.clear();
-
-    Portal startPortal{};
-    startPortal.left = startPos;
-    startPortal.right = startPos;
-    outPortals.push_back(startPortal);
-
-    for (int i = 0; i + 1 < static_cast<int>(trianglePath.size()); ++i) {
-        const int triAIndex = trianglePath[i];
-        const int triBIndex = trianglePath[i + 1];
-
-        const NavTriangle& triA = navMesh.triangles[triAIndex];
-        const NavTriangle& triB = navMesh.triangles[triBIndex];
-
-        int edgeV0 = -1;
-        int edgeV1 = -1;
-        if (!GetSharedEdge(triA, triBIndex, edgeV0, edgeV1)) {
-            continue;
-        }
-
-        const int aOtherIndex = FindThirdVertexIndex(triA, edgeV0, edgeV1);
-        const int bOtherIndex = FindThirdVertexIndex(triB, edgeV0, edgeV1);
-
-        if (aOtherIndex < 0 || bOtherIndex < 0) {
-            continue;
-        }
-
-        const Vector2 p0 = navMesh.vertices[edgeV0];
-        const Vector2 p1 = navMesh.vertices[edgeV1];
-        const Vector2 aOther = navMesh.vertices[aOtherIndex];
-        const Vector2 bOther = navMesh.vertices[bOtherIndex];
-
-        const float sideA = AreaMath(p0, p1, aOther);
-        const float sideB = AreaMath(p0, p1, bOther);
-
-        Portal portal{};
-
-        // We want the path to move from triA to triB.
-        // For the chosen directed portal edge, triA's unique vertex should be on the right,
-        // and triB's unique vertex should be on the left.
-
-        if (sideA < -kAreaEps && sideB > kAreaEps) {
-            portal.left = p1;
-            portal.right = p0;
-        } else if (sideA > kAreaEps && sideB < -kAreaEps) {
-            portal.left = p0;
-            portal.right = p1;
-        } else {
-            // Degenerate fallback: orient the portal relative to travel direction from
-            // triA centroid toward triB centroid.
-            const float p0Side = AreaMath(triA.centroid, triB.centroid, p0);
-            if (p0Side > 0.0f) {
-                portal.left = p0;
-                portal.right = p1;
-            } else {
-                portal.left = p1;
-                portal.right = p0;
-            }
-        }
-
-        outPortals.push_back(portal);
-    }
-
-    Portal endPortal{};
-    endPortal.left = endPos;
-    endPortal.right = endPos;
-    outPortals.push_back(endPortal);
-}
-
-static void RunFunnel(
-        const std::vector<Portal>& portals,
-        std::vector<Vector2>& outPoints)
-{
-    outPoints.clear();
-    if (portals.empty()) {
-        return;
-    }
-
-    Vector2 portalApex = portals[0].left;
-    Vector2 portalLeft = portals[0].left;
-    Vector2 portalRight = portals[0].right;
-
-    int apexIndex = 0;
-    int leftIndex = 0;
-    int rightIndex = 0;
-
-    outPoints.push_back(portalApex);
-
-    for (int i = 1; i < static_cast<int>(portals.size()); ++i) {
-        const Vector2 left = portals[i].left;
-        const Vector2 right = portals[i].right;
-
-        // Tighten right side
-        if (AreaMath(portalApex, portalRight, right) <= kAreaEps) {
-            if (SamePoint(portalApex, portalRight) ||
-                AreaMath(portalApex, portalLeft, right) > kAreaEps) {
-                portalRight = right;
-                rightIndex = i;
-            } else {
-                outPoints.push_back(portalLeft);
-
-                portalApex = portalLeft;
-                apexIndex = leftIndex;
-
-                portalLeft = portalApex;
-                portalRight = portalApex;
-                leftIndex = apexIndex;
-                rightIndex = apexIndex;
-
-                i = apexIndex;
-                continue;
-            }
-        }
-
-        // Tighten left side
-        if (AreaMath(portalApex, portalLeft, left) >= -kAreaEps) {
-            if (SamePoint(portalApex, portalLeft) ||
-                AreaMath(portalApex, portalRight, left) < -kAreaEps) {
-                portalLeft = left;
-                leftIndex = i;
-            } else {
-                outPoints.push_back(portalRight);
-
-                portalApex = portalRight;
-                apexIndex = rightIndex;
-
-                portalLeft = portalApex;
-                portalRight = portalApex;
-                leftIndex = apexIndex;
-                rightIndex = apexIndex;
-
-                i = apexIndex;
-                continue;
-            }
-        }
-    }
-
-    const Vector2 endPoint = portals.back().left;
-    if (outPoints.empty() || !SamePoint(outPoints.back(), endPoint)) {
-        outPoints.push_back(endPoint);
-    }
+    (void)posOverPoly;
+    return FromDetourPos(closest);
 }
 
 bool BuildNavPath(
@@ -618,61 +161,145 @@ bool BuildNavPath(
         Vector2* outResolvedEndPos)
 {
     outPathPoints.clear();
+
     if (outTrianglePath != nullptr) {
         outTrianglePath->clear();
     }
-    if (outResolvedEndPos != nullptr) {
-        *outResolvedEndPos = endPos;
-    }
-
-    if (!navMesh.built || navMesh.triangles.empty()) {
-        return false;
-    }
-
-    int startTri = FindTriangleContainingPoint(navMesh, startPos);
-    if (startTri < 0) {
-        startPos = ProjectPointToNavMesh(navMesh, startPos, &startTri);
-    }
-
-    int endTri = FindTriangleContainingPoint(navMesh, endPos);
-    if (endTri < 0) {
-        endPos = ProjectPointToNavMesh(navMesh, endPos, &endTri);
-    }
 
     if (outResolvedEndPos != nullptr) {
         *outResolvedEndPos = endPos;
     }
 
-    if (startTri < 0 || endTri < 0) {
+    if (!navMesh.built ||
+        navMesh.detourNavMesh == nullptr ||
+        navMesh.detourQuery == nullptr) {
         return false;
     }
 
-    std::vector<int> trianglePath;
-    if (!BuildTrianglePathAStar(navMesh, startTri, endTri, startPos, endPos, trianglePath)) {
+    dtPolyRef startRef = 0;
+    dtPolyRef endRef = 0;
+
+    float startNearest[3]{};
+    float endNearest[3]{};
+
+    if (!FindNearestPolyRef(navMesh, startPos, startRef, startNearest)) {
+        return false;
+    }
+
+    if (!FindNearestPolyRef(navMesh, endPos, endRef, endNearest)) {
+        return false;
+    }
+
+    float startClosest[3]{};
+    float endClosest[3]{};
+    bool startOverPoly = false;
+    bool endOverPoly = false;
+
+    if (dtStatusFailed(navMesh.detourQuery->closestPointOnPoly(
+            startRef,
+            startNearest,
+            startClosest,
+            &startOverPoly))) {
+        return false;
+    }
+
+    if (dtStatusFailed(navMesh.detourQuery->closestPointOnPoly(
+            endRef,
+            endNearest,
+            endClosest,
+            &endOverPoly))) {
+        return false;
+    }
+
+    const Vector2 resolvedEndPos = FromDetourPos(endClosest);
+    if (outResolvedEndPos != nullptr) {
+        *outResolvedEndPos = resolvedEndPos;
+    }
+
+    dtQueryFilter filter;
+
+    std::vector<dtPolyRef> polyPath(static_cast<size_t>(kMaxPathPolys), 0);
+    int polyPathCount = 0;
+
+    if (dtStatusFailed(navMesh.detourQuery->findPath(
+            startRef,
+            endRef,
+            startClosest,
+            endClosest,
+            &filter,
+            polyPath.data(),
+            &polyPathCount,
+            static_cast<int>(polyPath.size())))) {
+        return false;
+    }
+
+    if (polyPathCount <= 0) {
         return false;
     }
 
     if (outTrianglePath != nullptr) {
-        *outTrianglePath = trianglePath;
+        outTrianglePath->reserve(static_cast<size_t>(polyPathCount));
+
+        for (int i = 0; i < polyPathCount; ++i) {
+            const int triIndex =
+                    FindTriangleIndexForPolyRef(navMesh, polyPath[static_cast<size_t>(i)]);
+
+            if (triIndex >= 0) {
+                if (outTrianglePath->empty() || outTrianglePath->back() != triIndex) {
+                    outTrianglePath->push_back(triIndex);
+                }
+            }
+        }
     }
 
-    if (trianglePath.size() == 1) {
-        outPathPoints.push_back(endPos);
+    std::vector<float> straightPath(static_cast<size_t>(kMaxStraightPathPoints) * 3u, 0.0f);
+    std::vector<unsigned char> straightFlags(static_cast<size_t>(kMaxStraightPathPoints), 0);
+    std::vector<dtPolyRef> straightRefs(static_cast<size_t>(kMaxStraightPathPoints), 0);
+    int straightCount = 0;
+
+    if (dtStatusFailed(navMesh.detourQuery->findStraightPath(
+            startClosest,
+            endClosest,
+            polyPath.data(),
+            polyPathCount,
+            straightPath.data(),
+            straightFlags.data(),
+            straightRefs.data(),
+            &straightCount,
+            kMaxStraightPathPoints,
+            0))) {
+        return false;
+    }
+
+    if (straightCount <= 0) {
+        outPathPoints.push_back(resolvedEndPos);
         return true;
     }
 
-    std::vector<Portal> portals;
-    BuildPortals(navMesh, trianglePath, startPos, endPos, portals);
+    outPathPoints.reserve(static_cast<size_t>(straightCount));
 
-    RunFunnel(portals, outPathPoints);
+    for (int i = 0; i < straightCount; ++i) {
+        Vector2 p{
+                straightPath[static_cast<size_t>(i) * 3u + 0u],
+                straightPath[static_cast<size_t>(i) * 3u + 2u]
+        };
 
-    if (!outPathPoints.empty() && SamePoint(outPathPoints.front(), startPos)) {
-        outPathPoints.erase(outPathPoints.begin());
+        if (i == 0 && SamePoint(p, startPos)) {
+            continue;
+        }
+
+        if (!outPathPoints.empty() && SamePoint(outPathPoints.back(), p)) {
+            continue;
+        }
+
+        outPathPoints.push_back(p);
     }
 
-    if (outPathPoints.empty() || !SamePoint(outPathPoints.back(), endPos)) {
-        outPathPoints.push_back(endPos);
+    if (outPathPoints.empty() || !SamePoint(outPathPoints.back(), resolvedEndPos)) {
+        outPathPoints.push_back(resolvedEndPos);
     }
 
+    (void)startOverPoly;
+    (void)endOverPoly;
     return true;
 }

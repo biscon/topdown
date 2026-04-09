@@ -448,6 +448,77 @@ static void DrawPlayerDebug(const GameState& state)
 
 static void DrawSingleNpcPathDebug(const GameState& state, const TopdownNpcRuntime& npc)
 {
+    const NavMeshData& navMesh = state.topdown.runtime.nav.navMesh;
+
+    // ---------------------------------------------------------------------
+    // Raw triangle corridor debug
+    // ---------------------------------------------------------------------
+    if (navMesh.built && !npc.move.debugTrianglePath.empty()) {
+        const Color triColor = Color{80, 200, 255, 110};
+        const Color triOutlineColor = Color{80, 200, 255, 220};
+        const Color currentTriColor = Color{255, 80, 255, 140};
+        const Color currentTriOutlineColor = Color{255, 80, 255, 255};
+
+        int currentTri = -1;
+        if (npc.move.currentPoint >= 0 &&
+            npc.move.currentPoint < static_cast<int>(npc.move.debugTrianglePath.size())) {
+            currentTri = npc.move.debugTrianglePath[npc.move.currentPoint];
+        }
+
+        for (int i = 0; i < static_cast<int>(npc.move.debugTrianglePath.size()); ++i) {
+            const int triIndex = npc.move.debugTrianglePath[i];
+            if (triIndex < 0 || triIndex >= static_cast<int>(navMesh.triangles.size())) {
+                continue;
+            }
+
+            const NavTriangle& tri = navMesh.triangles[triIndex];
+
+            const Vector2 aWorld = navMesh.vertices[tri.vertexIndex0];
+            const Vector2 bWorld = navMesh.vertices[tri.vertexIndex1];
+            const Vector2 cWorld = navMesh.vertices[tri.vertexIndex2];
+
+            const Vector2 a = TopdownWorldToScreen(state, aWorld);
+            const Vector2 b = TopdownWorldToScreen(state, bWorld);
+            const Vector2 c = TopdownWorldToScreen(state, cWorld);
+            const Vector2 centroid = TopdownWorldToScreen(state, tri.centroid);
+
+            const bool isCurrentTriangle = (triIndex == currentTri);
+
+            DrawTriangle(
+                    a,
+                    b,
+                    c,
+                    isCurrentTriangle ? currentTriColor : triColor);
+
+            DrawLineEx(
+                    a,
+                    b,
+                    isCurrentTriangle ? 3.0f : 1.5f,
+                    isCurrentTriangle ? currentTriOutlineColor : triOutlineColor);
+            DrawLineEx(
+                    b,
+                    c,
+                    isCurrentTriangle ? 3.0f : 1.5f,
+                    isCurrentTriangle ? currentTriOutlineColor : triOutlineColor);
+            DrawLineEx(
+                    c,
+                    a,
+                    isCurrentTriangle ? 3.0f : 1.5f,
+                    isCurrentTriangle ? currentTriOutlineColor : triOutlineColor);
+
+            const std::string triLabel = std::to_string(i);
+            DrawText(
+                    triLabel.c_str(),
+                    static_cast<int>(std::round(centroid.x + 4.0f)),
+                    static_cast<int>(std::round(centroid.y - 6.0f)),
+                    14,
+                    isCurrentTriangle ? currentTriOutlineColor : triOutlineColor);
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Final smoothed point path debug
+    // ---------------------------------------------------------------------
     if (!npc.move.active || npc.move.pathPoints.empty()) {
         return;
     }
@@ -458,13 +529,28 @@ static void DrawSingleNpcPathDebug(const GameState& state, const TopdownNpcRunti
         const Vector2 p = TopdownWorldToScreen(state, npc.move.pathPoints[i]);
 
         const bool isCurrentTarget = (i == npc.move.currentPoint);
-        const Color pointColor = isCurrentTarget ? Color{255, 140, 0, 255} : Color{255, 210, 120, 255};
-        const float lineThickness = isCurrentTarget ? 3.0f : 2.0f;
+        const Color lineColor = isCurrentTarget
+                                ? Color{255, 170, 40, 255}
+                                : Color{255, 210, 120, 255};
+        const Color pointColor = isCurrentTarget
+                                 ? Color{255, 120, 0, 255}
+                                 : Color{255, 230, 150, 255};
+        const float lineThickness = isCurrentTarget ? 4.0f : 2.0f;
+        const float pointRadius = isCurrentTarget ? 6.0f : 4.0f;
 
-        DrawLineEx(prev, p, lineThickness, Color{255, 210, 120, 255});
-        DrawCircleV(p, isCurrentTarget ? 6.0f : 4.0f, pointColor);
+        DrawLineEx(prev, p, lineThickness, lineColor);
+        DrawCircleV(p, pointRadius, pointColor);
 
         prev = p;
+    }
+
+    if (npc.move.hasFinalTarget) {
+        const Vector2 finalP = TopdownWorldToScreen(state, npc.move.finalTarget);
+        DrawCircleLines(
+                static_cast<int>(std::round(finalP.x)),
+                static_cast<int>(std::round(finalP.y)),
+                8.0f,
+                Color{255, 255, 255, 220});
     }
 }
 
@@ -634,6 +720,10 @@ static void DrawNpcDebug(const GameState& state)
             line3 += "  move=idle";
         }
 
+        std::string line4 =
+                "pts=" + std::to_string(static_cast<int>(npc.move.pathPoints.size())) +
+                "  tris=" + std::to_string(static_cast<int>(npc.move.debugTrianglePath.size()));
+
         DrawText(
                 line1.c_str(),
                 static_cast<int>(npcScreen.x + 10.0f),
@@ -652,6 +742,13 @@ static void DrawNpcDebug(const GameState& state)
                 line3.c_str(),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 14.0f),
+                16,
+                color);
+
+        DrawText(
+                line4.c_str(),
+                static_cast<int>(npcScreen.x + 10.0f),
+                static_cast<int>(npcScreen.y + 32.0f),
                 16,
                 color);
 

@@ -1,7 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <vector>
+
 #include "raylib.h"
+#include "detour/DetourNavMesh.h"
+#include "detour/DetourNavMeshQuery.h"
 
 struct NavPolygon {
     std::vector<Vector2> vertices;
@@ -21,15 +25,20 @@ struct NavTriangle {
 };
 
 struct NavMeshData {
-    // Authored walkable polygons from Tiled
+    // Authored walkable polygons from Tiled.
     std::vector<NavPolygon> sourcePolygons;
 
-    // Authored blockers from Tiled
+    // Authored blockers from Tiled.
     std::vector<NavPolygon> blockerPolygons;
 
-    // Final triangulated runtime mesh
+    // Debug/inspection mesh generated from the final Recast poly mesh.
+    // We build the Recast poly mesh with nvp=3, so these are triangles.
     std::vector<Vector2> vertices;
     std::vector<NavTriangle> triangles;
+
+    // Runtime Detour navmesh + query.
+    std::shared_ptr<dtNavMesh> detourNavMesh;
+    std::shared_ptr<dtNavMeshQuery> detourQuery;
 
     bool built = false;
 };
