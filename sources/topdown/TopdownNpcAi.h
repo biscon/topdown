@@ -32,7 +32,8 @@ float TopdownGetNpcClipDurationMs(
 void TopdownBuildNpcPathToTarget(
         GameState& state,
         TopdownNpcRuntime& npc,
-        Vector2 targetPos);
+        Vector2 targetPos,
+        TopdownNpcMoveOwner owner = TopdownNpcMoveOwner::Ai);
 
 void TopdownApplyDamageToPlayer(
         GameState& state,
@@ -53,4 +54,14 @@ void TopdownAlertNpcToPlayer(
 void TopdownAlertNearbyNpcs(
         GameState& state,
         const TopdownNpcRuntime& sourceNpc,
+        float radius);
+
+Vector2 TopdownBuildNpcInvestigationTargetAroundPoint(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        Vector2 center);
+
+bool TopdownHasNpcReachedPoint(
+        const TopdownNpcRuntime& npc,
+        Vector2 point,
         float radius);

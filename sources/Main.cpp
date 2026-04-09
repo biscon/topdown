@@ -19,6 +19,7 @@
 #include "topdown/BloodStampGeneration.h"
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/TopdownPlayerVignette.h"
+#include "topdown/TopdownRvo.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
 {
@@ -179,6 +180,8 @@ int main()
     if (!InitTopdownPlayerVignetteSystem()) {
         TraceLog(LOG_WARNING, "Topdown player vignette system failed to initialize");
     }
+
+    TopdownRvoInit(state);
 
     RenderTexture2D worldTarget = LoadRenderTexture(INTERNAL_WIDTH, INTERNAL_HEIGHT);
     SetTextureFilter(worldTarget.texture, TEXTURE_FILTER_BILINEAR);
@@ -345,6 +348,7 @@ int main()
     ShutdownCursor(state);
     UnloadTopdownBloodRenderTarget(state);
     UnloadTopdownBloodStampLibrary(state.topdown.bloodStampLibrary);
+    TopdownRvoShutdown(state);
     CloseWindow();
 
     return 0;

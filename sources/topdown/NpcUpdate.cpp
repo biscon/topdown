@@ -7,6 +7,7 @@
 #include "resources/AsepriteAsset.h"
 #include "topdown/TopdownNpcAi.h"
 #include "CharacterRender.h"
+#include "TopdownRvo.h"
 
 static float ComputeRemainingNpcPathDistance(const TopdownNpcMoveState& move, Vector2 currentPosition)
 {
@@ -33,23 +34,58 @@ static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string&
     return nullptr;
 }
 
+static Vector2 BuildNpcFallbackPathVelocity(
+        GameState& state,
+        const TopdownNpcRuntime& npc)
+{
+    if (!npc.move.active ||
+        npc.move.currentPoint < 0 ||
+        npc.move.currentPoint >= static_cast<int>(npc.move.pathPoints.size())) {
+        return Vector2{};
+    }
+
+    const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
+    const Vector2 delta = TopdownSub(target, npc.position);
+    const float dist = TopdownLength(delta);
+
+    if (dist <= std::max(1.0f, npc.move.arrivalRadius)) {
+        return Vector2{};
+    }
+
+    const Vector2 dir = TopdownNormalizeOrZero(delta);
+
+    const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
+    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
+    const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
+    const float maxSpeed = npc.move.running ? runSpeed : walkSpeed;
+
+    const float speed = std::min(std::max(0.0f, npc.move.currentSpeed), maxSpeed);
+    return TopdownMul(dir, speed);
+}
+
 static void UpdateNpcMovementAndCollision(
         GameState& state,
         TopdownNpcRuntime& npc,
         float dt)
 {
     if (!npc.active || npc.dead) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (npc.hurtStunRemainingMs > 0.0f) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
+    const Vector2 startPos = npc.position;
+
     Vector2 velocity{};
 
-    if (npc.move.active && npc.moving) {
-        velocity = TopdownMul(npc.facing, npc.move.currentSpeed);
+    if (TopdownRvoHasAgent(state, npc.handle)) {
+        velocity = TopdownRvoGetVelocity(state, npc.handle);
+    } else {
+        velocity = BuildNpcFallbackPathVelocity(state, npc);
     }
 
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
@@ -65,93 +101,106 @@ static void UpdateNpcMovementAndCollision(
                     seg);
         }
 
-        Vector2 preferredVsPlayer = TopdownSub(npc.position, state.topdown.runtime.player.position);
+        const bool usingRvo =
+                TopdownRvoHasAgent(state, npc.handle) &&
+                npc.move.active &&
+                npc.move.owner == TopdownNpcMoveOwner::Ai;
 
-        if (TopdownLengthSqr(preferredVsPlayer) <= 0.000001f &&
-            TopdownLengthSqr(velocity) > 0.000001f) {
-            preferredVsPlayer = Vector2{ -velocity.y, velocity.x };
-        }
+        if (!usingRvo) {
+            Vector2 preferredVsPlayer = TopdownSub(
+                    npc.position,
+                    state.topdown.runtime.player.position);
 
-        ResolveCircleVsCircle(
-                npc.position,
-                velocity,
-                npc.collisionRadius,
-                state.topdown.runtime.player.position,
-                state.topdown.runtime.player.radius,
-                preferredVsPlayer);
-
-        for (const TopdownNpcRuntime& otherNpc : state.topdown.runtime.npcs) {
-            if (!otherNpc.active || !otherNpc.visible || otherNpc.corpse) {
-                continue;
-            }
-
-            if (&otherNpc == &npc) {
-                continue;
-            }
-
-            Vector2 preferredVsNpc = TopdownSub(npc.position, otherNpc.position);
-
-            if (TopdownLengthSqr(preferredVsNpc) <= 0.000001f &&
+            if (TopdownLengthSqr(preferredVsPlayer) <= 0.000001f &&
                 TopdownLengthSqr(velocity) > 0.000001f) {
-                preferredVsNpc = Vector2{ -velocity.y, velocity.x };
+                preferredVsPlayer = Vector2{ -velocity.y, velocity.x };
             }
 
             ResolveCircleVsCircle(
                     npc.position,
                     velocity,
                     npc.collisionRadius,
-                    otherNpc.position,
-                    otherNpc.collisionRadius,
-                    preferredVsNpc);
+                    state.topdown.runtime.player.position,
+                    state.topdown.runtime.player.radius,
+                    preferredVsPlayer);
         }
+    }
+
+    if (dt > 0.0f) {
+        npc.currentVelocity = TopdownMul(
+                TopdownSub(npc.position, startPos),
+                1.0f / dt);
+    } else {
+        npc.currentVelocity = Vector2{};
     }
 }
 
-static void UpdateSingleNpcScriptedMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
+static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
 {
     TopdownNpcMoveState& move = npc.move;
 
     if (npc.dead) {
         npc.move = {};
+        npc.move.owner = TopdownNpcMoveOwner::None;
         npc.moving = false;
         npc.running = false;
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (npc.hurtStunRemainingMs > 0.0f) {
         npc.moving = false;
         npc.running = false;
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (!move.active) {
         npc.moving = false;
         npc.running = false;
+        npc.currentVelocity = Vector2{};
         return;
+    }
+
+    while (move.currentPoint < static_cast<int>(move.pathPoints.size())) {
+        const Vector2 target = move.pathPoints[move.currentPoint];
+        const Vector2 delta = TopdownSub(target, npc.position);
+        const float dist = TopdownLength(delta);
+
+        if (dist > move.arrivalRadius) {
+            break;
+        }
+
+        npc.position = target;
+        move.currentPoint++;
     }
 
     if (move.currentPoint >= static_cast<int>(move.pathPoints.size())) {
         move = {};
+        move.owner = TopdownNpcMoveOwner::None;
         npc.moving = false;
         npc.running = false;
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
-
     const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
     const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
     const float maxSpeed = move.running ? runSpeed : walkSpeed;
 
-    const float remainingDistance = ComputeRemainingNpcPathDistance(move, npc.position);
-
     float targetSpeed = maxSpeed;
-    if (remainingDistance < move.stopDistance) {
-        const float t = std::clamp(
-                remainingDistance / std::max(move.stopDistance, 0.001f),
-                0.0f,
-                1.0f);
-        targetSpeed = maxSpeed * t;
+
+    if (move.owner == TopdownNpcMoveOwner::Script) {
+        const float remainingDistance = ComputeRemainingNpcPathDistance(move, npc.position);
+
+        if (remainingDistance < move.stopDistance) {
+            const float t = std::clamp(
+                    remainingDistance / std::max(move.stopDistance, 0.001f),
+                    0.0f,
+                    1.0f);
+            targetSpeed = maxSpeed * t;
+        }
     }
 
     move.currentSpeed = MoveTowardsFloat(
@@ -159,40 +208,79 @@ static void UpdateSingleNpcScriptedMovement(GameState& state, TopdownNpcRuntime&
             targetSpeed,
             ((targetSpeed > move.currentSpeed) ? move.acceleration : move.deceleration) * dt);
 
-    while (move.currentPoint < static_cast<int>(move.pathPoints.size())) {
-        const Vector2 target = move.pathPoints[move.currentPoint];
-        const Vector2 delta = TopdownSub(target, npc.position);
-        const float dist = TopdownLength(delta);
+    const Vector2 target = move.pathPoints[move.currentPoint];
+    const Vector2 delta = TopdownSub(target, npc.position);
+    const Vector2 dir = TopdownNormalizeOrZero(delta);
 
-        if (dist <= move.arrivalRadius) {
-            npc.position = target;
-            move.currentPoint++;
-            continue;
-        }
-
-        const Vector2 dir = TopdownNormalizeOrZero(delta);
+    if (TopdownLengthSqr(dir) > 0.000001f) {
         npc.facing = dir;
         npc.rotationRadians = std::atan2(dir.y, dir.x);
         npc.moving = true;
         npc.running = move.running;
-
-        UpdateNpcMovementAndCollision(state, npc, dt);
-        return;
+    } else {
+        npc.moving = false;
+        npc.running = false;
+        npc.currentVelocity = Vector2{};
     }
-
-    move = {};
-    npc.moving = false;
-    npc.running = false;
 }
 
-static void UpdateNpcScriptedMovement(GameState& state, float dt)
+static void ApplyNpcAiMovement(GameState& state, float dt)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active) {
             continue;
         }
 
-        UpdateSingleNpcScriptedMovement(state, npc, dt);
+        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Ai) {
+            continue;
+        }
+
+        UpdateNpcMovementAndCollision(state, npc, dt);
+    }
+}
+
+static void ApplyNpcScriptedMovement(GameState& state, float dt)
+{
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active) {
+            continue;
+        }
+
+        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Script) {
+            continue;
+        }
+
+        UpdateNpcMovementAndCollision(state, npc, dt);
+    }
+}
+
+static void PrepareNpcAiMovement(GameState& state, float dt)
+{
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active) {
+            continue;
+        }
+
+        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Ai) {
+            continue;
+        }
+
+        PrepareSingleNpcPathMovement(state, npc, dt);
+    }
+}
+
+static void PrepareNpcScriptedMovement(GameState& state, float dt)
+{
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active) {
+            continue;
+        }
+
+        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Script) {
+            continue;
+        }
+
+        PrepareSingleNpcPathMovement(state, npc, dt);
     }
 }
 
@@ -218,18 +306,23 @@ static void UpdateNpcKnockbackAndCollision(
         float dt)
 {
     if (!npc.active) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (npc.corpse) {
         npc.knockbackVelocity = Vector2{};
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (TopdownLengthSqr(npc.knockbackVelocity) <= 0.000001f) {
         npc.knockbackVelocity = Vector2{};
+        npc.currentVelocity = Vector2{};
         return;
     }
+
+    const Vector2 startPos = npc.position;
 
     Vector2 velocity = npc.knockbackVelocity;
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
@@ -245,7 +338,9 @@ static void UpdateNpcKnockbackAndCollision(
                     seg);
         }
 
-        Vector2 preferredVsPlayer = TopdownSub(npc.position, state.topdown.runtime.player.position);
+        Vector2 preferredVsPlayer = TopdownSub(
+                npc.position,
+                state.topdown.runtime.player.position);
 
         if (TopdownLengthSqr(preferredVsPlayer) <= 0.000001f &&
             TopdownLengthSqr(velocity) > 0.000001f) {
@@ -284,6 +379,14 @@ static void UpdateNpcKnockbackAndCollision(
                     otherNpc.collisionRadius,
                     preferredVsNpc);
         }
+    }
+
+    if (dt > 0.0f) {
+        npc.currentVelocity = TopdownMul(
+                TopdownSub(npc.position, startPos),
+                1.0f / dt);
+    } else {
+        npc.currentVelocity = Vector2{};
     }
 
     npc.knockbackVelocity = MoveTowardsVector(
@@ -350,6 +453,7 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
 
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active) {
+            npc.currentVelocity = Vector2{};
             continue;
         }
 
@@ -367,6 +471,7 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
             npc.automaticLoopClip = {};
             TopdownClearNpcScriptLoopAnimation(npc);
             TopdownClearNpcOneShotAnimation(npc);
+            npc.currentVelocity = Vector2{};
             continue;
         }
 
@@ -398,6 +503,7 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
                 npc.oneShotClip.clipIndex < 0 ||
                 npc.oneShotClip.clipIndex >= static_cast<int>(sprite->clips.size())) {
                 TopdownClearNpcOneShotAnimation(npc);
+                npc.currentVelocity = Vector2{};
             } else {
                 const SpriteClip& clip = sprite->clips[npc.oneShotClip.clipIndex];
                 const float durationMs = GetOneShotClipDurationMs(*sprite, clip);
@@ -407,8 +513,10 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
                     npc.corpse = true;
                     npc.knockbackVelocity = Vector2{};
                     npc.move = {};
+                    npc.move.owner = TopdownNpcMoveOwner::None;
                     npc.moving = false;
                     npc.running = false;
+                    npc.currentVelocity = Vector2{};
                 } else if (!npc.dead && npc.oneShotTimeMs >= durationMs) {
                     TopdownClearNpcOneShotAnimation(npc);
                 }
@@ -427,13 +535,16 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
                 npc.dead = true;
                 npc.corpse = false;
                 npc.move = {};
+                npc.move.owner = TopdownNpcMoveOwner::None;
                 npc.moving = false;
                 npc.running = false;
                 npc.knockbackVelocity = Vector2{};
+                npc.currentVelocity = Vector2{};
                 TopdownClearNpcOneShotAnimation(npc);
                 TopdownClearNpcScriptLoopAnimation(npc);
                 npc.automaticLoopClip = {};
                 npc.automaticLoopTimeMs = 0.0f;
+                TopdownRvoRequestRebuild(state);
             }
         }
     }
@@ -446,11 +557,14 @@ void StartNpcKnockback(
 {
     dir = TopdownNormalizeOrZero(dir);
     if (TopdownLengthSqr(dir) <= 0.000001f) {
+        npc.knockbackVelocity = Vector2{};
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (knockbackDistance <= 0.0f) {
         npc.knockbackVelocity = Vector2{};
+        npc.currentVelocity = Vector2{};
         return;
     }
 
@@ -460,11 +574,20 @@ void StartNpcKnockback(
     npc.knockbackVelocity = TopdownMul(dir, initialSpeed);
 }
 
-
 void TopdownUpdateNpcLogic(GameState& state, float dt)
 {
     TopdownUpdateNpcAi(state, dt);
-    UpdateNpcScriptedMovement(state, dt);
+
+    PrepareNpcAiMovement(state, dt);
+    PrepareNpcScriptedMovement(state, dt);
+
+    TopdownRvoEnsureReady(state);
+    TopdownRvoSync(state);
+    TopdownRvoStep(state, dt);
+
+    ApplyNpcAiMovement(state, dt);
+    ApplyNpcScriptedMovement(state, dt);
+
     UpdateNpcKnockbacks(state, dt);
     UpdateNpcAudio(state, dt);
 }

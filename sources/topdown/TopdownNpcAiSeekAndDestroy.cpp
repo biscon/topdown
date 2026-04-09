@@ -133,16 +133,21 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
             TopdownMul(toPlayer, -player.radius * 0.55f));
 }
 
-static bool HasNpcReachedLastKnownPlayerPosition(const TopdownNpcRuntime& npc)
+static bool HasNpcReachedInvestigationDestination(const TopdownNpcRuntime& npc)
 {
-    const float distSqr =
-            TopdownLengthSqr(TopdownSub(npc.lastKnownPlayerPosition, npc.position));
+    const float arriveRadius = 100;
 
-    // Reuse the movement arrival radius if available, otherwise a sane fallback.
-    const float arriveRadius =
-            (npc.move.arrivalRadius > 0.0f) ? npc.move.arrivalRadius : 12.0f;
+    if (npc.hasInvestigationTarget) {
+        return TopdownHasNpcReachedPoint(
+                npc,
+                npc.investigationTarget,
+                arriveRadius);
+    }
 
-    return distSqr <= arriveRadius * arriveRadius;
+    return TopdownHasNpcReachedPoint(
+            npc,
+            npc.lastKnownPlayerPosition,
+            arriveRadius);
 }
 
 static void UpdateNpcPerception(
@@ -154,7 +159,18 @@ static void UpdateNpcPerception(
     const bool hearsPlayer = TopdownNpcCanHearPlayer(state, npc);
 
     if (seesPlayer || hearsPlayer) {
-        TopdownAlertNpcToPlayer(state, npc);
+        if (!npc.hasPlayerTarget) {
+            npc.hasPlayerTarget = true;
+            npc.repathTimerMs = 0.0f;
+        }
+
+        npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
+        npc.loseTargetTimerMs = 0.0f;
+        npc.awarenessState = TopdownNpcAwarenessState::Alerted;
+
+        npc.investigationStuckTimerMs = 0.0f;
+        npc.hasInvestigationTarget = false;
+        npc.investigationTarget = Vector2{};
 
         const float nearbyAlertRadius =
                 std::max(180.0f, npc.hearingRange);
@@ -167,23 +183,58 @@ static void UpdateNpcPerception(
         npc.loseTargetTimerMs += dtMs;
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
-        // Keep investigating the last known position even after timeout.
-        // Only fully give up once the NPC has actually reached that spot.
-        if (npc.loseTargetTimerMs < npc.loseTargetTimeoutMs) {
-            return;
+        // Only start "give up if stuck near investigation zone" logic
+        // after the normal lose-target timeout has elapsed.
+        if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
+            const float nearLastKnownRadius = 100.0f;
+            const bool nearLastKnown =
+                    TopdownHasNpcReachedPoint(
+                            npc,
+                            npc.lastKnownPlayerPosition,
+                            nearLastKnownRadius);
+
+            const bool barelyMoving =
+                    TopdownLengthSqr(npc.currentVelocity) < (20.0f * 20.0f);
+
+            if (nearLastKnown && barelyMoving) {
+                npc.investigationStuckTimerMs += dtMs;
+            } else {
+                npc.investigationStuckTimerMs = 0.0f;
+            }
+
+            // Normal success case: reached assigned investigation point.
+            if (HasNpcReachedInvestigationDestination(npc)) {
+                npc.hasPlayerTarget = false;
+                npc.loseTargetTimerMs = 0.0f;
+                npc.repathTimerMs = 0.0f;
+                npc.investigationStuckTimerMs = 0.0f;
+                npc.hasInvestigationTarget = false;
+                npc.investigationTarget = Vector2{};
+                TopdownStopNpcMovement(npc);
+                return;
+            }
+
+            // Failsafe case: close enough to the whole investigation area,
+            // but blocked / jammed / not making progress for a while.
+            if (npc.investigationStuckTimerMs >= 700.0f) {
+                npc.hasPlayerTarget = false;
+                npc.loseTargetTimerMs = 0.0f;
+                npc.repathTimerMs = 0.0f;
+                npc.investigationStuckTimerMs = 0.0f;
+                npc.hasInvestigationTarget = false;
+                npc.investigationTarget = Vector2{};
+                TopdownStopNpcMovement(npc);
+                return;
+            }
         }
 
-        if (!HasNpcReachedLastKnownPlayerPosition(npc)) {
-            return;
-        }
-
-        npc.hasPlayerTarget = false;
-        npc.loseTargetTimerMs = 0.0f;
-        npc.repathTimerMs = 0.0f;
-        TopdownStopNpcMovement(npc);
+        return;
     }
 
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
+    npc.investigationStuckTimerMs = 0.0f;
+    npc.hasInvestigationTarget = false;
+    npc.investigationTarget = Vector2{};
 }
 
 static void StartNpcAttack(
@@ -320,14 +371,17 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     const float dtMs = dt * 1000.0f;
 
     if (!npc.active || npc.dead || npc.corpse) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (!npc.hostile) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
     if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
+        npc.currentVelocity = Vector2{};
         return;
     }
 
@@ -358,6 +412,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
                 npc.hasPlayerTarget
                 ? TopdownNpcCombatState::Chase
                 : TopdownNpcCombatState::None;
+        npc.currentVelocity = Vector2{};
         return;
     }
 
@@ -369,6 +424,10 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         UpdateNpcAttackState(state, npc, dt);
         return;
     }
+
+    const bool currentlySeesPlayer = TopdownNpcCanSeePlayer(state, npc);
+    const bool currentlyHearsPlayer = TopdownNpcCanHearPlayer(state, npc);
+    const bool currentlyDetectsPlayer = currentlySeesPlayer || currentlyHearsPlayer;
 
     UpdateNpcPerception(state, npc, dtMs);
 
@@ -382,14 +441,16 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     const bool inAttackRange =
             TopdownIsPlayerWithinNpcAttackRange(npc, player);
 
-    const Vector2 toPlayer = TopdownSub(player.position, npc.position);
-    if (TopdownLengthSqr(toPlayer) > 0.000001f) {
-        const Vector2 facing = TopdownNormalizeOrZero(toPlayer);
-        npc.facing = facing;
-        npc.rotationRadians = std::atan2(facing.y, facing.x);
+    if (currentlyDetectsPlayer) {
+        const Vector2 toPlayer = TopdownSub(player.position, npc.position);
+        if (TopdownLengthSqr(toPlayer) > 0.000001f) {
+            const Vector2 facing = TopdownNormalizeOrZero(toPlayer);
+            npc.facing = facing;
+            npc.rotationRadians = std::atan2(facing.y, facing.x);
+        }
     }
 
-    if (inAttackRange) {
+    if (currentlyDetectsPlayer && inAttackRange) {
         TopdownStopNpcMovement(npc);
 
         if (npc.attackCooldownRemainingMs <= 0.0f) {
@@ -403,8 +464,39 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
     npc.combatState = TopdownNpcCombatState::Chase;
 
-    if (!npc.move.active || npc.repathTimerMs <= 0.0f) {
-        TopdownBuildNpcPathToTarget(state, npc, npc.lastKnownPlayerPosition);
+    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Script) {
+        return;
+    }
+
+    if (!npc.move.active ||
+        npc.move.owner != TopdownNpcMoveOwner::Ai ||
+        npc.repathTimerMs <= 0.0f) {
+
+        Vector2 chaseTarget{};
+
+        if (currentlyDetectsPlayer) {
+            // Real chase while target is actively detected.
+            chaseTarget = player.position;
+            npc.hasInvestigationTarget = false;
+            npc.investigationTarget = Vector2{};
+            npc.investigationStuckTimerMs = 0.0f;
+        } else {
+            // Investigation mode: spread out around the last known point.
+            npc.investigationTarget =
+                    TopdownBuildNpcInvestigationTargetAroundPoint(
+                            state,
+                            npc,
+                            npc.lastKnownPlayerPosition);
+            npc.hasInvestigationTarget = true;
+            chaseTarget = npc.investigationTarget;
+        }
+
+        TopdownBuildNpcPathToTarget(
+                state,
+                npc,
+                chaseTarget,
+                TopdownNpcMoveOwner::Ai);
+
         npc.repathTimerMs = std::max(1.0f, npc.chaseRepathIntervalMs);
     }
 }

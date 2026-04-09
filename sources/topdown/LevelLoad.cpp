@@ -17,6 +17,7 @@
 #include "nav/NavMeshBuild.h"
 #include "topdown/NpcRegistry.h"
 #include "BloodRenderTarget.h"
+#include "TopdownRvo.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -1374,6 +1375,10 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
     BuildRuntimeNpcsFromAuthored(state);
 
+    TopdownRvoInit(state);
+    TopdownRvoRequestRebuild(state);
+    TopdownRvoEnsureReady(state);
+
     TopdownInitCamera(state);
 
     // Fresh scripting VM per level
@@ -1415,6 +1420,7 @@ void TopdownUnloadLevel(GameState& state)
 {
     UnloadTopdownBloodRenderTarget(state);
     UnloadSceneResources(state.resources);
+    TopdownRvoShutdown(state);
     state.topdown.authored = {};
     state.topdown.runtime = {};
     state.topdown.npcAssets.clear();

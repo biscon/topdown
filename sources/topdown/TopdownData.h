@@ -6,6 +6,7 @@
 #include "resources/ResourceData.h"
 #include "render/EffectTypes.h"
 #include "nav/NavMeshData.h"
+#include "rvo2/RVOSimulator.h"
 
 using TopdownObstacleHandle = int;
 using TopdownImageLayerHandle = int;
@@ -683,12 +684,22 @@ enum class TopdownNpcAnimationMode {
     ScriptLoop
 };
 
+enum class TopdownNpcMoveOwner {
+    None,
+    Ai,
+    Script
+};
+
 struct TopdownNpcMoveState {
     bool active = false;
     bool running = false;
+    TopdownNpcMoveOwner owner = TopdownNpcMoveOwner::None;
 
     std::vector<Vector2> pathPoints;
     int currentPoint = 0;
+
+    Vector2 finalTarget{};
+    bool hasFinalTarget = false;
 
     float currentSpeed = 0.0f;
     float acceleration = 1800.0f;
@@ -835,6 +846,10 @@ struct TopdownNpcRuntime {
     float loseTargetTimerMs = 0.0f;
     float repathTimerMs = 0.0f;
 
+    float investigationStuckTimerMs = 0.0f;
+    Vector2 investigationTarget{};
+    bool hasInvestigationTarget = false;
+
     bool attackHitPending = false;
     bool attackHitApplied = false;
     float attackStateTimeMs = 0.0f;
@@ -844,6 +859,7 @@ struct TopdownNpcRuntime {
 
     Vector2 position{};
     Vector2 facing{1.0f, 0.0f};
+    Vector2 currentVelocity{};
 
     float collisionRadius = 32.0f;
 
@@ -950,6 +966,24 @@ struct TopdownBloodRenderTarget {
     Vector2 lastCameraPosition{};
 };
 
+struct TopdownRvoAgent {
+    int npcHandle = -1;
+    size_t rvoId = RVO::RVO_ERROR;
+};
+
+struct TopdownRvoState {
+    bool initialized = false;
+    RVO::RVOSimulator* sim = nullptr;
+
+    std::vector<TopdownRvoAgent> agents;
+
+    bool obstaclesBuilt = false;
+    bool rebuildRequested = false;
+
+    bool hasPlayerAgent = false;
+    size_t playerRvoId = RVO::RVO_ERROR;
+};
+
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -978,6 +1012,8 @@ struct TopdownRuntimeData {
     int nextNpcHandle = 1;
     TopdownScreenShakeState screenShake{};
     TopdownBloodRenderTarget bloodRenderTarget{};
+
+    TopdownRvoState rvo;
 };
 
 struct TopdownData {

@@ -14,6 +14,7 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
             npc.attackHitApplied = false;
             npc.attackStateTimeMs = 0.0f;
             npc.attackAnimationDurationMs = 0.0f;
+            npc.currentVelocity = Vector2{};
         }
         return;
     }

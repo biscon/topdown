@@ -7,6 +7,7 @@
 #include "resources/AsepriteAsset.h"
 #include "utils/json.hpp"
 #include "raymath.h"
+#include "TopdownRvo.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -859,6 +860,10 @@ bool TopdownSpawnNpcRuntime(
 
     npc.animationMode = TopdownNpcAnimationMode::AutomaticLocomotion;
 
+    npc.move = {};
+    npc.move.owner = TopdownNpcMoveOwner::None;
+
     state.topdown.runtime.npcs.push_back(npc);
+    TopdownRvoRequestRebuild(state);
     return true;
 }

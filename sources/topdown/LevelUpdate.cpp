@@ -17,6 +17,7 @@
 #include "menu/Menu.h"
 #include "LevelLoad.h"
 #include "TopdownNpcAi.h"
+#include "TopdownRvo.h"
 
 enum class TopdownShotHitType
 {
@@ -380,6 +381,20 @@ static void BeginNpcDeath(
     npc.health = 0.0f;
     npc.dead = true;
     npc.corpse = false;
+
+    npc.hasPlayerTarget = false;
+    npc.awarenessState = TopdownNpcAwarenessState::Idle;
+    npc.combatState = TopdownNpcCombatState::None;
+    npc.loseTargetTimerMs = 0.0f;
+    npc.repathTimerMs = 0.0f;
+
+    npc.attackHitPending = false;
+    npc.attackHitApplied = false;
+    npc.attackStateTimeMs = 0.0f;
+    npc.attackAnimationDurationMs = 0.0f;
+    npc.attackCooldownRemainingMs = 0.0f;
+
+    TopdownRvoRequestRebuild(state);
 
     npc.move = {};
     npc.moving = false;
