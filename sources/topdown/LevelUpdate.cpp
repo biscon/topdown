@@ -592,14 +592,21 @@ static void TriggerPlayerWeaponScreenShake(
     }
 }
 
-static bool TryStartPlayerAttack(
+struct PlayerRangedAttackContext
+{
+    Vector2 muzzleWorld{};
+    Vector2 baseDir{1.0f, 0.0f};
+};
+
+static bool BeginPlayerAttackRuntime(
         GameState& state,
-        TopdownAttackInput input)
+        TopdownAttackInput input,
+        const TopdownPlayerWeaponConfig*& outWeaponConfig,
+        TopdownAttackType& outAttackType)
 {
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
-    // --- prevent restart spam ---
     if (attack.active) {
         return false;
     }
@@ -654,228 +661,490 @@ static bool TryStartPlayerAttack(
             ? weaponConfig->primaryCooldownMs
             : weaponConfig->secondaryCooldownMs;
 
-    if (attackType == TopdownAttackType::Ranged) {
-        const std::string attackAnimationId =
-                FindTopdownPlayerEquipmentAttackAnimationId(
-                        state,
-                        character.equippedSetId,
-                        attackType);
-
-        Vector2 muzzleWorld{};
-        if (!attackAnimationId.empty() &&
-            TryComputePlayerAttackAnimationMuzzleWorldPosition(state, attackAnimationId, muzzleWorld)) {
-            // authored muzzle point used
-        } else {
-            muzzleWorld = ComputePlayerWeaponMuzzleWorldPosition(state, *weaponConfig);
-        }
-
-        Vector2 mouseWorld = GetMouseWorldPosition(state);
-        mouseWorld = ClampMouseWorldToPlayerShootingDeadzone(state, mouseWorld, muzzleWorld);
-        (void)mouseWorld;
-
-        Vector2 baseDir{
-                std::cos(character.upperRotationRadians),
-                std::sin(character.upperRotationRadians)
-        };
-        baseDir = TopdownNormalizeOrZero(baseDir);
-
-        if (TopdownLengthSqr(baseDir) <= 0.000001f) {
-            baseDir = state.topdown.runtime.player.facing;
-        }
-
-        if (TopdownLengthSqr(baseDir) <= 0.000001f) {
-            baseDir = Vector2{1.0f, 0.0f};
-        }
-
-        SpawnMuzzleFlashEffect(
-                state,
-                muzzleWorld,
-                baseDir,
-                *weaponConfig);
-
-        SpawnMuzzleSmokeParticles(
-                state,
-                muzzleWorld,
-                baseDir,
-                *weaponConfig);
-
-        TriggerPlayerWeaponScreenShake(state, *weaponConfig);
-
-        if (weaponConfig->tracerStyle == TopdownTracerStyle::Handgun) {
-            PlaySoundById(state, "pistol_shot", RandomRangeFloat(0.96f, 1.04f));
-        }
-        else if (weaponConfig->tracerStyle == TopdownTracerStyle::Shotgun) {
-            PlaySoundById(state, "shotgun_shot", RandomRangeFloat(0.97f, 1.03f));
-        }
-
-        const int shotCount =
-                (weaponConfig->tracerStyle == TopdownTracerStyle::Shotgun)
-                ? std::max(1, weaponConfig->pelletCount)
-                : 1;
-
-        std::vector<PendingNpcShotResult> pendingNpcHits;
-        pendingNpcHits.reserve(shotCount);
-
-        std::vector<PendingDoorShotResult> pendingDoorHits;
-        pendingDoorHits.reserve(shotCount);
-
-        static constexpr float kTracerForwardOffset = 0.0f;
-
-        for (int i = 0; i < shotCount; ++i) {
-            const Vector2 shotDir =
-                    ComputeShotDirectionWithSpread(baseDir, weaponConfig->spreadDegrees);
-
-            const Vector2 tracerStart =
-                    TopdownAdd(muzzleWorld, TopdownMul(shotDir, kTracerForwardOffset));
-
-            TopdownShotHitResult hit =
-                    FindFirstHitscanHit(state, muzzleWorld, shotDir, weaponConfig->maxRange);
-
-            AppendPlayerTracerEffect(
-                    state,
-                    tracerStart,
-                    hit.point,
-                    weaponConfig->tracerStyle);
-
-            if (hit.type == TopdownShotHitType::Wall) {
-                SpawnWallImpactParticles(
-                        state,
-                        hit.point,
-                        hit.normal,
-                        *weaponConfig);
-            } else if (hit.type == TopdownShotHitType::Door && hit.door != nullptr) {
-                PendingDoorShotResult* existing = nullptr;
-
-                for (PendingDoorShotResult& pending : pendingDoorHits) {
-                    if (pending.door == hit.door) {
-                        existing = &pending;
-                        break;
-                    }
-                }
-
-                if (existing == nullptr) {
-                    PendingDoorShotResult pending;
-                    pending.door = hit.door;
-                    pending.hitCount = 1;
-                    pending.hitPoint = hit.point;
-                    pending.hitNormal = hit.normal;
-                    pending.hitDir = shotDir;
-                    pending.hasHit = true;
-                    pendingDoorHits.push_back(pending);
-                } else {
-                    existing->hitCount++;
-                    existing->hitPoint = hit.point;
-                    existing->hitNormal = hit.normal;
-                    existing->hitDir = shotDir;
-                }
-            } else if (hit.type == TopdownShotHitType::Npc && hit.npc != nullptr) {
-                PendingNpcShotResult* existing = nullptr;
-
-                for (PendingNpcShotResult& pending : pendingNpcHits) {
-                    if (pending.handle == hit.npc->handle) {
-                        existing = &pending;
-                        break;
-                    }
-                }
-
-                if (existing == nullptr) {
-                    PendingNpcShotResult pending;
-                    pending.handle = hit.npc->handle;
-                    pending.npc = hit.npc;
-                    pending.totalDamage = weaponConfig->rangedDamage;
-                    pending.hitPoint = hit.point;
-                    pending.hitDir = shotDir;
-                    pending.hasHit = true;
-                    pendingNpcHits.push_back(pending);
-                } else {
-                    existing->totalDamage += weaponConfig->rangedDamage;
-                    existing->hitDir = shotDir;
-                }
-            }
-        }
-
-        for (PendingDoorShotResult& pending : pendingDoorHits) {
-            if (!pending.hasHit || pending.door == nullptr) {
-                continue;
-            }
-
-            SpawnWallImpactParticles(
-                    state,
-                    pending.hitPoint,
-                    pending.hitNormal,
-                    *weaponConfig);
-
-            ApplyDoorBallisticImpulse(
-                    *pending.door,
-                    pending.hitPoint,
-                    pending.hitDir,
-                    weaponConfig->rangedDoorImpulse * static_cast<float>(pending.hitCount));
-        }
-
-        for (PendingNpcShotResult& pending : pendingNpcHits) {
-            if (!pending.hasHit || pending.npc == nullptr) {
-                continue;
-            }
-
-            const TopdownNpcDamageResult damageResult =
-                    ApplyDamageToNpc(
-                            state,
-                            *pending.npc,
-                            pending.totalDamage);
-
-            if (!damageResult.validTarget || damageResult.damageApplied <= 0.0f) {
-                continue;
-            }
-
-            TopdownAlertNpcToPlayer(state, *pending.npc);
-
-            {
-                const float nearbyAlertRadius =
-                        std::max(180.0f, pending.npc->hearingRange);
-                TopdownAlertNearbyNpcs(state, *pending.npc, nearbyAlertRadius);
-            }
-
-            if (damageResult.killed) {
-                BeginNpcDeath(
-                        state,
-                        *pending.npc,
-                        pending.hitDir,
-                        weaponConfig->rangedKnockback);
-            } else {
-                ApplyNpcHitReaction(
-                        state,
-                        *pending.npc,
-                        pending.hitDir,
-                        weaponConfig->rangedKnockback);
-            }
-
-            SpawnBloodImpactParticles(
-                    state,
-                    pending.hitPoint,
-                    pending.hitDir,
-                    *weaponConfig);
-
-            QueueBloodSpatterDecals(
-                    state,
-                    pending.hitPoint,
-                    pending.hitDir,
-                    *weaponConfig);
-        }
-    }
-
-    if (attackType == TopdownAttackType::Melee) {
-        attack.meleeHitPending = true;
-        attack.meleeHitApplied = false;
-        PlaySoundById(state, "knife_swing", RandomRangeFloat(0.95f, 1.05f));
-    }
-
+    outWeaponConfig = weaponConfig;
+    outAttackType = attackType;
     return true;
 }
 
-static void UpdatePlayerAttackRuntime(GameState& state, float dt)
+static Vector2 BuildPlayerAttackAimDirection(const GameState& state)
+{
+    const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
+
+    Vector2 dir{
+            std::cos(character.upperRotationRadians),
+            std::sin(character.upperRotationRadians)
+    };
+    dir = TopdownNormalizeOrZero(dir);
+
+    if (TopdownLengthSqr(dir) <= 0.000001f) {
+        dir = state.topdown.runtime.player.facing;
+    }
+
+    if (TopdownLengthSqr(dir) <= 0.000001f) {
+        dir = Vector2{1.0f, 0.0f};
+    }
+
+    return dir;
+}
+
+static PlayerRangedAttackContext BuildPlayerRangedAttackContext(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    PlayerRangedAttackContext ctx;
+
+    const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
+
+    const std::string attackAnimationId =
+            FindTopdownPlayerEquipmentAttackAnimationId(
+                    state,
+                    character.equippedSetId,
+                    TopdownAttackType::Ranged);
+
+    if (!attackAnimationId.empty() &&
+        TryComputePlayerAttackAnimationMuzzleWorldPosition(state, attackAnimationId, ctx.muzzleWorld)) {
+        // authored muzzle point used
+    } else {
+        ctx.muzzleWorld = ComputePlayerWeaponMuzzleWorldPosition(state, weaponConfig);
+    }
+
+    Vector2 mouseWorld = GetMouseWorldPosition(state);
+    mouseWorld = ClampMouseWorldToPlayerShootingDeadzone(state, mouseWorld, ctx.muzzleWorld);
+    (void)mouseWorld;
+
+    ctx.baseDir = BuildPlayerAttackAimDirection(state);
+    return ctx;
+}
+
+static void PlayPlayerRangedAttackAudioAndFx(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        const PlayerRangedAttackContext& ctx)
+{
+    SpawnMuzzleFlashEffect(
+            state,
+            ctx.muzzleWorld,
+            ctx.baseDir,
+            weaponConfig);
+
+    SpawnMuzzleSmokeParticles(
+            state,
+            ctx.muzzleWorld,
+            ctx.baseDir,
+            weaponConfig);
+
+    TriggerPlayerWeaponScreenShake(state, weaponConfig);
+
+    if (weaponConfig.tracerStyle == TopdownTracerStyle::Handgun) {
+        PlaySoundById(state, "pistol_shot", RandomRangeFloat(0.96f, 1.04f));
+    } else if (weaponConfig.tracerStyle == TopdownTracerStyle::Shotgun) {
+        PlaySoundById(state, "shotgun_shot", RandomRangeFloat(0.97f, 1.03f));
+    }
+}
+
+static void AccumulatePendingDoorShot(
+        std::vector<PendingDoorShotResult>& pendingDoorHits,
+        TopdownRuntimeDoor* door,
+        Vector2 hitPoint,
+        Vector2 hitNormal,
+        Vector2 hitDir)
+{
+    PendingDoorShotResult* existing = nullptr;
+
+    for (PendingDoorShotResult& pending : pendingDoorHits) {
+        if (pending.door == door) {
+            existing = &pending;
+            break;
+        }
+    }
+
+    if (existing == nullptr) {
+        PendingDoorShotResult pending;
+        pending.door = door;
+        pending.hitCount = 1;
+        pending.hitPoint = hitPoint;
+        pending.hitNormal = hitNormal;
+        pending.hitDir = hitDir;
+        pending.hasHit = true;
+        pendingDoorHits.push_back(pending);
+    } else {
+        existing->hitCount++;
+        existing->hitPoint = hitPoint;
+        existing->hitNormal = hitNormal;
+        existing->hitDir = hitDir;
+    }
+}
+
+static void AccumulatePendingNpcShot(
+        std::vector<PendingNpcShotResult>& pendingNpcHits,
+        TopdownNpcRuntime* npc,
+        float damage,
+        Vector2 hitPoint,
+        Vector2 hitDir)
+{
+    PendingNpcShotResult* existing = nullptr;
+
+    for (PendingNpcShotResult& pending : pendingNpcHits) {
+        if (pending.handle == npc->handle) {
+            existing = &pending;
+            break;
+        }
+    }
+
+    if (existing == nullptr) {
+        PendingNpcShotResult pending;
+        pending.handle = npc->handle;
+        pending.npc = npc;
+        pending.totalDamage = damage;
+        pending.hitPoint = hitPoint;
+        pending.hitDir = hitDir;
+        pending.hasHit = true;
+        pendingNpcHits.push_back(pending);
+    } else {
+        existing->totalDamage += damage;
+        existing->hitDir = hitDir;
+    }
+}
+
+static void CollectPlayerRangedHits(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        const PlayerRangedAttackContext& ctx,
+        std::vector<PendingDoorShotResult>& outDoorHits,
+        std::vector<PendingNpcShotResult>& outNpcHits)
+{
+    const int shotCount =
+            (weaponConfig.tracerStyle == TopdownTracerStyle::Shotgun)
+            ? std::max(1, weaponConfig.pelletCount)
+            : 1;
+
+    outNpcHits.clear();
+    outNpcHits.reserve(shotCount);
+
+    outDoorHits.clear();
+    outDoorHits.reserve(shotCount);
+
+    static constexpr float kTracerForwardOffset = 0.0f;
+
+    for (int i = 0; i < shotCount; ++i) {
+        const Vector2 shotDir =
+                ComputeShotDirectionWithSpread(ctx.baseDir, weaponConfig.spreadDegrees);
+
+        const Vector2 tracerStart =
+                TopdownAdd(ctx.muzzleWorld, TopdownMul(shotDir, kTracerForwardOffset));
+
+        const TopdownShotHitResult hit =
+                FindFirstHitscanHit(state, ctx.muzzleWorld, shotDir, weaponConfig.maxRange);
+
+        AppendPlayerTracerEffect(
+                state,
+                tracerStart,
+                hit.point,
+                weaponConfig.tracerStyle);
+
+        if (hit.type == TopdownShotHitType::Wall) {
+            SpawnWallImpactParticles(
+                    state,
+                    hit.point,
+                    hit.normal,
+                    weaponConfig);
+            continue;
+        }
+
+        if (hit.type == TopdownShotHitType::Door && hit.door != nullptr) {
+            AccumulatePendingDoorShot(
+                    outDoorHits,
+                    hit.door,
+                    hit.point,
+                    hit.normal,
+                    shotDir);
+            continue;
+        }
+
+        if (hit.type == TopdownShotHitType::Npc && hit.npc != nullptr) {
+            AccumulatePendingNpcShot(
+                    outNpcHits,
+                    hit.npc,
+                    weaponConfig.rangedDamage,
+                    hit.point,
+                    shotDir);
+        }
+    }
+}
+
+static void ApplyPendingDoorShots(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        const std::vector<PendingDoorShotResult>& pendingDoorHits)
+{
+    for (const PendingDoorShotResult& pending : pendingDoorHits) {
+        if (!pending.hasHit || pending.door == nullptr) {
+            continue;
+        }
+
+        SpawnWallImpactParticles(
+                state,
+                pending.hitPoint,
+                pending.hitNormal,
+                weaponConfig);
+
+        ApplyDoorBallisticImpulse(
+                *pending.door,
+                pending.hitPoint,
+                pending.hitDir,
+                weaponConfig.rangedDoorImpulse * static_cast<float>(pending.hitCount));
+    }
+}
+
+static void ApplyPendingNpcShots(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        const std::vector<PendingNpcShotResult>& pendingNpcHits)
+{
+    for (const PendingNpcShotResult& pending : pendingNpcHits) {
+        if (!pending.hasHit || pending.npc == nullptr) {
+            continue;
+        }
+
+        const TopdownNpcDamageResult damageResult =
+                ApplyDamageToNpc(
+                        state,
+                        *pending.npc,
+                        pending.totalDamage);
+
+        if (!damageResult.validTarget || damageResult.damageApplied <= 0.0f) {
+            continue;
+        }
+
+        TopdownAlertNpcToPlayer(state, *pending.npc);
+
+        {
+            const float nearbyAlertRadius =
+                    std::max(180.0f, pending.npc->hearingRange);
+            TopdownAlertNearbyNpcs(state, *pending.npc, nearbyAlertRadius);
+        }
+
+        if (damageResult.killed) {
+            BeginNpcDeath(
+                    state,
+                    *pending.npc,
+                    pending.hitDir,
+                    weaponConfig.rangedKnockback);
+        } else {
+            ApplyNpcHitReaction(
+                    state,
+                    *pending.npc,
+                    pending.hitDir,
+                    weaponConfig.rangedKnockback);
+        }
+
+        SpawnBloodImpactParticles(
+                state,
+                pending.hitPoint,
+                pending.hitDir,
+                weaponConfig);
+
+        QueueBloodSpatterDecals(
+                state,
+                pending.hitPoint,
+                pending.hitDir,
+                weaponConfig);
+    }
+}
+
+static void StartPlayerMeleeAttack(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    attack.meleeHitPending = true;
+    attack.meleeHitApplied = false;
+
+    if (weaponConfig.equipmentSetId == "knife") {
+        PlaySoundById(state, "knife_swing", RandomRangeFloat(0.95f, 1.05f));
+    } else {
+        PlaySoundById(state, "melee_hit", RandomRangeFloat(0.95f, 1.05f));
+    }
+}
+
+static void ResolvePlayerMeleeNpcHit(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        TopdownNpcRuntime& hitNpc,
+        Vector2 hitDir)
+{
+    const TopdownNpcDamageResult damageResult =
+            ApplyDamageToNpc(
+                    state,
+                    hitNpc,
+                    weaponConfig.meleeDamage);
+
+    if (damageResult.validTarget && damageResult.damageApplied > 0.0f) {
+        TopdownAlertNpcToPlayer(state, hitNpc);
+
+        {
+            const float nearbyAlertRadius =
+                    std::max(180.0f, hitNpc.hearingRange);
+            TopdownAlertNearbyNpcs(state, hitNpc, nearbyAlertRadius);
+        }
+
+        if (damageResult.killed) {
+            BeginNpcDeath(
+                    state,
+                    hitNpc,
+                    hitDir,
+                    weaponConfig.meleeKnockback);
+        } else {
+            ApplyNpcHitReaction(
+                    state,
+                    hitNpc,
+                    hitDir,
+                    weaponConfig.meleeKnockback);
+        }
+    }
+
+    if (weaponConfig.equipmentSetId == "knife" &&
+        damageResult.validTarget &&
+        damageResult.damageApplied > 0.0f) {
+        Vector2 bloodOrigin{};
+        bool hasAuthoredBloodOrigin = false;
+
+        const std::string attackAnimationId =
+                FindTopdownPlayerEquipmentAttackAnimationId(
+                        state,
+                        weaponConfig.equipmentSetId,
+                        TopdownAttackType::Melee);
+
+        if (!attackAnimationId.empty()) {
+            hasAuthoredBloodOrigin =
+                    TryComputePlayerAttackAnimationMuzzleWorldPosition(
+                            state,
+                            attackAnimationId,
+                            bloodOrigin);
+        }
+
+        if (!hasAuthoredBloodOrigin) {
+            Vector2 toNpc = TopdownNormalizeOrZero(
+                    TopdownSub(hitNpc.position, state.topdown.runtime.player.position));
+
+            if (TopdownLengthSqr(toNpc) <= 0.000001f) {
+                toNpc = hitDir;
+            }
+
+            bloodOrigin = TopdownSub(
+                    hitNpc.position,
+                    TopdownMul(toNpc, hitNpc.collisionRadius * 0.65f));
+        }
+
+        SpawnBloodImpactParticles(
+                state,
+                bloodOrigin,
+                hitDir,
+                weaponConfig);
+
+        QueueBloodSpatterDecals(
+                state,
+                bloodOrigin,
+                hitDir,
+                weaponConfig);
+    }
+}
+
+static void ResolvePlayerMeleeDoorHit(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig,
+        Vector2 attackDir)
+{
+    if (weaponConfig.meleeDoorImpulse <= 0.0f) {
+        return;
+    }
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
+    float hitDistance = weaponConfig.meleeRange;
+
+    if (!RaycastClosestDoor(
+            state,
+            state.topdown.runtime.player.position,
+            attackDir,
+            weaponConfig.meleeRange,
+            hitDoor,
+            hitPoint,
+            hitNormal,
+            hitDistance)) {
+        return;
+    }
+
+    SpawnWallImpactParticles(
+            state,
+            hitPoint,
+            hitNormal,
+            weaponConfig);
+
+    ApplyDoorBallisticImpulse(
+            *hitDoor,
+            hitPoint,
+            attackDir,
+            weaponConfig.meleeDoorImpulse);
+}
+
+static void ResolvePendingPlayerMeleeImpact(GameState& state)
 {
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
 
+    const TopdownPlayerWeaponConfig* weaponConfig =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(
+                    state,
+                    attack.equipmentSetId);
+
+    if (weaponConfig == nullptr) {
+        attack.meleeHitApplied = true;
+        attack.meleeHitPending = false;
+        return;
+    }
+
+    TopdownNpcRuntime* hitNpc =
+            FindBestPlayerMeleeTarget(
+                    state,
+                    weaponConfig->meleeRange,
+                    weaponConfig->meleeArcDegrees);
+
+    const Vector2 attackDir = BuildPlayerAttackAimDirection(state);
+
+    if (hitNpc != nullptr) {
+        Vector2 hitDir = TopdownNormalizeOrZero(
+                TopdownSub(hitNpc->position, state.topdown.runtime.player.position));
+
+        if (TopdownLengthSqr(hitDir) <= 0.000001f) {
+            hitDir = attackDir;
+        }
+
+        if (weaponConfig->equipmentSetId == "knife") {
+            PlaySoundById(state, "knife_hit", RandomRangeFloat(0.95f, 1.05f));
+        } else if (weaponConfig->equipmentSetId == "rifle" ||
+                   weaponConfig->equipmentSetId == "shotgun") {
+            PlaySoundById(state, "melee_hit", RandomRangeFloat(0.95f, 1.05f));
+        }
+
+        ResolvePlayerMeleeNpcHit(
+                state,
+                *weaponConfig,
+                *hitNpc,
+                hitDir);
+    }
+
+    ResolvePlayerMeleeDoorHit(
+            state,
+            *weaponConfig,
+            attackDir);
+
+    attack.meleeHitApplied = true;
+    attack.meleeHitPending = false;
+}
+
+static void UpdatePlayerAttackTimers(TopdownPlayerAttackRuntime& attack, float dt)
+{
     if (attack.cooldownRemainingMs > 0.0f) {
         attack.cooldownRemainingMs -= dt * 1000.0f;
         if (attack.cooldownRemainingMs < 0.0f) {
@@ -893,194 +1162,90 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
     if (!attack.triggerHeld || attack.currentFireMode != TopdownFireMode::FullAuto) {
         attack.fullAutoShakeCooldownMs = 0.0f;
     }
+}
 
-    if (attack.active) {
-        attack.stateTimeMs += dt * 1000.0f;
+static void UpdateActivePlayerAttack(GameState& state, float dt)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
 
-        // --- delayed melee impact ---
-        if (attack.meleeHitPending && !attack.meleeHitApplied) {
-            const float durationMs = attack.animationDurationMs;
+    if (!attack.active) {
+        attack.rifleLoopPlaying = false;
+        return;
+    }
 
-            if (durationMs > 0.0f) {
-                const float triggerTime = durationMs * 0.75f;
+    attack.stateTimeMs += dt * 1000.0f;
 
-                if (attack.stateTimeMs >= triggerTime) {
-                    const TopdownPlayerWeaponConfig* weaponConfig =
-                            FindTopdownPlayerWeaponConfigByEquipmentSetId(
-                                    state,
-                                    attack.equipmentSetId);
-
-                    if (weaponConfig != nullptr) {
-                        TopdownNpcRuntime* hitNpc =
-                                FindBestPlayerMeleeTarget(
-                                        state,
-                                        weaponConfig->meleeRange,
-                                        weaponConfig->meleeArcDegrees);
-
-                        if (hitNpc != nullptr) {
-                            const TopdownCharacterRuntime& character =
-                                    state.topdown.runtime.playerCharacter;
-
-                            Vector2 hitDir = TopdownNormalizeOrZero(
-                                    TopdownSub(hitNpc->position, state.topdown.runtime.player.position));
-
-                            if (TopdownLengthSqr(hitDir) <= 0.000001f) {
-                                hitDir = Vector2{
-                                        std::cos(character.upperRotationRadians),
-                                        std::sin(character.upperRotationRadians)
-                                };
-                            }
-
-                            if (weaponConfig->equipmentSetId == "knife") {
-                                PlaySoundById(state, "knife_hit", RandomRangeFloat(0.95f, 1.05f));
-                            }
-                            if (weaponConfig->equipmentSetId == "rifle" || weaponConfig->equipmentSetId == "shotgun") {
-                                PlaySoundById(state, "melee_hit", RandomRangeFloat(0.95f, 1.05f));
-                            }
-
-                            const TopdownNpcDamageResult damageResult =
-                                    ApplyDamageToNpc(
-                                            state,
-                                            *hitNpc,
-                                            weaponConfig->meleeDamage);
-
-                            if (damageResult.validTarget && damageResult.damageApplied > 0.0f) {
-                                TopdownAlertNpcToPlayer(state, *hitNpc);
-
-                                {
-                                    const float nearbyAlertRadius =
-                                            std::max(180.0f, hitNpc->hearingRange);
-                                    TopdownAlertNearbyNpcs(state, *hitNpc, nearbyAlertRadius);
-                                }
-
-                                if (damageResult.killed) {
-                                    BeginNpcDeath(
-                                            state,
-                                            *hitNpc,
-                                            hitDir,
-                                            weaponConfig->meleeKnockback);
-                                } else {
-                                    ApplyNpcHitReaction(
-                                            state,
-                                            *hitNpc,
-                                            hitDir,
-                                            weaponConfig->meleeKnockback);
-                                }
-                            }
-
-                            if (weaponConfig->equipmentSetId == "knife" &&
-                                damageResult.validTarget &&
-                                damageResult.damageApplied > 0.0f) {
-                                Vector2 bloodOrigin{};
-                                bool hasAuthoredBloodOrigin = false;
-
-                                const std::string attackAnimationId =
-                                        FindTopdownPlayerEquipmentAttackAnimationId(
-                                                state,
-                                                attack.equipmentSetId,
-                                                TopdownAttackType::Melee);
-
-                                if (!attackAnimationId.empty()) {
-                                    hasAuthoredBloodOrigin =
-                                            TryComputePlayerAttackAnimationMuzzleWorldPosition(
-                                                    state,
-                                                    attackAnimationId,
-                                                    bloodOrigin);
-                                }
-
-                                if (!hasAuthoredBloodOrigin) {
-                                    Vector2 toNpc = TopdownNormalizeOrZero(
-                                            TopdownSub(hitNpc->position, state.topdown.runtime.player.position));
-
-                                    if (TopdownLengthSqr(toNpc) <= 0.000001f) {
-                                        toNpc = hitDir;
-                                    }
-
-                                    bloodOrigin = TopdownSub(
-                                            hitNpc->position,
-                                            TopdownMul(toNpc, hitNpc->collisionRadius * 0.65f));
-                                }
-
-                                SpawnBloodImpactParticles(
-                                        state,
-                                        bloodOrigin,
-                                        hitDir,
-                                        *weaponConfig);
-
-                                QueueBloodSpatterDecals(
-                                        state,
-                                        bloodOrigin,
-                                        hitDir,
-                                        *weaponConfig);
-                            }
-                        }
-                    }
-
-                    if (weaponConfig != nullptr &&
-                        weaponConfig->meleeDoorImpulse > 0.0f) {
-                        const TopdownCharacterRuntime& character =
-                                state.topdown.runtime.playerCharacter;
-
-                        Vector2 attackDir{
-                                std::cos(character.upperRotationRadians),
-                                std::sin(character.upperRotationRadians)
-                        };
-                        attackDir = TopdownNormalizeOrZero(attackDir);
-
-                        if (TopdownLengthSqr(attackDir) <= 0.000001f) {
-                            attackDir = state.topdown.runtime.player.facing;
-                        }
-
-                        if (TopdownLengthSqr(attackDir) <= 0.000001f) {
-                            attackDir = Vector2{1.0f, 0.0f};
-                        }
-
-                        TopdownRuntimeDoor* hitDoor = nullptr;
-                        Vector2 hitPoint{};
-                        Vector2 hitNormal{};
-                        float hitDistance = weaponConfig->meleeRange;
-
-                        if (RaycastClosestDoor(
-                                state,
-                                state.topdown.runtime.player.position,
-                                attackDir,
-                                weaponConfig->meleeRange,
-                                hitDoor,
-                                hitPoint,
-                                hitNormal,
-                                hitDistance)) {
-                            SpawnWallImpactParticles(
-                                    state,
-                                    hitPoint,
-                                    hitNormal,
-                                    *weaponConfig);
-
-                            ApplyDoorBallisticImpulse(
-                                    *hitDoor,
-                                    hitPoint,
-                                    attackDir,
-                                    weaponConfig->meleeDoorImpulse);
-                        }
-                    }
-
-                    attack.meleeHitApplied = true;
-                    attack.meleeHitPending = false;
-                }
-            }
-        }
-
+    if (attack.meleeHitPending && !attack.meleeHitApplied) {
         const float durationMs = attack.animationDurationMs;
 
-        if (durationMs <= 0.0f || attack.stateTimeMs >= durationMs) {
-            attack.active = false;
-            attack.state = TopdownPlayerAttackState::Idle;
-            attack.attackType = TopdownAttackType::None;
-            attack.stateTimeMs = 0.0f;
-            attack.animationDurationMs = 0.0f;
+        if (durationMs > 0.0f) {
+            const float triggerTime = durationMs * 0.75f;
+
+            if (attack.stateTimeMs >= triggerTime) {
+                ResolvePendingPlayerMeleeImpact(state);
+            }
         }
-    } else {
-        attack.rifleLoopPlaying = false;
     }
+
+    const float durationMs = attack.animationDurationMs;
+
+    if (durationMs <= 0.0f || attack.stateTimeMs >= durationMs) {
+        attack.active = false;
+        attack.state = TopdownPlayerAttackState::Idle;
+        attack.attackType = TopdownAttackType::None;
+        attack.stateTimeMs = 0.0f;
+        attack.animationDurationMs = 0.0f;
+    }
+}
+
+static bool TryStartPlayerAttack(
+        GameState& state,
+        TopdownAttackInput input)
+{
+    const TopdownPlayerWeaponConfig* weaponConfig = nullptr;
+    TopdownAttackType attackType = TopdownAttackType::None;
+
+    if (!BeginPlayerAttackRuntime(state, input, weaponConfig, attackType)) {
+        return false;
+    }
+
+    if (attackType == TopdownAttackType::Ranged) {
+        const PlayerRangedAttackContext ctx =
+                BuildPlayerRangedAttackContext(state, *weaponConfig);
+
+        PlayPlayerRangedAttackAudioAndFx(state, *weaponConfig, ctx);
+
+        std::vector<PendingNpcShotResult> pendingNpcHits;
+        std::vector<PendingDoorShotResult> pendingDoorHits;
+
+        CollectPlayerRangedHits(
+                state,
+                *weaponConfig,
+                ctx,
+                pendingDoorHits,
+                pendingNpcHits);
+
+        ApplyPendingDoorShots(
+                state,
+                *weaponConfig,
+                pendingDoorHits);
+
+        ApplyPendingNpcShots(
+                state,
+                *weaponConfig,
+                pendingNpcHits);
+    }
+
+    if (attackType == TopdownAttackType::Melee) {
+        StartPlayerMeleeAttack(state, *weaponConfig);
+    }
+
+    return true;
+}
+
+static void ConsumeQueuedPlayerAttackInputs(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
 
     if (attack.pendingSecondaryAttack) {
         attack.pendingSecondaryAttack = false;
@@ -1097,8 +1262,11 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
         attack.cooldownRemainingMs <= 0.0f) {
         TryStartPlayerAttack(state, TopdownAttackInput::Primary);
     }
+}
 
-    // --- rifle full auto audio ---
+static void UpdatePlayerRifleLoopAudio(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
     const TopdownPlayerWeaponConfig* weaponConfig =
@@ -1106,8 +1274,7 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
 
     if (weaponConfig != nullptr &&
         weaponConfig->tracerStyle == TopdownTracerStyle::Rifle &&
-        attack.currentFireMode == TopdownFireMode::FullAuto)
-    {
+        attack.currentFireMode == TopdownFireMode::FullAuto) {
         if (attack.triggerHeld) {
             if (!attack.rifleLoopPlaying) {
                 PlaySoundById(state, "rifle_full_auto_start", RandomRangeFloat(0.98f, 1.02f));
@@ -1122,6 +1289,16 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
             }
         }
     }
+}
+
+static void UpdatePlayerAttackRuntime(GameState& state, float dt)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+
+    UpdatePlayerAttackTimers(attack, dt);
+    UpdateActivePlayerAttack(state, dt);
+    ConsumeQueuedPlayerAttackInputs(state);
+    UpdatePlayerRifleLoopAudio(state);
 }
 
 void TopdownUpdate(GameState& state, float dt)

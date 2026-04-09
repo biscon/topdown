@@ -1193,8 +1193,8 @@ static void DrawSingleDoor(const GameState& state, const TopdownRuntimeDoor& doo
     Vector2 d{};
     TopdownBuildDoorCorners(door, a, b, c, d);
 
-    const Color fillColor{92, 58, 34, 255};
-    const Color outlineColor{36, 20, 12, 255};
+    const Color fillColor = door.color;
+    const Color outlineColor = door.outlineColor;
 
     const float outlineThickness =
             static_cast<float>(std::max(1, state.topdown.currentLevelBaseAssetScale));

@@ -174,6 +174,9 @@ struct TopdownAuthoredDoor {
 
     std::string openSoundId;
     std::string closeSoundId;
+
+    Color color = Color{92, 58, 34, 255};
+    Color outlineColor = BLACK;
 };
 
 struct TopdownAuthoredEffectRegion {
@@ -262,6 +265,8 @@ struct TopdownRuntimeDoor {
     std::string closeSoundId;
     bool wasNearClosed = true;
     bool openSoundPlayedThisSwing = false;
+    Color color = Color{92, 58, 34, 255};
+    Color outlineColor = BLACK;
 };
 
 struct TopdownRuntimeImageLayer {

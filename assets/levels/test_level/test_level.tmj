@@ -2375,6 +2375,11 @@
                          "value":"door_close"
                         }, 
                         {
+                         "name":"color",
+                         "type":"color",
+                         "value":"#ffc0bfbc"
+                        }, 
+                        {
                          "name":"damping",
                          "type":"float",
                          "value":3.5
@@ -2393,6 +2398,11 @@
                          "name":"openSoundId",
                          "type":"string",
                          "value":"door_open"
+                        }, 
+                        {
+                         "name":"outlineColor",
+                         "type":"color",
+                         "value":"#ff24140c"
                         }, 
                         {
                          "name":"swingMaxDeg",

@@ -9,6 +9,7 @@
 #include "topdown/LevelCollision.h"
 #include "nav/NavMeshQuery.h"
 #include "resources/AsepriteAsset.h"
+#include "LevelDoors.h"
 
 const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
 {
@@ -55,6 +56,36 @@ bool TopdownHasNpcReachedPoint(
 }
 
 
+static bool HasDoorBetweenPoints(
+        GameState& state,
+        Vector2 from,
+        Vector2 to)
+{
+    Vector2 delta = TopdownSub(to, from);
+    const float dist = TopdownLength(delta);
+
+    if (dist <= 0.000001f) {
+        return false;
+    }
+
+    const Vector2 dir = TopdownMul(delta, 1.0f / dist);
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
+    float hitDistance = dist;
+
+    return RaycastClosestDoor(
+            state,
+            from,
+            dir,
+            dist,
+            hitDoor,
+            hitPoint,
+            hitNormal,
+            hitDistance);
+}
+
 static bool HasClearLineFromPointToPoint(
         GameState& state,
         Vector2 from,
@@ -90,6 +121,20 @@ static bool HasClearLineFromPointToPoint(
             dir,
             state.topdown.runtime.collision.boundarySegments,
             dist,
+            hitPoint,
+            hitNormal,
+            hitDistance)) {
+        return false;
+    }
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    hitDistance = dist;
+    if (RaycastClosestDoor(
+            state,
+            from,
+            dir,
+            dist,
+            hitDoor,
             hitPoint,
             hitNormal,
             hitDistance)) {
@@ -135,7 +180,7 @@ Vector2 TopdownBuildNpcInvestigationTargetAroundPoint(
     const float baseRadius =
             std::max(96.0f, npc.collisionRadius * 2.0f + 40.0f);
 
-    const float ringSpacing = 80.0f;
+    const float ringSpacing = 100.0f;
 
     const int baseSlot =
             (npc.handle >= 0)
@@ -334,6 +379,20 @@ static bool RaycastPlayerDetailed(
         return false;
     }
 
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    float doorDistance = outDistance;
+    if (RaycastClosestDoor(
+            state,
+            origin,
+            dir,
+            outDistance,
+            hitDoor,
+            wallPoint,
+            wallNormal,
+            doorDistance)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -394,6 +453,50 @@ static bool IsPlayerInsideNpcVisionCone(
     return TopdownDot(facing, dirToPlayer) >= cosThreshold;
 }
 
+static bool HasWallOcclusionBetweenPoints(
+        GameState& state,
+        Vector2 from,
+        Vector2 to)
+{
+    Vector2 delta = TopdownSub(to, from);
+    const float dist = TopdownLength(delta);
+
+    if (dist <= 0.000001f) {
+        return false;
+    }
+
+    const Vector2 dir = TopdownMul(delta, 1.0f / dist);
+
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
+    float hitDistance = dist;
+
+    if (RaycastClosestSegmentWithNormal(
+            from,
+            dir,
+            state.topdown.runtime.collision.visionSegments,
+            dist,
+            hitPoint,
+            hitNormal,
+            hitDistance)) {
+        return true;
+    }
+
+    hitDistance = dist;
+    if (RaycastClosestSegmentWithNormal(
+            from,
+            dir,
+            state.topdown.runtime.collision.boundarySegments,
+            dist,
+            hitPoint,
+            hitNormal,
+            hitDistance)) {
+        return true;
+    }
+
+    return false;
+}
+
 bool TopdownNpcCanSeePlayer(
         GameState& state,
         const TopdownNpcRuntime& npc)
@@ -426,14 +529,19 @@ bool TopdownNpcCanHearPlayer(
     }
 
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
-    const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
-    const float range = std::max(0.0f, npc.hearingRange);
 
-    if (distSqr > range * range) {
+    if (HasWallOcclusionBetweenPoints(state, npc.position, player.position)) {
         return false;
     }
 
-    return HasNpcLineOfSightToPlayer(state, npc, range);
+    float range = std::max(0.0f, npc.hearingRange);
+
+    if (HasDoorBetweenPoints(state, npc.position, player.position)) {
+        range *= 0.5f;
+    }
+
+    const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
+    return distSqr <= range * range;
 }
 
 bool TopdownIsPlayerWithinNpcAttackRange(
@@ -481,6 +589,20 @@ bool TopdownNpcHasLineOfSightToNpc(
             dir,
             state.topdown.runtime.collision.boundarySegments,
             dist,
+            hitPoint,
+            hitNormal,
+            hitDistance)) {
+        return false;
+    }
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    hitDistance = dist;
+    if (RaycastClosestDoor(
+            state,
+            fromNpc.position,
+            dir,
+            dist,
+            hitDoor,
             hitPoint,
             hitNormal,
             hitDistance)) {

@@ -730,6 +730,16 @@ static void ImportDoorLayer(
         door.openSoundId = GetObjectPropertyString(obj, "openSoundId", "");
         door.closeSoundId = GetObjectPropertyString(obj, "closeSoundId", "");
 
+        door.color = GetObjectPropertyColor(
+                obj,
+                "color",
+                Color{92, 58, 34, 255});
+
+        door.outlineColor = GetObjectPropertyColor(
+                obj,
+                "outlineColor",
+                BLACK);
+
         topdown.authored.doors.push_back(door);
     }
 }
@@ -1252,6 +1262,9 @@ static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
 
     runtime.openSoundId = authored.openSoundId;
     runtime.closeSoundId = authored.closeSoundId;
+
+    runtime.color = authored.color;
+    runtime.outlineColor = authored.outlineColor;
 
     runtime.wasNearClosed = true;
     runtime.openSoundPlayedThisSwing = false;

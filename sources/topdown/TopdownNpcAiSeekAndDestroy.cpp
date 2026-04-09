@@ -135,7 +135,7 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
 
 static bool HasNpcReachedInvestigationDestination(const TopdownNpcRuntime& npc)
 {
-    const float arriveRadius = 100;
+    const float arriveRadius = 200;
 
     if (npc.hasInvestigationTarget) {
         return TopdownHasNpcReachedPoint(
