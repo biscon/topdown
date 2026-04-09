@@ -3,13 +3,21 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <vector>
+
+namespace
+{
+    constexpr float kPointEqualEps = 0.01f;
+    constexpr float kPointInTriangleEps = 0.01f;
+    constexpr float kAreaEps = 0.001f;
+}
 
 static bool NearlyEqual(float a, float b, float eps = 0.0001f)
 {
     return std::fabs(a - b) <= eps;
 }
 
-static bool SamePoint(Vector2 a, Vector2 b, float eps = 0.01f)
+static bool SamePoint(Vector2 a, Vector2 b, float eps = kPointEqualEps)
 {
     return NearlyEqual(a.x, b.x, eps) && NearlyEqual(a.y, b.y, eps);
 }
@@ -32,6 +40,25 @@ static float AreaMath(Vector2 a, Vector2 b, Vector2 c)
     return TriArea2(a, b, c);
 }
 
+static float DistSqr(Vector2 a, Vector2 b)
+{
+    const float dx = a.x - b.x;
+    const float dy = a.y - b.y;
+    return dx * dx + dy * dy;
+}
+
+static float Dist(Vector2 a, Vector2 b)
+{
+    return std::sqrt(DistSqr(a, b));
+}
+
+static int SignWithEps(float v, float eps)
+{
+    if (v > eps) return 1;
+    if (v < -eps) return -1;
+    return 0;
+}
+
 static int FindThirdVertexIndex(const NavTriangle& tri, int edgeV0, int edgeV1)
 {
     const int verts[3] = { tri.vertexIndex0, tri.vertexIndex1, tri.vertexIndex2 };
@@ -43,7 +70,7 @@ static int FindThirdVertexIndex(const NavTriangle& tri, int edgeV0, int edgeV1)
     return -1;
 }
 
-static bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+static bool PointInTriangleStrict(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
 {
     const float d1 = TriArea2(p, a, b);
     const float d2 = TriArea2(p, b, c);
@@ -55,11 +82,16 @@ static bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
     return !(hasNeg && hasPos);
 }
 
-static float DistSqr(Vector2 a, Vector2 b)
+static bool PointInTriangleEps(Vector2 p, Vector2 a, Vector2 b, Vector2 c, float eps)
 {
-    const float dx = a.x - b.x;
-    const float dy = a.y - b.y;
-    return dx * dx + dy * dy;
+    const int s1 = SignWithEps(TriArea2(p, a, b), eps);
+    const int s2 = SignWithEps(TriArea2(p, b, c), eps);
+    const int s3 = SignWithEps(TriArea2(p, c, a), eps);
+
+    const bool hasNeg = (s1 < 0) || (s2 < 0) || (s3 < 0);
+    const bool hasPos = (s1 > 0) || (s2 > 0) || (s3 > 0);
+
+    return !(hasNeg && hasPos);
 }
 
 static Vector2 ClosestPointOnSegment(Vector2 p, Vector2 a, Vector2 b)
@@ -78,6 +110,49 @@ static Vector2 ClosestPointOnSegment(Vector2 p, Vector2 a, Vector2 b)
             a.x + ab.x * t,
             a.y + ab.y * t
     };
+}
+
+static bool GetTriangleEdgeVertexIndices(
+        const NavTriangle& tri,
+        int edgeSlot,
+        int& outV0,
+        int& outV1)
+{
+    switch (edgeSlot) {
+        case 0:
+            outV0 = tri.vertexIndex0;
+            outV1 = tri.vertexIndex1;
+            return true;
+
+        case 1:
+            outV0 = tri.vertexIndex1;
+            outV1 = tri.vertexIndex2;
+            return true;
+
+        case 2:
+            outV0 = tri.vertexIndex2;
+            outV1 = tri.vertexIndex0;
+            return true;
+
+        default:
+            break;
+    }
+
+    outV0 = -1;
+    outV1 = -1;
+    return false;
+}
+
+static int GetTriangleEdgeNeighbor(
+        const NavTriangle& tri,
+        int edgeSlot)
+{
+    switch (edgeSlot) {
+        case 0: return tri.neighbor0;
+        case 1: return tri.neighbor1;
+        case 2: return tri.neighbor2;
+        default: return -1;
+    }
 }
 
 static bool GetSharedEdge(
@@ -126,12 +201,32 @@ static bool GetSharedEdgeMidpoint(
     return true;
 }
 
+static Vector2 GetTriangleReferencePoint(
+        const NavMeshData& navMesh,
+        int triangleIndex,
+        int startTri,
+        int endTri,
+        Vector2 startPos,
+        Vector2 endPos)
+{
+    if (triangleIndex == startTri) {
+        return startPos;
+    }
+
+    if (triangleIndex == endTri) {
+        return endPos;
+    }
+
+    return navMesh.triangles[triangleIndex].centroid;
+}
+
 int FindTriangleContainingPoint(const NavMeshData& navMesh, Vector2 p)
 {
     if (!navMesh.built) {
         return -1;
     }
 
+    // First pass: strict test.
     for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
         const NavTriangle& tri = navMesh.triangles[i];
 
@@ -144,12 +239,41 @@ int FindTriangleContainingPoint(const NavMeshData& navMesh, Vector2 p)
         const Vector2 b = navMesh.vertices[tri.vertexIndex1];
         const Vector2 c = navMesh.vertices[tri.vertexIndex2];
 
-        if (PointInTriangle(p, a, b, c)) {
+        if (PointInTriangleStrict(p, a, b, c)) {
             return i;
         }
     }
 
-    return -1;
+    // Second pass: tolerant test for points lying numerically on edges.
+    int bestTri = -1;
+    float bestCentroidDist = std::numeric_limits<float>::max();
+
+    for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
+        const NavTriangle& tri = navMesh.triangles[i];
+
+        if (p.x < tri.bounds.x - kPointInTriangleEps ||
+            p.x > tri.bounds.x + tri.bounds.width + kPointInTriangleEps ||
+            p.y < tri.bounds.y - kPointInTriangleEps ||
+            p.y > tri.bounds.y + tri.bounds.height + kPointInTriangleEps) {
+            continue;
+        }
+
+        const Vector2 a = navMesh.vertices[tri.vertexIndex0];
+        const Vector2 b = navMesh.vertices[tri.vertexIndex1];
+        const Vector2 c = navMesh.vertices[tri.vertexIndex2];
+
+        if (!PointInTriangleEps(p, a, b, c, kPointInTriangleEps)) {
+            continue;
+        }
+
+        const float d2 = DistSqr(p, tri.centroid);
+        if (bestTri < 0 || d2 < bestCentroidDist) {
+            bestTri = i;
+            bestCentroidDist = d2;
+        }
+    }
+
+    return bestTri;
 }
 
 Vector2 ProjectPointToNavMesh(
@@ -173,32 +297,55 @@ Vector2 ProjectPointToNavMesh(
     float bestDistSqr = std::numeric_limits<float>::max();
     int bestTri = -1;
 
-    for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
-        const NavTriangle& tri = navMesh.triangles[i];
+    auto tryEdges = [&](bool boundaryOnly) {
+        for (int i = 0; i < static_cast<int>(navMesh.triangles.size()); ++i) {
+            const NavTriangle& tri = navMesh.triangles[i];
 
-        const Vector2 a = navMesh.vertices[tri.vertexIndex0];
-        const Vector2 b = navMesh.vertices[tri.vertexIndex1];
-        const Vector2 c = navMesh.vertices[tri.vertexIndex2];
+            for (int edgeSlot = 0; edgeSlot < 3; ++edgeSlot) {
+                const int neighbor = GetTriangleEdgeNeighbor(tri, edgeSlot);
+                if (boundaryOnly && neighbor >= 0) {
+                    continue;
+                }
 
-        const Vector2 candidates[3] = {
-                ClosestPointOnSegment(p, a, b),
-                ClosestPointOnSegment(p, b, c),
-                ClosestPointOnSegment(p, c, a)
-        };
+                int v0 = -1;
+                int v1 = -1;
+                if (!GetTriangleEdgeVertexIndices(tri, edgeSlot, v0, v1)) {
+                    continue;
+                }
 
-        for (const Vector2& q : candidates) {
-            const float d2 = DistSqr(p, q);
-            if (d2 < bestDistSqr) {
-                bestDistSqr = d2;
-                bestPoint = q;
-                bestTri = i;
+                const Vector2 a = navMesh.vertices[v0];
+                const Vector2 b = navMesh.vertices[v1];
+                const Vector2 q = ClosestPointOnSegment(p, a, b);
+                const float d2 = DistSqr(p, q);
+
+                if (d2 < bestDistSqr) {
+                    bestDistSqr = d2;
+                    bestPoint = q;
+                    bestTri = i;
+                }
             }
+        }
+    };
+
+    // Prefer true navmesh boundary edges first.
+    tryEdges(true);
+
+    // Fallback only if something is seriously wrong and no boundary edge was found.
+    if (bestTri < 0) {
+        tryEdges(false);
+    }
+
+    if (bestTri >= 0) {
+        int containingTri = FindTriangleContainingPoint(navMesh, bestPoint);
+        if (containingTri >= 0) {
+            bestTri = containingTri;
         }
     }
 
     if (outTriangleIndex != nullptr) {
         *outTriangleIndex = bestTri;
     }
+
     return bestPoint;
 }
 
@@ -230,7 +377,7 @@ static bool BuildTrianglePathAStar(
     std::vector<bool> closedSet(triCount, false);
 
     gScore[startTri] = 0.0f;
-    fScore[startTri] = std::sqrt(DistSqr(startPos, endPos));
+    fScore[startTri] = Dist(startPos, endPos);
     openSet[startTri] = true;
 
     for (;;) {
@@ -238,7 +385,11 @@ static bool BuildTrianglePathAStar(
         float bestF = std::numeric_limits<float>::max();
 
         for (int i = 0; i < triCount; ++i) {
-            if (openSet[i] && fScore[i] < bestF) {
+            if (!openSet[i]) {
+                continue;
+            }
+
+            if (fScore[i] < bestF) {
                 bestF = fScore[i];
                 current = i;
             }
@@ -264,46 +415,44 @@ static bool BuildTrianglePathAStar(
         const NavTriangle& tri = navMesh.triangles[current];
         const int neighbors[3] = { tri.neighbor0, tri.neighbor1, tri.neighbor2 };
 
-        Vector2 currentPos = startPos;
-        if (current != startTri) {
-            const int parent = cameFrom[current];
-            if (parent >= 0) {
-                Vector2 entryMid{};
-                if (GetSharedEdgeMidpoint(navMesh, tri, parent, entryMid)) {
-                    currentPos = entryMid;
-                } else {
-                    currentPos = tri.centroid;
-                }
-            } else {
-                currentPos = tri.centroid;
-            }
-        }
+        const Vector2 currentRef = GetTriangleReferencePoint(
+                navMesh,
+                current,
+                startTri,
+                endTri,
+                startPos,
+                endPos);
 
         for (int nb : neighbors) {
             if (nb < 0 || closedSet[nb]) {
                 continue;
             }
 
-            Vector2 nextPos = endPos;
-            if (nb != endTri) {
-                if (!GetSharedEdgeMidpoint(navMesh, tri, nb, nextPos)) {
-                    nextPos = navMesh.triangles[nb].centroid;
-                }
-            }
+            const Vector2 nextRef = GetTriangleReferencePoint(
+                    navMesh,
+                    nb,
+                    startTri,
+                    endTri,
+                    startPos,
+                    endPos);
 
-            const float stepCost = std::sqrt(DistSqr(currentPos, nextPos));
-            const float tentativeG = gScore[current] + stepCost;
+            const float tentativeG = gScore[current] + Dist(currentRef, nextRef);
+            const float heuristic = Dist(nextRef, endPos);
+            const float tentativeF = tentativeG + heuristic;
 
-            if (!openSet[nb] || tentativeG < gScore[nb]) {
+            const bool strictlyBetter = tentativeG + 0.0001f < gScore[nb];
+            const bool tieButBetterF = NearlyEqual(tentativeG, gScore[nb], 0.0001f) &&
+                                       tentativeF + 0.0001f < fScore[nb];
+
+            if (!openSet[nb] || strictlyBetter || tieButBetterF) {
                 cameFrom[nb] = current;
                 gScore[nb] = tentativeG;
-                fScore[nb] = tentativeG + std::sqrt(DistSqr(nextPos, endPos));
+                fScore[nb] = tentativeF;
                 openSet[nb] = true;
             }
         }
     }
 }
-
 
 struct Portal {
     Vector2 left{};
@@ -354,24 +503,26 @@ static void BuildPortals(
 
         Portal portal{};
 
-        // Correct portal orientation should put triA's unique vertex on the right
-        // of the portal, and triB's unique vertex on the left.
+        // We want the path to move from triA to triB.
+        // For the chosen directed portal edge, triA's unique vertex should be on the right,
+        // and triB's unique vertex should be on the left.
 
-        if (sideA < 0.0f && sideB > 0.0f) {
+        if (sideA < -kAreaEps && sideB > kAreaEps) {
             portal.left = p1;
             portal.right = p0;
-        } else if (sideA > 0.0f && sideB < 0.0f) {
+        } else if (sideA > kAreaEps && sideB < -kAreaEps) {
             portal.left = p0;
             portal.right = p1;
         } else {
-            // Fallback for degenerate / nearly-collinear cases:
-            const float centroidSide = AreaMath(triA.centroid, triB.centroid, p0);
-            if (centroidSide >= 0.0f) {
-                portal.left = p1;
-                portal.right = p0;
-            } else {
+            // Degenerate fallback: orient the portal relative to travel direction from
+            // triA centroid toward triB centroid.
+            const float p0Side = AreaMath(triA.centroid, triB.centroid, p0);
+            if (p0Side > 0.0f) {
                 portal.left = p0;
                 portal.right = p1;
+            } else {
+                portal.left = p1;
+                portal.right = p0;
             }
         }
 
@@ -408,9 +559,9 @@ static void RunFunnel(
         const Vector2 right = portals[i].right;
 
         // Tighten right side
-        if (AreaMath(portalApex, portalRight, right) <= 0.0f) {
+        if (AreaMath(portalApex, portalRight, right) <= kAreaEps) {
             if (SamePoint(portalApex, portalRight) ||
-                AreaMath(portalApex, portalLeft, right) > 0.0f) {
+                AreaMath(portalApex, portalLeft, right) > kAreaEps) {
                 portalRight = right;
                 rightIndex = i;
             } else {
@@ -430,9 +581,9 @@ static void RunFunnel(
         }
 
         // Tighten left side
-        if (AreaMath(portalApex, portalLeft, left) >= 0.0f) {
+        if (AreaMath(portalApex, portalLeft, left) >= -kAreaEps) {
             if (SamePoint(portalApex, portalLeft) ||
-                AreaMath(portalApex, portalRight, left) < 0.0f) {
+                AreaMath(portalApex, portalRight, left) < -kAreaEps) {
                 portalLeft = left;
                 leftIndex = i;
             } else {

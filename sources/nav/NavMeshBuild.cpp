@@ -425,7 +425,7 @@ bool BuildNavMesh(NavMeshData& navMesh, float agentRadius)
     }
 
     navMesh.built = !navMesh.triangles.empty();
-    return true;
+    return navMesh.built;
 }
 
 bool BuildNavMesh(NavMeshData& navMesh)
