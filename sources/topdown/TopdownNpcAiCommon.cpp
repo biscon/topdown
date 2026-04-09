@@ -28,6 +28,7 @@ const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state)
         case TopdownNpcCombatState::Chase:   return "Chase";
         case TopdownNpcCombatState::Attack:  return "Attack";
         case TopdownNpcCombatState::Recover: return "Recover";
+        case TopdownNpcCombatState::Search:  return "Search";
         default:                             return "Unknown";
     }
 }

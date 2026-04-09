@@ -83,7 +83,8 @@ enum class TopdownNpcCombatState {
     None,
     Chase,
     Attack,
-    Recover
+    Recover,
+    Search
 };
 
 enum class TopdownPlayerLifeState {
@@ -921,6 +922,11 @@ struct TopdownNpcRuntime {
     bool attackHitApplied = false;
     float attackStateTimeMs = 0.0f;
     float attackAnimationDurationMs = 0.0f;
+
+    float searchStateTimeMs = 0.0f;
+    float searchDurationMs = 900.0f;
+    float searchBaseFacingRadians = 0.0f;
+    float searchSweepDegrees = 300.0f;
 
     float renderOpacity = 1.0f;
 

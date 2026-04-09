@@ -11,6 +11,7 @@
 #include "NpcRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "PlayerLoad.h"
+#include "TopdownNpcAi.h"
 
 
 static void DrawPolygonOutline(const GameState& state, const std::vector<Vector2>& points, Color color, float thickness = 2.0f)
@@ -473,27 +474,6 @@ static const char* TopdownNpcAiModeToString(TopdownNpcAiMode mode)
         case TopdownNpcAiMode::None:           return "none";
         case TopdownNpcAiMode::SeekAndDestroy: return "seek_destroy";
         default:                               return "unknown";
-    }
-}
-
-static const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
-{
-    switch (state) {
-        case TopdownNpcAwarenessState::Idle:       return "idle";
-        case TopdownNpcAwarenessState::Suspicious: return "suspicious";
-        case TopdownNpcAwarenessState::Alerted:    return "alerted";
-        default:                                   return "unknown";
-    }
-}
-
-static const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state)
-{
-    switch (state) {
-        case TopdownNpcCombatState::None:    return "none";
-        case TopdownNpcCombatState::Chase:   return "chase";
-        case TopdownNpcCombatState::Attack:  return "attack";
-        case TopdownNpcCombatState::Recover: return "recover";
-        default:                             return "unknown";
     }
 }
 

@@ -8,34 +8,120 @@
 #include "topdown/LevelEffects.h"
 #include "resources/AsepriteAsset.h"
 #include "audio/Audio.h"
+#include "raymath.h"
+#include "LevelCollision.h"
 
-static TopdownPlayerWeaponConfig BuildNpcMeleeBloodWeaponConfig()
+static float SmoothStep01(float t)
 {
-    TopdownPlayerWeaponConfig cfg;
+    t = Clamp(t, 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
 
-    cfg.equipmentSetId = "npc_melee";
+static void ClearNpcSearchState(TopdownNpcRuntime& npc)
+{
+    npc.searchStateTimeMs = 0.0f;
+    npc.searchDurationMs = 0.0f;
+    npc.searchBaseFacingRadians = 0.0f;
+    npc.searchSweepDegrees = 0.0f;
+}
 
-    cfg.bloodImpactParticleCount = 10;
-    cfg.bloodImpactParticleSpeedMin = 45.0f;
-    cfg.bloodImpactParticleSpeedMax = 125.0f;
-    cfg.bloodImpactParticleLifetimeMsMin = 160.0f;
-    cfg.bloodImpactParticleLifetimeMsMax = 320.0f;
-    cfg.bloodImpactParticleSizeMin = 2.5f;
-    cfg.bloodImpactParticleSizeMax = 5.5f;
-    cfg.bloodImpactSpreadDegrees = 75.0f;
+static void BeginNpcSearchState(TopdownNpcRuntime& npc)
+{
+    TopdownStopNpcMovement(npc);
 
-    cfg.bloodDecalCountMin = 3;
-    cfg.bloodDecalCountMax = 5;
-    cfg.bloodDecalDistanceMin = 8.0f;
-    cfg.bloodDecalDistanceMax = 60.0f;
-    cfg.bloodDecalRadiusMin = 7.0f;
-    cfg.bloodDecalRadiusMax = 14.0f;
-    cfg.bloodDecalSpreadDegrees = 50.0f;
-    cfg.bloodDecalWallPadding = 6.0f;
-    cfg.bloodDecalOpacityMin = 0.72f;
-    cfg.bloodDecalOpacityMax = 0.95f;
+    npc.combatState = TopdownNpcCombatState::Search;
+    npc.searchStateTimeMs = 0.0f;
+    npc.searchDurationMs = 3600.0f;
+    npc.searchSweepDegrees = 260.0f;
 
-    return cfg;
+    Vector2 facing = TopdownNormalizeOrZero(npc.facing);
+    if (TopdownLengthSqr(facing) <= 0.000001f) {
+        facing = Vector2{
+                std::cos(npc.rotationRadians),
+                std::sin(npc.rotationRadians)
+        };
+        facing = TopdownNormalizeOrZero(facing);
+    }
+
+    if (TopdownLengthSqr(facing) <= 0.000001f) {
+        facing = Vector2{1.0f, 0.0f};
+    }
+
+    npc.searchBaseFacingRadians = std::atan2(facing.y, facing.x);
+    npc.rotationRadians = npc.searchBaseFacingRadians;
+    npc.facing = facing;
+}
+
+static void FinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
+{
+    npc.hasPlayerTarget = false;
+    npc.loseTargetTimerMs = 0.0f;
+    npc.repathTimerMs = 0.0f;
+    npc.investigationStuckTimerMs = 0.0f;
+    npc.hasInvestigationTarget = false;
+    npc.investigationTarget = Vector2{};
+    npc.awarenessState = TopdownNpcAwarenessState::Idle;
+    npc.combatState = TopdownNpcCombatState::None;
+
+    ClearNpcSearchState(npc);
+    TopdownStopNpcMovement(npc);
+}
+
+static void UpdateNpcSearchState(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dt)
+{
+    if (npc.combatState != TopdownNpcCombatState::Search) {
+        return;
+    }
+
+    npc.searchStateTimeMs += dt * 1000.0f;
+
+    const float durationMs = std::max(1.0f, npc.searchDurationMs);
+    const float totalT = Clamp(npc.searchStateTimeMs / durationMs, 0.0f, 1.0f);
+
+    const float halfSweepRadians =
+            (npc.searchSweepDegrees * 0.5f) * DEG2RAD;
+
+    float signedOffsetRadians = 0.0f;
+
+    if (totalT < (1.0f / 3.0f)) {
+        const float t = SmoothStep01(totalT / (1.0f / 3.0f));
+        signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
+    } else if (totalT < (2.0f / 3.0f)) {
+        const float t = SmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
+        signedOffsetRadians = Lerp(-halfSweepRadians, halfSweepRadians, t);
+    } else {
+        const float t = SmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
+        signedOffsetRadians = Lerp(halfSweepRadians, 0.0f, t);
+    }
+
+    const float newAngle =
+            NormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
+
+    npc.rotationRadians = newAngle;
+    npc.facing = Vector2{
+            std::cos(newAngle),
+            std::sin(newAngle)
+    };
+
+    if (TopdownNpcCanSeePlayer(state, npc) ||
+        TopdownNpcCanHearPlayer(state, npc)) {
+        TopdownAlertNpcToPlayer(state, npc);
+        ClearNpcSearchState(npc);
+        return;
+    }
+
+    if (npc.searchStateTimeMs >= durationMs) {
+        npc.rotationRadians = npc.searchBaseFacingRadians;
+        npc.facing = Vector2{
+                std::cos(npc.searchBaseFacingRadians),
+                std::sin(npc.searchBaseFacingRadians)
+        };
+
+        FinishNpcSearchAndForgetTarget(npc);
+    }
 }
 
 static TopdownPlayerWeaponConfig BuildNpcAttackEffectsAsWeaponConfig(
@@ -66,8 +152,6 @@ static TopdownPlayerWeaponConfig BuildNpcAttackEffectsAsWeaponConfig(
 
     return cfg;
 }
-
-
 
 static bool TryBuildNpcMeleeHitWorldPosition(
         const GameState& state,
@@ -135,7 +219,7 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
 
 static bool HasNpcReachedInvestigationDestination(const TopdownNpcRuntime& npc)
 {
-    const float arriveRadius = 200;
+    const float arriveRadius = 200.0f;
 
     if (npc.hasInvestigationTarget) {
         return TopdownHasNpcReachedPoint(
@@ -183,8 +267,6 @@ static void UpdateNpcPerception(
         npc.loseTargetTimerMs += dtMs;
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
-        // Only start "give up if stuck near investigation zone" logic
-        // after the normal lose-target timeout has elapsed.
         if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
             const float nearLastKnownRadius = 100.0f;
             const bool nearLastKnown =
@@ -202,28 +284,13 @@ static void UpdateNpcPerception(
                 npc.investigationStuckTimerMs = 0.0f;
             }
 
-            // Normal success case: reached assigned investigation point.
             if (HasNpcReachedInvestigationDestination(npc)) {
-                npc.hasPlayerTarget = false;
-                npc.loseTargetTimerMs = 0.0f;
-                npc.repathTimerMs = 0.0f;
-                npc.investigationStuckTimerMs = 0.0f;
-                npc.hasInvestigationTarget = false;
-                npc.investigationTarget = Vector2{};
-                TopdownStopNpcMovement(npc);
+                BeginNpcSearchState(npc);
                 return;
             }
 
-            // Failsafe case: close enough to the whole investigation area,
-            // but blocked / jammed / not making progress for a while.
             if (npc.investigationStuckTimerMs >= 700.0f) {
-                npc.hasPlayerTarget = false;
-                npc.loseTargetTimerMs = 0.0f;
-                npc.repathTimerMs = 0.0f;
-                npc.investigationStuckTimerMs = 0.0f;
-                npc.hasInvestigationTarget = false;
-                npc.investigationTarget = Vector2{};
-                TopdownStopNpcMovement(npc);
+                BeginNpcSearchState(npc);
                 return;
             }
         }
@@ -266,6 +333,7 @@ static void StartNpcAttack(
     if (npc.attackAnimationDurationMs <= 0.0f) {
         npc.attackAnimationDurationMs = std::max(1.0f, npc.attackRecoverMs);
     }
+
     if (!npc.attackStartSoundId.empty()) {
         PlaySoundById(state, npc.attackStartSoundId, RandomRangeFloat(0.95f, 1.05f));
     }
@@ -390,6 +458,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         npc.awarenessState = TopdownNpcAwarenessState::Idle;
         npc.combatState = TopdownNpcCombatState::None;
         TopdownStopNpcMovement(npc);
+        ClearNpcSearchState(npc);
         return;
     }
 
@@ -425,11 +494,21 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         return;
     }
 
+    if (npc.combatState == TopdownNpcCombatState::Search) {
+        UpdateNpcSearchState(state, npc, dt);
+        return;
+    }
+
     const bool currentlySeesPlayer = TopdownNpcCanSeePlayer(state, npc);
     const bool currentlyHearsPlayer = TopdownNpcCanHearPlayer(state, npc);
     const bool currentlyDetectsPlayer = currentlySeesPlayer || currentlyHearsPlayer;
 
     UpdateNpcPerception(state, npc, dtMs);
+
+    if (npc.combatState == TopdownNpcCombatState::Search) {
+        UpdateNpcSearchState(state, npc, dt);
+        return;
+    }
 
     if (!npc.hasPlayerTarget) {
         npc.combatState = TopdownNpcCombatState::None;
@@ -475,13 +554,11 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         Vector2 chaseTarget{};
 
         if (currentlyDetectsPlayer) {
-            // Real chase while target is actively detected.
             chaseTarget = player.position;
             npc.hasInvestigationTarget = false;
             npc.investigationTarget = Vector2{};
             npc.investigationStuckTimerMs = 0.0f;
         } else {
-            // Investigation mode: spread out around the last known point.
             npc.investigationTarget =
                     TopdownBuildNpcInvestigationTargetAroundPoint(
                             state,
