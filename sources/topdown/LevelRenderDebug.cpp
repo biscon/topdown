@@ -1055,6 +1055,82 @@ static void DrawCombatDebug(GameState& state)
     }
 }
 
+static const char* TopdownDoorHingeSideToString(TopdownDoorHingeSide side)
+{
+    switch (side) {
+        case TopdownDoorHingeSide::Left:   return "left";
+        case TopdownDoorHingeSide::Right:  return "right";
+        case TopdownDoorHingeSide::Top:    return "top";
+        case TopdownDoorHingeSide::Bottom: return "bottom";
+        default:                           return "unknown";
+    }
+}
+
+static void DrawDoorDebug(const GameState& state)
+{
+    const int count = static_cast<int>(state.topdown.authored.doors.size());
+
+    for (int i = 0; i < count; ++i) {
+        const TopdownAuthoredDoor& authored = state.topdown.authored.doors[i];
+        const TopdownRuntimeDoor& runtime = state.topdown.runtime.doors[i];
+
+        Vector2 a{};
+        Vector2 b{};
+        Vector2 c{};
+        Vector2 d{};
+        TopdownBuildDoorCorners(runtime, a, b, c, d);
+
+        const Color slabColor{255, 90, 90, 255};
+        const Color hingeColor{255, 255, 0, 255};
+        const Color segmentColor{255, 200, 80, 255};
+
+        DrawPolygonOutline(state, std::vector<Vector2>{a, b, c, d}, slabColor, 2.0f);
+
+        const Vector2 hingeScreen = TopdownWorldToScreen(state, runtime.hinge);
+        DrawCircleV(hingeScreen, 5.0f, hingeColor);
+
+        const TopdownSegment centerSeg = TopdownBuildDoorCenterSegment(runtime);
+        DrawLineEx(
+                TopdownWorldToScreen(state, centerSeg.a),
+                TopdownWorldToScreen(state, centerSeg.b),
+                2.0f,
+                segmentColor);
+
+        Vector2 labelPos = TopdownWorldToScreen(state, runtime.hinge);
+        labelPos.x += 10.0f;
+        labelPos.y -= 18.0f;
+
+        DrawText(
+                authored.id.c_str(),
+                static_cast<int>(labelPos.x),
+                static_cast<int>(labelPos.y),
+                16,
+                slabColor);
+
+        DrawText(
+                TextFormat("hinge=%s  angle=%.1f  swing=[%.1f, %.1f]",
+                           TopdownDoorHingeSideToString(authored.hingeSide),
+                           runtime.angleRadians * RAD2DEG,
+                           authored.swingMinDegrees,
+                           authored.swingMaxDegrees),
+                static_cast<int>(labelPos.x),
+                static_cast<int>(labelPos.y + 18.0f),
+                16,
+                slabColor);
+
+        DrawText(
+                TextFormat("len=%.1f  thick=%.1f  autoClose=%s  locked=%s",
+                           runtime.length,
+                           runtime.thickness,
+                           runtime.autoClose ? "yes" : "no",
+                           runtime.locked ? "yes" : "no"),
+                static_cast<int>(labelPos.x),
+                static_cast<int>(labelPos.y + 36.0f),
+                16,
+                slabColor);
+    }
+}
+
 void TopdownRenderDebug(GameState& state)
 {
     if (!state.topdown.authored.loaded) {
@@ -1112,5 +1188,9 @@ void TopdownRenderDebug(GameState& state)
 
     if (state.topdown.runtime.debug.showAiDebug) {
         DrawNpcAiDebug(state);
+    }
+
+    if (state.topdown.runtime.debug.showDoors) {
+        DrawDoorDebug(state);
     }
 }

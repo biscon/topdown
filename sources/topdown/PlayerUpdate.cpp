@@ -9,6 +9,7 @@
 #include "NpcRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "LevelCollision.h"
+#include "LevelDoors.h"
 
 static float ClampFloat(float v, float lo, float hi)
 {
@@ -283,6 +284,8 @@ static void UpdatePlayerMovementAndCollision(GameState& state, float dt)
                     player.radius,
                     seg);
         }
+
+        ResolvePlayerVsDoors(state);
 
         for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
             if (!npc.active || !npc.visible || npc.corpse) {

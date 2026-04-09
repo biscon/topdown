@@ -13,7 +13,7 @@
             "hostile": true,
             "aiMode": "seek_and_destroy",
 
-            "visionRange": 820.0,
+            "visionRange": 620.0,
             "hearingRange": 320.0,
             "visionHalfAngleDegrees": 70.0,
 

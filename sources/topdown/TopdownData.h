@@ -146,6 +146,36 @@ struct TopdownAuthoredNpc {
     bool visible = true;
 };
 
+enum class TopdownDoorHingeSide {
+    Left,
+    Right,
+    Top,
+    Bottom
+};
+
+struct TopdownAuthoredDoor {
+    int tiledObjectId = -1;
+    std::string id;
+    bool visible = true;
+
+    Vector2 rectPosition{};
+    Vector2 rectSize{};
+
+    TopdownDoorHingeSide hingeSide = TopdownDoorHingeSide::Left;
+
+    bool locked = false;
+
+    bool autoClose = false;
+    float autoCloseStrength = 6.0f;
+    float damping = 5.0f;
+
+    float swingMinDegrees = -90.0f;
+    float swingMaxDegrees = 90.0f;
+
+    std::string openSoundId;
+    std::string closeSoundId;
+};
+
 struct TopdownAuthoredEffectRegion {
     int tiledObjectId = -1;
     std::string id;
@@ -190,6 +220,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
     std::vector<TopdownAuthoredNpc> npcs;
+    std::vector<TopdownAuthoredDoor> doors;
 };
 
 struct TopdownRuntimeObstacle {
@@ -203,6 +234,34 @@ struct TopdownRuntimeObstacle {
 
     Rectangle bounds{};
     bool visible = true;
+};
+
+struct TopdownRuntimeDoor {
+    int tiledObjectId = -1;
+    std::string id;
+    bool visible = true;
+
+    Vector2 hinge{};
+    float length = 0.0f;
+    float thickness = 0.0f;
+
+    float closedAngleRadians = 0.0f;
+    float angleRadians = 0.0f;
+    float angularVelocity = 0.0f;
+
+    float swingMinRadians = -90.0f * DEG2RAD;
+    float swingMaxRadians = 90.0f * DEG2RAD;
+
+    bool locked = false;
+
+    bool autoClose = false;
+    float autoCloseStrength = 6.0f;
+    float damping = 5.0f;
+
+    std::string openSoundId;
+    std::string closeSoundId;
+    bool wasNearClosed = true;
+    bool openSoundPlayedThisSwing = false;
 };
 
 struct TopdownRuntimeImageLayer {
@@ -917,6 +976,7 @@ struct TopdownDebugData {
     bool showScriptDebug = false;
     bool showCombatDebug = false;
     bool showAiDebug = false;
+    bool showDoors = false;
 };
 
 struct TopdownScriptMoveState {
@@ -1014,6 +1074,7 @@ struct TopdownRuntimeData {
     TopdownBloodRenderTarget bloodRenderTarget{};
 
     TopdownRvoState rvo;
+    std::vector<TopdownRuntimeDoor> doors;
 };
 
 struct TopdownData {

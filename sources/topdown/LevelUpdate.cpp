@@ -18,6 +18,7 @@
 #include "LevelLoad.h"
 #include "TopdownNpcAi.h"
 #include "TopdownRvo.h"
+#include "LevelDoors.h"
 
 enum class TopdownShotHitType
 {
@@ -1017,8 +1018,13 @@ void TopdownUpdate(GameState& state, float dt)
         TraceLog(LOG_INFO, "Game Over triggered");
     }
 
+    TopdownUpdateDoors(state, dt);
+
     TopdownUpdatePlayerLogic(state, dt);
     TopdownUpdateNpcLogic(state, dt);
+
+    ApplyDoorMotionPushToPlayer(state, dt);
+    ApplyDoorMotionPushToNpcs(state, dt);
 
     UpdatePlayerAttackRuntime(state, dt);
     TopdownUpdateLevelEffects(state, dt);

@@ -56,6 +56,11 @@ void TopdownHandleInput(GameState& state)
                 ConsumeEvent(ev);
                 break;
 
+            case KEY_F11:
+                state.topdown.runtime.debug.showDoors = !state.topdown.runtime.debug.showDoors;
+                ConsumeEvent(ev);
+                break;
+
             case KEY_ONE:
             case KEY_TWO:
             case KEY_THREE:

@@ -8,6 +8,7 @@
 #include "topdown/TopdownNpcAi.h"
 #include "CharacterRender.h"
 #include "TopdownRvo.h"
+#include "LevelDoors.h"
 
 static float ComputeRemainingNpcPathDistance(const TopdownNpcMoveState& move, Vector2 currentPosition)
 {
@@ -100,6 +101,8 @@ static void UpdateNpcMovementAndCollision(
                     npc.collisionRadius,
                     seg);
         }
+
+        ResolveNpcVsDoors(state, npc);
 
         const bool usingRvo =
                 TopdownRvoHasAgent(state, npc.handle) &&
@@ -337,6 +340,8 @@ static void UpdateNpcKnockbackAndCollision(
                     npc.collisionRadius,
                     seg);
         }
+
+        ResolveNpcKnockbackVsDoors(state, npc);
 
         Vector2 preferredVsPlayer = TopdownSub(
                 npc.position,

@@ -1144,6 +1144,71 @@ static void DrawMuzzleFlashEffects(const GameState& state)
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
 }
 
+static void DrawWorldQuad(
+        const GameState& state,
+        Vector2 a,
+        Vector2 b,
+        Vector2 c,
+        Vector2 d,
+        Color color)
+{
+    const Vector2 sa = TopdownWorldToScreen(state, a);
+    const Vector2 sb = TopdownWorldToScreen(state, b);
+    const Vector2 sc = TopdownWorldToScreen(state, c);
+    const Vector2 sd = TopdownWorldToScreen(state, d);
+
+    DrawTriangle(sa, sb, sc, color);
+    DrawTriangle(sa, sc, sd, color);
+}
+
+static void DrawWorldQuadOutline(
+        const GameState& state,
+        Vector2 a,
+        Vector2 b,
+        Vector2 c,
+        Vector2 d,
+        float thickness,
+        Color color)
+{
+    const Vector2 sa = TopdownWorldToScreen(state, a);
+    const Vector2 sb = TopdownWorldToScreen(state, b);
+    const Vector2 sc = TopdownWorldToScreen(state, c);
+    const Vector2 sd = TopdownWorldToScreen(state, d);
+
+    DrawLineEx(sa, sb, thickness, color);
+    DrawLineEx(sb, sc, thickness, color);
+    DrawLineEx(sc, sd, thickness, color);
+    DrawLineEx(sd, sa, thickness, color);
+}
+
+static void DrawSingleDoor(const GameState& state, const TopdownRuntimeDoor& door)
+{
+    if (!door.visible) {
+        return;
+    }
+
+    Vector2 a{};
+    Vector2 b{};
+    Vector2 c{};
+    Vector2 d{};
+    TopdownBuildDoorCorners(door, a, b, c, d);
+
+    const Color fillColor{92, 58, 34, 255};
+    const Color outlineColor{36, 20, 12, 255};
+
+    const float outlineThickness =
+            static_cast<float>(std::max(1, state.topdown.currentLevelBaseAssetScale));
+
+    DrawWorldQuad(state, a, b, c, d, fillColor);
+    DrawWorldQuadOutline(state, a, b, c, d, outlineThickness, outlineColor);
+}
+
+static void TopdownRenderDoors(const GameState& state)
+{
+    for (const TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+        DrawSingleDoor(state, door);
+    }
+}
 
 void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTexture2D& tempTarget)
 {
@@ -1176,6 +1241,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     DrawTopdownBloodRenderTargetToWorld(state);
     TopdownRenderNpcs(state);
     TopdownRenderPlayerCharacter(state);
+    TopdownRenderDoors(state);
     DrawWallImpactParticles(state);
     DrawBloodImpactParticles(state);
     DrawMuzzleSmokeParticles(state);

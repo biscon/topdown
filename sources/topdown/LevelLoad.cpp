@@ -113,6 +113,45 @@ static bool ParseEffectShaderTypeString(
     return false;
 }
 
+static bool ParseTopdownDoorHingeSide(
+        const std::string& s,
+        TopdownDoorHingeSide& outSide)
+{
+    if (s == "left") {
+        outSide = TopdownDoorHingeSide::Left;
+        return true;
+    }
+
+    if (s == "right") {
+        outSide = TopdownDoorHingeSide::Right;
+        return true;
+    }
+
+    if (s == "top") {
+        outSide = TopdownDoorHingeSide::Top;
+        return true;
+    }
+
+    if (s == "bottom") {
+        outSide = TopdownDoorHingeSide::Bottom;
+        return true;
+    }
+
+    return false;
+}
+
+static const char* TopdownDoorHingeSideToString(TopdownDoorHingeSide side)
+{
+    switch (side) {
+        case TopdownDoorHingeSide::Left:   return "left";
+        case TopdownDoorHingeSide::Right:  return "right";
+        case TopdownDoorHingeSide::Top:    return "top";
+        case TopdownDoorHingeSide::Bottom: return "bottom";
+    }
+
+    return "unknown";
+}
+
 static float ReadOptionalFloatProperty(const json& obj, const char* propertyName, float defaultValue)
 {
     auto propsIt = obj.find("properties");
@@ -574,6 +613,124 @@ static void ImportNpcLayer(
         }
 
         topdown.authored.npcs.push_back(npc);
+    }
+}
+
+static void ImportDoorLayer(
+        TopdownData& topdown,
+        const json& layer,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+    const float layerOffX = layer.value("offsetx", 0.0f);
+    const float layerOffY = layer.value("offsety", 0.0f);
+
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object() || !IsRectObject(obj)) {
+            continue;
+        }
+
+        if (!obj.value("visible", true)) {
+            continue;
+        }
+
+        TopdownAuthoredDoor door;
+        door.tiledObjectId = obj.value("id", -1);
+        door.id = obj.value("name", std::string());
+        door.visible = true;
+
+        if (door.id.empty()) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown door with empty name");
+            continue;
+        }
+
+        const float width = obj.value("width", 0.0f);
+        const float height = obj.value("height", 0.0f);
+
+        if (width <= 0.0f || height <= 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown door '%s': invalid rect size %.3f x %.3f",
+                     door.id.c_str(),
+                     width,
+                     height);
+            continue;
+        }
+
+        door.rectPosition.x = (obj.value("x", 0.0f) + layerOffX) * scale;
+        door.rectPosition.y = (obj.value("y", 0.0f) + layerOffY) * scale;
+        door.rectSize.x = width * scale;
+        door.rectSize.y = height * scale;
+
+        const std::string hingeSideStr =
+                GetObjectPropertyString(obj, "hingeSide", "");
+        if (!ParseTopdownDoorHingeSide(hingeSideStr, door.hingeSide)) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown door '%s': invalid or missing hingeSide '%s'",
+                     door.id.c_str(),
+                     hingeSideStr.c_str());
+            continue;
+        }
+
+        const bool horizontal = door.rectSize.x >= door.rectSize.y;
+        const bool hingeValid =
+                (horizontal &&
+                 (door.hingeSide == TopdownDoorHingeSide::Left ||
+                  door.hingeSide == TopdownDoorHingeSide::Right)) ||
+                (!horizontal &&
+                 (door.hingeSide == TopdownDoorHingeSide::Top ||
+                  door.hingeSide == TopdownDoorHingeSide::Bottom));
+
+        if (!hingeValid) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown door '%s': hingeSide '%s' incompatible with rect %.3f x %.3f",
+                     door.id.c_str(),
+                     TopdownDoorHingeSideToString(door.hingeSide),
+                     door.rectSize.x,
+                     door.rectSize.y);
+            continue;
+        }
+
+        door.locked = GetObjectPropertyBool(obj, "locked", false);
+
+        door.autoClose = GetObjectPropertyBool(obj, "autoClose", false);
+        door.autoCloseStrength = GetObjectPropertyFloat(obj, "autoCloseStrength", 6.0f);
+        door.damping = GetObjectPropertyFloat(obj, "damping", 5.0f);
+
+        if (door.autoCloseStrength < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Topdown door '%s' has negative autoCloseStrength %.3f; clamping to 0",
+                     door.id.c_str(),
+                     door.autoCloseStrength);
+            door.autoCloseStrength = 0.0f;
+        }
+
+        if (door.damping < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Topdown door '%s' has negative damping %.3f; clamping to 0",
+                     door.id.c_str(),
+                     door.damping);
+            door.damping = 0.0f;
+        }
+
+        door.swingMinDegrees = GetObjectPropertyFloat(obj, "swingMinDeg", -90.0f);
+        door.swingMaxDegrees = GetObjectPropertyFloat(obj, "swingMaxDeg", 90.0f);
+
+        if (door.swingMinDegrees > door.swingMaxDegrees) {
+            TraceLog(LOG_WARNING,
+                     "Topdown door '%s' has swingMinDeg > swingMaxDeg; swapping values",
+                     door.id.c_str());
+            std::swap(door.swingMinDegrees, door.swingMaxDegrees);
+        }
+
+        door.openSoundId = GetObjectPropertyString(obj, "openSoundId", "");
+        door.closeSoundId = GetObjectPropertyString(obj, "closeSoundId", "");
+
+        topdown.authored.doors.push_back(door);
     }
 }
 
@@ -1076,6 +1233,72 @@ static bool BuildWallOcclusionPolygon(
     return true;
 }
 
+static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
+        const TopdownAuthoredDoor& authored)
+{
+    TopdownRuntimeDoor runtime;
+    runtime.tiledObjectId = authored.tiledObjectId;
+    runtime.id = authored.id;
+    runtime.visible = authored.visible;
+
+    runtime.locked = authored.locked;
+
+    runtime.autoClose = authored.autoClose;
+    runtime.autoCloseStrength = authored.autoCloseStrength;
+    runtime.damping = authored.damping;
+
+    runtime.swingMinRadians = authored.swingMinDegrees * DEG2RAD;
+    runtime.swingMaxRadians = authored.swingMaxDegrees * DEG2RAD;
+
+    runtime.openSoundId = authored.openSoundId;
+    runtime.closeSoundId = authored.closeSoundId;
+
+    runtime.wasNearClosed = true;
+    runtime.openSoundPlayedThisSwing = false;
+
+    const Rectangle rect{
+            authored.rectPosition.x,
+            authored.rectPosition.y,
+            authored.rectSize.x,
+            authored.rectSize.y
+    };
+
+    const bool horizontal = rect.width >= rect.height;
+
+    runtime.length = horizontal ? rect.width : rect.height;
+    runtime.thickness = horizontal ? rect.height : rect.width;
+
+    const float centerX = rect.x + rect.width * 0.5f;
+    const float centerY = rect.y + rect.height * 0.5f;
+
+    switch (authored.hingeSide) {
+        case TopdownDoorHingeSide::Left:
+            runtime.hinge = Vector2{ rect.x, centerY };
+            runtime.closedAngleRadians = 0.0f;
+            break;
+
+        case TopdownDoorHingeSide::Right:
+            runtime.hinge = Vector2{ rect.x + rect.width, centerY };
+            runtime.closedAngleRadians = PI;
+            break;
+
+        case TopdownDoorHingeSide::Top:
+            runtime.hinge = Vector2{ centerX, rect.y };
+            runtime.closedAngleRadians = PI * 0.5f;
+            break;
+
+        case TopdownDoorHingeSide::Bottom:
+            runtime.hinge = Vector2{ centerX, rect.y + rect.height };
+            runtime.closedAngleRadians = -PI * 0.5f;
+            break;
+    }
+
+    runtime.angleRadians = runtime.closedAngleRadians;
+    runtime.angularVelocity = 0.0f;
+
+    return runtime;
+}
+
 static void BuildRuntimeFromAuthored(TopdownData& topdown)
 {
     topdown.runtime = {};
@@ -1135,6 +1358,10 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         }
 
         (void)obstacleIndex;
+    }
+
+    for (const TopdownAuthoredDoor& authored : topdown.authored.doors) {
+        topdown.runtime.doors.push_back(BuildRuntimeDoorFromAuthored(authored));
     }
 
     if (!topdown.runtime.nav.navMesh.sourcePolygons.empty()) {
@@ -1354,6 +1581,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
             ImportNpcLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
             continue;
         }
+
+        if (layerName == "Doors" && layerType == "objectgroup") {
+            ImportDoorLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
+            continue;
+        }
     }
 
     if (!foundBoundary) {
@@ -1412,6 +1644,8 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     TraceLog(LOG_INFO, "  nav triangles: %d", static_cast<int>(state.topdown.runtime.nav.navMesh.triangles.size()));
     TraceLog(LOG_INFO, "  authored npcs: %d", static_cast<int>(state.topdown.authored.npcs.size()));
     TraceLog(LOG_INFO, "  runtime npcs: %d", static_cast<int>(state.topdown.runtime.npcs.size()));
+    TraceLog(LOG_INFO, "  authored doors: %d", static_cast<int>(state.topdown.authored.doors.size()));
+    TraceLog(LOG_INFO, "  runtime doors: %d", static_cast<int>(state.topdown.runtime.doors.size()));
 
     return true;
 }

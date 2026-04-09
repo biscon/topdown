@@ -42,4 +42,15 @@ Vector2 GetMouseWorldPosition(const GameState& state);
 float RandomRangeFloat(float minValue, float maxValue);
 Vector2 RotateVector(Vector2 v, float radians);
 
+Vector2 TopdownPerpRight(Vector2 v);
+
+Vector2 TopdownGetDoorDirection(float angleRadians);
+TopdownSegment TopdownBuildDoorCenterSegment(const TopdownRuntimeDoor& door);
+
+void TopdownBuildDoorCorners(
+        const TopdownRuntimeDoor& door,
+        Vector2& outA,
+        Vector2& outB,
+        Vector2& outC,
+        Vector2& outD);
 

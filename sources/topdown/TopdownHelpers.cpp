@@ -301,3 +301,51 @@ Vector2 RotateVector(Vector2 v, float radians)
             v.x * s + v.y * c
     };
 }
+
+Vector2 TopdownPerpRight(Vector2 v)
+{
+    return Vector2{-v.y, v.x};
+}
+
+Vector2 TopdownGetDoorDirection(float angleRadians)
+{
+    return Vector2{
+            std::cos(angleRadians),
+            std::sin(angleRadians)
+    };
+}
+
+TopdownSegment TopdownBuildDoorCenterSegment(const TopdownRuntimeDoor& door)
+{
+    const Vector2 dir = TopdownGetDoorDirection(door.angleRadians);
+    const Vector2 end = TopdownAdd(door.hinge, TopdownMul(dir, door.length));
+
+    TopdownSegment seg;
+    seg.a = door.hinge;
+    seg.b = end;
+    return seg;
+}
+
+void TopdownBuildDoorCorners(
+        const TopdownRuntimeDoor& door,
+        Vector2& outA,
+        Vector2& outB,
+        Vector2& outC,
+        Vector2& outD)
+{
+    const Vector2 dir = TopdownGetDoorDirection(door.angleRadians);
+    const Vector2 right = TopdownPerpRight(dir);
+    const Vector2 halfThicknessOffset = TopdownMul(right, door.thickness * 0.5f);
+
+    const Vector2 hingeLeft = TopdownSub(door.hinge, halfThicknessOffset);
+    const Vector2 hingeRight = TopdownAdd(door.hinge, halfThicknessOffset);
+
+    const Vector2 end = TopdownAdd(door.hinge, TopdownMul(dir, door.length));
+    const Vector2 endLeft = TopdownSub(end, halfThicknessOffset);
+    const Vector2 endRight = TopdownAdd(end, halfThicknessOffset);
+
+    outA = hingeLeft;
+    outB = hingeRight;
+    outC = endRight;
+    outD = endLeft;
+}
