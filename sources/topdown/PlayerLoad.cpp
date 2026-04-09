@@ -308,6 +308,46 @@ static void ReadPlayerWeaponConfigs(
             cfg.meleeKnockback = 0.0f;
         }
 
+        float defaultRangedDoorImpulse = 0.0f;
+        float defaultMeleeDoorImpulse = 0.0f;
+
+        // Sensible defaults so existing json keeps working immediately.
+        // NOTE:
+        // shotgun/rifle ranged values are per pellet / per bullet hit,
+        // so they are intentionally lower than the pistol value.
+        if (cfg.equipmentSetId == "handgun") {
+            defaultRangedDoorImpulse = 420.0f;
+            defaultMeleeDoorImpulse = 0.0f;
+        } else if (cfg.equipmentSetId == "shotgun") {
+            defaultRangedDoorImpulse = 150.0f;
+            defaultMeleeDoorImpulse = 900.0f;
+        } else if (cfg.equipmentSetId == "rifle") {
+            defaultRangedDoorImpulse = 115.0f;
+            defaultMeleeDoorImpulse = 760.0f;
+        } else if (cfg.equipmentSetId == "knife") {
+            defaultRangedDoorImpulse = 0.0f;
+            defaultMeleeDoorImpulse = 0.0f;
+        }
+
+        cfg.rangedDoorImpulse =
+                entry.value("rangedDoorImpulse", defaultRangedDoorImpulse);
+        cfg.meleeDoorImpulse =
+                entry.value("meleeDoorImpulse", defaultMeleeDoorImpulse);
+
+        if (cfg.rangedDoorImpulse < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Player weapon config '%s': rangedDoorImpulse < 0, clamping to 0",
+                     cfg.equipmentSetId.c_str());
+            cfg.rangedDoorImpulse = 0.0f;
+        }
+
+        if (cfg.meleeDoorImpulse < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Player weapon config '%s': meleeDoorImpulse < 0, clamping to 0",
+                     cfg.equipmentSetId.c_str());
+            cfg.meleeDoorImpulse = 0.0f;
+        }
+
         if (entry.contains("muzzleOriginX") && entry["muzzleOriginX"].is_number()) {
             cfg.muzzleOrigin.x = entry["muzzleOriginX"].get<float>();
         }

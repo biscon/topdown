@@ -38,6 +38,8 @@
             "supportedFireModes": ["semi"],
             "defaultFireMode": "semi",
 
+            "meleeDoorImpulse": 0.0,
+
             "bloodImpactParticleCount": 8,
             "bloodImpactParticleSpeedMin": 45.0,
             "bloodImpactParticleSpeedMax": 120.0,
@@ -87,6 +89,9 @@
             "wallImpactSpreadDegrees": 55.0,
             "supportedFireModes": ["semi"],
             "defaultFireMode": "semi",
+
+            "rangedDoorImpulse": 50.0,
+            "meleeDoorImpulse": 0.0,
 
             "muzzleFlashLifetimeMs": 100.0,
             "muzzleFlashForwardLength": 60.0,
@@ -151,6 +156,9 @@
             "wallImpactSpreadDegrees": 75.0,
             "supportedFireModes": ["semi"],
             "defaultFireMode": "semi",
+
+            "rangedDoorImpulse": 35.0,
+            "meleeDoorImpulse": 150.0,
 
             "muzzleFlashLifetimeMs": 110.0,
             "muzzleFlashForwardLength": 90.0,
@@ -217,6 +225,9 @@
             "defaultFireMode": "full",
             "burstCount": 3,
             "burstIntervalMs": 70,
+
+            "rangedDoorImpulse": 40.0,
+            "meleeDoorImpulse": 150.0,
 
             "muzzleFlashLifetimeMs": 70.0,
             "muzzleFlashForwardLength": 90.0,

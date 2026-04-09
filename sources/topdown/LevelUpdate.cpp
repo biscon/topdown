@@ -24,6 +24,7 @@ enum class TopdownShotHitType
 {
     None,
     Npc,
+    Door,
     Wall
 };
 
@@ -31,6 +32,7 @@ struct TopdownShotHitResult
 {
     TopdownShotHitType type = TopdownShotHitType::None;
     TopdownNpcRuntime* npc = nullptr;
+    TopdownRuntimeDoor* door = nullptr;
     Vector2 point{};
     Vector2 normal{};
     float distance = 0.0f;
@@ -42,6 +44,16 @@ struct PendingNpcShotResult
     TopdownNpcRuntime* npc = nullptr;
     float totalDamage = 0.0f;
     Vector2 hitPoint{};
+    Vector2 hitDir{};
+    bool hasHit = false;
+};
+
+struct PendingDoorShotResult
+{
+    TopdownRuntimeDoor* door = nullptr;
+    int hitCount = 0;
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
     Vector2 hitDir{};
     bool hasHit = false;
 };
@@ -197,6 +209,8 @@ static TopdownShotHitResult FindFirstHitscanHit(
     TopdownShotHitResult result;
     result.point = TopdownAdd(origin, TopdownMul(dir, maxRange));
     result.distance = maxRange;
+    result.npc = nullptr;
+    result.door = nullptr;
 
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active || !npc.visible || npc.dead) {
@@ -222,6 +236,28 @@ static TopdownShotHitResult FindFirstHitscanHit(
             result.normal = hitNormal;
             result.distance = hitDistance;
         }
+    }
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    Vector2 doorPoint{};
+    Vector2 doorNormal{};
+    float doorDistance = result.distance;
+
+    if (RaycastClosestDoor(
+            state,
+            origin,
+            dir,
+            result.distance,
+            hitDoor,
+            doorPoint,
+            doorNormal,
+            doorDistance)) {
+        result.type = TopdownShotHitType::Door;
+        result.npc = nullptr;
+        result.door = hitDoor;
+        result.point = doorPoint;
+        result.normal = doorNormal;
+        result.distance = doorDistance;
     }
 
     Vector2 wallPoint{};
@@ -680,6 +716,9 @@ static bool TryStartPlayerAttack(
         std::vector<PendingNpcShotResult> pendingNpcHits;
         pendingNpcHits.reserve(shotCount);
 
+        std::vector<PendingDoorShotResult> pendingDoorHits;
+        pendingDoorHits.reserve(shotCount);
+
         static constexpr float kTracerForwardOffset = 0.0f;
 
         for (int i = 0; i < shotCount; ++i) {
@@ -704,6 +743,31 @@ static bool TryStartPlayerAttack(
                         hit.point,
                         hit.normal,
                         *weaponConfig);
+            } else if (hit.type == TopdownShotHitType::Door && hit.door != nullptr) {
+                PendingDoorShotResult* existing = nullptr;
+
+                for (PendingDoorShotResult& pending : pendingDoorHits) {
+                    if (pending.door == hit.door) {
+                        existing = &pending;
+                        break;
+                    }
+                }
+
+                if (existing == nullptr) {
+                    PendingDoorShotResult pending;
+                    pending.door = hit.door;
+                    pending.hitCount = 1;
+                    pending.hitPoint = hit.point;
+                    pending.hitNormal = hit.normal;
+                    pending.hitDir = shotDir;
+                    pending.hasHit = true;
+                    pendingDoorHits.push_back(pending);
+                } else {
+                    existing->hitCount++;
+                    existing->hitPoint = hit.point;
+                    existing->hitNormal = hit.normal;
+                    existing->hitDir = shotDir;
+                }
             } else if (hit.type == TopdownShotHitType::Npc && hit.npc != nullptr) {
                 PendingNpcShotResult* existing = nullptr;
 
@@ -728,6 +792,24 @@ static bool TryStartPlayerAttack(
                     existing->hitDir = shotDir;
                 }
             }
+        }
+
+        for (PendingDoorShotResult& pending : pendingDoorHits) {
+            if (!pending.hasHit || pending.door == nullptr) {
+                continue;
+            }
+
+            SpawnWallImpactParticles(
+                    state,
+                    pending.hitPoint,
+                    pending.hitNormal,
+                    *weaponConfig);
+
+            ApplyDoorBallisticImpulse(
+                    *pending.door,
+                    pending.hitPoint,
+                    pending.hitDir,
+                    weaponConfig->rangedDoorImpulse * static_cast<float>(pending.hitCount));
         }
 
         for (PendingNpcShotResult& pending : pendingNpcHits) {
@@ -931,6 +1013,53 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
                                         hitDir,
                                         *weaponConfig);
                             }
+                        }
+                    }
+
+                    if (weaponConfig != nullptr &&
+                        weaponConfig->meleeDoorImpulse > 0.0f) {
+                        const TopdownCharacterRuntime& character =
+                                state.topdown.runtime.playerCharacter;
+
+                        Vector2 attackDir{
+                                std::cos(character.upperRotationRadians),
+                                std::sin(character.upperRotationRadians)
+                        };
+                        attackDir = TopdownNormalizeOrZero(attackDir);
+
+                        if (TopdownLengthSqr(attackDir) <= 0.000001f) {
+                            attackDir = state.topdown.runtime.player.facing;
+                        }
+
+                        if (TopdownLengthSqr(attackDir) <= 0.000001f) {
+                            attackDir = Vector2{1.0f, 0.0f};
+                        }
+
+                        TopdownRuntimeDoor* hitDoor = nullptr;
+                        Vector2 hitPoint{};
+                        Vector2 hitNormal{};
+                        float hitDistance = weaponConfig->meleeRange;
+
+                        if (RaycastClosestDoor(
+                                state,
+                                state.topdown.runtime.player.position,
+                                attackDir,
+                                weaponConfig->meleeRange,
+                                hitDoor,
+                                hitPoint,
+                                hitNormal,
+                                hitDistance)) {
+                            SpawnWallImpactParticles(
+                                    state,
+                                    hitPoint,
+                                    hitNormal,
+                                    *weaponConfig);
+
+                            ApplyDoorBallisticImpulse(
+                                    *hitDoor,
+                                    hitPoint,
+                                    attackDir,
+                                    weaponConfig->meleeDoorImpulse);
                         }
                     }
 

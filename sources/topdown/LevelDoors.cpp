@@ -236,6 +236,183 @@ static Vector2 ComputeDoorPointVelocity(
     };
 }
 
+static bool RaycastDoorCapsuleDetailed(
+        const TopdownRuntimeDoor& door,
+        Vector2 origin,
+        Vector2 dirNormalized,
+        float maxDistance,
+        Vector2& outHitPoint,
+        Vector2& outHitNormal,
+        float& outHitDistance)
+{
+    const float radius = door.thickness * 0.5f;
+    const TopdownSegment center = TopdownBuildDoorCenterSegment(door);
+
+    Vector2 edge = TopdownSub(center.b, center.a);
+    const float edgeLen = TopdownLength(edge);
+    if (edgeLen <= 0.000001f) {
+        return false;
+    }
+
+    edge = TopdownMul(edge, 1.0f / edgeLen);
+    const Vector2 side = TopdownMul(TopdownPerpRight(edge), radius);
+
+    bool foundHit = false;
+    float bestDistance = maxDistance;
+    Vector2 bestPoint{};
+    Vector2 bestNormal{};
+
+    auto testSegment = [&](const TopdownSegment& seg)
+    {
+        std::vector<TopdownSegment> single{ seg };
+
+        Vector2 hitPoint{};
+        Vector2 hitNormal{};
+        float hitDistance = bestDistance;
+
+        if (!RaycastClosestSegmentWithNormal(
+                origin,
+                dirNormalized,
+                single,
+                bestDistance,
+                hitPoint,
+                hitNormal,
+                hitDistance)) {
+            return;
+        }
+
+        if (hitDistance < bestDistance) {
+            foundHit = true;
+            bestDistance = hitDistance;
+            bestPoint = hitPoint;
+            bestNormal = hitNormal;
+        }
+    };
+
+    auto testCircle = [&](Vector2 centerPoint)
+    {
+        float hitDistance = 0.0f;
+        Vector2 hitPoint{};
+        Vector2 hitNormal{};
+
+        if (!RaycastCircleDetailed(
+                origin,
+                dirNormalized,
+                centerPoint,
+                radius,
+                bestDistance,
+                hitDistance,
+                hitPoint,
+                hitNormal)) {
+            return;
+        }
+
+        if (hitDistance < bestDistance) {
+            foundHit = true;
+            bestDistance = hitDistance;
+            bestPoint = hitPoint;
+            bestNormal = hitNormal;
+        }
+    };
+
+    testSegment(TopdownSegment{
+            TopdownAdd(center.a, side),
+            TopdownAdd(center.b, side)
+    });
+
+    testSegment(TopdownSegment{
+            TopdownSub(center.a, side),
+            TopdownSub(center.b, side)
+    });
+
+    testCircle(center.a);
+    testCircle(center.b);
+
+    if (!foundHit) {
+        return false;
+    }
+
+    outHitPoint = bestPoint;
+    outHitNormal = bestNormal;
+    outHitDistance = bestDistance;
+    return true;
+}
+
+bool RaycastClosestDoor(
+        GameState& state,
+        Vector2 origin,
+        Vector2 dirNormalized,
+        float maxDistance,
+        TopdownRuntimeDoor*& outDoor,
+        Vector2& outHitPoint,
+        Vector2& outHitNormal,
+        float& outHitDistance)
+{
+    outDoor = nullptr;
+    outHitDistance = maxDistance;
+
+    bool foundHit = false;
+
+    for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+        if (!door.visible) {
+            continue;
+        }
+
+        Vector2 hitPoint{};
+        Vector2 hitNormal{};
+        float hitDistance = outHitDistance;
+
+        if (!RaycastDoorCapsuleDetailed(
+                door,
+                origin,
+                dirNormalized,
+                outHitDistance,
+                hitPoint,
+                hitNormal,
+                hitDistance)) {
+            continue;
+        }
+
+        if (hitDistance < outHitDistance) {
+            foundHit = true;
+            outDoor = &door;
+            outHitPoint = hitPoint;
+            outHitNormal = hitNormal;
+            outHitDistance = hitDistance;
+        }
+    }
+
+    return foundHit;
+}
+
+void ApplyDoorBallisticImpulse(
+        TopdownRuntimeDoor& door,
+        Vector2 hitPoint,
+        Vector2 shotDir,
+        float impulseMagnitude)
+{
+    if (impulseMagnitude <= 0.0f) {
+        return;
+    }
+
+    shotDir = TopdownNormalizeOrZero(shotDir);
+    if (TopdownLengthSqr(shotDir) <= 0.000001f) {
+        return;
+    }
+
+    float leverT = 0.0f;
+    (void)ComputeDoorClosestPoint(door, hitPoint, &leverT);
+
+    // Same core angular response model as actor pushing,
+    // but with a synthetic "impact velocity" along the shot direction.
+    ApplyAngularImpulseFromActor(
+            door,
+            TopdownMul(shotDir, impulseMagnitude),
+            TopdownMul(shotDir, -1.0f),
+            leverT,
+            0.0f);
+}
+
 static void UpdateSingleDoorSounds(GameState& state, TopdownRuntimeDoor& door)
 {
     const float relativeAngle = ComputeDoorRelativeAngle(door);

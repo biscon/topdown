@@ -514,6 +514,9 @@ struct TopdownPlayerWeaponConfig {
     float rangedKnockback = 0.0f;
     float meleeKnockback = 0.0f;
 
+    float rangedDoorImpulse = 0.0f;
+    float meleeDoorImpulse = 0.0f;
+
     Vector2 muzzleOrigin{};
 
     TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
