@@ -11,6 +11,8 @@
 #include "raymath.h"
 #include "LevelCollision.h"
 
+constexpr const float kHardChaseCutoffDistance = 3500.0f;
+
 static float SmoothStep01(float t)
 {
     t = Clamp(t, 0.0f, 1.0f);
@@ -621,6 +623,18 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         ResetNpcLostTargetProgress(npc);
         ResetNpcChaseStuckWatchdog(npc);
         TopdownStopNpcMovement(npc);
+        return;
+    }
+
+
+    const float distanceToPlayer =
+            TopdownLength(
+                    TopdownSub(
+                            state.topdown.runtime.player.position,
+                            npc.position));
+
+    if (distanceToPlayer >= kHardChaseCutoffDistance) {
+        BeginNpcSearchState(npc);
         return;
     }
 
