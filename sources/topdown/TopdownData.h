@@ -616,10 +616,8 @@ struct TopdownPlayerRuntime {
 
     float radius = 45.0f;
 
-    float walkSpeed = 450.0f;
-    float runSpeed = 700.0f;
-    float backwardSpeed = 300.0f;
-    float strafeSpeed = 350.0f;
+    float walkSpeed = 550.0f;
+    float runSpeed = 750.0f;
 
     float acceleration = 2800.0f;
     float deceleration = 3200.0f;

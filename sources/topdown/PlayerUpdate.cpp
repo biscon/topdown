@@ -236,6 +236,8 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
     runtime.feetAnimationTimeMs += dt * 1000.0f;
     runtime.upperAnimationTimeMs += dt * 1000.0f;
 
+    static constexpr float kFeetTurnSpeedRadians = 14.0f;
+
     if (IsScriptedMoveActive(state)) {
         if (TopdownLengthSqr(player.facing) > 0.0001f) {
             const float scriptedAngle = std::atan2(player.facing.y, player.facing.x);
@@ -304,7 +306,11 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
         }
 
         if (TopdownLengthSqr(moveDir) > 0.000001f) {
-            runtime.feetRotationRadians = std::atan2(moveDir.y, moveDir.x);
+            const float desiredFeetAngle = std::atan2(moveDir.y, moveDir.x);
+            runtime.feetRotationRadians = MoveTowardsAngle(
+                    runtime.feetRotationRadians,
+                    desiredFeetAngle,
+                    kFeetTurnSpeedRadians * dt);
         }
         // else: idle -> keep previous feet rotation planted
     }
