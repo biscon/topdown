@@ -119,7 +119,7 @@ void TopdownUpdateCamera(GameState& state, float dt)
 
     Vector2 desiredOffset{};
 
-    static constexpr float kAimMaxOffset = 800.0f;
+    static constexpr float kAimMaxOffset = 1000.0f;
     static constexpr float kAimStrength = 0.30f;
     static constexpr float kAimResponse = 8.0f;
 

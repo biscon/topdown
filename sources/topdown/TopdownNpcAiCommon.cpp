@@ -370,9 +370,11 @@ bool TopdownNpcCanHearPlayer(
 
     float range = std::max(0.0f, npc.hearingRange);
 
+    /* Reducing hearing through doors is less fun
     if (HasDoorBetweenPoints(state, npc.position, player.position)) {
-        range *= 0.5f;
+        range *= 0.75f;
     }
+    */
 
     const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
     return distSqr <= range * range;

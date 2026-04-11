@@ -3,7 +3,7 @@ function Level_onEnter()
     --startScript("WalkAround")
     --startScript("ZombiePatrol")
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
-    SpawnThugs()
+    --SpawnThugs()
 end
 
 function WalkAround()

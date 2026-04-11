@@ -20,89 +20,13 @@
                  "y":0
                 }, 
                 {
-                 "id":10,
-                 "image":"carpet.png",
-                 "imageheight":67,
-                 "imagewidth":197,
-                 "name":"Carpet",
-                 "offsetx":446,
-                 "offsety":180,
-                 "opacity":1,
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":5,
-                 "image":"box_2x2.png",
-                 "imageheight":82,
-                 "imagewidth":80,
-                 "name":"Crate",
-                 "offsetx":543.333333333333,
-                 "offsety":210,
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"scale",
-                         "type":"float",
-                         "value":0.5
-                        }],
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":9,
-                 "image":"barrel_top.png",
-                 "imageheight":32,
-                 "imagewidth":30,
-                 "name":"Barrel",
-                 "offsetx":-54,
-                 "offsety":-4,
-                 "opacity":1,
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":27,
-                 "image":"..\/..\/environment\/gym\/bench.png",
-                 "imageheight":74,
-                 "imagewidth":33,
-                 "name":"bench",
-                 "offsetx":424.666666666667,
-                 "offsety":194,
-                 "opacity":1,
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":26,
-                 "image":"..\/..\/environment\/gym\/big_weight.png",
-                 "imageheight":22,
-                 "imagewidth":68,
-                 "name":"big_weight",
-                 "offsetx":407.333333333333,
-                 "offsety":208,
-                 "opacity":1,
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":31,
-                 "image":"minigym_floor.png",
-                 "imageheight":224,
-                 "imagewidth":226,
-                 "name":"minigym_floor",
-                 "offsetx":478.5,
-                 "offsety":-209,
+                 "id":35,
+                 "image":"beach_house_bottom.png",
+                 "imageheight":1062,
+                 "imagewidth":904,
+                 "name":"beach_house_bottom",
+                 "offsetx":123.212121212121,
+                 "offsety":-580.787878787879,
                  "opacity":1,
                  "type":"imagelayer",
                  "visible":true,
@@ -120,14 +44,28 @@
          "id":8,
          "layers":[
                 {
+                 "id":36,
+                 "image":"beach_house_top.png",
+                 "imageheight":1062,
+                 "imagewidth":904,
+                 "name":"beach_house_top",
+                 "offsetx":123.212121212121,
+                 "offsety":-580.787878787879,
+                 "opacity":1,
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
                  "id":15,
                  "image":"..\/..\/environment\/foliage\/palmtree6.png",
                  "imageheight":129,
                  "imagewidth":128,
                  "mode":"multiply",
                  "name":"PalmShadow1",
-                 "offsetx":81.5,
-                 "offsety":-133.5,
+                 "offsetx":180.5,
+                 "offsety":664.5,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -187,8 +125,8 @@
                  "imageheight":129,
                  "imagewidth":128,
                  "name":"Palm1",
-                 "offsetx":69.5,
-                 "offsety":-159,
+                 "offsetx":168.5,
+                 "offsety":639,
                  "opacity":1,
                  "properties":[
                         {
@@ -243,8 +181,8 @@
                  "imagewidth":128,
                  "mode":"multiply",
                  "name":"PalmShadow3",
-                 "offsetx":312.5,
-                 "offsety":-134,
+                 "offsetx":411.5,
+                 "offsety":664,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -304,8 +242,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"Palm3",
-                 "offsetx":306.5,
-                 "offsety":-157,
+                 "offsetx":405.5,
+                 "offsety":641,
                  "opacity":1,
                  "properties":[
                         {
@@ -360,8 +298,8 @@
                  "imagewidth":128,
                  "mode":"multiply",
                  "name":"PalmShadow4",
-                 "offsetx":-43.5,
-                 "offsety":14.5,
+                 "offsetx":55.5,
+                 "offsety":812.5,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -421,8 +359,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"Palm4",
-                 "offsetx":-55.5,
-                 "offsety":-7,
+                 "offsetx":43.5,
+                 "offsety":791,
                  "opacity":1,
                  "properties":[
                         {
@@ -476,8 +414,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"PalmShadow2",
-                 "offsetx":430.5,
-                 "offsety":105.5,
+                 "offsetx":529.5,
+                 "offsety":903.5,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -537,8 +475,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"Palm2",
-                 "offsetx":411,
-                 "offsety":76.5,
+                 "offsetx":510,
+                 "offsety":874.5,
                  "opacity":1,
                  "properties":[
                         {
@@ -581,20 +519,6 @@
                          "type":"float",
                          "value":1.9
                         }],
-                 "type":"imagelayer",
-                 "visible":true,
-                 "x":0,
-                 "y":0
-                }, 
-                {
-                 "id":32,
-                 "image":"minigym_walls.png",
-                 "imageheight":184,
-                 "imagewidth":184,
-                 "name":"minigym_walls",
-                 "offsetx":480.5,
-                 "offsety":-208.083333333333,
-                 "opacity":1,
                  "type":"imagelayer",
                  "visible":true,
                  "x":0,
@@ -653,64 +577,334 @@
          "name":"Blockers",
          "objects":[
                 {
-                 "height":183.666666666667,
-                 "id":43,
+                 "height":11,
+                 "id":56,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":10.3333333333333,
-                 "x":481.333333333333,
-                 "y":-208
+                 "width":86.5,
+                 "x":838,
+                 "y":341.75
                 }, 
                 {
-                 "height":12.6666666666667,
-                 "id":44,
+                 "height":203.75,
+                 "id":57,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":171,
-                 "x":492.333333333333,
-                 "y":-208.666666666667
+                 "width":10.5,
+                 "x":913.75,
+                 "y":137
                 }, 
                 {
-                 "height":172,
-                 "id":45,
+                 "height":12.25,
+                 "id":58,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":230.25,
+                 "x":683.5,
+                 "y":136.25
+                }, 
+                {
+                 "height":156.25,
+                 "id":59,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.75,
+                 "x":683.5,
+                 "y":196.5
+                }, 
+                {
+                 "height":11,
+                 "id":60,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":28.75,
+                 "x":694.75,
+                 "y":341.5
+                }, 
+                {
+                 "height":0,
+                 "id":61,
+                 "name":"",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":-31,
+                         "y":0.25
+                        }, 
+                        {
+                         "x":-30.75,
+                         "y":10.5
+                        }, 
+                        {
+                         "x":-25.75,
+                         "y":11
+                        }, 
+                        {
+                         "x":-26.25,
+                         "y":39
+                        }, 
+                        {
+                         "x":-20,
+                         "y":38.75
+                        }, 
+                        {
+                         "x":0.25,
+                         "y":38.75
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":683.5,
+                 "y":264.75
+                }, 
+                {
+                 "height":28.25,
+                 "id":62,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":6,
+                 "x":584.75,
+                 "y":275.5
+                }, 
+                {
+                 "height":10.5,
+                 "id":63,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":446,
+                 "x":149.25,
+                 "y":265.25
+                }, 
+                {
+                 "height":843.5,
+                 "id":64,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.75,
+                 "x":137.75,
+                 "y":-568.25
+                }, 
+                {
+                 "height":12,
+                 "id":65,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":865.25,
+                 "x":149.25,
+                 "y":-569
+                }, 
+                {
+                 "height":432.75,
+                 "id":66,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.25,
+                 "x":1004,
+                 "y":-557
+                }, 
+                {
+                 "height":10.75,
+                 "id":67,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":355,
+                 "x":648.75,
+                 "y":-135.25
+                }, 
+                {
+                 "height":261,
+                 "id":68,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.75,
+                 "x":683.5,
+                 "y":-124.5
+                }, 
+                {
+                 "height":68.75,
+                 "id":69,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.5,
+                 "x":548,
+                 "y":196.25
+                }, 
+                {
+                 "height":351,
+                 "id":70,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":11.25,
+                 "x":547.5,
+                 "y":-203.25
+                }, 
+                {
+                 "height":11.75,
+                 "id":71,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":366.75,
+                 "x":232.5,
+                 "y":-135.75
+                },
+            
+                {
+                 "height":11.5,
+                 "id":72,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34.5,
+                 "x":149.25,
+                 "y":-135.75
+                }, 
+                {
+                 "height":11,
+                 "id":73,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":241.25,
+                 "x":306,
+                 "y":24.75
+                }, 
+                {
+                 "height":12,
+                 "id":74,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":398,
+                 "x":149.333333333333,
+                 "y":-345
+                }, 
+                {
+                 "height":160.666666666667,
+                 "id":75,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":11,
-                 "x":653,
-                 "y":-196
+                 "x":547.666666666667,
+                 "y":-412.333333333333
                 }, 
                 {
-                 "height":11,
-                 "id":46,
+                 "height":94.3333333333333,
+                 "id":76,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":79.6666666666667,
-                 "x":573.333333333333,
-                 "y":-35.3333333333333
+                 "width":10.3333333333333,
+                 "x":548,
+                 "y":-556.333333333333
                 }, 
                 {
-                 "height":9.66666666666667,
-                 "id":47,
+                 "height":94.9999999999999,
+                 "id":77,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":35,
-                 "x":490.666666666667,
-                 "y":-35
+                 "width":10.3333333333333,
+                 "x":684,
+                 "y":-556.333333333333
+                }, 
+                {
+                 "height":160,
+                 "id":78,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":11.3333333333334,
+                 "x":683.666666666667,
+                 "y":-412.333333333333
+                }, 
+                {
+                 "height":11.6666666666667,
+                 "id":79,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":308,
+                 "x":695.666666666667,
+                 "y":-344.333333333333
+                }, 
+                {
+                 "height":68,
+                 "id":80,
+                 "name":"",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10.6666666666666,
+                 "x":683.666666666667,
+                 "y":-203.333333333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -781,85 +975,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":195.5,
-                 "y":169
-                }, 
-                {
-                 "height":0,
-                 "id":10,
-                 "name":"",
-                 "opacity":1,
-                 "polygon":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":-9.27273,
-                         "y":-13.6364
-                        }, 
-                        {
-                         "x":-9.45455,
-                         "y":-26.1818
-                        }, 
-                        {
-                         "x":1.81818,
-                         "y":-35.6364
-                        }, 
-                        {
-                         "x":8.90909,
-                         "y":-35.4545
-                        }, 
-                        {
-                         "x":15.8182,
-                         "y":-32.5455
-                        }, 
-                        {
-                         "x":24.9091,
-                         "y":-23.2727
-                        }, 
-                        {
-                         "x":28.9091,
-                         "y":-12.3636
-                        }, 
-                        {
-                         "x":23.0909,
-                         "y":-1.45455
-                        }, 
-                        {
-                         "x":14,
-                         "y":2.36364
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":-49,
-                 "y":27
-                }, 
-                {
-                 "height":35,
-                 "id":11,
-                 "name":"",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":36.8333,
-                 "x":563.33335,
-                 "y":228
-                }, 
-                {
-                 "height":20,
-                 "id":22,
-                 "name":"",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":22,
-                 "x":120,
-                 "y":-105
+                 "x":286.5,
+                 "y":967
                 }, 
                 {
                  "height":0,
@@ -915,8 +1032,69 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":-356,
-                 "y":1302
+                 "x":-354,
+                 "y":1304
+                }, 
+                {
+                 "height":0,
+                 "id":81,
+                 "name":"",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":0.333333333333371,
+                         "y":-62.6666666666667
+                        }, 
+                        {
+                         "x":31.3333333333334,
+                         "y":-64
+                        }, 
+                        {
+                         "x":46.6666666666667,
+                         "y":-84.6666666666667
+                        }, 
+                        {
+                         "x":46,
+                         "y":-122
+                        }, 
+                        {
+                         "x":26.3333333333334,
+                         "y":-125.333333333333
+                        }, 
+                        {
+                         "x":18.6666666666667,
+                         "y":-154.666666666667
+                        }, 
+                        {
+                         "x":15,
+                         "y":-164
+                        }, 
+                        {
+                         "x":4.33333333333337,
+                         "y":-179.333333333333
+                        }, 
+                        {
+                         "x":21.6666666666667,
+                         "y":-210.666666666667
+                        }, 
+                        {
+                         "x":87.3333333333334,
+                         "y":-210.666666666667
+                        }, 
+                        {
+                         "x":87,
+                         "y":0.333333333333314
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":916.333333333333,
+                 "y":-345.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -945,8 +1123,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":382,
-                 "y":-517
+                 "x":809,
+                 "y":-471
                 }, 
                 {
                  "height":0,
@@ -964,8 +1142,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":480,
-                 "y":-684
+                 "x":571,
+                 "y":114
                 }, 
                 {
                  "height":0,
@@ -977,8 +1155,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":656,
-                 "y":-808
+                 "x":747,
+                 "y":-10
                 }, 
                 {
                  "height":0,
@@ -996,8 +1174,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":621.666666667,
-                 "y":-1001.666666667
+                 "x":1571.666666667,
+                 "y":57.333333333
                 }, 
                 {
                  "height":0,
@@ -1009,8 +1187,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":126,
-                 "y":-944
+                 "x":217,
+                 "y":-146
                 }, 
                 {
                  "height":0,
@@ -1022,8 +1200,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":224,
-                 "y":-688
+                 "x":315,
+                 "y":110
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -1172,8 +1350,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":191.526344953202,
-                 "y":186
+                 "x":282.526344953202,
+                 "y":984
                 }, 
                 {
                  "height":0,
@@ -1320,8 +1498,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":192.5,
-                 "y":186.5
+                 "x":283.5,
+                 "y":984.5
                 }, 
                 {
                  "height":0,
@@ -1457,8 +1635,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":192.5,
-                 "y":186
+                 "x":283.5,
+                 "y":984
                 }, 
                 {
                  "height":0,
@@ -2004,79 +2182,6 @@
                  "y":1304
                 }, 
                 {
-                 "height":170.727272727273,
-                 "id":48,
-                 "name":"minigym_grade",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"blendMode",
-                         "type":"string",
-                         "value":"normal"
-                        }, 
-                        {
-                         "name":"brightness",
-                         "type":"float",
-                         "value":-0.04
-                        }, 
-                        {
-                         "name":"contrast",
-                         "type":"float",
-                         "value":1
-                        }, 
-                        {
-                         "name":"occludedByWalls",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"placement",
-                         "type":"string",
-                         "value":"final"
-                        }, 
-                        {
-                         "name":"saturation",
-                         "type":"float",
-                         "value":1
-                        }, 
-                        {
-                         "name":"shaderId",
-                         "type":"string",
-                         "value":"region_grade"
-                        }, 
-                        {
-                         "name":"softness",
-                         "type":"float",
-                         "value":0
-                        }, 
-                        {
-                         "name":"sortIndex",
-                         "type":"int",
-                         "value":70
-                        }, 
-                        {
-                         "name":"tintB",
-                         "type":"float",
-                         "value":1
-                        }, 
-                        {
-                         "name":"tintG",
-                         "type":"float",
-                         "value":1
-                        }, 
-                        {
-                         "name":"tintR",
-                         "type":"float",
-                         "value":1
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":160.181818181818,
-                 "x":492.727272727273,
-                 "y":-195.454545454545
-                }, 
-                {
                  "height":0,
                  "id":49,
                  "name":"door_light",
@@ -2133,12 +2238,12 @@
                         {
                          "name":"occludedByWalls",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"placement",
                          "type":"string",
-                         "value":"final"
+                         "value":"after_characters"
                         }, 
                         {
                          "name":"saturation",
@@ -2179,8 +2284,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":527.636363636364,
-                 "y":-27.6363636363636
+                 "x":602.151515151515,
+                 "y":269.090909090909
                 }, 
                 {
                  "height":0,
@@ -2302,10 +2407,10 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":true,
+                 "visible":false,
                  "width":0,
-                 "x":-258.666666666667,
-                 "y":698.666666666667
+                 "x":-229.666666666667,
+                 "y":1446.66666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2339,8 +2444,104 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":82,
-                 "y":286
+                 "x":895,
+                 "y":176
+                }, 
+                {
+                 "height":0,
+                 "id":90,
+                 "name":"knife_thug_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":90
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":623,
+                 "y":95
+                }, 
+                {
+                 "height":0,
+                 "id":91,
+                 "name":"knife_thug_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":90
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":371.5,
+                 "y":182.5
+                }, 
+                {
+                 "height":0,
+                 "id":92,
+                 "name":"knife_thug_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":90
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":519,
+                 "y":101.5
+                }, 
+                {
+                 "height":0,
+                 "id":93,
+                 "name":"knife_thug_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":-180
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":422,
+                 "y":-35
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2354,9 +2555,9 @@
          "name":"Doors",
          "objects":[
                 {
-                 "height":4.18181818181818,
-                 "id":51,
-                 "name":"ShackDoor",
+                 "height":49.8901333333334,
+                 "id":55,
+                 "name":"door1",
                  "opacity":1,
                  "properties":[
                         {
@@ -2367,75 +2568,7 @@
                         {
                          "name":"autoCloseStrength",
                          "type":"float",
-                         "value":4.5
-                        }, 
-                        {
-                         "name":"closeSoundId",
-                         "type":"string",
-                         "value":"door_close"
-                        }, 
-                        {
-                         "name":"color",
-                         "type":"color",
-                         "value":"#ffc0bfbc"
-                        }, 
-                        {
-                         "name":"damping",
-                         "type":"float",
-                         "value":3.5
-                        }, 
-                        {
-                         "name":"hingeSide",
-                         "type":"string",
-                         "value":"left"
-                        }, 
-                        {
-                         "name":"locked",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"openSoundId",
-                         "type":"string",
-                         "value":"door_open"
-                        }, 
-                        {
-                         "name":"outlineColor",
-                         "type":"color",
-                         "value":"#ff24140c"
-                        }, 
-                        {
-                         "name":"swingMaxDeg",
-                         "type":"float",
-                         "value":90
-                        }, 
-                        {
-                         "name":"swingMinDeg",
-                         "type":"float",
-                         "value":-90
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":46.5454545454545,
-                 "x":526.363636363636,
-                 "y":-32.3636363636364
-                }, 
-                {
-                 "height":4.18182,
-                 "id":52,
-                 "name":"TestDoor",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"autoClose",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"autoCloseStrength",
-                         "type":"float",
-                         "value":4.5
+                         "value":3
                         }, 
                         {
                          "name":"closeSoundId",
@@ -2445,123 +2578,7 @@
                         {
                          "name":"damping",
                          "type":"float",
-                         "value":3.5
-                        }, 
-                        {
-                         "name":"hingeSide",
-                         "type":"string",
-                         "value":"left"
-                        }, 
-                        {
-                         "name":"locked",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"openSoundId",
-                         "type":"string",
-                         "value":"door_open"
-                        }, 
-                        {
-                         "name":"swingMaxDeg",
-                         "type":"float",
-                         "value":90
-                        }, 
-                        {
-                         "name":"swingMinDeg",
-                         "type":"float",
-                         "value":-90
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":46.5455,
-                 "x":771.060583333333,
-                 "y":-105.757576666667
-                }, 
-                {
-                 "height":4.18182,
-                 "id":53,
-                 "name":"TestDoor2",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"autoClose",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"autoCloseStrength",
-                         "type":"float",
-                         "value":4.5
-                        }, 
-                        {
-                         "name":"closeSoundId",
-                         "type":"string",
-                         "value":"door_close"
-                        }, 
-                        {
-                         "name":"damping",
-                         "type":"float",
-                         "value":3.5
-                        }, 
-                        {
-                         "name":"hingeSide",
-                         "type":"string",
-                         "value":"right"
-                        }, 
-                        {
-                         "name":"locked",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"openSoundId",
-                         "type":"string",
-                         "value":"door_open"
-                        }, 
-                        {
-                         "name":"swingMaxDeg",
-                         "type":"float",
-                         "value":90
-                        }, 
-                        {
-                         "name":"swingMinDeg",
-                         "type":"float",
-                         "value":-90
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":46.5455,
-                 "x":818.454522727273,
-                 "y":-105.78787969697
-                }, 
-                {
-                 "height":55.18182,
-                 "id":54,
-                 "name":"TestDoor3",
-                 "opacity":1,
-                 "properties":[
-                        {
-                         "name":"autoClose",
-                         "type":"bool",
-                         "value":false
-                        }, 
-                        {
-                         "name":"autoCloseStrength",
-                         "type":"float",
-                         "value":4.5
-                        }, 
-                        {
-                         "name":"closeSoundId",
-                         "type":"string",
-                         "value":"door_close"
-                        }, 
-                        {
-                         "name":"damping",
-                         "type":"float",
-                         "value":3.5
+                         "value":2
                         }, 
                         {
                          "name":"hingeSide",
@@ -2581,24 +2598,24 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":90
+                         "value":110
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-90
+                         "value":-110
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":4.0455,
-                 "x":825.22725,
-                 "y":-233.09091
+                 "x":551.47725,
+                 "y":146.117433333333
                 }, 
                 {
-                 "height":55.1818,
-                 "id":55,
-                 "name":"TestDoor4",
+                 "height":49.8901,
+                 "id":82,
+                 "name":"door2",
                  "opacity":1,
                  "properties":[
                         {
@@ -2650,8 +2667,419 @@
                  "type":"",
                  "visible":true,
                  "width":4.0455,
-                 "x":963.47725,
-                 "y":-229.0909
+                 "x":686.97725,
+                 "y":146.55495
+                }, 
+                {
+                 "height":49.8901,
+                 "id":83,
+                 "name":"door3",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"bottom"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":4.0455,
+                 "x":687.268916666667,
+                 "y":-252.19505
+                }, 
+                {
+                 "height":49.8901,
+                 "id":84,
+                 "name":"door4",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"bottom"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":4.0455,
+                 "x":551.35225,
+                 "y":-251.94505
+                }, 
+                {
+                 "height":49.8901,
+                 "id":85,
+                 "name":"door5",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"top"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":4.0455,
+                 "x":551.219674242424,
+                 "y":-462.399595454545
+                }, 
+                {
+                 "height":49.8901,
+                 "id":86,
+                 "name":"door6",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"top"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":4.0455,
+                 "x":687.249977272727,
+                 "y":-462.399595454545
+                }, 
+                {
+                 "height":4,
+                 "id":87,
+                 "name":"door7",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"right"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":50.4091363636363,
+                 "x":599.568159090909,
+                 "y":-131.490504545
+                }, 
+                {
+                 "height":4,
+                 "id":88,
+                 "name":"door8",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"left"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":50.4091,
+                 "x":182.337116666667,
+                 "y":-132.041666666667
+                }, 
+                {
+                 "height":4,
+                 "id":89,
+                 "name":"front_door",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"autoClose",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"autoCloseStrength",
+                         "type":"float",
+                         "value":3
+                        }, 
+                        {
+                         "name":"closeSoundId",
+                         "type":"string",
+                         "value":"door_close"
+                        }, 
+                        {
+                         "name":"color",
+                         "type":"color",
+                         "value":"#ffc0bfbc"
+                        }, 
+                        {
+                         "name":"damping",
+                         "type":"float",
+                         "value":2
+                        }, 
+                        {
+                         "name":"hingeSide",
+                         "type":"string",
+                         "value":"left"
+                        }, 
+                        {
+                         "name":"locked",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"openSoundId",
+                         "type":"string",
+                         "value":"door_open"
+                        }, 
+                        {
+                         "name":"swingMaxDeg",
+                         "type":"float",
+                         "value":110
+                        }, 
+                        {
+                         "name":"swingMinDeg",
+                         "type":"float",
+                         "value":-110
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":58.5000090909091,
+                 "x":594.128783333333,
+                 "y":268.121212121212
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2659,8 +3087,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":34,
- "nextobjectid":56,
+ "nextlayerid":37,
+ "nextobjectid":94,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

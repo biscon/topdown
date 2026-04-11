@@ -5,7 +5,7 @@
             "baseDrawScale": 3.0,
             "collisionRadius": 38.0,
             "walkSpeed": 200,
-            "runSpeed": 320,
+            "runSpeed": 600,
             "hurtStunMs": 300,
             "maxHealth": 100,
             "corpseExpirationMs": -1,
@@ -17,17 +17,17 @@
             "hearingRange": 320.0,
             "visionHalfAngleDegrees": 70.0,
 
-            "attackRange": 25.0,
-            "attackCooldownMs": 1100.0,
-            "attackDamage": 20.0,
+            "attackRange": 60.0,
+            "attackCooldownMs": 600.0,
+            "attackDamage": 40.0,
             "attackHitNormalizedTime": 0.7,
             "attackRecoverMs": 300.0,
 
             "chaseRepathIntervalMs": 250.0,
             "loseTargetTimeoutMs": 1400.0,
 
-            "meleeHitPosX": 62,
-            "meleeHitPosY": 31,
+            "meleeHitPosX": 75,
+            "meleeHitPosY": 40,
 
             "sounds": {
                 "attackStart": "knife_swing",
@@ -67,8 +67,8 @@
             "animations": [
                 {
                     "asepriteJson": "knifethug/knifethug.json",
-                    "originX": 31,
-                    "originY": 31
+                    "originX": 40,
+                    "originY": 40
                 }
             ]
         }
