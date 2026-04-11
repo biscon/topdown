@@ -6,7 +6,6 @@
 
 #include "topdown/TopdownHelpers.h"
 #include "topdown/PlayerLoad.h"
-#include "NpcRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "LevelCollision.h"
 #include "LevelDoors.h"
@@ -36,6 +35,70 @@ static SpriteAssetHandle FirstValidHandle(
     if (b >= 0) return b;
     if (c >= 0) return c;
     return -1;
+}
+
+static TopdownLocomotionType ClassifyLocomotionWithHysteresis(
+        Vector2 moveDir,
+        Vector2 aimForward,
+        TopdownLocomotionType previousLocomotion)
+{
+    moveDir = TopdownNormalizeOrZero(moveDir);
+    aimForward = TopdownNormalizeOrZero(aimForward);
+
+    if (TopdownLengthSqr(moveDir) <= 0.000001f) {
+        return TopdownLocomotionType::Idle;
+    }
+
+    if (TopdownLengthSqr(aimForward) <= 0.000001f) {
+        return TopdownLocomotionType::Forward;
+    }
+
+    const Vector2 aimRight{ -aimForward.y, aimForward.x };
+
+    const float forwardDot = TopdownDot(moveDir, aimForward);
+    const float rightDot = TopdownDot(moveDir, aimRight);
+
+    const float absForward = std::fabs(forwardDot);
+    const float absRight = std::fabs(rightDot);
+
+    // Small hysteresis so we do not flicker constantly around the 45-degree boundary.
+    static constexpr float kKeepBias = 0.12f;
+
+    switch (previousLocomotion) {
+        case TopdownLocomotionType::StrafeLeft:
+        case TopdownLocomotionType::StrafeRight:
+            if (absRight + kKeepBias >= absForward) {
+                return (rightDot < 0.0f)
+                       ? TopdownLocomotionType::StrafeLeft
+                       : TopdownLocomotionType::StrafeRight;
+            }
+            break;
+
+        case TopdownLocomotionType::Backward:
+            if (forwardDot < 0.0f && absForward + kKeepBias >= absRight) {
+                return TopdownLocomotionType::Backward;
+            }
+            break;
+
+        case TopdownLocomotionType::Forward:
+            if (forwardDot >= 0.0f && absForward + kKeepBias >= absRight) {
+                return TopdownLocomotionType::Forward;
+            }
+            break;
+
+        case TopdownLocomotionType::Idle:
+            break;
+    }
+
+    if (absRight > absForward) {
+        return (rightDot < 0.0f)
+               ? TopdownLocomotionType::StrafeLeft
+               : TopdownLocomotionType::StrafeRight;
+    }
+
+    return (forwardDot < 0.0f)
+           ? TopdownLocomotionType::Backward
+           : TopdownLocomotionType::Forward;
 }
 
 static void UpdatePlayerDamageRuntime(GameState& state, float dt)
@@ -164,7 +227,7 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
 {
     TopdownCharacterRuntime& runtime = state.topdown.runtime.playerCharacter;
     const TopdownCharacterAssetData& asset = state.topdown.playerCharacterAsset;
-    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    TopdownPlayerRuntime& player = state.topdown.runtime.player;
 
     if (!runtime.active || !asset.loaded) {
         return;
@@ -213,12 +276,19 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
             runtime.desiredAimRadians = std::atan2(aimDelta.y, aimDelta.x);
         }
 
+        Vector2 aimFacing{
+                std::cos(runtime.desiredAimRadians),
+                std::sin(runtime.desiredAimRadians)
+        };
+        aimFacing = TopdownNormalizeOrZero(aimFacing);
+        if (TopdownLengthSqr(aimFacing) > 0.000001f) {
+            player.facing = aimFacing;
+        }
+
         runtime.bodyFacingRadians = MoveTowardsAngle(
                 runtime.bodyFacingRadians,
                 runtime.desiredAimRadians,
                 runtime.turnSpeedRadians * dt);
-
-        runtime.feetRotationRadians = runtime.bodyFacingRadians;
 
         float upperDelta = NormalizeAngleRadians(runtime.desiredAimRadians - runtime.bodyFacingRadians);
         upperDelta = ClampFloat(
@@ -227,26 +297,37 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
                 runtime.maxUpperBodyTwistRadians);
 
         runtime.upperRotationRadians = runtime.bodyFacingRadians + upperDelta;
+
+        Vector2 moveDir = player.desiredVelocity;
+        if (TopdownLengthSqr(moveDir) <= 0.000001f) {
+            moveDir = player.velocity;
+        }
+
+        if (TopdownLengthSqr(moveDir) > 0.000001f) {
+            runtime.feetRotationRadians = std::atan2(moveDir.y, moveDir.x);
+        }
+        // else: idle -> keep previous feet rotation planted
     }
 
     runtime.running = false;
-    runtime.locomotion = TopdownLocomotionType::Idle;
 
-    const float localForward = player.moveInputForward;
-    const float localRight = player.moveInputRight;
+    Vector2 locomotionMoveDir = player.desiredVelocity;
+    if (TopdownLengthSqr(locomotionMoveDir) <= 0.000001f) {
+        locomotionMoveDir = player.velocity;
+    }
 
-    if (std::fabs(localRight) > std::fabs(localForward) && std::fabs(localRight) > 0.25f) {
-        runtime.locomotion =
-                (localRight < 0.0f)
-                ? TopdownLocomotionType::StrafeLeft
-                : TopdownLocomotionType::StrafeRight;
-    } else if (localForward < -0.1f) {
-        runtime.locomotion = TopdownLocomotionType::Backward;
-    } else if (localForward > 0.1f) {
-        runtime.locomotion = TopdownLocomotionType::Forward;
+    Vector2 locomotionAimForward{
+            std::cos(runtime.upperRotationRadians),
+            std::sin(runtime.upperRotationRadians)
+    };
+
+    runtime.locomotion = ClassifyLocomotionWithHysteresis(
+            locomotionMoveDir,
+            locomotionAimForward,
+            runtime.locomotion);
+
+    if (runtime.locomotion == TopdownLocomotionType::Forward) {
         runtime.running = player.wantsRun;
-    } else if (TopdownLengthSqr(player.velocity) > 0.0001f) {
-        runtime.locomotion = TopdownLocomotionType::Forward;
     }
 
     UpdatePlayerFeetAnimation(state);
@@ -388,7 +469,6 @@ static void UpdateScriptedPlayerMovement(GameState& state, float dt)
 static void UpdatePlayerMovementIntent(GameState& state)
 {
     TopdownPlayerRuntime& player = state.topdown.runtime.player;
-    const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
     float inputForward = 0.0f;
     float inputRight = 0.0f;
@@ -406,56 +486,25 @@ static void UpdatePlayerMovementIntent(GameState& state)
         inputRight -= 1.0f;
     }
 
-    Vector2 localInput{inputRight, inputForward};
-    localInput = TopdownNormalizeOrZero(localInput);
+    Vector2 worldInput{ inputRight, -inputForward };
+    worldInput = TopdownNormalizeOrZero(worldInput);
 
-    player.moveInputRight = localInput.x;
-    player.moveInputForward = localInput.y;
+    player.moveInputRight = worldInput.x;
+    player.moveInputForward = worldInput.y;
     player.wantsRun = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
 
-    if (TopdownLengthSqr(localInput) <= 0.000001f) {
+    if (TopdownLengthSqr(worldInput) <= 0.000001f) {
         player.desiredVelocity = Vector2{};
         return;
     }
 
-    Vector2 forward{
-            std::cos(character.bodyFacingRadians),
-            std::sin(character.bodyFacingRadians)
-    };
-    forward = TopdownNormalizeOrZero(forward);
-
-    if (TopdownLengthSqr(forward) <= 0.000001f) {
-        forward = Vector2{1.0f, 0.0f};
-    }
-
-    Vector2 right{ -forward.y, forward.x };
-
-    Vector2 moveDir = TopdownAdd(
-            TopdownMul(forward, localInput.y),
-            TopdownMul(right, localInput.x));
-    moveDir = TopdownNormalizeOrZero(moveDir);
-
-    float desiredSpeed = player.walkSpeed;
-
-    if (localInput.y < -0.1f) {
-        desiredSpeed = player.backwardSpeed;
-    } else if (std::fabs(localInput.x) > 0.1f && std::fabs(localInput.y) < 0.25f) {
-        desiredSpeed = player.strafeSpeed;
-    } else if (player.wantsRun) {
-        desiredSpeed = player.runSpeed;
-    } else {
-        desiredSpeed = player.walkSpeed;
-    }
+    float desiredSpeed = player.wantsRun ? player.runSpeed : player.walkSpeed;
 
     if (player.hitSlowdownRemainingMs > 0.0f) {
         desiredSpeed *= ClampFloat(player.hitSlowdownMultiplier, 0.0f, 1.0f);
     }
 
-    player.desiredVelocity = TopdownMul(moveDir, desiredSpeed);
-
-    if (TopdownLengthSqr(moveDir) > 0.000001f) {
-        player.facing = moveDir;
-    }
+    player.desiredVelocity = TopdownMul(worldInput, desiredSpeed);
 }
 
 static void UpdatePlayerVelocity(TopdownPlayerRuntime& player, float dt)
