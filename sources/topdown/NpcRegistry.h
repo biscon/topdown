@@ -56,4 +56,5 @@ bool TopdownSpawnNpcRuntime(
         const std::string& assetId,
         Vector2 position,
         float orientationDegrees,
-        bool visible);
+        bool visible,
+        bool persistentChase = false);

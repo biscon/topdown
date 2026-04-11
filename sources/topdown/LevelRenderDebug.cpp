@@ -635,19 +635,27 @@ static void DrawNpcAiDebug(const GameState& state)
                     WHITE);
         }
 
+        const float distToPlayer =
+                TopdownLength(TopdownSub(player.position, npc.position));
+
+        const float distToLastKnown =
+                TopdownLength(TopdownSub(npc.lastKnownPlayerPosition, npc.position));
+
         DrawText(
-                TextFormat("ai=%s  hostile=%s",
+                TextFormat("ai=%s  hostile=%s  persistent=%s",
                            TopdownNpcAiModeToString(npc.aiMode),
-                           npc.hostile ? "yes" : "no"),
+                           npc.hostile ? "yes" : "no",
+                           npc.persistentChase ? "yes" : "no"),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 34.0f),
                 16,
                 baseColor);
 
         DrawText(
-                TextFormat("aware=%s  combat=%s",
+                TextFormat("aware=%s  combat=%s  target=%s",
                            TopdownNpcAwarenessStateToString(npc.awarenessState),
-                           TopdownNpcCombatStateToString(npc.combatState)),
+                           TopdownNpcCombatStateToString(npc.combatState),
+                           npc.hasPlayerTarget ? "yes" : "no"),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 52.0f),
                 16,
@@ -660,6 +668,24 @@ static void DrawNpcAiDebug(const GameState& state)
                            npc.loseTargetTimerMs),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 70.0f),
+                16,
+                baseColor);
+
+        DrawText(
+                TextFormat("distPlayer=%.0f  distLast=%.0f",
+                           distToPlayer,
+                           distToLastKnown),
+                static_cast<int>(npcScreen.x + 10.0f),
+                static_cast<int>(npcScreen.y + 88.0f),
+                16,
+                baseColor);
+
+        DrawText(
+                TextFormat("progressT=%.0f  progressLast=%.0f",
+                           npc.lostTargetProgressTimerMs,
+                           npc.lostTargetLastDistance),
+                static_cast<int>(npcScreen.x + 10.0f),
+                static_cast<int>(npcScreen.y + 106.0f),
                 16,
                 baseColor);
     }

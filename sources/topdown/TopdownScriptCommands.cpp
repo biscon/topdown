@@ -205,7 +205,8 @@ bool TopdownScriptSpawnNpc(
         GameState& state,
         const std::string& npcId,
         const std::string& assetId,
-        const std::string& spawnId)
+        const std::string& spawnId,
+        bool persistentChase)
 {
     if (npcId.empty() || assetId.empty() || spawnId.empty()) {
         return false;
@@ -228,7 +229,8 @@ bool TopdownScriptSpawnNpc(
             assetId,
             spawn->position,
             spawn->orientationDegrees,
-            true);
+            true,
+            persistentChase);
 }
 
 bool TopdownScriptRemoveNpc(GameState& state, const std::string& npcId)

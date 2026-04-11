@@ -144,6 +144,7 @@ struct TopdownAuthoredNpc {
     std::string assetId;
     Vector2 position{};
     float orientationDegrees = 0.0f;
+    bool persistentChase = false;
     bool visible = true;
 };
 
@@ -884,8 +885,9 @@ struct TopdownNpcRuntime {
     bool visible = true;
     bool dead = false;
     bool corpse = false;
-
     bool hostile = true;
+    bool persistentChase = false;
+
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
     TopdownNpcAwarenessState awarenessState = TopdownNpcAwarenessState::Idle;
     TopdownNpcCombatState combatState = TopdownNpcCombatState::None;
@@ -966,6 +968,9 @@ struct TopdownNpcRuntime {
 
     float lostTargetProgressTimerMs = 0.0f;
     float lostTargetLastDistance = 0.0f;
+
+    float chaseStuckTimerMs = 0.0f;
+    Vector2 chaseStuckLastPosition{};
 };
 
 struct TopdownLevelRegistryEntry {

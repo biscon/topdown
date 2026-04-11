@@ -13,7 +13,12 @@ bool TopdownScriptStartWalkToSpawn(GameState& state, const std::string& spawnId)
 bool TopdownScriptStartRunToSpawn(GameState& state, const std::string& spawnId);
 
 // NPC lifecycle
-bool TopdownScriptSpawnNpc(GameState& state, const std::string& npcId, const std::string& assetId, const std::string& spawnId);
+bool TopdownScriptSpawnNpc(
+        GameState& state,
+        const std::string& npcId,
+        const std::string& assetId,
+        const std::string& spawnId,
+        bool persistentChase = false);
 bool TopdownScriptRemoveNpc(GameState& state, const std::string& npcId);
 
 // NPC scripted movement

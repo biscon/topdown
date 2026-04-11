@@ -598,6 +598,7 @@ static void ImportNpcLayer(
         npc.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
         npc.orientationDegrees = ReadOptionalFloatProperty(obj, "orientation", 0.0f);
         npc.assetId = GetObjectPropertyString(obj, "assetId", "");
+        npc.persistentChase = GetObjectPropertyBool(obj, "persistentChase", false);
 
         if (npc.id.empty()) {
             TraceLog(LOG_WARNING,
@@ -1064,7 +1065,8 @@ static void BuildRuntimeNpcsFromAuthored(GameState& state)
                 authored.assetId,
                 authored.position,
                 authored.orientationDegrees,
-                authored.visible)) {
+                authored.visible,
+                authored.persistentChase)) {
             TraceLog(LOG_WARNING,
                      "Skipping NPC '%s': failed spawning asset '%s'",
                      authored.id.c_str(),

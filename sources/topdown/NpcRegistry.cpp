@@ -773,7 +773,8 @@ bool TopdownSpawnNpcRuntime(
         const std::string& assetId,
         Vector2 position,
         float orientationDegrees,
-        bool visible)
+        bool visible,
+        bool persistentChase)
 {
     if (npcId.empty() || assetId.empty()) {
         return false;
@@ -804,6 +805,7 @@ bool TopdownSpawnNpcRuntime(
     npc.corpseElapsedMs = 0.0f;
 
     npc.hostile = asset->hostile;
+    npc.persistentChase = persistentChase;
     npc.aiMode = asset->aiMode;
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
     npc.combatState = TopdownNpcCombatState::None;

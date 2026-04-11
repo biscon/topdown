@@ -2438,7 +2438,12 @@
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":0
+                         "value":110
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":false
                         }],
                  "rotation":0,
                  "type":"",
@@ -2463,6 +2468,11 @@
                          "name":"orientation",
                          "type":"float",
                          "value":90
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":true
                         }],
                  "rotation":0,
                  "type":"",
@@ -2487,6 +2497,11 @@
                          "name":"orientation",
                          "type":"float",
                          "value":90
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":true
                         }],
                  "rotation":0,
                  "type":"",
@@ -2511,6 +2526,11 @@
                          "name":"orientation",
                          "type":"float",
                          "value":90
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":true
                         }],
                  "rotation":0,
                  "type":"",
@@ -2535,6 +2555,11 @@
                          "name":"orientation",
                          "type":"float",
                          "value":-180
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":true
                         }],
                  "rotation":0,
                  "type":"",
