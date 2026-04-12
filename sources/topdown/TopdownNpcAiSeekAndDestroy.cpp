@@ -515,53 +515,56 @@ static void UpdateNpcAttackState(
     }
 }
 
-void TopdownUpdateNpcAiSeekAndDestroy(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dt)
+static bool ShouldSkipNpcAiUpdate(const TopdownNpcRuntime& npc)
 {
-    const float dtMs = dt * 1000.0f;
-
     if (!npc.active || npc.dead || npc.corpse) {
-        npc.currentVelocity = Vector2{};
-        return;
+        return true;
     }
 
     if (!npc.hostile) {
-        npc.currentVelocity = Vector2{};
-        return;
+        return true;
     }
 
     if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
-        npc.currentVelocity = Vector2{};
-        return;
+        return true;
     }
 
-    if (!TopdownIsPlayerAlive(state)) {
-        npc.hasPlayerTarget = false;
-        ResetNpcLostTargetProgress(npc);
-        ResetNpcChaseStuckWatchdog(npc);
-        npc.awarenessState = TopdownNpcAwarenessState::Idle;
-        npc.combatState = TopdownNpcCombatState::None;
-        TopdownStopNpcMovement(npc);
-        ClearNpcSearchState(npc);
-        return;
-    }
+    return false;
+}
 
+static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
+{
+    npc.hasPlayerTarget = false;
+    ResetNpcLostTargetProgress(npc);
+    ResetNpcChaseStuckWatchdog(npc);
+    npc.awarenessState = TopdownNpcAwarenessState::Idle;
+    npc.combatState = TopdownNpcCombatState::None;
+    TopdownStopNpcMovement(npc);
+    ClearNpcSearchState(npc);
+}
+
+static void UpdateNpcAttackCooldown(TopdownNpcRuntime& npc, float dtMs)
+{
     if (npc.attackCooldownRemainingMs > 0.0f) {
         npc.attackCooldownRemainingMs -= dtMs;
         if (npc.attackCooldownRemainingMs < 0.0f) {
             npc.attackCooldownRemainingMs = 0.0f;
         }
     }
+}
 
+static void UpdateNpcRepathTimer(TopdownNpcRuntime& npc, float dtMs)
+{
     if (npc.repathTimerMs > 0.0f) {
         npc.repathTimerMs -= dtMs;
         if (npc.repathTimerMs < 0.0f) {
             npc.repathTimerMs = 0.0f;
         }
     }
+}
 
+static bool HandleNpcMotionInterrupts(TopdownNpcRuntime& npc)
+{
     if (npc.hurtStunRemainingMs > 0.0f) {
         ResetNpcChaseStuckWatchdog(npc);
         npc.combatState =
@@ -569,28 +572,41 @@ void TopdownUpdateNpcAiSeekAndDestroy(
                 ? TopdownNpcCombatState::Chase
                 : TopdownNpcCombatState::None;
         npc.currentVelocity = Vector2{};
-        return;
+        return true;
     }
 
     if (TopdownLengthSqr(npc.knockbackVelocity) > 0.000001f) {
         ResetNpcChaseStuckWatchdog(npc);
-        return;
+        return true;
     }
 
+    return false;
+}
+
+static bool HandleNpcImmediateCombatStates(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dt)
+{
     if (npc.combatState == TopdownNpcCombatState::Attack) {
         UpdateNpcAttackState(state, npc, dt);
-        return;
+        return true;
     }
 
     if (npc.combatState == TopdownNpcCombatState::Search) {
         UpdateNpcSearchState(state, npc, dt);
-        return;
+        return true;
     }
 
-    const bool currentlySeesPlayer = TopdownNpcCanSeePlayer(state, npc);
-    const bool currentlyHearsPlayer = TopdownNpcCanHearPlayer(state, npc);
-    const bool currentlyDetectsPlayer = currentlySeesPlayer || currentlyHearsPlayer;
+    return false;
+}
 
+static void UpdateNpcTargetingPhase(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dtMs,
+        bool currentlyDetectsPlayer)
+{
     const bool persistentChaseActive =
             npc.persistentChase &&
             npc.hasPlayerTarget;
@@ -600,86 +616,134 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     } else {
         UpdateNpcPerception(state, npc, dtMs);
     }
+}
 
-    if (npc.combatState == TopdownNpcCombatState::Search) {
-        UpdateNpcSearchState(state, npc, dt);
-        return;
+static bool HandleNpcNoTargetState(TopdownNpcRuntime& npc)
+{
+    if (npc.hasPlayerTarget) {
+        return false;
     }
 
-    if (!npc.hasPlayerTarget) {
-        npc.combatState = TopdownNpcCombatState::None;
-        ResetNpcLostTargetProgress(npc);
-        ResetNpcChaseStuckWatchdog(npc);
-        TopdownStopNpcMovement(npc);
-        return;
-    }
+    npc.combatState = TopdownNpcCombatState::None;
+    ResetNpcLostTargetProgress(npc);
+    ResetNpcChaseStuckWatchdog(npc);
+    TopdownStopNpcMovement(npc);
+    return true;
+}
 
-    Vector2 chaseTarget{};
+static bool HandleNpcMissingChaseTarget(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        bool currentlyDetectsPlayer,
+        Vector2& outChaseTarget)
+{
     const bool hasChaseTarget =
-            TryBuildNpcChaseTarget(state, npc, currentlyDetectsPlayer, chaseTarget);
+            TryBuildNpcChaseTarget(state, npc, currentlyDetectsPlayer, outChaseTarget);
 
-    if (!hasChaseTarget) {
-        npc.combatState = TopdownNpcCombatState::None;
-        ResetNpcLostTargetProgress(npc);
-        ResetNpcChaseStuckWatchdog(npc);
-        TopdownStopNpcMovement(npc);
-        return;
+    if (hasChaseTarget) {
+        return false;
     }
 
+    npc.combatState = TopdownNpcCombatState::None;
+    ResetNpcLostTargetProgress(npc);
+    ResetNpcChaseStuckWatchdog(npc);
+    TopdownStopNpcMovement(npc);
+    return true;
+}
 
+static bool HandleNpcHardChaseCutoff(
+        GameState& state,
+        TopdownNpcRuntime& npc)
+{
     const float distanceToPlayer =
             TopdownLength(
                     TopdownSub(
                             state.topdown.runtime.player.position,
                             npc.position));
 
-    if (distanceToPlayer >= kHardChaseCutoffDistance) {
-        BeginNpcSearchState(npc);
+    if (distanceToPlayer < kHardChaseCutoffDistance) {
+        return false;
+    }
+
+    BeginNpcSearchState(npc);
+    return true;
+}
+
+static void UpdateNpcFacingTowardPlayer(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        bool currentlyDetectsPlayer)
+{
+    if (!currentlyDetectsPlayer) {
         return;
     }
 
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
-    const bool inAttackRange =
-            TopdownIsPlayerWithinNpcAttackRange(npc, player);
+    const Vector2 toPlayer = TopdownSub(player.position, npc.position);
 
-    if (currentlyDetectsPlayer) {
-        const Vector2 toPlayer = TopdownSub(player.position, npc.position);
-        if (TopdownLengthSqr(toPlayer) > 0.000001f) {
-            const Vector2 facing = TopdownNormalizeOrZero(toPlayer);
-            npc.facing = facing;
-            npc.rotationRadians = std::atan2(facing.y, facing.x);
-        }
-    }
-
-    if (currentlyDetectsPlayer && inAttackRange) {
-        TopdownStopNpcMovement(npc);
-        ResetNpcLostTargetProgress(npc);
-        ResetNpcChaseStuckWatchdog(npc);
-
-        if (npc.attackCooldownRemainingMs <= 0.0f) {
-            StartNpcAttack(state, npc);
-        } else {
-            npc.combatState = TopdownNpcCombatState::Recover;
-        }
-
+    if (TopdownLengthSqr(toPlayer) <= 0.000001f) {
         return;
     }
 
-    npc.combatState = TopdownNpcCombatState::Chase;
+    const Vector2 facing = TopdownNormalizeOrZero(toPlayer);
+    npc.facing = facing;
+    npc.rotationRadians = std::atan2(facing.y, facing.x);
+}
 
+static bool HandleNpcAttackOrRecover(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        bool currentlyDetectsPlayer)
+{
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const bool inAttackRange =
+            TopdownIsPlayerWithinNpcAttackRange(npc, player);
+
+    if (!(currentlyDetectsPlayer && inAttackRange)) {
+        return false;
+    }
+
+    TopdownStopNpcMovement(npc);
+    ResetNpcLostTargetProgress(npc);
+    ResetNpcChaseStuckWatchdog(npc);
+
+    if (npc.attackCooldownRemainingMs <= 0.0f) {
+        StartNpcAttack(state, npc);
+    } else {
+        npc.combatState = TopdownNpcCombatState::Recover;
+    }
+
+    return true;
+}
+
+static bool HandleNpcChaseWatchdog(
+        TopdownNpcRuntime& npc,
+        bool persistentChaseActive,
+        bool currentlyDetectsPlayer,
+        float dtMs)
+{
     if (persistentChaseActive && !currentlyDetectsPlayer) {
         if (UpdateNpcChaseStuckWatchdog(npc, dtMs)) {
             BeginNpcSearchState(npc);
-            return;
+            return true;
         }
     } else {
         ResetNpcChaseStuckWatchdog(npc);
     }
 
-    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Script) {
-        return;
-    }
+    return false;
+}
 
+static bool ShouldSkipNpcAiPathing(const TopdownNpcRuntime& npc)
+{
+    return npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Script;
+}
+
+static void UpdateNpcChasePathing(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        Vector2 chaseTarget)
+{
     if (!npc.move.active ||
         npc.move.owner != TopdownNpcMoveOwner::Ai ||
         npc.repathTimerMs <= 0.0f) {
@@ -691,4 +755,79 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
         npc.repathTimerMs = std::max(1.0f, npc.chaseRepathIntervalMs);
     }
+}
+
+void TopdownUpdateNpcAiSeekAndDestroy(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dt)
+{
+    const float dtMs = dt * 1000.0f;
+
+    if (ShouldSkipNpcAiUpdate(npc)) {
+        npc.currentVelocity = Vector2{};
+        return;
+    }
+
+    if (!TopdownIsPlayerAlive(state)) {
+        StopNpcAiForDeadPlayer(npc);
+        return;
+    }
+
+    UpdateNpcAttackCooldown(npc, dtMs);
+    UpdateNpcRepathTimer(npc, dtMs);
+
+    if (HandleNpcMotionInterrupts(npc)) {
+        return;
+    }
+
+    if (HandleNpcImmediateCombatStates(state, npc, dt)) {
+        return;
+    }
+
+    const bool currentlySeesPlayer = TopdownNpcCanSeePlayer(state, npc);
+    const bool currentlyHearsPlayer = TopdownNpcCanHearPlayer(state, npc);
+    const bool currentlyDetectsPlayer = currentlySeesPlayer || currentlyHearsPlayer;
+
+    const bool persistentChaseActive =
+            npc.persistentChase &&
+            npc.hasPlayerTarget;
+
+    UpdateNpcTargetingPhase(state, npc, dtMs, currentlyDetectsPlayer);
+
+    if (npc.combatState == TopdownNpcCombatState::Search) {
+        UpdateNpcSearchState(state, npc, dt);
+        return;
+    }
+
+    if (HandleNpcNoTargetState(npc)) {
+        return;
+    }
+
+    Vector2 chaseTarget{};
+    if (HandleNpcMissingChaseTarget(state, npc, currentlyDetectsPlayer, chaseTarget)) {
+        return;
+    }
+
+    if (HandleNpcHardChaseCutoff(state, npc)) {
+        return;
+    }
+
+    UpdateNpcFacingTowardPlayer(state, npc, currentlyDetectsPlayer);
+
+    if (HandleNpcAttackOrRecover(state, npc, currentlyDetectsPlayer)) {
+        return;
+    }
+
+    npc.combatState = TopdownNpcCombatState::Chase;
+
+    if (HandleNpcChaseWatchdog(npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {
+        return;
+    }
+
+    if (ShouldSkipNpcAiPathing(npc)) {
+        return;
+    }
+
+    UpdateNpcChasePathing(state, npc, chaseTarget);
 }
