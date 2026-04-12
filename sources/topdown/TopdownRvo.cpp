@@ -75,8 +75,8 @@ static void ConfigureSimulatorDefaults(RVO::RVOSimulator& sim)
             180.0f, // neighborDist
             12,     // maxNeighbors
             0.8f,   // timeHorizon
-            0.8f,   // timeHorizonObst
-            40.0f,  // radius
+            0.5f,   // timeHorizonObst
+            45.0f,  // radius
             700.0f  // maxSpeed
     );
 }

@@ -759,6 +759,24 @@ void QueueBloodSpatterDecals(
     state.topdown.runtime.render.pendingBloodDecalSpawns.push_back(pending);
 }
 
+void SpawnBloodPoolEmitter(
+        GameState& state,
+        Vector2 position,
+        float maxRadius,
+        float durationMs)
+{
+    TopdownBloodPoolEmitter emitter;
+    emitter.active = true;
+    emitter.position = position;
+    emitter.elapsedMs = 0.0f;
+    emitter.durationMs = std::max(1.0f, durationMs);
+    emitter.spawnIntervalMs = RandomRangeFloat(30.0f, 70.0f);
+    emitter.spawnTimerMs = 0.0f;
+    emitter.maxRadius = std::max(4.0f, maxRadius);
+
+    state.topdown.runtime.render.bloodPoolEmitters.push_back(emitter);
+}
+
 static void EnforceBloodImpactParticleCap(TopdownRenderWorld& renderWorld)
 {
     std::vector<TopdownBloodImpactParticle>& particles =
@@ -990,9 +1008,119 @@ static void UpdatePendingBloodDecalSpawns(GameState& state, float dt)
             pending.end());
 }
 
+static void UpdateBloodPoolEmitters(GameState& state, float dt)
+{
+    bool anyDecalStillFading = false;
+
+    for (auto& decal : state.topdown.runtime.render.bloodDecals) {
+        decal.ageMs += dt * 1000.0f;
+
+        if (decal.fadeInMs > 0.0f && decal.ageMs < decal.fadeInMs) {
+            anyDecalStillFading = true;
+        }
+    }
+
+    std::vector<TopdownBloodPoolEmitter>& emitters =
+            state.topdown.runtime.render.bloodPoolEmitters;
+
+    const TopdownBloodStampLibrary& library = state.topdown.bloodStampLibrary;
+
+    bool spawnedAnyDecals = false;
+
+    for (TopdownBloodPoolEmitter& emitter : emitters) {
+        if (!emitter.active) {
+            continue;
+        }
+
+        emitter.elapsedMs += dt * 1000.0f;
+        if (emitter.elapsedMs >= emitter.durationMs) {
+            emitter.active = false;
+            continue;
+        }
+
+        emitter.spawnTimerMs += dt * 1000.0f;
+
+        while (emitter.spawnTimerMs >= emitter.spawnIntervalMs) {
+            emitter.spawnTimerMs -= emitter.spawnIntervalMs;
+
+            const float t = Clamp(emitter.elapsedMs / emitter.durationMs, 0.0f, 1.0f);
+            const float currentRadius = emitter.maxRadius * t;
+
+            float dist01 = RandomRangeFloat(0.0f, 1.0f);
+            dist01 = dist01 * dist01;
+
+            const float angle = RandomRangeFloat(0.0f, 2.0f * PI);
+            const float dist = currentRadius * dist01;
+
+            Vector2 offset{
+                    std::cos(angle) * dist,
+                    std::sin(angle) * dist
+            };
+
+            offset.y += currentRadius * 0.08f * t;
+
+            TopdownBloodDecal decal;
+            decal.active = true;
+            decal.kind = TopdownBloodDecalKind::Pool;
+            decal.position = TopdownAdd(emitter.position, offset);
+
+            decal.radius = RandomRangeFloat(30.0f, 50.0f);
+            decal.targetRadius = decal.radius;
+            decal.growthRate = 0.0f;
+            decal.opacity = RandomRangeFloat(0.72f, 0.95f);
+
+            const float fadeBias = dist01;
+            const float fadeMinMs = 500.0f;
+            const float fadeMaxMs = 1200.0f;
+
+            decal.fadeInMs =
+                    Lerp(fadeMinMs, fadeMaxMs, fadeBias) +
+                    RandomRangeFloat(-80.0f, 80.0f);
+
+            decal.fadeInMs = std::max(80.0f, decal.fadeInMs);
+            decal.ageMs = 0.0f;
+            decal.variantSeed = static_cast<unsigned int>(GetRandomValue(0, 0x7fffffff));
+
+            decal.useGeneratedStamp = library.generated && !library.splats.empty();
+            decal.preferStreakStamp = false;
+            decal.stretch = RandomRangeFloat(0.92f, 1.28f);
+            decal.rotationRadians = RandomRangeFloat(0.0f, 2.0f * PI);
+
+            if (decal.useGeneratedStamp) {
+                decal.stampIndex = ChooseBloodStampIndex(
+                        static_cast<int>(library.splats.size()));
+            } else {
+                decal.stampIndex = -1;
+            }
+
+            state.topdown.runtime.render.bloodDecals.push_back(decal);
+            spawnedAnyDecals = true;
+            anyDecalStillFading = true;
+        }
+    }
+
+    emitters.erase(
+            std::remove_if(
+                    emitters.begin(),
+                    emitters.end(),
+                    [](const TopdownBloodPoolEmitter& emitter) {
+                        return !emitter.active;
+                    }),
+            emitters.end());
+
+    if (spawnedAnyDecals) {
+        EnforceBloodDecalCap(state.topdown.runtime.render);
+    }
+
+    if (spawnedAnyDecals || anyDecalStillFading) {
+        MarkTopdownBloodRenderTargetDirty(state);
+    }
+}
+
 void TopdownUpdateLevelEffects(GameState& state, float dt) {
     UpdateTracerEffects(state, dt);
     UpdatePendingBloodDecalSpawns(state, dt);
+    UpdateBloodPoolEmitters(state, dt);
     UpdateWallImpactParticles(state, dt);
     UpdateBloodImpactParticles(state, dt);
     UpdateMuzzleFlashEffects(state, dt);

@@ -124,9 +124,22 @@ namespace
                 dst.height * 0.5f
         };
 
+        float fade01 = 1.0f;
+
+        if (decal.fadeInMs > 0.0f) {
+            fade01 = Clamp(decal.ageMs / decal.fadeInMs, 0.0f, 1.0f);
+        }
+
+        float finalOpacity = decal.opacity * fade01;
+
+        const unsigned char alpha =
+                (unsigned char)(255.0f * Clamp(finalOpacity, 0.0f, 1.0f));
+
+        /*
         const unsigned char alpha =
                 static_cast<unsigned char>(
                         std::round(255.0f * Clamp(decal.opacity, 0.0f, 1.0f)));
+                        */
 
         // Stamp textures are premultiplied alpha white masks,
         // so PMA tint here is grayscale with matching alpha.

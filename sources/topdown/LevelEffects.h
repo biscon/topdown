@@ -44,6 +44,12 @@ void QueueBloodSpatterDecals(
         Vector2 incomingShotDir,
         const TopdownPlayerWeaponConfig& weaponConfig);
 
+void SpawnBloodPoolEmitter(
+        GameState& state,
+        Vector2 position,
+        float maxRadius,
+        float durationMs);
+
 void SpawnBloodImpactParticles(
         GameState& state,
         Vector2 hitPoint,

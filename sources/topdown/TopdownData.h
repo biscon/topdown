@@ -407,6 +407,9 @@ struct TopdownBloodDecal {
     float opacity = 1.0f;
     float ageMs = 0.0f;
 
+    float spawnOpacity = 1.0f;
+    float fadeInMs = 0.0f;
+
     unsigned int variantSeed = 0;
 
     bool useGeneratedStamp = false;
@@ -587,6 +590,20 @@ struct TopdownPendingBloodDecalSpawn {
     float elapsedMs = 0.0f;
 };
 
+struct TopdownBloodPoolEmitter {
+    bool active = false;
+
+    Vector2 position{};
+
+    float elapsedMs = 0.0f;
+    float durationMs = 4000.0f;
+
+    float spawnIntervalMs = 90.0f;
+    float spawnTimerMs = 0.0f;
+
+    float maxRadius = 70.0f;
+};
+
 struct TopdownRenderWorld {
     std::vector<TopdownRuntimeImageLayer> bottomLayers;
     std::vector<TopdownRuntimeImageLayer> topLayers;
@@ -600,6 +617,7 @@ struct TopdownRenderWorld {
     std::vector<TopdownMuzzleSmokeParticle> muzzleSmokeParticles;
 
     std::vector<TopdownPendingBloodDecalSpawn> pendingBloodDecalSpawns;
+    std::vector<TopdownBloodPoolEmitter> bloodPoolEmitters;
 
     std::vector<int> afterBottomEffectRegionIndices;
     std::vector<int> afterCharactersEffectRegionIndices;
@@ -621,7 +639,7 @@ struct TopdownPlayerRuntime {
     float runSpeed = 750.0f;
 
     float acceleration = 2800.0f;
-    float deceleration = 3200.0f;
+    float deceleration = 4500.0f;
 
     bool wantsRun = false;
 
@@ -648,6 +666,10 @@ struct TopdownCameraData {
 
     float deadzoneWidth = 160.0f;
     float deadzoneHeight = 40.0f;
+
+    float aimMaxOffset = 1000.0f;
+    float aimStrength = 0.30f;
+    float aimResponse = 8.0f;
 
     float smoothing = 10.0f;
 };

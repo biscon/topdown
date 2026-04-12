@@ -119,10 +119,6 @@ void TopdownUpdateCamera(GameState& state, float dt)
 
     Vector2 desiredOffset{};
 
-    static constexpr float kAimMaxOffset = 1000.0f;
-    static constexpr float kAimStrength = 0.30f;
-    static constexpr float kAimResponse = 8.0f;
-
     if (TopdownLengthSqr(toMouse) > 0.001f) {
         // Compress X so diagonal aim biases a bit more vertically on 16:9.
         const float aspectComp = camera.viewportHeight / camera.viewportWidth; // 1080/1920 = 0.5625
@@ -134,14 +130,14 @@ void TopdownUpdateCamera(GameState& state, float dt)
         if (weightedDist > 0.001f) {
             Vector2 dir = TopdownMul(weighted, 1.0f / weightedDist);
 
-            float strength = std::min(weightedDist, kAimMaxOffset) / kAimMaxOffset;
+            float strength = std::min(weightedDist, camera.aimMaxOffset) / camera.aimMaxOffset;
             strength = 1.0f - std::exp(-3.0f * strength);
 
-            desiredOffset = TopdownMul(dir, strength * kAimMaxOffset * kAimStrength);
+            desiredOffset = TopdownMul(dir, strength * camera.aimMaxOffset * camera.aimStrength);
         }
     }
 
-    const float aimLerp = std::clamp(kAimResponse * dt, 0.0f, 1.0f);
+    const float aimLerp = std::clamp(camera.aimResponse * dt, 0.0f, 1.0f);
     runtime.aimOffset.x += (desiredOffset.x - runtime.aimOffset.x) * aimLerp;
     runtime.aimOffset.y += (desiredOffset.y - runtime.aimOffset.y) * aimLerp;
 

@@ -9,6 +9,7 @@
 #include "CharacterRender.h"
 #include "TopdownRvo.h"
 #include "LevelDoors.h"
+#include "LevelEffects.h"
 
 static float ComputeRemainingNpcPathDistance(const TopdownNpcMoveState& move, Vector2 currentPosition)
 {
@@ -526,6 +527,9 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
 
                 if (npc.dead && npc.oneShotTimeMs >= durationMs) {
                     npc.oneShotTimeMs = durationMs;
+
+                    const bool becameCorpseThisFrame = !npc.corpse;
+
                     npc.corpse = true;
                     npc.knockbackVelocity = Vector2{};
                     npc.move = {};
@@ -533,6 +537,14 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
                     npc.moving = false;
                     npc.running = false;
                     npc.currentVelocity = Vector2{};
+
+                    if (becameCorpseThisFrame) {
+                        SpawnBloodPoolEmitter(
+                                state,
+                                npc.position,
+                                RandomRangeFloat(80.0f, 105.0f),
+                                RandomRangeFloat(2000.0f, 2500.0f));
+                    }
                 } else if (!npc.dead && npc.oneShotTimeMs >= durationMs) {
                     TopdownClearNpcOneShotAnimation(npc);
                 }
