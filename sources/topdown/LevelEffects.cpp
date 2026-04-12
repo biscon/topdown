@@ -1070,8 +1070,8 @@ static void UpdateBloodPoolEmitters(GameState& state, float dt)
             decal.opacity = RandomRangeFloat(0.72f, 0.95f);
 
             const float fadeBias = dist01;
-            const float fadeMinMs = 500.0f;
-            const float fadeMaxMs = 1200.0f;
+            const float fadeMinMs = 900.0f;
+            const float fadeMaxMs = 1500.0f;
 
             decal.fadeInMs =
                     Lerp(fadeMinMs, fadeMaxMs, fadeBias) +
