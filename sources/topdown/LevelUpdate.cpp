@@ -1325,6 +1325,7 @@ void TopdownUpdate(GameState& state, float dt)
     }
 
     TopdownUpdateDoors(state, dt);
+    TopdownRebuildWallOcclusionPolygons(state.topdown);
 
     TopdownUpdatePlayerLogic(state, dt);
     TopdownUpdateNpcLogic(state, dt);

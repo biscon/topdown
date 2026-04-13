@@ -1141,6 +1141,23 @@ static bool BuildWallOcclusionPolygon(
         segments.push_back(seg);
     }
 
+    for (const TopdownRuntimeDoor& door : topdown.runtime.doors) {
+        if (!door.visible) {
+            continue;
+        }
+
+        Vector2 a{};
+        Vector2 b{};
+        Vector2 c{};
+        Vector2 d{};
+        TopdownBuildDoorCorners(door, a, b, c, d);
+
+        segments.push_back(TopdownSegment{a, b});
+        segments.push_back(TopdownSegment{b, c});
+        segments.push_back(TopdownSegment{c, d});
+        segments.push_back(TopdownSegment{d, a});
+    }
+
     if (segments.empty()) {
         return false;
     }
@@ -1261,6 +1278,35 @@ static bool BuildWallOcclusionPolygon(
     }
 
     return true;
+}
+
+void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown)
+{
+    for (int i = 0; i < static_cast<int>(topdown.authored.effectRegions.size()); ++i) {
+        if (i >= static_cast<int>(topdown.runtime.render.effectRegions.size())) {
+            break;
+        }
+
+        const TopdownAuthoredEffectRegion& authored = topdown.authored.effectRegions[i];
+        TopdownRuntimeEffectRegion& runtime = topdown.runtime.render.effectRegions[i];
+
+        runtime.occludedByWalls = authored.occludedByWalls;
+        runtime.hasWallOcclusionPolygon = false;
+        runtime.wallOcclusionPolygon.clear();
+
+        if (!runtime.occludedByWalls) {
+            continue;
+        }
+
+        runtime.hasWallOcclusionPolygon =
+                BuildWallOcclusionPolygon(topdown, authored, runtime.wallOcclusionPolygon);
+
+        if (!runtime.hasWallOcclusionPolygon) {
+            TraceLog(LOG_WARNING,
+                     "Failed building wall occlusion polygon for effect region '%s'",
+                     authored.id.c_str());
+        }
+    }
 }
 
 static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
@@ -1442,23 +1488,11 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.tint = authored.tint;
         runtime.shaderType = authored.shaderType;
         runtime.shaderParams = authored.shaderParams;
-        runtime.occludedByWalls = authored.occludedByWalls;
-        runtime.hasWallOcclusionPolygon = false;
-        runtime.wallOcclusionPolygon.clear();
-
-        if (runtime.occludedByWalls) {
-            runtime.hasWallOcclusionPolygon =
-                    BuildWallOcclusionPolygon(topdown, authored, runtime.wallOcclusionPolygon);
-
-            if (!runtime.hasWallOcclusionPolygon) {
-                TraceLog(LOG_WARNING,
-                         "Failed building wall occlusion polygon for effect region '%s'",
-                         authored.id.c_str());
-            }
-        }
 
         topdown.runtime.render.effectRegions.push_back(runtime);
     }
+
+    TopdownRebuildWallOcclusionPolygons(topdown);
 
     BuildSortedEffectRegionBuckets(topdown);
 
