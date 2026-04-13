@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 #include "resources/AsepriteAsset.h"
 #include "resources/TextureAsset.h"
@@ -313,7 +314,27 @@ void TopdownRenderPlayerCharacter(GameState& state)
 
 void TopdownRenderNpcs(GameState& state)
 {
+    std::vector<const TopdownNpcRuntime*> sortedNpcs;
+    sortedNpcs.reserve(state.topdown.runtime.npcs.size());
+
     for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (npc.dead || npc.corpse) {
+            sortedNpcs.push_back(&npc);
+        }
+    }
+
+    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.dead && !npc.corpse) {
+            sortedNpcs.push_back(&npc);
+        }
+    }
+
+    for (const TopdownNpcRuntime* npcPtr : sortedNpcs) {
+        if (npcPtr == nullptr) {
+            continue;
+        }
+
+        const TopdownNpcRuntime& npc = *npcPtr;
         if (!npc.active || !npc.visible) {
             continue;
         }
@@ -401,4 +422,3 @@ void TopdownRenderNpcs(GameState& state)
         }
     }
 }
-
