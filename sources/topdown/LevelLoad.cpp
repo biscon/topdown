@@ -1122,6 +1122,8 @@ static bool BuildWallOcclusionPolygon(
         const TopdownAuthoredEffectRegion& effect,
         std::vector<Vector2>& outPolygon)
 {
+    static constexpr int kMaxOcclusionPolygonPoints = 256;
+
     outPolygon.clear();
 
     const Vector2 origin = TopdownComputeEffectRegionOcclusionOrigin(effect);
@@ -1234,12 +1236,28 @@ static bool BuildWallOcclusionPolygon(
         return false;
     }
 
-    if (outPolygon.size() > 64) {
+    if (outPolygon.size() > static_cast<size_t>(kMaxOcclusionPolygonPoints)) {
+        const std::vector<Vector2> fullPolygon = outPolygon;
+        std::vector<Vector2> reducedPolygon;
+        reducedPolygon.reserve(kMaxOcclusionPolygonPoints);
+
+        const float step = static_cast<float>(fullPolygon.size()) /
+                           static_cast<float>(kMaxOcclusionPolygonPoints);
+
+        for (int i = 0; i < kMaxOcclusionPolygonPoints; ++i) {
+            const int sourceIndex = static_cast<int>(std::floor(step * static_cast<float>(i)));
+            const int clampedIndex =
+                    std::clamp(sourceIndex, 0, static_cast<int>(fullPolygon.size()) - 1);
+            reducedPolygon.push_back(fullPolygon[clampedIndex]);
+        }
+
         TraceLog(LOG_WARNING,
-                 "Wall occlusion polygon for effect '%s' has %d points, truncating to 64",
+                 "Wall occlusion polygon for effect '%s' has %d points, downsampling to %d",
                  effect.id.c_str(),
-                 static_cast<int>(outPolygon.size()));
-        outPolygon.resize(64);
+                 static_cast<int>(outPolygon.size()),
+                 kMaxOcclusionPolygonPoints);
+
+        outPolygon = std::move(reducedPolygon);
     }
 
     return true;

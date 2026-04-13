@@ -131,8 +131,8 @@ static void SetShaderOcclusionPolygonIfValid(
         return;
     }
 
-    float points[64 * 2] = {};
-    for (int i = 0; i < vertexCount && i < 64; ++i) {
+    float points[256 * 2] = {};
+    for (int i = 0; i < vertexCount && i < 256; ++i) {
         points[i * 2 + 0] = runtime.wallOcclusionPolygon[i].x - cam.x;
         points[i * 2 + 1] = runtime.wallOcclusionPolygon[i].y - cam.y;
     }
