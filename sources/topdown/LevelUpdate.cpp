@@ -1215,6 +1215,7 @@ static bool TryStartPlayerAttack(
                 BuildPlayerRangedAttackContext(state, *weaponConfig);
 
         PlayPlayerRangedAttackAudioAndFx(state, *weaponConfig, ctx);
+        TopdownAlertNpcsByGunshot(state, ctx.muzzleWorld);
 
         std::vector<PendingNpcShotResult> pendingNpcHits;
         std::vector<PendingDoorShotResult> pendingDoorHits;

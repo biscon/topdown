@@ -56,6 +56,10 @@ void TopdownAlertNearbyNpcs(
         const TopdownNpcRuntime& sourceNpc,
         float radius);
 
+void TopdownAlertNpcsByGunshot(
+        GameState& state,
+        Vector2 shotOrigin);
+
 bool TopdownHasNpcReachedPoint(
         const TopdownNpcRuntime& npc,
         Vector2 point,

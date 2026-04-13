@@ -346,6 +346,7 @@ static void MergeNpcRegistryFile(
 
         def.visionRange = entry.value("visionRange", 700.0f);
         def.hearingRange = entry.value("hearingRange", 220.0f);
+        def.gunshotHearingRange = entry.value("gunshotHearingRange", 1000.0f);
         def.visionHalfAngleDegrees = entry.value("visionHalfAngleDegrees", 65.0f);
 
         def.attackRange = entry.value("attackRange", 95.0f);
@@ -396,6 +397,13 @@ static void MergeNpcRegistryFile(
                      "NPC definition '%s' has hearingRange < 0, clamping to 0",
                      def.assetId.c_str());
             def.hearingRange = 0.0f;
+        }
+
+        if (def.gunshotHearingRange < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has gunshotHearingRange < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.gunshotHearingRange = 0.0f;
         }
 
         if (def.visionHalfAngleDegrees < 0.0f) {
@@ -659,6 +667,7 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
 
     runtime.visionRange = def->visionRange;
     runtime.hearingRange = def->hearingRange;
+    runtime.gunshotHearingRange = def->gunshotHearingRange;
     runtime.visionHalfAngleDegrees = def->visionHalfAngleDegrees;
 
     runtime.attackRange = def->attackRange;
@@ -812,6 +821,7 @@ bool TopdownSpawnNpcRuntime(
 
     npc.visionRange = asset->visionRange;
     npc.hearingRange = asset->hearingRange;
+    npc.gunshotHearingRange = asset->gunshotHearingRange;
     npc.visionHalfAngleDegrees = asset->visionHalfAngleDegrees;
 
     npc.attackRange = asset->attackRange;

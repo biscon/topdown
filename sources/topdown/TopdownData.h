@@ -824,6 +824,7 @@ struct TopdownNpcAssetDefinition {
 
     float visionRange = 700.0f;
     float hearingRange = 220.0f;
+    float gunshotHearingRange = 1000.0f;
     float visionHalfAngleDegrees = 65.0f;
 
     float attackRange = 95.0f;
@@ -881,6 +882,7 @@ struct TopdownNpcAssetRuntime {
 
     float visionRange = 700.0f;
     float hearingRange = 220.0f;
+    float gunshotHearingRange = 1000.0f;
     float visionHalfAngleDegrees = 65.0f;
 
     float attackRange = 95.0f;
@@ -924,6 +926,7 @@ struct TopdownNpcRuntime {
 
     float visionRange = 700.0f;
     float hearingRange = 220.0f;
+    float gunshotHearingRange = 1000.0f;
     float visionHalfAngleDegrees = 65.0f;
 
     float attackRange = 95.0f;
