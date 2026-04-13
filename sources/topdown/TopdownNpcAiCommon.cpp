@@ -158,6 +158,45 @@ void TopdownAlertNearbyNpcs(
     }
 }
 
+void TopdownAlertNpcsByGunshot(
+        GameState& state,
+        Vector2 shotOrigin)
+{
+    static constexpr float kAspectRatioCompensation =
+            static_cast<float>(INTERNAL_HEIGHT) / static_cast<float>(INTERNAL_WIDTH);
+
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active || npc.dead || npc.corpse) {
+            continue;
+        }
+
+        if (!npc.hostile) {
+            continue;
+        }
+
+        if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
+            continue;
+        }
+
+        const float range = std::max(0.0f, npc.gunshotHearingRange);
+        if (range <= 0.0f) {
+            continue;
+        }
+
+        const Vector2 delta = TopdownSub(npc.position, shotOrigin);
+        const Vector2 weightedDelta{
+                delta.x * kAspectRatioCompensation,
+                delta.y
+        };
+
+        if (TopdownLengthSqr(weightedDelta) > range * range) {
+            continue;
+        }
+
+        TopdownAlertNpcToPlayer(state, npc);
+    }
+}
+
 bool TopdownIsPlayerAlive(const GameState& state)
 {
     return state.topdown.runtime.player.lifeState == TopdownPlayerLifeState::Alive;
