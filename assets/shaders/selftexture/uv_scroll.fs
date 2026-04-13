@@ -42,8 +42,15 @@ void main()
         discard;
     }
 
+    /*
     vec2 safeUvScale = max(uUvScale, vec2(0.0001));
     vec2 uv = fragTexCoord * safeUvScale;
+    uv += uScrollSpeed * uTime;
+    uv += vec2(uPhaseOffset, uPhaseOffset);
+    */
+
+    vec2 safeUvScale = max(uUvScale, vec2(0.0001));
+    vec2 uv = local * safeUvScale;
     uv += uScrollSpeed * uTime;
     uv += vec2(uPhaseOffset, uPhaseOffset);
 

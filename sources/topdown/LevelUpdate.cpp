@@ -19,6 +19,7 @@
 #include "TopdownNpcAi.h"
 #include "TopdownRvo.h"
 #include "LevelDoors.h"
+#include "utils/ScopeTimer.h"
 
 enum class TopdownShotHitType
 {
@@ -1333,12 +1334,16 @@ void TopdownUpdate(GameState& state, float dt)
     ApplyDoorMotionPushToNpcs(state, dt);
 
     UpdatePlayerAttackRuntime(state, dt);
+
     TopdownUpdateLevelEffects(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);
     TopdownUpdateCamera(state, dt);
-    TopdownRebuildWallOcclusionPolygons(state.topdown, false);
+    {
+        //ScopeTimer t("RebuildWallOcclusionPolygons");
+        TopdownRebuildWallOcclusionPolygons(state.topdown, false);
+    }
 
     // --- update game over ---
     if (runtime.gameOverActive) {
