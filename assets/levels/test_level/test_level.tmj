@@ -2290,7 +2290,7 @@
                 {
                  "height":0,
                  "id":49,
-                 "name":"door_light",
+                 "name":"door_grade",
                  "opacity":1,
                  "polygon":[
                         {
@@ -2369,12 +2369,12 @@
                         {
                          "name":"sortIndex",
                          "type":"int",
-                         "value":100
+                         "value":1000
                         }, 
                         {
                          "name":"tintB",
                          "type":"float",
-                         "value":1
+                         "value":0.9
                         }, 
                         {
                          "name":"tintG",
@@ -2384,7 +2384,7 @@
                         {
                          "name":"tintR",
                          "type":"float",
-                         "value":1.1
+                         "value":1.15
                         }],
                  "rotation":0,
                  "type":"",
@@ -2521,10 +2521,451 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":true,
+                 "visible":false,
                  "width":0,
                  "x":-109.666666666667,
                  "y":1577.42424242425
+                }, 
+                {
+                 "height":31.25,
+                 "id":96,
+                 "name":"table_lamp_glow1",
+                 "opacity":0.76,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/light_bulb.png"
+                        }, 
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        }, 
+                        {
+                         "name":"overlay",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"final"
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.08
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":27,
+                 "x":155.833333333333,
+                 "y":224.375
+                }, 
+                {
+                 "height":364.333333333333,
+                 "id":97,
+                 "name":"table_lamp_glow2",
+                 "opacity":0.5,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/radial_glow_1024.png"
+                        }, 
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        }, 
+                        {
+                         "name":"occludedByWalls",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"final"
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.04
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.8
+                        }, 
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":0.9
+                        }, 
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":438.250333333333,
+                 "x":-41.7918333333333,
+                 "y":56.8333333333333
+                }, 
+                {
+                 "height":376.333,
+                 "id":99,
+                 "name":"table_lamp_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        }, 
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.03
+                        }, 
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.03
+                        }, 
+                        {
+                         "name":"occludedByWalls",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"final"
+                        }, 
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":1.1
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.28
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":100
+                        }, 
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.92
+                        }, 
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1.03
+                        }, 
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":450,
+                 "x":-48.0833333333333,
+                 "y":52.2501666666666
+                }, 
+                {
+                 "height":0,
+                 "id":100,
+                 "name":"door_dust",
+                 "opacity":0.25,
+                 "polygon":[
+                        {
+                         "x":-2.90909,
+                         "y":5.45455
+                        }, 
+                        {
+                         "x":-14,
+                         "y":-60.3636
+                        }, 
+                        {
+                         "x":-5.56654,
+                         "y":-74.0487
+                        }, 
+                        {
+                         "x":12.3678,
+                         "y":-79.7223
+                        }, 
+                        {
+                         "x":37.3122,
+                         "y":-79.8685
+                        }, 
+                        {
+                         "x":54.6236,
+                         "y":-74.0653
+                        }, 
+                        {
+                         "x":60.3636,
+                         "y":-57.2727
+                        }, 
+                        {
+                         "x":46.9091,
+                         "y":5.63636
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/noise\/Grainy\/Grainy 6 - 128x128.png"
+                        }, 
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        }, 
+                        {
+                         "name":"occludedByWalls",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"after_characters"
+                        }, 
+                        {
+                         "name":"scrollSpeedX",
+                         "type":"float",
+                         "value":0.01
+                        }, 
+                        {
+                         "name":"scrollSpeedY",
+                         "type":"float",
+                         "value":0.01
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"uv_scroll"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.1
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":10
+                        }, 
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.9
+                        }, 
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1.1
+                        }, 
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.1
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.56
+                        }, 
+                        {
+                         "name":"uvScaley",
+                         "type":"float",
+                         "value":2.34
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":602.181818181818,
+                 "y":269.181818181818
+                }, 
+                {
+                 "height":365.666333333334,
+                 "id":103,
+                 "name":"ceiling_lamp_glow",
+                 "opacity":0.5,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/effects\/radial_glow_white_1024.png"
+                        }, 
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"add"
+                        }, 
+                        {
+                         "name":"occludedByWalls",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"final"
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.04
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":468.25,
+                 "x":228.875,
+                 "y":-99.1665000003333
+                }, 
+                {
+                 "height":364.333,
+                 "id":104,
+                 "name":"ceiling_lamp_grade",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        }, 
+                        {
+                         "name":"brightness",
+                         "type":"float",
+                         "value":0.03
+                        }, 
+                        {
+                         "name":"contrast",
+                         "type":"float",
+                         "value":1.04
+                        }, 
+                        {
+                         "name":"occludedByWalls",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"final"
+                        }, 
+                        {
+                         "name":"saturation",
+                         "type":"float",
+                         "value":1.2
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"region_grade"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.28
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":100
+                        }, 
+                        {
+                         "name":"tintB",
+                         "type":"float",
+                         "value":0.95
+                        }, 
+                        {
+                         "name":"tintG",
+                         "type":"float",
+                         "value":1.02
+                        }, 
+                        {
+                         "name":"tintR",
+                         "type":"float",
+                         "value":1.05
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":466,
+                 "x":231,
+                 "y":-98.8331666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2610,7 +3051,7 @@
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":90
+                         "value":0
                         }, 
                         {
                          "name":"persistentChase",
@@ -2639,7 +3080,7 @@
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":90
+                         "value":45
                         }, 
                         {
                          "name":"persistentChase",
@@ -2722,7 +3163,7 @@
                         {
                          "name":"hingeSide",
                          "type":"string",
-                         "value":"top"
+                         "value":"bottom"
                         }, 
                         {
                          "name":"locked",
@@ -3227,7 +3668,7 @@
          "y":0
         }],
  "nextlayerid":37,
- "nextobjectid":96,
+ "nextobjectid":106,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

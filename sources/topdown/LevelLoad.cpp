@@ -1117,43 +1117,160 @@ static void BuildSortedEffectRegionBuckets(TopdownData& topdown)
     stableSortBucket(topdown.runtime.render.finalEffectRegionIndices);
 }
 
-static bool BuildWallOcclusionPolygon(
-        const TopdownData& topdown,
-        const TopdownAuthoredEffectRegion& effect,
-        std::vector<Vector2>& outPolygon)
-{
-    outPolygon.clear();
+struct TopdownOcclusionHitPoint {
+    float angle = 0.0f;
+    Vector2 point{};
+};
 
-    const Vector2 origin = TopdownComputeEffectRegionOcclusionOrigin(effect);
-
+struct TopdownOcclusionSegmentCache {
     std::vector<TopdownSegment> segments;
-    segments.reserve(
+    std::vector<Rectangle> bounds;
+};
+
+static Rectangle BuildSegmentBounds(const TopdownSegment& seg)
+{
+    const float minX = std::min(seg.a.x, seg.b.x);
+    const float minY = std::min(seg.a.y, seg.b.y);
+    const float maxX = std::max(seg.a.x, seg.b.x);
+    const float maxY = std::max(seg.a.y, seg.b.y);
+
+    return Rectangle{
+            minX,
+            minY,
+            maxX - minX,
+            maxY - minY
+    };
+}
+
+static bool RectsOverlap(const Rectangle& a, const Rectangle& b)
+{
+    return !(a.x + a.width < b.x ||
+             b.x + b.width < a.x ||
+             a.y + a.height < b.y ||
+             b.y + b.height < a.y);
+}
+
+static Rectangle BuildOcclusionInterestBounds(
+        const TopdownAuthoredEffectRegion& effect,
+        Vector2 origin)
+{
+    Rectangle r = effect.worldRect;
+
+    if (effect.usePolygon && !effect.polygon.empty()) {
+        r = TopdownComputePolygonBounds(effect.polygon);
+    }
+
+    const float minX = std::min(r.x, origin.x);
+    const float minY = std::min(r.y, origin.y);
+    const float maxX = std::max(r.x + r.width, origin.x);
+    const float maxY = std::max(r.y + r.height, origin.y);
+
+    static constexpr float kMargin = 96.0f;
+    return Rectangle{
+            minX - kMargin,
+            minY - kMargin,
+            (maxX - minX) + kMargin * 2.0f,
+            (maxY - minY) + kMargin * 2.0f
+    };
+}
+
+static void BuildWallOcclusionSegments(
+        const TopdownData& topdown,
+        TopdownOcclusionSegmentCache& outCache)
+{
+    outCache.segments.clear();
+    outCache.bounds.clear();
+
+    const size_t targetCount =
             topdown.runtime.collision.visionSegments.size() +
-            topdown.runtime.collision.boundarySegments.size());
+            topdown.runtime.collision.boundarySegments.size() +
+            topdown.runtime.doors.size() * 4;
+
+    if (outCache.segments.capacity() < targetCount) {
+        outCache.segments.reserve(targetCount);
+    }
+    if (outCache.bounds.capacity() < targetCount) {
+        outCache.bounds.reserve(targetCount);
+    }
+
+    auto pushSegment = [&](const TopdownSegment& seg) {
+        outCache.segments.push_back(seg);
+        outCache.bounds.push_back(BuildSegmentBounds(seg));
+    };
 
     for (const TopdownSegment& seg : topdown.runtime.collision.visionSegments) {
-        segments.push_back(seg);
+        pushSegment(seg);
     }
 
     for (const TopdownSegment& seg : topdown.runtime.collision.boundarySegments) {
-        segments.push_back(seg);
+        pushSegment(seg);
     }
 
-    if (segments.empty()) {
+    for (const TopdownRuntimeDoor& door : topdown.runtime.doors) {
+        if (!door.visible) {
+            continue;
+        }
+
+        Vector2 a{};
+        Vector2 b{};
+        Vector2 c{};
+        Vector2 d{};
+        TopdownBuildDoorCorners(door, a, b, c, d);
+
+        pushSegment(TopdownSegment{a, b});
+        pushSegment(TopdownSegment{b, c});
+        pushSegment(TopdownSegment{c, d});
+        pushSegment(TopdownSegment{d, a});
+    }
+}
+
+static bool BuildWallOcclusionPolygon(
+        const TopdownOcclusionSegmentCache& segmentCache,
+        const TopdownAuthoredEffectRegion& effect,
+        std::vector<Vector2>& outPolygon)
+{
+    static constexpr int kMaxOcclusionPolygonPoints = 256;
+    static thread_local std::vector<float> rayAngles;
+    static thread_local std::vector<TopdownOcclusionHitPoint> hits;
+    static thread_local std::vector<Vector2> reducedPolygon;
+    static thread_local std::vector<int> candidateSegmentIndices;
+
+    outPolygon.clear();
+
+    const Vector2 origin = TopdownComputeEffectRegionOcclusionOrigin(effect);
+    const Rectangle interestBounds = BuildOcclusionInterestBounds(effect, origin);
+
+    candidateSegmentIndices.clear();
+    const size_t segmentCount = segmentCache.segments.size();
+    if (segmentCount != segmentCache.bounds.size() || segmentCount == 0) {
         return false;
     }
 
-    struct HitPoint {
-        float angle = 0.0f;
-        Vector2 point{};
-    };
+    if (candidateSegmentIndices.capacity() < segmentCount) {
+        candidateSegmentIndices.reserve(segmentCount);
+    }
 
-    std::vector<float> rayAngles;
-    rayAngles.reserve(segments.size() * 6);
+    for (size_t i = 0; i < segmentCount; ++i) {
+        if (!RectsOverlap(interestBounds, segmentCache.bounds[i])) {
+            continue;
+        }
+        candidateSegmentIndices.push_back(static_cast<int>(i));
+    }
+
+    if (candidateSegmentIndices.empty()) {
+        return false;
+    }
+
+    rayAngles.clear();
+    const size_t targetAngleCount = candidateSegmentIndices.size() * 6;
+    if (rayAngles.capacity() < targetAngleCount) {
+        rayAngles.reserve(targetAngleCount);
+    }
 
     static constexpr float kAngleEpsilon = 0.0002f;
 
-    for (const TopdownSegment& seg : segments) {
+    for (int candidateIndex : candidateSegmentIndices) {
+        const TopdownSegment& seg = segmentCache.segments[candidateIndex];
         const Vector2 endpoints[2] = { seg.a, seg.b };
 
         for (const Vector2& endpoint : endpoints) {
@@ -1164,8 +1281,10 @@ static bool BuildWallOcclusionPolygon(
         }
     }
 
-    std::vector<HitPoint> hits;
-    hits.reserve(rayAngles.size());
+    hits.clear();
+    if (hits.capacity() < rayAngles.size()) {
+        hits.reserve(rayAngles.size());
+    }
 
     for (float angle : rayAngles) {
         const Vector2 dir{
@@ -1177,7 +1296,8 @@ static bool BuildWallOcclusionPolygon(
         float bestT = 0.0f;
         Vector2 bestPoint{};
 
-        for (const TopdownSegment& seg : segments) {
+        for (int candidateIndex : candidateSegmentIndices) {
+            const TopdownSegment& seg = segmentCache.segments[candidateIndex];
             float t = 0.0f;
             Vector2 point{};
 
@@ -1193,7 +1313,7 @@ static bool BuildWallOcclusionPolygon(
         }
 
         if (foundHit) {
-            HitPoint hit;
+            TopdownOcclusionHitPoint hit;
             hit.angle = angle;
             hit.point = bestPoint;
             hits.push_back(hit);
@@ -1207,7 +1327,7 @@ static bool BuildWallOcclusionPolygon(
     std::sort(
             hits.begin(),
             hits.end(),
-            [](const HitPoint& a, const HitPoint& b) {
+            [](const TopdownOcclusionHitPoint& a, const TopdownOcclusionHitPoint& b) {
                 return a.angle < b.angle;
             });
 
@@ -1215,7 +1335,7 @@ static bool BuildWallOcclusionPolygon(
 
     static constexpr float kPointMergeDistanceSqr = 1.0f;
 
-    for (const HitPoint& hit : hits) {
+    for (const TopdownOcclusionHitPoint& hit : hits) {
         if (!outPolygon.empty() &&
             DistanceSqr(outPolygon.back(), hit.point) <= kPointMergeDistanceSqr) {
             continue;
@@ -1234,15 +1354,120 @@ static bool BuildWallOcclusionPolygon(
         return false;
     }
 
-    if (outPolygon.size() > 64) {
+    if (outPolygon.size() > static_cast<size_t>(kMaxOcclusionPolygonPoints)) {
+        reducedPolygon.clear();
+        reducedPolygon.reserve(kMaxOcclusionPolygonPoints);
+
+        const float step = static_cast<float>(outPolygon.size()) /
+                           static_cast<float>(kMaxOcclusionPolygonPoints);
+
+        for (int i = 0; i < kMaxOcclusionPolygonPoints; ++i) {
+            const int sourceIndex = static_cast<int>(std::floor(step * static_cast<float>(i)));
+            const int clampedIndex =
+                    std::clamp(sourceIndex, 0, static_cast<int>(outPolygon.size()) - 1);
+            reducedPolygon.push_back(outPolygon[clampedIndex]);
+        }
+
         TraceLog(LOG_WARNING,
-                 "Wall occlusion polygon for effect '%s' has %d points, truncating to 64",
+                 "Wall occlusion polygon for effect '%s' has %d points, downsampling to %d",
                  effect.id.c_str(),
-                 static_cast<int>(outPolygon.size()));
-        outPolygon.resize(64);
+                 static_cast<int>(outPolygon.size()),
+                 kMaxOcclusionPolygonPoints);
+
+        outPolygon.swap(reducedPolygon);
     }
 
     return true;
+}
+
+static bool IsEffectRegionNearCameraView(
+        const TopdownData& topdown,
+        const TopdownAuthoredEffectRegion& authored)
+{
+    const float margin = 128.0f;
+    const Rectangle view{
+            topdown.runtime.camera.position.x - margin,
+            topdown.runtime.camera.position.y - margin,
+            topdown.camera.viewportWidth + margin * 2.0f,
+            topdown.camera.viewportHeight + margin * 2.0f
+    };
+
+    const Rectangle& r = authored.worldRect;
+    return !(r.x + r.width < view.x ||
+             view.x + view.width < r.x ||
+             r.y + r.height < view.y ||
+             view.y + view.height < r.y);
+}
+
+void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullRebuild)
+{
+    TopdownRenderWorld& render = topdown.runtime.render;
+    const Vector2 cameraPos = topdown.runtime.camera.position;
+
+    bool cameraMoved = true;
+    if (render.hasOcclusionRebuildCameraCache) {
+        const Vector2 delta = TopdownSub(cameraPos, render.occlusionRebuildLastCamera);
+        cameraMoved = TopdownLengthSqr(delta) > 0.25f;
+    }
+
+    bool anyDoorChanged = false;
+    const size_t doorCount = topdown.runtime.doors.size();
+
+    if (render.occlusionRebuildLastDoorAngles.size() != doorCount) {
+        render.occlusionRebuildLastDoorAngles.assign(doorCount, 0.0f);
+        anyDoorChanged = true;
+    }
+
+    for (size_t i = 0; i < doorCount; ++i) {
+        const TopdownRuntimeDoor& door = topdown.runtime.doors[i];
+        const float prev = render.occlusionRebuildLastDoorAngles[i];
+        const float current = door.angleRadians;
+
+        if (std::fabs(current - prev) > 0.0005f) {
+            anyDoorChanged = true;
+        }
+        render.occlusionRebuildLastDoorAngles[i] = current;
+    }
+
+    if (!forceFullRebuild && !cameraMoved && !anyDoorChanged) {
+        return;
+    }
+
+    static thread_local TopdownOcclusionSegmentCache wallOcclusionCache;
+    BuildWallOcclusionSegments(topdown, wallOcclusionCache);
+
+    for (int i = 0; i < static_cast<int>(topdown.authored.effectRegions.size()); ++i) {
+        if (i >= static_cast<int>(topdown.runtime.render.effectRegions.size())) {
+            break;
+        }
+
+        const TopdownAuthoredEffectRegion& authored = topdown.authored.effectRegions[i];
+        TopdownRuntimeEffectRegion& runtime = topdown.runtime.render.effectRegions[i];
+
+        runtime.occludedByWalls = authored.occludedByWalls;
+        runtime.hasWallOcclusionPolygon = false;
+        runtime.wallOcclusionPolygon.clear();
+
+        if (!runtime.occludedByWalls) {
+            continue;
+        }
+
+        if (!forceFullRebuild && !IsEffectRegionNearCameraView(topdown, authored)) {
+            continue;
+        }
+
+        runtime.hasWallOcclusionPolygon =
+                BuildWallOcclusionPolygon(wallOcclusionCache, authored, runtime.wallOcclusionPolygon);
+
+        if (!runtime.hasWallOcclusionPolygon) {
+            TraceLog(LOG_WARNING,
+                     "Failed building wall occlusion polygon for effect region '%s'",
+                     authored.id.c_str());
+        }
+    }
+
+    render.occlusionRebuildLastCamera = cameraPos;
+    render.hasOcclusionRebuildCameraCache = true;
 }
 
 static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
@@ -1424,23 +1649,11 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.tint = authored.tint;
         runtime.shaderType = authored.shaderType;
         runtime.shaderParams = authored.shaderParams;
-        runtime.occludedByWalls = authored.occludedByWalls;
-        runtime.hasWallOcclusionPolygon = false;
-        runtime.wallOcclusionPolygon.clear();
-
-        if (runtime.occludedByWalls) {
-            runtime.hasWallOcclusionPolygon =
-                    BuildWallOcclusionPolygon(topdown, authored, runtime.wallOcclusionPolygon);
-
-            if (!runtime.hasWallOcclusionPolygon) {
-                TraceLog(LOG_WARNING,
-                         "Failed building wall occlusion polygon for effect region '%s'",
-                         authored.id.c_str());
-            }
-        }
 
         topdown.runtime.render.effectRegions.push_back(runtime);
     }
+
+    TopdownRebuildWallOcclusionPolygons(topdown, true);
 
     BuildSortedEffectRegionBuckets(topdown);
 

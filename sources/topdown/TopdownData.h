@@ -625,6 +625,10 @@ struct TopdownRenderWorld {
 
     int nextImageLayerHandle = 1;
     int nextEffectRegionHandle = 1;
+
+    bool hasOcclusionRebuildCameraCache = false;
+    Vector2 occlusionRebuildLastCamera{};
+    std::vector<float> occlusionRebuildLastDoorAngles;
 };
 
 struct TopdownPlayerRuntime {

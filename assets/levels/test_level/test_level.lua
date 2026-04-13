@@ -1,9 +1,13 @@
+local Glow = require("effects.glow")
+
 function Level_onEnter()
     log("running onEnter")
     --startScript("WalkAround")
     --startScript("ZombiePatrol")
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
     --SpawnThugs()
+    startScript("TableLampGlowLoop")
+    startScript("CeilingLampGlowLoop")
 end
 
 function WalkAround()
@@ -57,4 +61,21 @@ end
 
 function Level_onExit()
     log("running onExit")
+end
+
+-- Effect scripts -------------------------
+function TableLampGlowLoop()
+    Glow.runElectric(
+        { "table_lamp_glow1", "table_lamp_glow2" },
+        0.65,
+        0.45
+    )
+end
+
+function CeilingLampGlowLoop()
+    Glow.runElectric(
+        { "unused", "ceiling_lamp_glow" },
+        0.00,
+        0.45
+    )
 end
