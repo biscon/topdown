@@ -5,4 +5,4 @@
 
 bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAssetScale);
 void TopdownUnloadLevel(GameState& state);
-void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown);
+void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullRebuild = false);

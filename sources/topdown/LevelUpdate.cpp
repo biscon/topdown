@@ -1325,7 +1325,6 @@ void TopdownUpdate(GameState& state, float dt)
     }
 
     TopdownUpdateDoors(state, dt);
-    TopdownRebuildWallOcclusionPolygons(state.topdown);
 
     TopdownUpdatePlayerLogic(state, dt);
     TopdownUpdateNpcLogic(state, dt);
@@ -1339,6 +1338,7 @@ void TopdownUpdate(GameState& state, float dt)
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);
     TopdownUpdateCamera(state, dt);
+    TopdownRebuildWallOcclusionPolygons(state.topdown, false);
 
     // --- update game over ---
     if (runtime.gameOverActive) {

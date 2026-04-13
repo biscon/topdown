@@ -1117,28 +1117,27 @@ static void BuildSortedEffectRegionBuckets(TopdownData& topdown)
     stableSortBucket(topdown.runtime.render.finalEffectRegionIndices);
 }
 
-static bool BuildWallOcclusionPolygon(
+struct TopdownOcclusionHitPoint {
+    float angle = 0.0f;
+    Vector2 point{};
+};
+
+static void BuildWallOcclusionSegments(
         const TopdownData& topdown,
-        const TopdownAuthoredEffectRegion& effect,
-        std::vector<Vector2>& outPolygon)
+        std::vector<TopdownSegment>& outSegments)
 {
-    static constexpr int kMaxOcclusionPolygonPoints = 256;
-
-    outPolygon.clear();
-
-    const Vector2 origin = TopdownComputeEffectRegionOcclusionOrigin(effect);
-
-    std::vector<TopdownSegment> segments;
-    segments.reserve(
+    outSegments.clear();
+    outSegments.reserve(
             topdown.runtime.collision.visionSegments.size() +
-            topdown.runtime.collision.boundarySegments.size());
+            topdown.runtime.collision.boundarySegments.size() +
+            topdown.runtime.doors.size() * 4);
 
     for (const TopdownSegment& seg : topdown.runtime.collision.visionSegments) {
-        segments.push_back(seg);
+        outSegments.push_back(seg);
     }
 
     for (const TopdownSegment& seg : topdown.runtime.collision.boundarySegments) {
-        segments.push_back(seg);
+        outSegments.push_back(seg);
     }
 
     for (const TopdownRuntimeDoor& door : topdown.runtime.doors) {
@@ -1152,22 +1151,31 @@ static bool BuildWallOcclusionPolygon(
         Vector2 d{};
         TopdownBuildDoorCorners(door, a, b, c, d);
 
-        segments.push_back(TopdownSegment{a, b});
-        segments.push_back(TopdownSegment{b, c});
-        segments.push_back(TopdownSegment{c, d});
-        segments.push_back(TopdownSegment{d, a});
+        outSegments.push_back(TopdownSegment{a, b});
+        outSegments.push_back(TopdownSegment{b, c});
+        outSegments.push_back(TopdownSegment{c, d});
+        outSegments.push_back(TopdownSegment{d, a});
     }
+}
+
+static bool BuildWallOcclusionPolygon(
+        const std::vector<TopdownSegment>& segments,
+        const TopdownAuthoredEffectRegion& effect,
+        std::vector<Vector2>& outPolygon)
+{
+    static constexpr int kMaxOcclusionPolygonPoints = 256;
+    static thread_local std::vector<float> rayAngles;
+    static thread_local std::vector<TopdownOcclusionHitPoint> hits;
+    static thread_local std::vector<Vector2> reducedPolygon;
+
+    outPolygon.clear();
+
+    const Vector2 origin = TopdownComputeEffectRegionOcclusionOrigin(effect);
 
     if (segments.empty()) {
         return false;
     }
-
-    struct HitPoint {
-        float angle = 0.0f;
-        Vector2 point{};
-    };
-
-    std::vector<float> rayAngles;
+    rayAngles.clear();
     rayAngles.reserve(segments.size() * 6);
 
     static constexpr float kAngleEpsilon = 0.0002f;
@@ -1183,7 +1191,7 @@ static bool BuildWallOcclusionPolygon(
         }
     }
 
-    std::vector<HitPoint> hits;
+    hits.clear();
     hits.reserve(rayAngles.size());
 
     for (float angle : rayAngles) {
@@ -1212,7 +1220,7 @@ static bool BuildWallOcclusionPolygon(
         }
 
         if (foundHit) {
-            HitPoint hit;
+            TopdownOcclusionHitPoint hit;
             hit.angle = angle;
             hit.point = bestPoint;
             hits.push_back(hit);
@@ -1226,7 +1234,7 @@ static bool BuildWallOcclusionPolygon(
     std::sort(
             hits.begin(),
             hits.end(),
-            [](const HitPoint& a, const HitPoint& b) {
+            [](const TopdownOcclusionHitPoint& a, const TopdownOcclusionHitPoint& b) {
                 return a.angle < b.angle;
             });
 
@@ -1234,7 +1242,7 @@ static bool BuildWallOcclusionPolygon(
 
     static constexpr float kPointMergeDistanceSqr = 1.0f;
 
-    for (const HitPoint& hit : hits) {
+    for (const TopdownOcclusionHitPoint& hit : hits) {
         if (!outPolygon.empty() &&
             DistanceSqr(outPolygon.back(), hit.point) <= kPointMergeDistanceSqr) {
             continue;
@@ -1255,7 +1263,7 @@ static bool BuildWallOcclusionPolygon(
 
     if (outPolygon.size() > static_cast<size_t>(kMaxOcclusionPolygonPoints)) {
         const std::vector<Vector2> fullPolygon = outPolygon;
-        std::vector<Vector2> reducedPolygon;
+        reducedPolygon.clear();
         reducedPolygon.reserve(kMaxOcclusionPolygonPoints);
 
         const float step = static_cast<float>(fullPolygon.size()) /
@@ -1274,14 +1282,68 @@ static bool BuildWallOcclusionPolygon(
                  static_cast<int>(outPolygon.size()),
                  kMaxOcclusionPolygonPoints);
 
-        outPolygon = std::move(reducedPolygon);
+        outPolygon.swap(reducedPolygon);
     }
 
     return true;
 }
 
-void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown)
+static bool IsEffectRegionNearCameraView(
+        const TopdownData& topdown,
+        const TopdownAuthoredEffectRegion& authored)
 {
+    const float margin = 128.0f;
+    const Rectangle view{
+            topdown.runtime.camera.position.x - margin,
+            topdown.runtime.camera.position.y - margin,
+            topdown.camera.viewportWidth + margin * 2.0f,
+            topdown.camera.viewportHeight + margin * 2.0f
+    };
+
+    const Rectangle& r = authored.worldRect;
+    return !(r.x + r.width < view.x ||
+             view.x + view.width < r.x ||
+             r.y + r.height < view.y ||
+             view.y + view.height < r.y);
+}
+
+void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullRebuild)
+{
+    TopdownRenderWorld& render = topdown.runtime.render;
+    const Vector2 cameraPos = topdown.runtime.camera.position;
+
+    bool cameraMoved = true;
+    if (render.hasOcclusionRebuildCameraCache) {
+        const Vector2 delta = TopdownSub(cameraPos, render.occlusionRebuildLastCamera);
+        cameraMoved = TopdownLengthSqr(delta) > 0.25f;
+    }
+
+    bool anyDoorChanged = false;
+    const size_t doorCount = topdown.runtime.doors.size();
+
+    if (render.occlusionRebuildLastDoorAngles.size() != doorCount) {
+        render.occlusionRebuildLastDoorAngles.assign(doorCount, 0.0f);
+        anyDoorChanged = true;
+    }
+
+    for (size_t i = 0; i < doorCount; ++i) {
+        const TopdownRuntimeDoor& door = topdown.runtime.doors[i];
+        const float prev = render.occlusionRebuildLastDoorAngles[i];
+        const float current = door.angleRadians;
+
+        if (std::fabs(current - prev) > 0.0005f) {
+            anyDoorChanged = true;
+        }
+        render.occlusionRebuildLastDoorAngles[i] = current;
+    }
+
+    if (!forceFullRebuild && !cameraMoved && !anyDoorChanged) {
+        return;
+    }
+
+    static thread_local std::vector<TopdownSegment> wallOcclusionSegments;
+    BuildWallOcclusionSegments(topdown, wallOcclusionSegments);
+
     for (int i = 0; i < static_cast<int>(topdown.authored.effectRegions.size()); ++i) {
         if (i >= static_cast<int>(topdown.runtime.render.effectRegions.size())) {
             break;
@@ -1298,8 +1360,12 @@ void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown)
             continue;
         }
 
+        if (!forceFullRebuild && !IsEffectRegionNearCameraView(topdown, authored)) {
+            continue;
+        }
+
         runtime.hasWallOcclusionPolygon =
-                BuildWallOcclusionPolygon(topdown, authored, runtime.wallOcclusionPolygon);
+                BuildWallOcclusionPolygon(wallOcclusionSegments, authored, runtime.wallOcclusionPolygon);
 
         if (!runtime.hasWallOcclusionPolygon) {
             TraceLog(LOG_WARNING,
@@ -1307,6 +1373,9 @@ void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown)
                      authored.id.c_str());
         }
     }
+
+    render.occlusionRebuildLastCamera = cameraPos;
+    render.hasOcclusionRebuildCameraCache = true;
 }
 
 static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
@@ -1492,7 +1561,7 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         topdown.runtime.render.effectRegions.push_back(runtime);
     }
 
-    TopdownRebuildWallOcclusionPolygons(topdown);
+    TopdownRebuildWallOcclusionPolygons(topdown, true);
 
     BuildSortedEffectRegionBuckets(topdown);
 
