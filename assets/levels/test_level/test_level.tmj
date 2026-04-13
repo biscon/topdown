@@ -3607,7 +3607,7 @@
                         {
                          "name":"autoClose",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"autoCloseStrength",
