@@ -210,6 +210,88 @@ struct TopdownAuthoredEffectRegion {
     TextureHandle textureHandle = -1;
 };
 
+struct TopdownAuthoredWindow {
+    int tiledObjectId = -1;
+    std::string id;
+    bool visible = true;
+
+    Vector2 rectPosition{};
+    Vector2 rectSize{};
+    bool horizontal = true;
+
+    Color color1 = Color{138, 196, 195, 255};
+    Color color2 = Color{100, 135, 140, 255};
+    Color outlineColor = Color{23, 24, 25, 255};
+
+    std::string breakSoundId;
+
+    int breakParticleCount = 24;
+    float breakParticleSpeedMin = 80.0f;
+    float breakParticleSpeedMax = 220.0f;
+    float breakParticleLifetimeMsMin = 180.0f;
+    float breakParticleLifetimeMsMax = 420.0f;
+    float breakParticleSizeMin = 2.0f;
+    float breakParticleSizeMax = 4.5f;
+    float breakParticleSpreadAlongWindow = 26.0f;
+
+    Color breakParticleColor1 = Color{210, 240, 250, 255};
+    Color breakParticleColor2 = Color{160, 210, 230, 255};
+};
+
+struct TopdownRuntimeWindow {
+    int tiledObjectId = -1;
+    std::string id;
+    bool visible = true;
+
+    Rectangle worldRect{};
+    bool horizontal = true;
+    bool broken = false;
+
+    std::vector<Vector2> polygon;
+    std::vector<TopdownSegment> edges;
+
+    Texture2D atlasTexture{};
+    bool atlasLoaded = false;
+
+    Rectangle intactSrc{};
+    Rectangle brokenSrc{};
+
+    Color color1 = Color{138, 196, 195, 255};
+    Color color2 = Color{100, 135, 140, 255};
+    Color outlineColor = Color{23, 24, 25, 255};
+
+    std::string breakSoundId;
+
+    int breakParticleCount = 24;
+    float breakParticleSpeedMin = 80.0f;
+    float breakParticleSpeedMax = 220.0f;
+    float breakParticleLifetimeMsMin = 180.0f;
+    float breakParticleLifetimeMsMax = 420.0f;
+    float breakParticleSizeMin = 2.0f;
+    float breakParticleSizeMax = 4.5f;
+    float breakParticleSpreadAlongWindow = 26.0f;
+
+    Color breakParticleColor1 = Color{210, 240, 250, 255};
+    Color breakParticleColor2 = Color{160, 210, 230, 255};
+};
+
+struct TopdownWindowGlassParticle {
+    bool active = false;
+
+    Vector2 position{};
+    Vector2 velocity{};
+
+    float ageMs = 0.0f;
+    float lifetimeMs = 220.0f;
+
+    float size = 2.0f;
+    float alpha = 1.0f;
+
+    float rotationRadians = 0.0f;
+
+    Color color = Color{210, 240, 250, 255};
+};
+
 struct TopdownAuthoredLevelData {
     bool loaded = false;
 
@@ -226,6 +308,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
     std::vector<TopdownAuthoredNpc> npcs;
     std::vector<TopdownAuthoredDoor> doors;
+    std::vector<TopdownAuthoredWindow> windows;
 };
 
 struct TopdownRuntimeObstacle {
@@ -615,6 +698,7 @@ struct TopdownRenderWorld {
     std::vector<TopdownWallImpactParticle> wallImpactParticles;
     std::vector<TopdownMuzzleFlashEffect> muzzleFlashes;
     std::vector<TopdownMuzzleSmokeParticle> muzzleSmokeParticles;
+    std::vector<TopdownWindowGlassParticle> windowGlassParticles;
 
     std::vector<TopdownPendingBloodDecalSpawn> pendingBloodDecalSpawns;
     std::vector<TopdownBloodPoolEmitter> bloodPoolEmitters;
@@ -671,7 +755,7 @@ struct TopdownCameraData {
     float deadzoneWidth = 160.0f;
     float deadzoneHeight = 40.0f;
 
-    float aimMaxOffset = 1000.0f;
+    float aimMaxOffset = 1200.0f;
     float aimStrength = 0.30f;
     float aimResponse = 8.0f;
 
@@ -1121,6 +1205,7 @@ struct TopdownRuntimeData {
 
     TopdownRvoState rvo;
     std::vector<TopdownRuntimeDoor> doors;
+    std::vector<TopdownRuntimeWindow> windows;
 };
 
 struct TopdownData {

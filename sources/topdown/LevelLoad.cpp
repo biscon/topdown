@@ -18,6 +18,7 @@
 #include "topdown/NpcRegistry.h"
 #include "BloodRenderTarget.h"
 #include "TopdownRvo.h"
+#include "LevelWindows.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -742,6 +743,141 @@ static void ImportDoorLayer(
                 BLACK);
 
         topdown.authored.doors.push_back(door);
+    }
+}
+
+static void ImportWindowLayer(
+        TopdownData& topdown,
+        const json& layer,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+    const float layerOffX = layer.value("offsetx", 0.0f);
+    const float layerOffY = layer.value("offsety", 0.0f);
+
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object() || !IsRectObject(obj)) {
+            continue;
+        }
+
+        if (!obj.value("visible", true)) {
+            continue;
+        }
+
+        TopdownAuthoredWindow window;
+        window.tiledObjectId = obj.value("id", -1);
+        window.id = obj.value("name", std::string());
+        window.visible = true;
+
+        if (window.id.empty()) {
+            TraceLog(LOG_WARNING, "Skipping topdown window with empty name");
+            continue;
+        }
+
+        const float width = obj.value("width", 0.0f);
+        const float height = obj.value("height", 0.0f);
+
+        if (width <= 0.0f || height <= 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown window '%s': invalid rect size %.3f x %.3f",
+                     window.id.c_str(),
+                     width,
+                     height);
+            continue;
+        }
+
+        window.rectPosition.x = (obj.value("x", 0.0f) + layerOffX) * scale;
+        window.rectPosition.y = (obj.value("y", 0.0f) + layerOffY) * scale;
+        window.rectSize.x = width * scale;
+        window.rectSize.y = height * scale;
+        window.horizontal = window.rectSize.x >= window.rectSize.y;
+
+        window.color1 = GetObjectPropertyColor(
+                obj,
+                "color1",
+                Color{138, 196, 195, 255});
+
+        window.color2 = GetObjectPropertyColor(
+                obj,
+                "color2",
+                Color{100, 135, 140, 255});
+
+        window.outlineColor = GetObjectPropertyColor(
+                obj,
+                "outlineColor",
+                Color{23, 24, 25, 255});
+
+        window.breakSoundId = GetObjectPropertyString(obj, "breakSoundId", "");
+
+        window.breakParticleCount = static_cast<int>(
+                GetObjectPropertyFloat(obj, "breakParticleCount", static_cast<float>(window.breakParticleCount)));
+
+        window.breakParticleSpeedMin = GetObjectPropertyFloat(
+                obj,
+                "breakParticleSpeedMin",
+                window.breakParticleSpeedMin);
+
+        window.breakParticleSpeedMax = GetObjectPropertyFloat(
+                obj,
+                "breakParticleSpeedMax",
+                window.breakParticleSpeedMax);
+
+        window.breakParticleLifetimeMsMin = GetObjectPropertyFloat(
+                obj,
+                "breakParticleLifetimeMsMin",
+                window.breakParticleLifetimeMsMin);
+
+        window.breakParticleLifetimeMsMax = GetObjectPropertyFloat(
+                obj,
+                "breakParticleLifetimeMsMax",
+                window.breakParticleLifetimeMsMax);
+
+        window.breakParticleSizeMin = GetObjectPropertyFloat(
+                obj,
+                "breakParticleSizeMin",
+                window.breakParticleSizeMin);
+
+        window.breakParticleSizeMax = GetObjectPropertyFloat(
+                obj,
+                "breakParticleSizeMax",
+                window.breakParticleSizeMax);
+
+        window.breakParticleSpreadAlongWindow = GetObjectPropertyFloat(
+                obj,
+                "breakParticleSpreadAlongWindow",
+                window.breakParticleSpreadAlongWindow);
+
+        window.breakParticleColor1 = GetObjectPropertyColor(
+                obj,
+                "breakParticleColor1",
+                window.breakParticleColor1);
+
+        window.breakParticleColor2 = GetObjectPropertyColor(
+                obj,
+                "breakParticleColor2",
+                window.breakParticleColor2);
+
+        if (window.breakParticleCount < 0) {
+            window.breakParticleCount = 0;
+        }
+
+        if (window.breakParticleSpeedMin > window.breakParticleSpeedMax) {
+            std::swap(window.breakParticleSpeedMin, window.breakParticleSpeedMax);
+        }
+
+        if (window.breakParticleLifetimeMsMin > window.breakParticleLifetimeMsMax) {
+            std::swap(window.breakParticleLifetimeMsMin, window.breakParticleLifetimeMsMax);
+        }
+
+        if (window.breakParticleSizeMin > window.breakParticleSizeMax) {
+            std::swap(window.breakParticleSizeMin, window.breakParticleSizeMax);
+        }
+
+        topdown.authored.windows.push_back(window);
     }
 }
 
@@ -1604,6 +1740,45 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         topdown.runtime.doors.push_back(BuildRuntimeDoorFromAuthored(authored));
     }
 
+    for (const TopdownAuthoredWindow& authored : topdown.authored.windows) {
+        TopdownRuntimeWindow runtimeWindow =
+                TopdownBuildRuntimeWindowFromAuthored(authored);
+
+        if (!TopdownGenerateWindowTextureAtlas(
+                runtimeWindow,
+                topdown.currentLevelBaseAssetScale > 0
+                ? topdown.currentLevelBaseAssetScale
+                : topdown.authored.baseAssetScale)) {
+            TraceLog(LOG_WARNING,
+                     "Failed generating texture atlas for topdown window '%s'",
+                     authored.id.c_str());
+        }
+
+        topdown.runtime.windows.push_back(runtimeWindow);
+
+        TopdownRuntimeObstacle runtimeObstacle;
+        runtimeObstacle.handle = topdown.runtime.collision.nextObstacleHandle++;
+        runtimeObstacle.tiledObjectId = authored.tiledObjectId;
+        runtimeObstacle.kind = TopdownObstacleKind::MovementOnly;
+        runtimeObstacle.name = authored.id;
+        runtimeObstacle.polygon = runtimeWindow.polygon;
+        runtimeObstacle.edges = runtimeWindow.edges;
+        runtimeObstacle.bounds = TopdownComputePolygonBounds(runtimeWindow.polygon);
+        runtimeObstacle.visible = authored.visible;
+
+        topdown.runtime.collision.obstacles.push_back(runtimeObstacle);
+
+        topdown.runtime.nav.holePolygons.push_back(runtimeWindow.polygon);
+
+        NavPolygon blockerPoly;
+        blockerPoly.vertices = runtimeWindow.polygon;
+        topdown.runtime.nav.navMesh.blockerPolygons.push_back(blockerPoly);
+
+        for (const TopdownSegment& seg : runtimeWindow.edges) {
+            topdown.runtime.collision.movementSegments.push_back(seg);
+        }
+    }
+
     if (!topdown.runtime.nav.navMesh.sourcePolygons.empty()) {
         if (!BuildNavMesh(topdown.runtime.nav.navMesh, topdown.runtime.nav.agentRadius)) {
             TraceLog(LOG_WARNING,
@@ -1814,6 +1989,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
             ImportDoorLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
             continue;
         }
+
+        if (layerName == "Windows" && layerType == "objectgroup") {
+            ImportWindowLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
+            continue;
+        }
     }
 
     if (!foundBoundary) {
@@ -1874,6 +2054,8 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     TraceLog(LOG_INFO, "  runtime npcs: %d", static_cast<int>(state.topdown.runtime.npcs.size()));
     TraceLog(LOG_INFO, "  authored doors: %d", static_cast<int>(state.topdown.authored.doors.size()));
     TraceLog(LOG_INFO, "  runtime doors: %d", static_cast<int>(state.topdown.runtime.doors.size()));
+    TraceLog(LOG_INFO, "  authored windows: %d", static_cast<int>(state.topdown.authored.windows.size()));
+    TraceLog(LOG_INFO, "  runtime windows: %d", static_cast<int>(state.topdown.runtime.windows.size()));
 
     return true;
 }
@@ -1881,6 +2063,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 void TopdownUnloadLevel(GameState& state)
 {
     UnloadTopdownBloodRenderTarget(state);
+    TopdownUnloadWindowResources(state.topdown);
     UnloadSceneResources(state.resources);
     TopdownRvoShutdown(state);
     state.topdown.authored = {};

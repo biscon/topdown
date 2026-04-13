@@ -121,6 +121,18 @@
             "loop": false
         },
         {
+            "id": "window_break2",
+            "file": "sfx/window_break.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "window_break",
+            "file": "sfx/window_break2.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
             "id": "knife_swing",
             "file": "sfx/weapons/knife/knife_swing.wav",
             "type": "sound",

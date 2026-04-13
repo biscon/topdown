@@ -20,12 +20,14 @@
 #include "TopdownRvo.h"
 #include "LevelDoors.h"
 #include "utils/ScopeTimer.h"
+#include "LevelWindows.h"
 
 enum class TopdownShotHitType
 {
     None,
     Npc,
     Door,
+    Window,
     Wall
 };
 
@@ -34,6 +36,7 @@ struct TopdownShotHitResult
     TopdownShotHitType type = TopdownShotHitType::None;
     TopdownNpcRuntime* npc = nullptr;
     TopdownRuntimeDoor* door = nullptr;
+    TopdownRuntimeWindow* window = nullptr;
     Vector2 point{};
     Vector2 normal{};
     float distance = 0.0f;
@@ -53,6 +56,15 @@ struct PendingDoorShotResult
 {
     TopdownRuntimeDoor* door = nullptr;
     int hitCount = 0;
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
+    Vector2 hitDir{};
+    bool hasHit = false;
+};
+
+struct PendingWindowShotResult
+{
+    TopdownRuntimeWindow* window = nullptr;
     Vector2 hitPoint{};
     Vector2 hitNormal{};
     Vector2 hitDir{};
@@ -212,6 +224,7 @@ static TopdownShotHitResult FindFirstHitscanHit(
     result.distance = maxRange;
     result.npc = nullptr;
     result.door = nullptr;
+    result.window = nullptr;
 
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active || !npc.visible || npc.dead) {
@@ -261,6 +274,29 @@ static TopdownShotHitResult FindFirstHitscanHit(
         result.distance = doorDistance;
     }
 
+    TopdownRuntimeWindow* hitWindow = nullptr;
+    Vector2 windowPoint{};
+    Vector2 windowNormal{};
+    float windowDistance = result.distance;
+
+    if (RaycastClosestWindow(
+            state,
+            origin,
+            dir,
+            result.distance,
+            hitWindow,
+            windowPoint,
+            windowNormal,
+            windowDistance)) {
+        result.type = TopdownShotHitType::Window;
+        result.npc = nullptr;
+        result.door = nullptr;
+        result.window = hitWindow;
+        result.point = windowPoint;
+        result.normal = windowNormal;
+        result.distance = windowDistance;
+    }
+
     Vector2 wallPoint{};
     Vector2 wallNormal{};
     float wallDistance = result.distance;
@@ -275,6 +311,8 @@ static TopdownShotHitResult FindFirstHitscanHit(
             wallDistance)) {
         result.type = TopdownShotHitType::Wall;
         result.npc = nullptr;
+        result.door = nullptr;
+        result.window = nullptr;
         result.point = wallPoint;
         result.normal = wallNormal;
         result.distance = wallDistance;
@@ -291,6 +329,8 @@ static TopdownShotHitResult FindFirstHitscanHit(
             wallDistance)) {
         result.type = TopdownShotHitType::Wall;
         result.npc = nullptr;
+        result.door = nullptr;
+        result.window = nullptr;
         result.point = wallPoint;
         result.normal = wallNormal;
         result.distance = wallDistance;
@@ -308,6 +348,7 @@ static bool IsShotBlockedFromPlayerOrigin(
     }
 
     if (playerOriginHit.type != TopdownShotHitType::Door &&
+        playerOriginHit.type != TopdownShotHitType::Window &&
         playerOriginHit.type != TopdownShotHitType::Wall) {
         return false;
     }
@@ -793,6 +834,49 @@ static void AccumulatePendingDoorShot(
     }
 }
 
+static void AccumulatePendingWindowShot(
+        std::vector<PendingWindowShotResult>& pendingWindowHits,
+        TopdownRuntimeWindow* window,
+        Vector2 hitPoint,
+        Vector2 hitNormal,
+        Vector2 hitDir)
+{
+    for (PendingWindowShotResult& pending : pendingWindowHits) {
+        if (pending.window == window) {
+            pending.hitPoint = hitPoint;
+            pending.hitNormal = hitNormal;
+            pending.hitDir = hitDir;
+            pending.hasHit = true;
+            return;
+        }
+    }
+
+    PendingWindowShotResult pending;
+    pending.window = window;
+    pending.hitPoint = hitPoint;
+    pending.hitNormal = hitNormal;
+    pending.hitDir = hitDir;
+    pending.hasHit = true;
+    pendingWindowHits.push_back(pending);
+}
+
+static void ApplyPendingWindowShots(
+        GameState& state,
+        const std::vector<PendingWindowShotResult>& pendingWindowHits)
+{
+    for (const PendingWindowShotResult& pending : pendingWindowHits) {
+        if (!pending.hasHit || pending.window == nullptr) {
+            continue;
+        }
+
+        BreakWindow(
+                state,
+                *pending.window,
+                pending.hitPoint,
+                pending.hitDir);
+    }
+}
+
 static void AccumulatePendingNpcShot(
         std::vector<PendingNpcShotResult>& pendingNpcHits,
         TopdownNpcRuntime* npc,
@@ -829,6 +913,7 @@ static void CollectPlayerRangedHits(
         const TopdownPlayerWeaponConfig& weaponConfig,
         const PlayerRangedAttackContext& ctx,
         std::vector<PendingDoorShotResult>& outDoorHits,
+        std::vector<PendingWindowShotResult>& outWindowHits,
         std::vector<PendingNpcShotResult>& outNpcHits)
 {
     const int shotCount =
@@ -841,6 +926,9 @@ static void CollectPlayerRangedHits(
 
     outDoorHits.clear();
     outDoorHits.reserve(shotCount);
+
+    outWindowHits.clear();
+    outWindowHits.reserve(shotCount);
 
     static constexpr float kTracerForwardOffset = 0.0f;
 
@@ -885,6 +973,16 @@ static void CollectPlayerRangedHits(
             AccumulatePendingDoorShot(
                     outDoorHits,
                     effectiveHit.door,
+                    effectiveHit.point,
+                    effectiveHit.normal,
+                    shotDir);
+            continue;
+        }
+
+        if (effectiveHit.type == TopdownShotHitType::Window && effectiveHit.window != nullptr) {
+            AccumulatePendingWindowShot(
+                    outWindowHits,
+                    effectiveHit.window,
                     effectiveHit.point,
                     effectiveHit.normal,
                     shotDir);
@@ -1248,18 +1346,24 @@ static bool TryStartPlayerAttack(
 
         std::vector<PendingNpcShotResult> pendingNpcHits;
         std::vector<PendingDoorShotResult> pendingDoorHits;
+        std::vector<PendingWindowShotResult> pendingWindowHits;
 
         CollectPlayerRangedHits(
                 state,
                 *weaponConfig,
                 ctx,
                 pendingDoorHits,
+                pendingWindowHits,
                 pendingNpcHits);
 
         ApplyPendingDoorShots(
                 state,
                 *weaponConfig,
                 pendingDoorHits);
+
+        ApplyPendingWindowShots(
+                state,
+                pendingWindowHits);
 
         ApplyPendingNpcShots(
                 state,
@@ -1366,6 +1470,7 @@ void TopdownUpdate(GameState& state, float dt)
     UpdatePlayerAttackRuntime(state, dt);
 
     TopdownUpdateLevelEffects(state, dt);
+    TopdownUpdateWindows(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);

@@ -16,6 +16,7 @@
 #include "TopdownPlayerVignette.h"
 #include "audio/Audio.h"
 #include "input/Input.h"
+#include "LevelWindows.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -1241,7 +1242,9 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     DrawTopdownBloodRenderTargetToWorld(state);
     TopdownRenderNpcs(state);
     TopdownRenderPlayerCharacter(state);
+    TopdownRenderWindows(state);
     TopdownRenderDoors(state);
+    TopdownRenderWindowGlassParticles(state);
     DrawWallImpactParticles(state);
     DrawBloodImpactParticles(state);
     DrawMuzzleSmokeParticles(state);
