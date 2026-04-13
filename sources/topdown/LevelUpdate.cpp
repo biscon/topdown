@@ -299,6 +299,23 @@ static TopdownShotHitResult FindFirstHitscanHit(
     return result;
 }
 
+static bool IsShotBlockedFromPlayerOrigin(
+        const TopdownShotHitResult& muzzleHit,
+        const TopdownShotHitResult& playerOriginHit)
+{
+    if (muzzleHit.type != TopdownShotHitType::Npc || muzzleHit.npc == nullptr) {
+        return false;
+    }
+
+    if (playerOriginHit.type != TopdownShotHitType::Door &&
+        playerOriginHit.type != TopdownShotHitType::Wall) {
+        return false;
+    }
+
+    static constexpr float kDistanceEpsilon = 0.01f;
+    return playerOriginHit.distance + kDistanceEpsilon < muzzleHit.distance;
+}
+
 static TopdownNpcDamageResult ApplyDamageToNpc(
         GameState& state,
         TopdownNpcRuntime& npc,
@@ -837,37 +854,49 @@ static void CollectPlayerRangedHits(
         const TopdownShotHitResult hit =
                 FindFirstHitscanHit(state, ctx.muzzleWorld, shotDir, weaponConfig.maxRange);
 
+        const TopdownShotHitResult playerOriginHit =
+                FindFirstHitscanHit(
+                        state,
+                        state.topdown.runtime.player.position,
+                        shotDir,
+                        weaponConfig.maxRange);
+
+        const TopdownShotHitResult effectiveHit =
+                IsShotBlockedFromPlayerOrigin(hit, playerOriginHit)
+                ? playerOriginHit
+                : hit;
+
         AppendPlayerTracerEffect(
                 state,
                 tracerStart,
-                hit.point,
+                effectiveHit.point,
                 weaponConfig.tracerStyle);
 
-        if (hit.type == TopdownShotHitType::Wall) {
+        if (effectiveHit.type == TopdownShotHitType::Wall) {
             SpawnWallImpactParticles(
                     state,
-                    hit.point,
-                    hit.normal,
+                    effectiveHit.point,
+                    effectiveHit.normal,
                     weaponConfig);
             continue;
         }
 
-        if (hit.type == TopdownShotHitType::Door && hit.door != nullptr) {
+        if (effectiveHit.type == TopdownShotHitType::Door && effectiveHit.door != nullptr) {
             AccumulatePendingDoorShot(
                     outDoorHits,
-                    hit.door,
-                    hit.point,
-                    hit.normal,
+                    effectiveHit.door,
+                    effectiveHit.point,
+                    effectiveHit.normal,
                     shotDir);
             continue;
         }
 
-        if (hit.type == TopdownShotHitType::Npc && hit.npc != nullptr) {
+        if (effectiveHit.type == TopdownShotHitType::Npc && effectiveHit.npc != nullptr) {
             AccumulatePendingNpcShot(
                     outNpcHits,
-                    hit.npc,
+                    effectiveHit.npc,
                     weaponConfig.rangedDamage,
-                    hit.point,
+                    effectiveHit.point,
                     shotDir);
         }
     }
