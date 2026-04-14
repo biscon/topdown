@@ -10,15 +10,18 @@ function Level_onEnter()
     startScript("CeilingLampGlowLoop")
 end
 
+local count = 1
 function Level_onTestTrigger1()
     log("running onTestTrigger1")
-    SpawnThugs()
+    spawnNpcSmart("enemy_" .. count, "knifethug", "test_spawn", false)
+    count = count + 1
 end
 
+--local count = 1
 function Level_onTestTrigger2()
-    log("running onTestTrigger2")
+    spawnNpcSmart("enemy_" .. count, "knifethug", "patrol_1", false)
+    --count = count + 1
 end
-
 
 function WalkAround()
     disableControls()
