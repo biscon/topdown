@@ -1564,6 +1564,25 @@
                  "width":0,
                  "x":328,
                  "y":-188
+                }, 
+                {
+                 "height":0,
+                 "id":123,
+                 "name":"test_spawn",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":180
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":430,
+                 "y":-758.666666666667
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -4814,7 +4833,7 @@
                         {
                          "name":"repeat",
                          "type":"bool",
-                         "value":false
+                         "value":true
                         }, 
                         {
                          "name":"script",
@@ -4825,8 +4844,8 @@
                  "type":"",
                  "visible":true,
                  "width":84.6666666666667,
-                 "x":837.333333333333,
-                 "y":587.333333333333
+                 "x":560.666666666667,
+                 "y":138.666666666666
                 }, 
                 {
                  "height":0,
@@ -4889,7 +4908,7 @@
          "y":0
         }],
  "nextlayerid":43,
- "nextobjectid":123,
+ "nextobjectid":124,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

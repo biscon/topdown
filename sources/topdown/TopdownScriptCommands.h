@@ -19,6 +19,12 @@ bool TopdownScriptSpawnNpc(
         const std::string& assetId,
         const std::string& spawnId,
         bool persistentChase = false);
+bool TopdownScriptSpawnNpcSmart(
+        GameState& state,
+        const std::string& npcId,
+        const std::string& assetId,
+        const std::string& spawnId,
+        bool persistentChase = false);
 bool TopdownScriptRemoveNpc(GameState& state, const std::string& npcId);
 
 // NPC scripted movement
