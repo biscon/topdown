@@ -12,6 +12,7 @@ end
 
 function Level_onTestTrigger1()
     log("running onTestTrigger1")
+    SpawnThugs()
 end
 
 function Level_onTestTrigger2()
