@@ -12,7 +12,7 @@ void TopdownHandleInput(GameState& state)
                 break;
 
             case KEY_F2:
-                state.topdown.runtime.debug.showSpatialGrid = !state.topdown.runtime.debug.showSpatialGrid;
+                state.topdown.runtime.debug.showTriggers = !state.topdown.runtime.debug.showTriggers;
                 ConsumeEvent(ev);
                 break;
 

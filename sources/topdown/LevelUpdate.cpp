@@ -21,6 +21,7 @@
 #include "LevelDoors.h"
 #include "utils/ScopeTimer.h"
 #include "LevelWindows.h"
+#include "scripting/ScriptSystem.h"
 
 enum class TopdownShotHitType
 {
@@ -1436,6 +1437,168 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
     UpdatePlayerRifleLoopAudio(state);
 }
 
+static bool IsPointInsideTrigger(
+        const TopdownAuthoredTrigger& trigger,
+        Vector2 point)
+{
+    if (trigger.usePolygon) {
+        return TopdownPointInPolygon(point, trigger.polygon);
+    }
+
+    return CheckCollisionPointRec(point, trigger.worldRect);
+}
+
+static void QueueTriggerCall(
+        TopdownRuntimeTrigger& trigger,
+        int authoredIndex,
+        TopdownCharacterHandle instigatorHandle,
+        bool instigatorIsPlayer,
+        float delayMs)
+{
+    TopdownRuntimeTriggerPendingCall call{};
+    call.active = true;
+    call.authoredIndex = authoredIndex;
+    call.instigatorHandle = instigatorHandle;
+    call.instigatorIsPlayer = instigatorIsPlayer;
+    call.remainingMs = delayMs;
+    trigger.pendingCalls.push_back(call);
+}
+
+static void UpdateSingleTriggerPendingCalls(
+        GameState& state,
+        TopdownRuntimeTrigger& runtimeTrigger,
+        float dt)
+{
+    const TopdownAuthoredTrigger& authored =
+            state.topdown.authored.triggers[runtimeTrigger.authoredIndex];
+
+    std::vector<TopdownRuntimeTriggerPendingCall> retained;
+    retained.reserve(runtimeTrigger.pendingCalls.size());
+
+    for (TopdownRuntimeTriggerPendingCall& pending : runtimeTrigger.pendingCalls) {
+        if (!pending.active) {
+            continue;
+        }
+
+        pending.remainingMs -= dt * 1000.0f;
+        if (pending.remainingMs > 0.0f) {
+            retained.push_back(pending);
+            continue;
+        }
+
+        if (!runtimeTrigger.enabled || authored.script.empty()) {
+            continue;
+        }
+
+        const ScriptCallResult result =
+                ScriptSystemCallTrigger(state, authored.script);
+        if (result == ScriptCallResult::Error) {
+            TraceLog(LOG_WARNING,
+                     "Topdown trigger '%s' script '%s' failed",
+                     authored.id.c_str(),
+                     authored.script.c_str());
+        }
+    }
+
+    runtimeTrigger.pendingCalls.swap(retained);
+}
+
+static bool TriggerAffectsPlayer(TopdownTriggerAffects affects)
+{
+    return affects == TopdownTriggerAffects::Player ||
+           affects == TopdownTriggerAffects::All;
+}
+
+static bool TriggerAffectsNpc(TopdownTriggerAffects affects)
+{
+    return affects == TopdownTriggerAffects::Npc ||
+           affects == TopdownTriggerAffects::All;
+}
+
+static void UpdateTriggers(GameState& state, float dt)
+{
+    for (TopdownRuntimeTrigger& runtimeTrigger : state.topdown.runtime.triggers) {
+        if (runtimeTrigger.authoredIndex < 0 ||
+            runtimeTrigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        const TopdownAuthoredTrigger& authored =
+                state.topdown.authored.triggers[runtimeTrigger.authoredIndex];
+
+        if (!runtimeTrigger.enabled) {
+            runtimeTrigger.playerInside = false;
+            runtimeTrigger.npcHandlesInside.clear();
+            runtimeTrigger.pendingCalls.clear();
+            continue;
+        }
+
+        const bool allowNewEntries = runtimeTrigger.repeat || !runtimeTrigger.fired;
+        bool enteredThisFrame = false;
+
+        if (TriggerAffectsPlayer(authored.affects)) {
+            const bool playerInsideNow =
+                    IsPointInsideTrigger(authored, state.topdown.runtime.player.position);
+
+            if (allowNewEntries && playerInsideNow && !runtimeTrigger.playerInside) {
+                enteredThisFrame = true;
+                QueueTriggerCall(
+                        runtimeTrigger,
+                        runtimeTrigger.authoredIndex,
+                        0,
+                        true,
+                        authored.delayMs);
+            }
+
+            runtimeTrigger.playerInside = playerInsideNow;
+        } else {
+            runtimeTrigger.playerInside = false;
+        }
+
+        if (TriggerAffectsNpc(authored.affects)) {
+            std::vector<TopdownCharacterHandle> npcInsideNow;
+            npcInsideNow.reserve(state.topdown.runtime.npcs.size());
+
+            for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+                if (!npc.active || !npc.visible || npc.dead) {
+                    continue;
+                }
+
+                if (!IsPointInsideTrigger(authored, npc.position)) {
+                    continue;
+                }
+
+                npcInsideNow.push_back(npc.handle);
+
+                const bool wasInside = std::find(
+                        runtimeTrigger.npcHandlesInside.begin(),
+                        runtimeTrigger.npcHandlesInside.end(),
+                        npc.handle) != runtimeTrigger.npcHandlesInside.end();
+
+                if (allowNewEntries && !wasInside) {
+                    enteredThisFrame = true;
+                    QueueTriggerCall(
+                            runtimeTrigger,
+                            runtimeTrigger.authoredIndex,
+                            npc.handle,
+                            false,
+                            authored.delayMs);
+                }
+            }
+
+            runtimeTrigger.npcHandlesInside.swap(npcInsideNow);
+        } else {
+            runtimeTrigger.npcHandlesInside.clear();
+        }
+
+        if (enteredThisFrame) {
+            runtimeTrigger.fired = true;
+        }
+
+        UpdateSingleTriggerPendingCalls(state, runtimeTrigger, dt);
+    }
+}
+
 void TopdownUpdate(GameState& state, float dt)
 {
     if (!state.topdown.runtime.levelActive) {
@@ -1471,6 +1634,7 @@ void TopdownUpdate(GameState& state, float dt)
 
     TopdownUpdateLevelEffects(state, dt);
     TopdownUpdateWindows(state, dt);
+    UpdateTriggers(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);
