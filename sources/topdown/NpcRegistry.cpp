@@ -8,6 +8,7 @@
 #include "utils/json.hpp"
 #include "raymath.h"
 #include "TopdownRvo.h"
+#include "topdown/TopdownHelpers.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -776,6 +777,161 @@ TopdownNpcClipRef FindTopdownNpcClipByName(
     return {};
 }
 
+static void AppendDoorCollisionSegments(
+        const TopdownRuntimeData& runtime,
+        std::vector<TopdownSegment>& outSegments)
+{
+    for (const TopdownRuntimeDoor& door : runtime.doors) {
+        if (!door.visible) {
+            continue;
+        }
+
+        Vector2 a{};
+        Vector2 b{};
+        Vector2 c{};
+        Vector2 d{};
+        TopdownBuildDoorCorners(door, a, b, c, d);
+
+        outSegments.push_back(TopdownSegment{a, b});
+        outSegments.push_back(TopdownSegment{b, c});
+        outSegments.push_back(TopdownSegment{c, d});
+        outSegments.push_back(TopdownSegment{d, a});
+    }
+}
+
+static void AppendWindowCollisionSegments(
+        const TopdownRuntimeData& runtime,
+        std::vector<TopdownSegment>& outSegments)
+{
+    for (const TopdownRuntimeWindow& window : runtime.windows) {
+        if (!window.visible || window.broken) {
+            continue;
+        }
+
+        for (const TopdownSegment& edge : window.edges) {
+            outSegments.push_back(edge);
+        }
+    }
+}
+
+static bool CandidateOverlapsBlockingGeometry(
+        const TopdownRuntimeData& runtime,
+        Vector2 candidate,
+        float npcRadius,
+        const std::vector<TopdownSegment>& blockingSegments,
+        float spawnPadding)
+{
+    const float clearance = npcRadius + spawnPadding;
+    const float clearanceSqr = clearance * clearance;
+
+    for (const TopdownNpcRuntime& npc : runtime.npcs) {
+        if (!npc.active) {
+            continue;
+        }
+
+        const float minDist = npc.collisionRadius + clearance;
+        const float minDistSqr = minDist * minDist;
+        const Vector2 delta = TopdownSub(candidate, npc.position);
+        if (TopdownLengthSqr(delta) < minDistSqr) {
+            return true;
+        }
+    }
+
+    for (const TopdownSegment& segment : blockingSegments) {
+        const Vector2 closest = TopdownClosestPointOnSegment(candidate, segment);
+        const Vector2 delta = TopdownSub(candidate, closest);
+        if (TopdownLengthSqr(delta) < clearanceSqr) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool TryResolveSmartSpawnPosition(
+        const TopdownRuntimeData& runtime,
+        Vector2 preferredPosition,
+        float npcRadius,
+        Vector2& outPosition)
+{
+    static constexpr float kSpawnPadding = 4.0f;
+    static constexpr int kMaxRings = 3;
+    static constexpr float kMinRadiusStep = 12.0f;
+    static constexpr float kRaycastEpsilon = 0.001f;
+
+    std::vector<TopdownSegment> blockingSegments = runtime.collision.movementSegments;
+    blockingSegments.reserve(
+            blockingSegments.size() +
+            runtime.doors.size() * 4 +
+            runtime.windows.size() * 4);
+
+    AppendDoorCollisionSegments(runtime, blockingSegments);
+    AppendWindowCollisionSegments(runtime, blockingSegments);
+
+    if (!CandidateOverlapsBlockingGeometry(
+                runtime,
+                preferredPosition,
+                npcRadius,
+                blockingSegments,
+                kSpawnPadding)) {
+        outPosition = preferredPosition;
+        return true;
+    }
+
+    const float radiusStep = std::max(kMinRadiusStep, npcRadius * 2.0f + kSpawnPadding);
+    const float slotArcLength = std::max(kMinRadiusStep, npcRadius * 2.0f + kSpawnPadding);
+
+    for (int ringIndex = 1; ringIndex <= kMaxRings; ++ringIndex) {
+        const float ringRadius = radiusStep * static_cast<float>(ringIndex);
+        const float circumference = 2.0f * PI * ringRadius;
+        const int slotCount = std::max(6, static_cast<int>(std::ceil(circumference / slotArcLength)));
+
+        for (int slotIndex = 0; slotIndex < slotCount; ++slotIndex) {
+            const float t = static_cast<float>(slotIndex) / static_cast<float>(slotCount);
+            const float radians = t * 2.0f * PI;
+            const Vector2 offset{
+                    std::cos(radians) * ringRadius,
+                    std::sin(radians) * ringRadius
+            };
+            const Vector2 candidate = TopdownAdd(preferredPosition, offset);
+
+            if (CandidateOverlapsBlockingGeometry(
+                        runtime,
+                        candidate,
+                        npcRadius,
+                        blockingSegments,
+                        kSpawnPadding)) {
+                continue;
+            }
+
+            const Vector2 toCandidate = TopdownSub(candidate, preferredPosition);
+            const float rayDistance = TopdownLength(toCandidate);
+            if (rayDistance <= 0.000001f) {
+                outPosition = candidate;
+                return true;
+            }
+
+            const Vector2 rayDir = TopdownMul(toCandidate, 1.0f / rayDistance);
+            Vector2 hitPoint{};
+            const bool blocked = TopdownRaycastSegments(
+                    preferredPosition,
+                    rayDir,
+                    blockingSegments,
+                    rayDistance - kRaycastEpsilon,
+                    hitPoint,
+                    nullptr);
+            if (blocked) {
+                continue;
+            }
+
+            outPosition = candidate;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool TopdownSpawnNpcRuntime(
         GameState& state,
         const std::string& npcId,
@@ -783,7 +939,8 @@ bool TopdownSpawnNpcRuntime(
         Vector2 position,
         float orientationDegrees,
         bool visible,
-        bool persistentChase)
+        bool persistentChase,
+        bool smartPlacement)
 {
     if (npcId.empty() || assetId.empty()) {
         return false;
@@ -798,6 +955,24 @@ bool TopdownSpawnNpcRuntime(
 
     if (asset == nullptr || !asset->loaded) {
         return false;
+    }
+
+    if (smartPlacement) {
+        Vector2 resolvedPosition{};
+        if (!TryResolveSmartSpawnPosition(
+                    state.topdown.runtime,
+                    position,
+                    asset->collisionRadius,
+                    resolvedPosition)) {
+            TraceLog(LOG_WARNING,
+                     "Unable to find smart spawn position for NPC '%s' near %.1f, %.1f",
+                     npcId.c_str(),
+                     position.x,
+                     position.y);
+            return false;
+        }
+
+        position = resolvedPosition;
     }
 
     TopdownNpcRuntime npc;

@@ -57,4 +57,5 @@ bool TopdownSpawnNpcRuntime(
         Vector2 position,
         float orientationDegrees,
         bool visible,
-        bool persistentChase = false);
+        bool persistentChase = false,
+        bool smartPlacement = false);

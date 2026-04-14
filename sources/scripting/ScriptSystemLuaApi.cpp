@@ -1811,6 +1811,29 @@ static int Lua_spawnNpc(lua_State* L)
     return 1;
 }
 
+static int Lua_spawnNpcSmart(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+    const char* assetId = luaL_checkstring(L, 2);
+    const char* spawnId = luaL_checkstring(L, 3);
+    const bool persistentChase = lua_toboolean(L, 4) != 0;
+
+    if (gameState == nullptr || npcId == nullptr || assetId == nullptr || spawnId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSpawnNpcSmart(
+            *gameState,
+            std::string(npcId),
+            std::string(assetId),
+            std::string(spawnId),
+            persistentChase);
+
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_removeNpc(lua_State* L)
 {
     const char* npcId = luaL_checkstring(L, 1);
@@ -2012,6 +2035,7 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "startRunToSpawn", Lua_startRunToSpawn);
 
     lua_register(L, "spawnNpc", Lua_spawnNpc);
+    lua_register(L, "spawnNpcSmart", Lua_spawnNpcSmart);
     lua_register(L, "removeNpc", Lua_removeNpc);
 
     lua_register(L, "startWalkNpcTo", Lua_startWalkNpcTo);

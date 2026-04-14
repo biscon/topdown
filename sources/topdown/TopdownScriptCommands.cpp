@@ -249,6 +249,39 @@ bool TopdownScriptSpawnNpc(
             persistentChase);
 }
 
+bool TopdownScriptSpawnNpcSmart(
+        GameState& state,
+        const std::string& npcId,
+        const std::string& assetId,
+        const std::string& spawnId,
+        bool persistentChase)
+{
+    if (npcId.empty() || assetId.empty() || spawnId.empty()) {
+        return false;
+    }
+
+    if (FindNpc(state, npcId) != nullptr) {
+        TraceLog(LOG_WARNING, "NPC with id '%s' already exists", npcId.c_str());
+        return false;
+    }
+
+    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    if (spawn == nullptr) {
+        TraceLog(LOG_WARNING, "Spawn '%s' not found for NPC '%s'", spawnId.c_str(), npcId.c_str());
+        return false;
+    }
+
+    return TopdownSpawnNpcRuntime(
+            state,
+            npcId,
+            assetId,
+            spawn->position,
+            spawn->orientationDegrees,
+            true,
+            persistentChase,
+            true);
+}
+
 bool TopdownScriptRemoveNpc(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
