@@ -1686,6 +1686,36 @@ static int Lua_effectRegionOpacity(lua_State* L)
     return 1;
 }
 
+static int Lua_setTriggerEnabled(lua_State* L)
+{
+    const char* triggerId = luaL_checkstring(L, 1);
+    const bool enabled = lua_toboolean(L, 2) != 0;
+
+    if (!gameState || !triggerId) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetTriggerEnabled(*gameState, triggerId, enabled);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setTriggerRepeat(lua_State* L)
+{
+    const char* triggerId = luaL_checkstring(L, 1);
+    const bool repeat = lua_toboolean(L, 2) != 0;
+
+    if (!gameState || !triggerId) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetTriggerRepeat(*gameState, triggerId, repeat);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_walkToSpawn(lua_State* L)
 {
     const char* spawnId = luaL_checkstring(L, 1);
@@ -2013,6 +2043,8 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "effectRegionVisible", Lua_effectRegionVisible);
     lua_register(L, "setEffectRegionOpacity", Lua_setEffectRegionOpacity);
     lua_register(L, "effectRegionOpacity", Lua_effectRegionOpacity);
+    lua_register(L, "setTriggerEnabled", Lua_setTriggerEnabled);
+    lua_register(L, "setTriggerRepeat", Lua_setTriggerRepeat);
 
     lua_register(L, "playSound", Lua_playSound);
     lua_register(L, "stopSound", Lua_stopSound);

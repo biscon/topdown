@@ -28,6 +28,12 @@ enum class TopdownEffectPlacement {
     Final
 };
 
+enum class TopdownTriggerAffects {
+    Player,
+    Npc,
+    All
+};
+
 enum class TopdownBloodDecalKind {
     Spatter,
     Pool
@@ -210,6 +216,21 @@ struct TopdownAuthoredEffectRegion {
     TextureHandle textureHandle = -1;
 };
 
+struct TopdownAuthoredTrigger {
+    int tiledObjectId = -1;
+    std::string id;
+
+    bool usePolygon = false;
+    std::vector<Vector2> polygon;
+    Rectangle worldRect{};
+
+    bool visible = true;
+    std::string script;
+    TopdownTriggerAffects affects = TopdownTriggerAffects::Player;
+    bool repeat = false;
+    float delayMs = 0.0f;
+};
+
 struct TopdownAuthoredWindow {
     int tiledObjectId = -1;
     std::string id;
@@ -306,6 +327,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredImageLayer> imageLayers;
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
+    std::vector<TopdownAuthoredTrigger> triggers;
     std::vector<TopdownAuthoredNpc> npcs;
     std::vector<TopdownAuthoredDoor> doors;
     std::vector<TopdownAuthoredWindow> windows;
@@ -392,6 +414,30 @@ struct TopdownRuntimeEffectRegion {
 
     bool hasWallOcclusionPolygon = false;
     std::vector<Vector2> wallOcclusionPolygon;
+};
+
+using TopdownTriggerHandle = int;
+
+struct TopdownRuntimeTriggerPendingCall {
+    bool active = false;
+    int authoredIndex = -1;
+    TopdownCharacterHandle instigatorHandle = -1;
+    bool instigatorIsPlayer = false;
+    float remainingMs = 0.0f;
+};
+
+struct TopdownRuntimeTrigger {
+    TopdownTriggerHandle handle = -1;
+    int authoredIndex = -1;
+
+    bool enabled = true;
+    bool repeat = false;
+    bool fired = false;
+
+    bool playerInside = false;
+    std::vector<TopdownCharacterHandle> npcHandlesInside;
+
+    std::vector<TopdownRuntimeTriggerPendingCall> pendingCalls;
 };
 
 struct TopdownBloodStamp {
@@ -1097,7 +1143,7 @@ struct TopdownLevelRegistryEntry {
 
 struct TopdownDebugData {
     bool showBlockers = false;
-    bool showSpatialGrid = false;
+    bool showTriggers = false;
     bool showNav = false;
     bool showPlayer = false;
     bool showSpawnPoints = false;
@@ -1204,6 +1250,8 @@ struct TopdownRuntimeData {
     TopdownBloodRenderTarget bloodRenderTarget{};
 
     TopdownRvoState rvo;
+    int nextTriggerHandle = 1;
+    std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
     std::vector<TopdownRuntimeWindow> windows;
 };

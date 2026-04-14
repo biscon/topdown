@@ -25,6 +25,22 @@ static TopdownRuntimeEffectRegion* FindEffect(GameState& state, const std::strin
     return nullptr;
 }
 
+static TopdownRuntimeTrigger* FindTrigger(GameState& state, const std::string& id)
+{
+    for (TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
+        if (trigger.authoredIndex < 0 ||
+            trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        if (state.topdown.authored.triggers[trigger.authoredIndex].id == id) {
+            return &trigger;
+        }
+    }
+
+    return nullptr;
+}
+
 static TopdownNpcRuntime* FindNpc(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
@@ -448,4 +464,38 @@ bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id
         return true;
     }
     return false;
+}
+
+// --------------------------------------------------
+// Triggers
+// --------------------------------------------------
+
+bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled)
+{
+    TopdownRuntimeTrigger* trigger = FindTrigger(state, triggerId);
+    if (trigger == nullptr) {
+        return false;
+    }
+
+    trigger->enabled = enabled;
+    if (!enabled) {
+        trigger->playerInside = false;
+        trigger->npcHandlesInside.clear();
+        trigger->pendingCalls.clear();
+    } else {
+        trigger->fired = false;
+    }
+
+    return true;
+}
+
+bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat)
+{
+    TopdownRuntimeTrigger* trigger = FindTrigger(state, triggerId);
+    if (trigger == nullptr) {
+        return false;
+    }
+
+    trigger->repeat = repeat;
+    return true;
 }

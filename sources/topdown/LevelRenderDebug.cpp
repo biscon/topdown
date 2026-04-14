@@ -302,6 +302,79 @@ static void DrawEffectRegionDebug(const GameState& state)
     }
 }
 
+static const char* TopdownTriggerAffectsToString(TopdownTriggerAffects affects)
+{
+    switch (affects) {
+        case TopdownTriggerAffects::Player:
+            return "player";
+        case TopdownTriggerAffects::Npc:
+            return "npc";
+        case TopdownTriggerAffects::All:
+            return "all";
+        default:
+            return "unknown";
+    }
+}
+
+static void DrawTriggerDebug(const GameState& state)
+{
+    for (const TopdownRuntimeTrigger& runtime : state.topdown.runtime.triggers) {
+        if (runtime.authoredIndex < 0 ||
+            runtime.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        const TopdownAuthoredTrigger& authored = state.topdown.authored.triggers[runtime.authoredIndex];
+
+        const Color color = runtime.enabled
+                            ? Color{255, 170, 70, 255}
+                            : Color{120, 120, 120, 200};
+
+        Vector2 labelAnchor{};
+
+        if (authored.usePolygon) {
+            DrawPolygonOutline(state, authored.polygon, color, 2.0f);
+
+            float sumX = 0.0f;
+            float sumY = 0.0f;
+            for (const Vector2& p : authored.polygon) {
+                const Vector2 screen = TopdownWorldToScreen(state, p);
+                DrawCircleV(screen, 2.5f, color);
+                sumX += screen.x;
+                sumY += screen.y;
+            }
+
+            const float count = static_cast<float>(authored.polygon.size());
+            labelAnchor.x = sumX / count;
+            labelAnchor.y = sumY / count;
+        } else {
+            Rectangle rect{
+                    authored.worldRect.x - state.topdown.runtime.camera.position.x,
+                    authored.worldRect.y - state.topdown.runtime.camera.position.y,
+                    authored.worldRect.width,
+                    authored.worldRect.height
+            };
+
+            DrawRectangleLinesEx(rect, 2.0f, color);
+            labelAnchor.x = rect.x + rect.width * 0.5f;
+            labelAnchor.y = rect.y + rect.height * 0.5f;
+        }
+
+        std::string line1 = authored.id + " [trigger]";
+        std::string line2 = std::string("enabled=") + (runtime.enabled ? "yes" : "no") +
+                            " affects=" + TopdownTriggerAffectsToString(authored.affects);
+        std::string line3 = std::string("repeat=") + (runtime.repeat ? "yes" : "no") +
+                            " delayMs=" + std::to_string(authored.delayMs) +
+                            " pending=" + std::to_string(static_cast<int>(runtime.pendingCalls.size()));
+        std::string line4 = std::string("script=") + (authored.script.empty() ? "<empty>" : authored.script);
+
+        DrawText(line1.c_str(), static_cast<int>(labelAnchor.x + 8.0f), static_cast<int>(labelAnchor.y - 24.0f), 16, color);
+        DrawText(line2.c_str(), static_cast<int>(labelAnchor.x + 8.0f), static_cast<int>(labelAnchor.y - 6.0f), 16, color);
+        DrawText(line3.c_str(), static_cast<int>(labelAnchor.x + 8.0f), static_cast<int>(labelAnchor.y + 12.0f), 16, color);
+        DrawText(line4.c_str(), static_cast<int>(labelAnchor.x + 8.0f), static_cast<int>(labelAnchor.y + 30.0f), 16, color);
+    }
+}
+
 static const char* TopdownImageLayerKindToString(TopdownImageLayerKind kind)
 {
     switch (kind) {
@@ -1270,6 +1343,10 @@ void TopdownRenderDebug(GameState& state)
 
     if (state.topdown.runtime.debug.showEffects) {
         DrawEffectRegionDebug(state);
+    }
+
+    if (state.topdown.runtime.debug.showTriggers) {
+        DrawTriggerDebug(state);
     }
 
     if (state.topdown.runtime.debug.showImageLayers) {

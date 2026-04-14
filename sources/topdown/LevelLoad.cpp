@@ -141,6 +141,28 @@ static bool ParseTopdownDoorHingeSide(
     return false;
 }
 
+static bool ParseTopdownTriggerAffects(
+        const std::string& s,
+        TopdownTriggerAffects& outAffects)
+{
+    if (s.empty() || s == "player") {
+        outAffects = TopdownTriggerAffects::Player;
+        return true;
+    }
+
+    if (s == "npc") {
+        outAffects = TopdownTriggerAffects::Npc;
+        return true;
+    }
+
+    if (s == "all") {
+        outAffects = TopdownTriggerAffects::All;
+        return true;
+    }
+
+    return false;
+}
+
 static const char* TopdownDoorHingeSideToString(TopdownDoorHingeSide side)
 {
     switch (side) {
@@ -1069,6 +1091,100 @@ static void ImportEffectRegionLayer(
     }
 }
 
+static void ImportTriggerLayer(
+        TopdownData& topdown,
+        const json& layer,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object()) {
+            continue;
+        }
+
+        TopdownAuthoredTrigger trigger;
+        trigger.tiledObjectId = obj.value("id", -1);
+        trigger.id = obj.value("name", std::string());
+
+        if (trigger.id.empty()) {
+            TraceLog(LOG_WARNING, "Skipping topdown trigger with empty name");
+            continue;
+        }
+
+        const bool hasPolygon =
+                obj.contains("polygon") &&
+                obj["polygon"].is_array() &&
+                !obj["polygon"].empty();
+
+        if (hasPolygon) {
+            trigger.usePolygon = true;
+            trigger.polygon = BuildWorldPolygonFromTiledPolygon(obj, baseAssetScale);
+
+            if (trigger.polygon.size() < 3) {
+                TraceLog(LOG_WARNING,
+                         "Skipping topdown trigger '%s': invalid polygon",
+                         trigger.id.c_str());
+                continue;
+            }
+
+            trigger.worldRect = ComputeWorldBoundsFromPolygon(trigger.polygon);
+        } else if (IsRectObject(obj)) {
+            trigger.usePolygon = false;
+            trigger.worldRect.x = obj.value("x", 0.0f) * scale;
+            trigger.worldRect.y = obj.value("y", 0.0f) * scale;
+            trigger.worldRect.width = obj.value("width", 0.0f) * scale;
+            trigger.worldRect.height = obj.value("height", 0.0f) * scale;
+        } else {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown trigger '%s': must be rect or polygon",
+                     trigger.id.c_str());
+            continue;
+        }
+
+        if (trigger.worldRect.width <= 0.0f || trigger.worldRect.height <= 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Skipping topdown trigger '%s': invalid area bounds",
+                     trigger.id.c_str());
+            continue;
+        }
+
+        trigger.visible = obj.value("visible", true);
+        trigger.script = GetObjectPropertyString(obj, "script", "");
+        trigger.repeat = GetObjectPropertyBool(obj, "repeat", false);
+        trigger.delayMs = GetObjectPropertyFloat(obj, "delayMs", 0.0f);
+
+        if (trigger.delayMs < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Topdown trigger '%s' has negative delayMs %.3f; clamping to 0",
+                     trigger.id.c_str(),
+                     trigger.delayMs);
+            trigger.delayMs = 0.0f;
+        }
+
+        const std::string affectsStr = GetObjectPropertyString(obj, "affects", "player");
+        if (!ParseTopdownTriggerAffects(affectsStr, trigger.affects)) {
+            TraceLog(LOG_WARNING,
+                     "Topdown trigger '%s' has invalid affects '%s'; defaulting to player",
+                     trigger.id.c_str(),
+                     affectsStr.c_str());
+            trigger.affects = TopdownTriggerAffects::Player;
+        }
+
+        if (trigger.script.empty()) {
+            TraceLog(LOG_WARNING,
+                     "Topdown trigger '%s' has empty script property",
+                     trigger.id.c_str());
+        }
+
+        topdown.authored.triggers.push_back(trigger);
+    }
+}
+
 static void ImportImageGroup(
         GameState& state,
         const json& groupLayer,
@@ -1828,6 +1944,18 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         topdown.runtime.render.effectRegions.push_back(runtime);
     }
 
+    for (int i = 0; i < static_cast<int>(topdown.authored.triggers.size()); ++i) {
+        const TopdownAuthoredTrigger& authored = topdown.authored.triggers[i];
+
+        TopdownRuntimeTrigger runtime;
+        runtime.handle = topdown.runtime.nextTriggerHandle++;
+        runtime.authoredIndex = i;
+        runtime.enabled = authored.visible;
+        runtime.repeat = authored.repeat;
+
+        topdown.runtime.triggers.push_back(runtime);
+    }
+
     TopdownRebuildWallOcclusionPolygons(topdown, true);
 
     BuildSortedEffectRegionBuckets(topdown);
@@ -1980,6 +2108,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
             continue;
         }
 
+        if (layerName == "Triggers" && layerType == "objectgroup") {
+            ImportTriggerLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
+            continue;
+        }
+
         if (layerName == "Npcs" && layerType == "objectgroup") {
             ImportNpcLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
             continue;
@@ -2042,6 +2175,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     TraceLog(LOG_INFO, "  movement segments: %d", static_cast<int>(state.topdown.runtime.collision.movementSegments.size()));
     TraceLog(LOG_INFO, "  vision segments: %d", static_cast<int>(state.topdown.runtime.collision.visionSegments.size()));
     TraceLog(LOG_INFO, "  effect regions: %d", static_cast<int>(state.topdown.authored.effectRegions.size()));
+    TraceLog(LOG_INFO, "  triggers: %d", static_cast<int>(state.topdown.authored.triggers.size()));
     TraceLog(LOG_INFO, "  effect buckets: after_bottom=%d after_characters=%d final=%d",
              static_cast<int>(state.topdown.runtime.render.afterBottomEffectRegionIndices.size()),
              static_cast<int>(state.topdown.runtime.render.afterCharactersEffectRegionIndices.size()),

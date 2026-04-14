@@ -45,3 +45,7 @@ bool TopdownScriptIsEffectRegionVisible(GameState& state, const std::string& id,
 
 bool TopdownScriptSetEffectRegionOpacity(GameState& state, const std::string& id, float opacity);
 bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id, float& outOpacity);
+
+// Triggers
+bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled);
+bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat);
