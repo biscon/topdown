@@ -276,7 +276,13 @@ static bool HandleNpcImmediateCombatStates(
         UpdateNpcAttackState(state, npc, dt);
         return true;
     }
-
+    // Search must be handled before normal targeting/perception.
+    // Otherwise perception can re-enter Search every frame, resetting the
+    // search timers and causing NPCs to spin indefinitely without finishing.
+    if (npc.combatState == TopdownNpcCombatState::Search) {
+        TopdownUpdateNpcSearchState(state, npc, dt);
+        return true;
+    }
     return false;
 }
 
