@@ -65,7 +65,7 @@ bool TopdownHasNpcReachedPoint(
         Vector2 point,
         float radius);
 
-void TopdownClearNpcSearchState(TopdownNpcRuntime& npc);
+void TopdownResetNpcSearchTimers(TopdownNpcRuntime& npc);
 void TopdownResetNpcLostTargetProgress(TopdownNpcRuntime& npc);
 void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc);
 

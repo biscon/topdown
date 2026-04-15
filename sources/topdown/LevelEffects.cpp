@@ -759,6 +759,47 @@ void QueueBloodSpatterDecals(
     state.topdown.runtime.render.pendingBloodDecalSpawns.push_back(pending);
 }
 
+static TopdownPlayerWeaponConfig BuildBloodOnlyWeaponConfig(
+        const TopdownNpcAttackEffectsConfig& fxConfig)
+{
+    TopdownPlayerWeaponConfig weaponConfig;
+    weaponConfig.equipmentSetId = "npc_attack_fx";
+
+    weaponConfig.bloodImpactParticleCount = fxConfig.bloodImpactParticleCount;
+    weaponConfig.bloodImpactParticleSpeedMin = fxConfig.bloodImpactParticleSpeedMin;
+    weaponConfig.bloodImpactParticleSpeedMax = fxConfig.bloodImpactParticleSpeedMax;
+    weaponConfig.bloodImpactParticleLifetimeMsMin = fxConfig.bloodImpactParticleLifetimeMsMin;
+    weaponConfig.bloodImpactParticleLifetimeMsMax = fxConfig.bloodImpactParticleLifetimeMsMax;
+    weaponConfig.bloodImpactParticleSizeMin = fxConfig.bloodImpactParticleSizeMin;
+    weaponConfig.bloodImpactParticleSizeMax = fxConfig.bloodImpactParticleSizeMax;
+    weaponConfig.bloodImpactSpreadDegrees = fxConfig.bloodImpactSpreadDegrees;
+
+    weaponConfig.bloodDecalCountMin = fxConfig.bloodDecalCountMin;
+    weaponConfig.bloodDecalCountMax = fxConfig.bloodDecalCountMax;
+    weaponConfig.bloodDecalDistanceMin = fxConfig.bloodDecalDistanceMin;
+    weaponConfig.bloodDecalDistanceMax = fxConfig.bloodDecalDistanceMax;
+    weaponConfig.bloodDecalRadiusMin = fxConfig.bloodDecalRadiusMin;
+    weaponConfig.bloodDecalRadiusMax = fxConfig.bloodDecalRadiusMax;
+    weaponConfig.bloodDecalSpreadDegrees = fxConfig.bloodDecalSpreadDegrees;
+    weaponConfig.bloodDecalWallPadding = fxConfig.bloodDecalWallPadding;
+    weaponConfig.bloodDecalOpacityMin = fxConfig.bloodDecalOpacityMin;
+    weaponConfig.bloodDecalOpacityMax = fxConfig.bloodDecalOpacityMax;
+    return weaponConfig;
+}
+
+void QueueBloodSpatterDecals(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownNpcAttackEffectsConfig& fxConfig)
+{
+    QueueBloodSpatterDecals(
+            state,
+            hitPoint,
+            incomingShotDir,
+            BuildBloodOnlyWeaponConfig(fxConfig));
+}
+
 void SpawnBloodPoolEmitter(
         GameState& state,
         Vector2 position,
@@ -877,6 +918,19 @@ void SpawnBloodImpactParticles(
     }
 
     EnforceBloodImpactParticleCap(state.topdown.runtime.render);
+}
+
+void SpawnBloodImpactParticles(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownNpcAttackEffectsConfig& fxConfig)
+{
+    SpawnBloodImpactParticles(
+            state,
+            hitPoint,
+            incomingShotDir,
+            BuildBloodOnlyWeaponConfig(fxConfig));
 }
 
 bool TopdownShakeScreen(GameState& state,

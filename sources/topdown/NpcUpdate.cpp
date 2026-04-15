@@ -299,15 +299,24 @@ static void PrepareNpcScriptedMovement(GameState& state, float dt)
     }
 }
 
-static void UpdateNpcAudio(GameState& state, float dt)
+static void TopdownUpdateNpcStatusTimers(GameState& state, float dt)
 {
+    const float dtMs = dt * 1000.0f;
+
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active) {
             continue;
         }
 
+        if (npc.hurtStunRemainingMs > 0.0f) {
+            npc.hurtStunRemainingMs -= dtMs;
+            if (npc.hurtStunRemainingMs < 0.0f) {
+                npc.hurtStunRemainingMs = 0.0f;
+            }
+        }
+
         if (npc.painSoundCooldownMs > 0.0f) {
-            npc.painSoundCooldownMs -= dt * 1000.0f;
+            npc.painSoundCooldownMs -= dtMs;
             if (npc.painSoundCooldownMs < 0.0f) {
                 npc.painSoundCooldownMs = 0.0f;
             }
@@ -463,22 +472,12 @@ static void SetNpcAutomaticLoopFromLocomotion(
     }
 }
 
-void TopdownUpdateNpcAnimation(GameState& state, float dt)
+static void TopdownUpdateNpcAnimationPlayback(GameState& state, float dtMs)
 {
-    //static constexpr float kCorpseFadeDurationMs = 2000.0f;
-    const float dtMs = dt * 1000.0f;
-
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active) {
             npc.currentVelocity = Vector2{};
             continue;
-        }
-
-        if (npc.hurtStunRemainingMs > 0.0f) {
-            npc.hurtStunRemainingMs -= dtMs;
-            if (npc.hurtStunRemainingMs < 0.0f) {
-                npc.hurtStunRemainingMs = 0.0f;
-            }
         }
 
         const TopdownNpcAssetRuntime* asset =
@@ -527,9 +526,31 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
 
                 if (npc.dead && npc.oneShotTimeMs >= durationMs) {
                     npc.oneShotTimeMs = durationMs;
+                } else if (!npc.dead && npc.oneShotTimeMs >= durationMs) {
+                    TopdownClearNpcOneShotAnimation(npc);
+                }
+            }
+        }
+    }
+}
 
-                    const bool becameCorpseThisFrame = !npc.corpse;
+static void TopdownUpdateNpcDeathAndCorpseLifecycle(GameState& state, float dtMs)
+{
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active) {
+            continue;
+        }
 
+        if (npc.dead && !npc.corpse && npc.oneShotActive && TopdownNpcClipRefIsValid(npc.oneShotClip)) {
+            const TopdownNpcClipRef& clipRef = npc.oneShotClip;
+            const SpriteAssetResource* sprite =
+                    FindSpriteAssetResource(state.resources, clipRef.spriteHandle);
+            if (sprite != nullptr &&
+                sprite->loaded &&
+                clipRef.clipIndex >= 0 &&
+                clipRef.clipIndex < static_cast<int>(sprite->clips.size())) {
+                const float durationMs = GetOneShotClipDurationMs(*sprite, sprite->clips[clipRef.clipIndex]);
+                if (npc.oneShotTimeMs >= durationMs) {
                     npc.corpse = true;
                     npc.knockbackVelocity = Vector2{};
                     npc.move = {};
@@ -538,20 +559,16 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
                     npc.running = false;
                     npc.currentVelocity = Vector2{};
 
-                    if (becameCorpseThisFrame) {
-                        SpawnBloodPoolEmitter(
-                                state,
-                                npc.position,
-                                RandomRangeFloat(80.0f, 105.0f),
-                                RandomRangeFloat(2000.0f, 2500.0f));
-                    }
-                } else if (!npc.dead && npc.oneShotTimeMs >= durationMs) {
-                    TopdownClearNpcOneShotAnimation(npc);
+                    SpawnBloodPoolEmitter(
+                            state,
+                            npc.position,
+                            RandomRangeFloat(80.0f, 105.0f),
+                            RandomRangeFloat(2000.0f, 2500.0f));
                 }
             }
         }
 
-        if (npc.corpse && npc.active && npc.corpseExpirationMs >= 0.0f) {
+        if (npc.corpse && npc.corpseExpirationMs >= 0.0f) {
             npc.corpseElapsedMs += dtMs;
 
             const float totalLifetimeMs =
@@ -576,6 +593,13 @@ void TopdownUpdateNpcAnimation(GameState& state, float dt)
             }
         }
     }
+}
+
+void TopdownUpdateNpcAnimation(GameState& state, float dt)
+{
+    const float dtMs = dt * 1000.0f;
+    TopdownUpdateNpcAnimationPlayback(state, dtMs);
+    TopdownUpdateNpcDeathAndCorpseLifecycle(state, dtMs);
 }
 
 void StartNpcKnockback(
@@ -604,18 +628,25 @@ void StartNpcKnockback(
 
 void TopdownUpdateNpcLogic(GameState& state, float dt)
 {
+    // Phase 1: gameplay timers/state that should not live inside animation playback.
+    TopdownUpdateNpcStatusTimers(state, dt);
+
+    // Phase 2: AI chooses goals/state and writes desired movement.
     TopdownUpdateNpcAi(state, dt);
 
+    // Phase 3: path-following prep sets facing/running before RVO consumes preferred motion.
     PrepareNpcAiMovement(state, dt);
     PrepareNpcScriptedMovement(state, dt);
 
+    // Phase 4: crowd sim resolves agent motion for AI-owned movers.
     TopdownRvoEnsureReady(state);
     TopdownRvoSync(state);
     TopdownRvoStep(state, dt);
 
+    // Phase 5: apply movement and world collision for both AI and scripted owners.
     ApplyNpcAiMovement(state, dt);
     ApplyNpcScriptedMovement(state, dt);
 
+    // Phase 6: knockback is applied after normal movement so interruption/override is explicit.
     UpdateNpcKnockbacks(state, dt);
-    UpdateNpcAudio(state, dt);
 }
