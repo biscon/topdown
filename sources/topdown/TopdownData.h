@@ -607,28 +607,6 @@ struct TopdownNavWorld {
     float agentRadius = 0.0f;
 };
 
-struct TopdownNpcAttackEffectsConfig {
-    int bloodImpactParticleCount = 8;
-    float bloodImpactParticleSpeedMin = 45.0f;
-    float bloodImpactParticleSpeedMax = 120.0f;
-    float bloodImpactParticleLifetimeMsMin = 180.0f;
-    float bloodImpactParticleLifetimeMsMax = 320.0f;
-    float bloodImpactParticleSizeMin = 2.5f;
-    float bloodImpactParticleSizeMax = 5.0f;
-    float bloodImpactSpreadDegrees = 70.0f;
-
-    int bloodDecalCountMin = 2;
-    int bloodDecalCountMax = 4;
-    float bloodDecalDistanceMin = 8.0f;
-    float bloodDecalDistanceMax = 55.0f;
-    float bloodDecalRadiusMin = 7.0f;
-    float bloodDecalRadiusMax = 14.0f;
-    float bloodDecalSpreadDegrees = 45.0f;
-    float bloodDecalWallPadding = 6.0f;
-    float bloodDecalOpacityMin = 0.75f;
-    float bloodDecalOpacityMax = 0.95f;
-};
-
 enum class TopdownBloodFxProfile {
     Default,
     Knife,
@@ -660,6 +638,29 @@ struct TopdownBloodEffectConfig {
     float bloodDecalWallPadding = 6.0f;
     float bloodDecalOpacityMin = 0.72f;
     float bloodDecalOpacityMax = 0.95f;
+};
+
+struct TopdownNpcAttackEffectsConfig {
+    TopdownBloodEffectConfig bloodEffects{
+            TopdownBloodFxProfile::NpcMelee,
+            8,
+            45.0f,
+            120.0f,
+            180.0f,
+            320.0f,
+            2.5f,
+            5.0f,
+            70.0f,
+            2,
+            4,
+            8.0f,
+            55.0f,
+            7.0f,
+            14.0f,
+            45.0f,
+            6.0f,
+            0.75f,
+            0.95f};
 };
 
 struct TopdownPlayerWeaponConfig {
@@ -716,25 +717,7 @@ struct TopdownPlayerWeaponConfig {
     float muzzleSmokeSpreadDegrees = 85.0f;
     float muzzleSmokeForwardBias = 0.35f;
 
-    int bloodImpactParticleCount = 8;
-    float bloodImpactParticleSpeedMin = 50.0f;
-    float bloodImpactParticleSpeedMax = 140.0f;
-    float bloodImpactParticleLifetimeMsMin = 90.0f;
-    float bloodImpactParticleLifetimeMsMax = 180.0f;
-    float bloodImpactParticleSizeMin = 2.0f;
-    float bloodImpactParticleSizeMax = 5.0f;
-    float bloodImpactSpreadDegrees = 80.0f;
-
-    int bloodDecalCountMin = 4;
-    int bloodDecalCountMax = 7;
-    float bloodDecalDistanceMin = 18.0f;
-    float bloodDecalDistanceMax = 110.0f;
-    float bloodDecalRadiusMin = 8.0f;
-    float bloodDecalRadiusMax = 18.0f;
-    float bloodDecalSpreadDegrees = 85.0f;
-    float bloodDecalWallPadding = 6.0f;
-    float bloodDecalOpacityMin = 0.72f;
-    float bloodDecalOpacityMax = 0.95f;
+    TopdownBloodEffectConfig bloodEffects{};
 
     std::vector<TopdownFireMode> supportedFireModes;
     TopdownFireMode defaultFireMode = TopdownFireMode::SemiAuto;
