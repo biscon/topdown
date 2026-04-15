@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "topdown/TopdownHelpers.h"
-#include "topdown/PlayerLoad.h"
+#include "topdown/PlayerRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "LevelCollision.h"
 #include "LevelDoors.h"

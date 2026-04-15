@@ -1,6 +1,6 @@
 #include "topdown/LevelInput.h"
 #include "input/Input.h"
-#include "topdown/PlayerLoad.h"
+#include "topdown/PlayerRegistry.h"
 
 void TopdownHandleInput(GameState& state)
 {

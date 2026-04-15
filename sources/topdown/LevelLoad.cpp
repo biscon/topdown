@@ -11,7 +11,7 @@
 #include "utils/json.hpp"
 #include "resources/Resources.h"
 #include "LevelCamera.h"
-#include "topdown/PlayerLoad.h"
+#include "topdown/PlayerRegistry.h"
 #include "topdown/LevelScripting.h"
 #include "scripting/ScriptSystem.h"
 #include "nav/NavMeshBuild.h"

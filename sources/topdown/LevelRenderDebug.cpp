@@ -10,7 +10,7 @@
 #include "scripting/ScriptSystem.h"
 #include "NpcRegistry.h"
 #include "resources/AsepriteAsset.h"
-#include "PlayerLoad.h"
+#include "PlayerRegistry.h"
 #include "TopdownNpcAi.h"
 
 

@@ -15,7 +15,7 @@
 #include "render/EffectShaderRegistry.h"
 #include "topdown/TopdownMode.h"
 #include "topdown/LevelRegistry.h"
-#include "topdown/PlayerLoad.h"
+#include "topdown/PlayerRegistry.h"
 #include "topdown/BloodStampGeneration.h"
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/TopdownPlayerVignette.h"

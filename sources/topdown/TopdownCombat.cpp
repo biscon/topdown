@@ -7,7 +7,7 @@
 #include "topdown/PlayerUpdate.h"
 #include "raylib.h"
 #include "NpcRegistry.h"
-#include "topdown/PlayerLoad.h"
+#include "topdown/PlayerRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "audio/Audio.h"
 #include "LevelCollision.h"
