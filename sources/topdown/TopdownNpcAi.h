@@ -64,3 +64,44 @@ bool TopdownHasNpcReachedPoint(
         const TopdownNpcRuntime& npc,
         Vector2 point,
         float radius);
+
+void TopdownClearNpcSearchState(TopdownNpcRuntime& npc);
+void TopdownResetNpcLostTargetProgress(TopdownNpcRuntime& npc);
+void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc);
+
+bool TopdownHasNpcReachedLastKnownTarget(
+        const TopdownNpcRuntime& npc,
+        float arriveRadius = 300.0f);
+
+void TopdownFinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc);
+void TopdownBeginNpcSearchState(
+        TopdownNpcRuntime& npc,
+        float durationMs = 3600.0f,
+        float sweepDegrees = 260.0f);
+
+bool TopdownUpdateNpcChaseStuckWatchdog(
+        TopdownNpcRuntime& npc,
+        float dtMs,
+        float probePeriodMs = 800.0f,
+        float minDistancePerProbe = 20.0f);
+
+bool TopdownTryBuildNpcChaseTarget(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        bool currentlyDetectsPlayer,
+        Vector2& outChaseTarget);
+
+void TopdownUpdateNpcSearchState(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dt);
+
+void TopdownUpdateNpcPerception(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        float dtMs);
+
+void TopdownUpdateNpcPersistentChaseState(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        bool currentlyDetectsPlayer);

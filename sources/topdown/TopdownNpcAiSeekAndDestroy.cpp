@@ -13,195 +13,6 @@
 
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
 
-static float SmoothStep01(float t)
-{
-    t = Clamp(t, 0.0f, 1.0f);
-    return t * t * (3.0f - 2.0f * t);
-}
-
-static void ClearNpcSearchState(TopdownNpcRuntime& npc)
-{
-    npc.searchStateTimeMs = 0.0f;
-    npc.searchDurationMs = 0.0f;
-    npc.searchBaseFacingRadians = 0.0f;
-    npc.searchSweepDegrees = 0.0f;
-}
-
-static void ResetNpcLostTargetProgress(TopdownNpcRuntime& npc)
-{
-    npc.lostTargetProgressTimerMs = 0.0f;
-    npc.lostTargetLastDistance = 0.0f;
-}
-
-static void ResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc)
-{
-    npc.chaseStuckTimerMs = 0.0f;
-    npc.chaseStuckLastPosition = npc.position;
-}
-
-static bool HasNpcReachedLastKnownTarget(const TopdownNpcRuntime& npc)
-{
-    const float arriveRadius = 300.0f;
-
-    return TopdownHasNpcReachedPoint(
-            npc,
-            npc.lastKnownPlayerPosition,
-            arriveRadius);
-}
-
-static void FinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
-{
-    npc.hasPlayerTarget = false;
-    npc.loseTargetTimerMs = 0.0f;
-    npc.repathTimerMs = 0.0f;
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.combatState = TopdownNpcCombatState::None;
-
-    ResetNpcLostTargetProgress(npc);
-    ResetNpcChaseStuckWatchdog(npc);
-    ClearNpcSearchState(npc);
-    TopdownStopNpcMovement(npc);
-}
-
-static void BeginNpcSearchState(TopdownNpcRuntime& npc)
-{
-    TopdownStopNpcMovement(npc);
-    ResetNpcChaseStuckWatchdog(npc);
-
-    npc.combatState = TopdownNpcCombatState::Search;
-    npc.searchStateTimeMs = 0.0f;
-    npc.searchDurationMs = 3600.0f;
-    npc.searchSweepDegrees = 260.0f;
-
-    Vector2 facing = TopdownNormalizeOrZero(npc.facing);
-    if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
-        facing = TopdownNormalizeOrZero(facing);
-    }
-
-    if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{1.0f, 0.0f};
-    }
-
-    npc.searchBaseFacingRadians = std::atan2(facing.y, facing.x);
-    npc.rotationRadians = npc.searchBaseFacingRadians;
-    npc.facing = facing;
-}
-
-static bool UpdateNpcChaseStuckWatchdog(
-        TopdownNpcRuntime& npc,
-        float dtMs)
-{
-    if (npc.chaseStuckTimerMs <= 0.0f) {
-        npc.chaseStuckLastPosition = npc.position;
-        npc.chaseStuckTimerMs = dtMs;
-        return false;
-    }
-
-    npc.chaseStuckTimerMs += dtMs;
-
-    if (npc.chaseStuckTimerMs < 800.0f) {
-        return false;
-    }
-
-    const float movedDistance =
-            TopdownLength(
-                    TopdownSub(
-                            npc.position,
-                            npc.chaseStuckLastPosition));
-
-    const bool movedTooLittle = movedDistance < 20.0f;
-
-    npc.chaseStuckLastPosition = npc.position;
-    npc.chaseStuckTimerMs = 0.0f;
-
-    return movedTooLittle;
-}
-
-static bool TryBuildNpcChaseTarget(
-        const GameState& state,
-        const TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer,
-        Vector2& outChaseTarget)
-{
-    if (!npc.hasPlayerTarget) {
-        return false;
-    }
-
-    if (npc.persistentChase) {
-        outChaseTarget = state.topdown.runtime.player.position;
-        return true;
-    }
-
-    if (currentlyDetectsPlayer) {
-        outChaseTarget = state.topdown.runtime.player.position;
-        return true;
-    }
-
-    outChaseTarget = npc.lastKnownPlayerPosition;
-    return true;
-}
-
-static void UpdateNpcSearchState(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dt)
-{
-    if (npc.combatState != TopdownNpcCombatState::Search) {
-        return;
-    }
-
-    npc.searchStateTimeMs += dt * 1000.0f;
-
-    const float durationMs = std::max(1.0f, npc.searchDurationMs);
-    const float totalT = Clamp(npc.searchStateTimeMs / durationMs, 0.0f, 1.0f);
-
-    const float halfSweepRadians =
-            (npc.searchSweepDegrees * 0.5f) * DEG2RAD;
-
-    float signedOffsetRadians = 0.0f;
-
-    if (totalT < (1.0f / 3.0f)) {
-        const float t = SmoothStep01(totalT / (1.0f / 3.0f));
-        signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
-    } else if (totalT < (2.0f / 3.0f)) {
-        const float t = SmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
-        signedOffsetRadians = Lerp(-halfSweepRadians, halfSweepRadians, t);
-    } else {
-        const float t = SmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
-        signedOffsetRadians = Lerp(halfSweepRadians, 0.0f, t);
-    }
-
-    const float newAngle =
-            NormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
-
-    npc.rotationRadians = newAngle;
-    npc.facing = Vector2{
-            std::cos(newAngle),
-            std::sin(newAngle)
-    };
-
-    if (TopdownNpcCanSeePlayer(state, npc) ||
-        TopdownNpcCanHearPlayer(state, npc)) {
-        TopdownAlertNpcToPlayer(state, npc);
-        ClearNpcSearchState(npc);
-        return;
-    }
-
-    if (npc.searchStateTimeMs >= durationMs) {
-        npc.rotationRadians = npc.searchBaseFacingRadians;
-        npc.facing = Vector2{
-                std::cos(npc.searchBaseFacingRadians),
-                std::sin(npc.searchBaseFacingRadians)
-        };
-
-        FinishNpcSearchAndForgetTarget(npc);
-    }
-}
-
 static TopdownPlayerWeaponConfig BuildNpcAttackEffectsAsWeaponConfig(
         const TopdownNpcAttackEffectsConfig& fx)
 {
@@ -295,98 +106,6 @@ static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
             TopdownMul(toPlayer, -player.radius * 0.55f));
 }
 
-static void UpdateNpcPerception(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dtMs)
-{
-    const bool seesPlayer = TopdownNpcCanSeePlayer(state, npc);
-    const bool hearsPlayer = TopdownNpcCanHearPlayer(state, npc);
-
-    if (seesPlayer || hearsPlayer) {
-        if (!npc.hasPlayerTarget) {
-            npc.hasPlayerTarget = true;
-            npc.repathTimerMs = 0.0f;
-        }
-
-        npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
-        npc.loseTargetTimerMs = 0.0f;
-        ResetNpcLostTargetProgress(npc);
-        npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-
-        const float nearbyAlertRadius =
-                std::max(180.0f, npc.hearingRange);
-
-        TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
-        return;
-    }
-
-    if (npc.hasPlayerTarget) {
-        npc.loseTargetTimerMs += dtMs;
-        npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
-
-        if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-            if (HasNpcReachedLastKnownTarget(npc)) {
-                BeginNpcSearchState(npc);
-                return;
-            }
-
-            const float currentDistance =
-                    TopdownLength(
-                            TopdownSub(
-                                    npc.lastKnownPlayerPosition,
-                                    npc.position));
-
-            if (npc.lostTargetProgressTimerMs <= 0.0f) {
-                npc.lostTargetLastDistance = currentDistance;
-                npc.lostTargetProgressTimerMs = dtMs;
-            } else {
-                npc.lostTargetProgressTimerMs += dtMs;
-            }
-
-            if (npc.lostTargetProgressTimerMs >= 800.0f) {
-                const float progress =
-                        npc.lostTargetLastDistance - currentDistance;
-
-                const bool madeTooLittleProgress = progress < 20.0f;
-                if (madeTooLittleProgress) {
-                    BeginNpcSearchState(npc);
-                    return;
-                }
-
-                npc.lostTargetLastDistance = currentDistance;
-                npc.lostTargetProgressTimerMs = 0.0f;
-            }
-        } else {
-            ResetNpcLostTargetProgress(npc);
-        }
-
-        return;
-    }
-
-    ResetNpcLostTargetProgress(npc);
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-}
-
-static void UpdateNpcPersistentChaseState(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer)
-{
-    if (!npc.hasPlayerTarget) {
-        return;
-    }
-
-    npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-    npc.loseTargetTimerMs = 0.0f;
-    npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
-    ResetNpcLostTargetProgress(npc);
-
-    if (currentlyDetectsPlayer) {
-        ResetNpcChaseStuckWatchdog(npc);
-    }
-}
-
 static void StartNpcAttack(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -399,7 +118,7 @@ static void StartNpcAttack(
     }
 
     TopdownStopNpcMovement(npc);
-    ResetNpcChaseStuckWatchdog(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
 
     npc.combatState = TopdownNpcCombatState::Attack;
     npc.attackStateTimeMs = 0.0f;
@@ -535,12 +254,12 @@ static bool ShouldSkipNpcAiUpdate(const TopdownNpcRuntime& npc)
 static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
 {
     npc.hasPlayerTarget = false;
-    ResetNpcLostTargetProgress(npc);
-    ResetNpcChaseStuckWatchdog(npc);
+    TopdownResetNpcLostTargetProgress(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
     npc.combatState = TopdownNpcCombatState::None;
     TopdownStopNpcMovement(npc);
-    ClearNpcSearchState(npc);
+    TopdownClearNpcSearchState(npc);
 }
 
 static void UpdateNpcAttackCooldown(TopdownNpcRuntime& npc, float dtMs)
@@ -566,7 +285,7 @@ static void UpdateNpcRepathTimer(TopdownNpcRuntime& npc, float dtMs)
 static bool HandleNpcMotionInterrupts(TopdownNpcRuntime& npc)
 {
     if (npc.hurtStunRemainingMs > 0.0f) {
-        ResetNpcChaseStuckWatchdog(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
         npc.combatState =
                 npc.hasPlayerTarget
                 ? TopdownNpcCombatState::Chase
@@ -576,7 +295,7 @@ static bool HandleNpcMotionInterrupts(TopdownNpcRuntime& npc)
     }
 
     if (TopdownLengthSqr(npc.knockbackVelocity) > 0.000001f) {
-        ResetNpcChaseStuckWatchdog(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
         return true;
     }
 
@@ -594,7 +313,7 @@ static bool HandleNpcImmediateCombatStates(
     }
 
     if (npc.combatState == TopdownNpcCombatState::Search) {
-        UpdateNpcSearchState(state, npc, dt);
+        TopdownUpdateNpcSearchState(state, npc, dt);
         return true;
     }
 
@@ -612,9 +331,9 @@ static void UpdateNpcTargetingPhase(
             npc.hasPlayerTarget;
 
     if (persistentChaseActive) {
-        UpdateNpcPersistentChaseState(state, npc, currentlyDetectsPlayer);
+        TopdownUpdateNpcPersistentChaseState(state, npc, currentlyDetectsPlayer);
     } else {
-        UpdateNpcPerception(state, npc, dtMs);
+        TopdownUpdateNpcPerception(state, npc, dtMs);
     }
 }
 
@@ -625,8 +344,8 @@ static bool HandleNpcNoTargetState(TopdownNpcRuntime& npc)
     }
 
     npc.combatState = TopdownNpcCombatState::None;
-    ResetNpcLostTargetProgress(npc);
-    ResetNpcChaseStuckWatchdog(npc);
+    TopdownResetNpcLostTargetProgress(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
     TopdownStopNpcMovement(npc);
     return true;
 }
@@ -638,15 +357,15 @@ static bool HandleNpcMissingChaseTarget(
         Vector2& outChaseTarget)
 {
     const bool hasChaseTarget =
-            TryBuildNpcChaseTarget(state, npc, currentlyDetectsPlayer, outChaseTarget);
+            TopdownTryBuildNpcChaseTarget(state, npc, currentlyDetectsPlayer, outChaseTarget);
 
     if (hasChaseTarget) {
         return false;
     }
 
     npc.combatState = TopdownNpcCombatState::None;
-    ResetNpcLostTargetProgress(npc);
-    ResetNpcChaseStuckWatchdog(npc);
+    TopdownResetNpcLostTargetProgress(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
     TopdownStopNpcMovement(npc);
     return true;
 }
@@ -665,7 +384,7 @@ static bool HandleNpcHardChaseCutoff(
         return false;
     }
 
-    BeginNpcSearchState(npc);
+    TopdownBeginNpcSearchState(npc);
     return true;
 }
 
@@ -704,8 +423,8 @@ static bool HandleNpcAttackOrRecover(
     }
 
     TopdownStopNpcMovement(npc);
-    ResetNpcLostTargetProgress(npc);
-    ResetNpcChaseStuckWatchdog(npc);
+    TopdownResetNpcLostTargetProgress(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
 
     if (npc.attackCooldownRemainingMs <= 0.0f) {
         StartNpcAttack(state, npc);
@@ -723,12 +442,12 @@ static bool HandleNpcChaseWatchdog(
         float dtMs)
 {
     if (persistentChaseActive && !currentlyDetectsPlayer) {
-        if (UpdateNpcChaseStuckWatchdog(npc, dtMs)) {
-            BeginNpcSearchState(npc);
+        if (TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
+            TopdownBeginNpcSearchState(npc);
             return true;
         }
     } else {
-        ResetNpcChaseStuckWatchdog(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
     }
 
     return false;
@@ -796,7 +515,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     UpdateNpcTargetingPhase(state, npc, dtMs, currentlyDetectsPlayer);
 
     if (npc.combatState == TopdownNpcCombatState::Search) {
-        UpdateNpcSearchState(state, npc, dt);
+        TopdownUpdateNpcSearchState(state, npc, dt);
         return;
     }
 
