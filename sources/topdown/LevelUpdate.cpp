@@ -9,10 +9,14 @@
 #include "topdown/TopdownCombat.h"
 #include "raylib.h"
 #include "NpcRegistry.h"
+#include "NpcUpdate.h"
 #include "menu/Menu.h"
 #include "LevelLoad.h"
 #include "utils/ScopeTimer.h"
 #include "scripting/ScriptSystem.h"
+#include "LevelDoors.h"
+#include "LevelEffects.h"
+#include "LevelWindows.h"
 
 static bool IsPointInsideTrigger(
         const TopdownAuthoredTrigger& trigger,
