@@ -37,47 +37,49 @@ static bool ParseNpcAiModeString(
 
 static void ClampNpcAttackEffectsConfig(TopdownNpcAttackEffectsConfig& cfg)
 {
-    if (cfg.bloodImpactParticleCount < 0) cfg.bloodImpactParticleCount = 0;
+    TopdownBloodEffectConfig& bloodCfg = cfg.bloodEffects;
 
-    if (cfg.bloodImpactParticleSpeedMin < 0.0f) cfg.bloodImpactParticleSpeedMin = 0.0f;
-    if (cfg.bloodImpactParticleSpeedMax < cfg.bloodImpactParticleSpeedMin) {
-        cfg.bloodImpactParticleSpeedMax = cfg.bloodImpactParticleSpeedMin;
+    if (bloodCfg.bloodImpactParticleCount < 0) bloodCfg.bloodImpactParticleCount = 0;
+
+    if (bloodCfg.bloodImpactParticleSpeedMin < 0.0f) bloodCfg.bloodImpactParticleSpeedMin = 0.0f;
+    if (bloodCfg.bloodImpactParticleSpeedMax < bloodCfg.bloodImpactParticleSpeedMin) {
+        bloodCfg.bloodImpactParticleSpeedMax = bloodCfg.bloodImpactParticleSpeedMin;
     }
 
-    if (cfg.bloodImpactParticleLifetimeMsMin < 0.0f) cfg.bloodImpactParticleLifetimeMsMin = 0.0f;
-    if (cfg.bloodImpactParticleLifetimeMsMax < cfg.bloodImpactParticleLifetimeMsMin) {
-        cfg.bloodImpactParticleLifetimeMsMax = cfg.bloodImpactParticleLifetimeMsMin;
+    if (bloodCfg.bloodImpactParticleLifetimeMsMin < 0.0f) bloodCfg.bloodImpactParticleLifetimeMsMin = 0.0f;
+    if (bloodCfg.bloodImpactParticleLifetimeMsMax < bloodCfg.bloodImpactParticleLifetimeMsMin) {
+        bloodCfg.bloodImpactParticleLifetimeMsMax = bloodCfg.bloodImpactParticleLifetimeMsMin;
     }
 
-    if (cfg.bloodImpactParticleSizeMin < 0.0f) cfg.bloodImpactParticleSizeMin = 0.0f;
-    if (cfg.bloodImpactParticleSizeMax < cfg.bloodImpactParticleSizeMin) {
-        cfg.bloodImpactParticleSizeMax = cfg.bloodImpactParticleSizeMin;
+    if (bloodCfg.bloodImpactParticleSizeMin < 0.0f) bloodCfg.bloodImpactParticleSizeMin = 0.0f;
+    if (bloodCfg.bloodImpactParticleSizeMax < bloodCfg.bloodImpactParticleSizeMin) {
+        bloodCfg.bloodImpactParticleSizeMax = bloodCfg.bloodImpactParticleSizeMin;
     }
 
-    if (cfg.bloodImpactSpreadDegrees < 0.0f) cfg.bloodImpactSpreadDegrees = 0.0f;
+    if (bloodCfg.bloodImpactSpreadDegrees < 0.0f) bloodCfg.bloodImpactSpreadDegrees = 0.0f;
 
-    if (cfg.bloodDecalCountMin < 0) cfg.bloodDecalCountMin = 0;
-    if (cfg.bloodDecalCountMax < cfg.bloodDecalCountMin) {
-        cfg.bloodDecalCountMax = cfg.bloodDecalCountMin;
+    if (bloodCfg.bloodDecalCountMin < 0) bloodCfg.bloodDecalCountMin = 0;
+    if (bloodCfg.bloodDecalCountMax < bloodCfg.bloodDecalCountMin) {
+        bloodCfg.bloodDecalCountMax = bloodCfg.bloodDecalCountMin;
     }
 
-    if (cfg.bloodDecalDistanceMin < 0.0f) cfg.bloodDecalDistanceMin = 0.0f;
-    if (cfg.bloodDecalDistanceMax < cfg.bloodDecalDistanceMin) {
-        cfg.bloodDecalDistanceMax = cfg.bloodDecalDistanceMin;
+    if (bloodCfg.bloodDecalDistanceMin < 0.0f) bloodCfg.bloodDecalDistanceMin = 0.0f;
+    if (bloodCfg.bloodDecalDistanceMax < bloodCfg.bloodDecalDistanceMin) {
+        bloodCfg.bloodDecalDistanceMax = bloodCfg.bloodDecalDistanceMin;
     }
 
-    if (cfg.bloodDecalRadiusMin < 0.0f) cfg.bloodDecalRadiusMin = 0.0f;
-    if (cfg.bloodDecalRadiusMax < cfg.bloodDecalRadiusMin) {
-        cfg.bloodDecalRadiusMax = cfg.bloodDecalRadiusMin;
+    if (bloodCfg.bloodDecalRadiusMin < 0.0f) bloodCfg.bloodDecalRadiusMin = 0.0f;
+    if (bloodCfg.bloodDecalRadiusMax < bloodCfg.bloodDecalRadiusMin) {
+        bloodCfg.bloodDecalRadiusMax = bloodCfg.bloodDecalRadiusMin;
     }
 
-    if (cfg.bloodDecalSpreadDegrees < 0.0f) cfg.bloodDecalSpreadDegrees = 0.0f;
-    if (cfg.bloodDecalWallPadding < 0.0f) cfg.bloodDecalWallPadding = 0.0f;
+    if (bloodCfg.bloodDecalSpreadDegrees < 0.0f) bloodCfg.bloodDecalSpreadDegrees = 0.0f;
+    if (bloodCfg.bloodDecalWallPadding < 0.0f) bloodCfg.bloodDecalWallPadding = 0.0f;
 
-    cfg.bloodDecalOpacityMin = Clamp(cfg.bloodDecalOpacityMin, 0.0f, 1.0f);
-    cfg.bloodDecalOpacityMax = Clamp(cfg.bloodDecalOpacityMax, 0.0f, 1.0f);
-    if (cfg.bloodDecalOpacityMax < cfg.bloodDecalOpacityMin) {
-        cfg.bloodDecalOpacityMax = cfg.bloodDecalOpacityMin;
+    bloodCfg.bloodDecalOpacityMin = Clamp(bloodCfg.bloodDecalOpacityMin, 0.0f, 1.0f);
+    bloodCfg.bloodDecalOpacityMax = Clamp(bloodCfg.bloodDecalOpacityMax, 0.0f, 1.0f);
+    if (bloodCfg.bloodDecalOpacityMax < bloodCfg.bloodDecalOpacityMin) {
+        bloodCfg.bloodDecalOpacityMax = bloodCfg.bloodDecalOpacityMin;
     }
 }
 
@@ -93,43 +95,44 @@ static void ReadNpcAttackEffectsConfig(
 
     const json& fx = *it;
 
-    outCfg.bloodImpactParticleCount =
-            fx.value("bloodImpactParticleCount", outCfg.bloodImpactParticleCount);
-    outCfg.bloodImpactParticleSpeedMin =
-            fx.value("bloodImpactParticleSpeedMin", outCfg.bloodImpactParticleSpeedMin);
-    outCfg.bloodImpactParticleSpeedMax =
-            fx.value("bloodImpactParticleSpeedMax", outCfg.bloodImpactParticleSpeedMax);
-    outCfg.bloodImpactParticleLifetimeMsMin =
-            fx.value("bloodImpactParticleLifetimeMsMin", outCfg.bloodImpactParticleLifetimeMsMin);
-    outCfg.bloodImpactParticleLifetimeMsMax =
-            fx.value("bloodImpactParticleLifetimeMsMax", outCfg.bloodImpactParticleLifetimeMsMax);
-    outCfg.bloodImpactParticleSizeMin =
-            fx.value("bloodImpactParticleSizeMin", outCfg.bloodImpactParticleSizeMin);
-    outCfg.bloodImpactParticleSizeMax =
-            fx.value("bloodImpactParticleSizeMax", outCfg.bloodImpactParticleSizeMax);
-    outCfg.bloodImpactSpreadDegrees =
-            fx.value("bloodImpactSpreadDegrees", outCfg.bloodImpactSpreadDegrees);
+    TopdownBloodEffectConfig& bloodCfg = outCfg.bloodEffects;
+    bloodCfg.bloodImpactParticleCount =
+            fx.value("bloodImpactParticleCount", bloodCfg.bloodImpactParticleCount);
+    bloodCfg.bloodImpactParticleSpeedMin =
+            fx.value("bloodImpactParticleSpeedMin", bloodCfg.bloodImpactParticleSpeedMin);
+    bloodCfg.bloodImpactParticleSpeedMax =
+            fx.value("bloodImpactParticleSpeedMax", bloodCfg.bloodImpactParticleSpeedMax);
+    bloodCfg.bloodImpactParticleLifetimeMsMin =
+            fx.value("bloodImpactParticleLifetimeMsMin", bloodCfg.bloodImpactParticleLifetimeMsMin);
+    bloodCfg.bloodImpactParticleLifetimeMsMax =
+            fx.value("bloodImpactParticleLifetimeMsMax", bloodCfg.bloodImpactParticleLifetimeMsMax);
+    bloodCfg.bloodImpactParticleSizeMin =
+            fx.value("bloodImpactParticleSizeMin", bloodCfg.bloodImpactParticleSizeMin);
+    bloodCfg.bloodImpactParticleSizeMax =
+            fx.value("bloodImpactParticleSizeMax", bloodCfg.bloodImpactParticleSizeMax);
+    bloodCfg.bloodImpactSpreadDegrees =
+            fx.value("bloodImpactSpreadDegrees", bloodCfg.bloodImpactSpreadDegrees);
 
-    outCfg.bloodDecalCountMin =
-            fx.value("bloodDecalCountMin", outCfg.bloodDecalCountMin);
-    outCfg.bloodDecalCountMax =
-            fx.value("bloodDecalCountMax", outCfg.bloodDecalCountMax);
-    outCfg.bloodDecalDistanceMin =
-            fx.value("bloodDecalDistanceMin", outCfg.bloodDecalDistanceMin);
-    outCfg.bloodDecalDistanceMax =
-            fx.value("bloodDecalDistanceMax", outCfg.bloodDecalDistanceMax);
-    outCfg.bloodDecalRadiusMin =
-            fx.value("bloodDecalRadiusMin", outCfg.bloodDecalRadiusMin);
-    outCfg.bloodDecalRadiusMax =
-            fx.value("bloodDecalRadiusMax", outCfg.bloodDecalRadiusMax);
-    outCfg.bloodDecalSpreadDegrees =
-            fx.value("bloodDecalSpreadDegrees", outCfg.bloodDecalSpreadDegrees);
-    outCfg.bloodDecalWallPadding =
-            fx.value("bloodDecalWallPadding", outCfg.bloodDecalWallPadding);
-    outCfg.bloodDecalOpacityMin =
-            fx.value("bloodDecalOpacityMin", outCfg.bloodDecalOpacityMin);
-    outCfg.bloodDecalOpacityMax =
-            fx.value("bloodDecalOpacityMax", outCfg.bloodDecalOpacityMax);
+    bloodCfg.bloodDecalCountMin =
+            fx.value("bloodDecalCountMin", bloodCfg.bloodDecalCountMin);
+    bloodCfg.bloodDecalCountMax =
+            fx.value("bloodDecalCountMax", bloodCfg.bloodDecalCountMax);
+    bloodCfg.bloodDecalDistanceMin =
+            fx.value("bloodDecalDistanceMin", bloodCfg.bloodDecalDistanceMin);
+    bloodCfg.bloodDecalDistanceMax =
+            fx.value("bloodDecalDistanceMax", bloodCfg.bloodDecalDistanceMax);
+    bloodCfg.bloodDecalRadiusMin =
+            fx.value("bloodDecalRadiusMin", bloodCfg.bloodDecalRadiusMin);
+    bloodCfg.bloodDecalRadiusMax =
+            fx.value("bloodDecalRadiusMax", bloodCfg.bloodDecalRadiusMax);
+    bloodCfg.bloodDecalSpreadDegrees =
+            fx.value("bloodDecalSpreadDegrees", bloodCfg.bloodDecalSpreadDegrees);
+    bloodCfg.bloodDecalWallPadding =
+            fx.value("bloodDecalWallPadding", bloodCfg.bloodDecalWallPadding);
+    bloodCfg.bloodDecalOpacityMin =
+            fx.value("bloodDecalOpacityMin", bloodCfg.bloodDecalOpacityMin);
+    bloodCfg.bloodDecalOpacityMax =
+            fx.value("bloodDecalOpacityMax", bloodCfg.bloodDecalOpacityMax);
 
     ClampNpcAttackEffectsConfig(outCfg);
 }

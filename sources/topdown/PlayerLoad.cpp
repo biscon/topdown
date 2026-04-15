@@ -559,165 +559,165 @@ static void ReadPlayerWeaponConfigs(
             cfg.muzzleSmokeForwardBias = 1.0f;
         }
 
-
         // blood
-        cfg.bloodImpactParticleCount =
-                entry.value("bloodImpactParticleCount", cfg.bloodImpactParticleCount);
-        if (cfg.bloodImpactParticleCount < 0) {
+        TopdownBloodEffectConfig& bloodCfg = cfg.bloodEffects;
+        bloodCfg.bloodImpactParticleCount =
+                entry.value("bloodImpactParticleCount", bloodCfg.bloodImpactParticleCount);
+        if (bloodCfg.bloodImpactParticleCount < 0) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleCount < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleCount = 0;
+            bloodCfg.bloodImpactParticleCount = 0;
         }
 
-        cfg.bloodImpactParticleSpeedMin =
-                entry.value("bloodImpactParticleSpeedMin", cfg.bloodImpactParticleSpeedMin);
-        cfg.bloodImpactParticleSpeedMax =
-                entry.value("bloodImpactParticleSpeedMax", cfg.bloodImpactParticleSpeedMax);
+        bloodCfg.bloodImpactParticleSpeedMin =
+                entry.value("bloodImpactParticleSpeedMin", bloodCfg.bloodImpactParticleSpeedMin);
+        bloodCfg.bloodImpactParticleSpeedMax =
+                entry.value("bloodImpactParticleSpeedMax", bloodCfg.bloodImpactParticleSpeedMax);
 
-        if (cfg.bloodImpactParticleSpeedMin < 0.0f) {
+        if (bloodCfg.bloodImpactParticleSpeedMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleSpeedMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleSpeedMin = 0.0f;
+            bloodCfg.bloodImpactParticleSpeedMin = 0.0f;
         }
-        if (cfg.bloodImpactParticleSpeedMax < cfg.bloodImpactParticleSpeedMin) {
+        if (bloodCfg.bloodImpactParticleSpeedMax < bloodCfg.bloodImpactParticleSpeedMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleSpeedMax < bloodImpactParticleSpeedMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleSpeedMax = cfg.bloodImpactParticleSpeedMin;
+            bloodCfg.bloodImpactParticleSpeedMax = bloodCfg.bloodImpactParticleSpeedMin;
         }
 
-        cfg.bloodImpactParticleLifetimeMsMin =
-                entry.value("bloodImpactParticleLifetimeMsMin", cfg.bloodImpactParticleLifetimeMsMin);
-        cfg.bloodImpactParticleLifetimeMsMax =
-                entry.value("bloodImpactParticleLifetimeMsMax", cfg.bloodImpactParticleLifetimeMsMax);
+        bloodCfg.bloodImpactParticleLifetimeMsMin =
+                entry.value("bloodImpactParticleLifetimeMsMin", bloodCfg.bloodImpactParticleLifetimeMsMin);
+        bloodCfg.bloodImpactParticleLifetimeMsMax =
+                entry.value("bloodImpactParticleLifetimeMsMax", bloodCfg.bloodImpactParticleLifetimeMsMax);
 
-        if (cfg.bloodImpactParticleLifetimeMsMin < 0.0f) {
+        if (bloodCfg.bloodImpactParticleLifetimeMsMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleLifetimeMsMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleLifetimeMsMin = 0.0f;
+            bloodCfg.bloodImpactParticleLifetimeMsMin = 0.0f;
         }
-        if (cfg.bloodImpactParticleLifetimeMsMax < cfg.bloodImpactParticleLifetimeMsMin) {
+        if (bloodCfg.bloodImpactParticleLifetimeMsMax < bloodCfg.bloodImpactParticleLifetimeMsMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleLifetimeMsMax < bloodImpactParticleLifetimeMsMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleLifetimeMsMax = cfg.bloodImpactParticleLifetimeMsMin;
+            bloodCfg.bloodImpactParticleLifetimeMsMax = bloodCfg.bloodImpactParticleLifetimeMsMin;
         }
 
-        cfg.bloodImpactParticleSizeMin =
-                entry.value("bloodImpactParticleSizeMin", cfg.bloodImpactParticleSizeMin);
-        cfg.bloodImpactParticleSizeMax =
-                entry.value("bloodImpactParticleSizeMax", cfg.bloodImpactParticleSizeMax);
+        bloodCfg.bloodImpactParticleSizeMin =
+                entry.value("bloodImpactParticleSizeMin", bloodCfg.bloodImpactParticleSizeMin);
+        bloodCfg.bloodImpactParticleSizeMax =
+                entry.value("bloodImpactParticleSizeMax", bloodCfg.bloodImpactParticleSizeMax);
 
-        if (cfg.bloodImpactParticleSizeMin < 0.0f) {
+        if (bloodCfg.bloodImpactParticleSizeMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleSizeMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleSizeMin = 0.0f;
+            bloodCfg.bloodImpactParticleSizeMin = 0.0f;
         }
-        if (cfg.bloodImpactParticleSizeMax < cfg.bloodImpactParticleSizeMin) {
+        if (bloodCfg.bloodImpactParticleSizeMax < bloodCfg.bloodImpactParticleSizeMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactParticleSizeMax < bloodImpactParticleSizeMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactParticleSizeMax = cfg.bloodImpactParticleSizeMin;
+            bloodCfg.bloodImpactParticleSizeMax = bloodCfg.bloodImpactParticleSizeMin;
         }
 
-        cfg.bloodImpactSpreadDegrees =
-                entry.value("bloodImpactSpreadDegrees", cfg.bloodImpactSpreadDegrees);
-        if (cfg.bloodImpactSpreadDegrees < 0.0f) {
+        bloodCfg.bloodImpactSpreadDegrees =
+                entry.value("bloodImpactSpreadDegrees", bloodCfg.bloodImpactSpreadDegrees);
+        if (bloodCfg.bloodImpactSpreadDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodImpactSpreadDegrees < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodImpactSpreadDegrees = 0.0f;
+            bloodCfg.bloodImpactSpreadDegrees = 0.0f;
         }
 
-        cfg.bloodDecalCountMin =
-                entry.value("bloodDecalCountMin", cfg.bloodDecalCountMin);
-        cfg.bloodDecalCountMax =
-                entry.value("bloodDecalCountMax", cfg.bloodDecalCountMax);
+        bloodCfg.bloodDecalCountMin =
+                entry.value("bloodDecalCountMin", bloodCfg.bloodDecalCountMin);
+        bloodCfg.bloodDecalCountMax =
+                entry.value("bloodDecalCountMax", bloodCfg.bloodDecalCountMax);
 
-        if (cfg.bloodDecalCountMin < 0) {
+        if (bloodCfg.bloodDecalCountMin < 0) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalCountMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalCountMin = 0;
+            bloodCfg.bloodDecalCountMin = 0;
         }
-        if (cfg.bloodDecalCountMax < cfg.bloodDecalCountMin) {
+        if (bloodCfg.bloodDecalCountMax < bloodCfg.bloodDecalCountMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalCountMax < bloodDecalCountMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalCountMax = cfg.bloodDecalCountMin;
+            bloodCfg.bloodDecalCountMax = bloodCfg.bloodDecalCountMin;
         }
 
-        cfg.bloodDecalDistanceMin =
-                entry.value("bloodDecalDistanceMin", cfg.bloodDecalDistanceMin);
-        cfg.bloodDecalDistanceMax =
-                entry.value("bloodDecalDistanceMax", cfg.bloodDecalDistanceMax);
+        bloodCfg.bloodDecalDistanceMin =
+                entry.value("bloodDecalDistanceMin", bloodCfg.bloodDecalDistanceMin);
+        bloodCfg.bloodDecalDistanceMax =
+                entry.value("bloodDecalDistanceMax", bloodCfg.bloodDecalDistanceMax);
 
-        if (cfg.bloodDecalDistanceMin < 0.0f) {
+        if (bloodCfg.bloodDecalDistanceMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalDistanceMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalDistanceMin = 0.0f;
+            bloodCfg.bloodDecalDistanceMin = 0.0f;
         }
-        if (cfg.bloodDecalDistanceMax < cfg.bloodDecalDistanceMin) {
+        if (bloodCfg.bloodDecalDistanceMax < bloodCfg.bloodDecalDistanceMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalDistanceMax < bloodDecalDistanceMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalDistanceMax = cfg.bloodDecalDistanceMin;
+            bloodCfg.bloodDecalDistanceMax = bloodCfg.bloodDecalDistanceMin;
         }
 
-        cfg.bloodDecalRadiusMin =
-                entry.value("bloodDecalRadiusMin", cfg.bloodDecalRadiusMin);
-        cfg.bloodDecalRadiusMax =
-                entry.value("bloodDecalRadiusMax", cfg.bloodDecalRadiusMax);
+        bloodCfg.bloodDecalRadiusMin =
+                entry.value("bloodDecalRadiusMin", bloodCfg.bloodDecalRadiusMin);
+        bloodCfg.bloodDecalRadiusMax =
+                entry.value("bloodDecalRadiusMax", bloodCfg.bloodDecalRadiusMax);
 
-        if (cfg.bloodDecalRadiusMin < 0.0f) {
+        if (bloodCfg.bloodDecalRadiusMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalRadiusMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalRadiusMin = 0.0f;
+            bloodCfg.bloodDecalRadiusMin = 0.0f;
         }
-        if (cfg.bloodDecalRadiusMax < cfg.bloodDecalRadiusMin) {
+        if (bloodCfg.bloodDecalRadiusMax < bloodCfg.bloodDecalRadiusMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalRadiusMax < bloodDecalRadiusMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalRadiusMax = cfg.bloodDecalRadiusMin;
+            bloodCfg.bloodDecalRadiusMax = bloodCfg.bloodDecalRadiusMin;
         }
 
-        cfg.bloodDecalSpreadDegrees =
-                entry.value("bloodDecalSpreadDegrees", cfg.bloodDecalSpreadDegrees);
-        if (cfg.bloodDecalSpreadDegrees < 0.0f) {
+        bloodCfg.bloodDecalSpreadDegrees =
+                entry.value("bloodDecalSpreadDegrees", bloodCfg.bloodDecalSpreadDegrees);
+        if (bloodCfg.bloodDecalSpreadDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalSpreadDegrees < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalSpreadDegrees = 0.0f;
+            bloodCfg.bloodDecalSpreadDegrees = 0.0f;
         }
 
-        cfg.bloodDecalWallPadding =
-                entry.value("bloodDecalWallPadding", cfg.bloodDecalWallPadding);
-        if (cfg.bloodDecalWallPadding < 0.0f) {
+        bloodCfg.bloodDecalWallPadding =
+                entry.value("bloodDecalWallPadding", bloodCfg.bloodDecalWallPadding);
+        if (bloodCfg.bloodDecalWallPadding < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalWallPadding < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalWallPadding = 0.0f;
+            bloodCfg.bloodDecalWallPadding = 0.0f;
         }
 
-        cfg.bloodDecalOpacityMin =
-                entry.value("bloodDecalOpacityMin", cfg.bloodDecalOpacityMin);
-        cfg.bloodDecalOpacityMax =
-                entry.value("bloodDecalOpacityMax", cfg.bloodDecalOpacityMax);
+        bloodCfg.bloodDecalOpacityMin =
+                entry.value("bloodDecalOpacityMin", bloodCfg.bloodDecalOpacityMin);
+        bloodCfg.bloodDecalOpacityMax =
+                entry.value("bloodDecalOpacityMax", bloodCfg.bloodDecalOpacityMax);
 
-        cfg.bloodDecalOpacityMin = Clamp(cfg.bloodDecalOpacityMin, 0.0f, 1.0f);
-        cfg.bloodDecalOpacityMax = Clamp(cfg.bloodDecalOpacityMax, 0.0f, 1.0f);
+        bloodCfg.bloodDecalOpacityMin = Clamp(bloodCfg.bloodDecalOpacityMin, 0.0f, 1.0f);
+        bloodCfg.bloodDecalOpacityMax = Clamp(bloodCfg.bloodDecalOpacityMax, 0.0f, 1.0f);
 
-        if (cfg.bloodDecalOpacityMax < cfg.bloodDecalOpacityMin) {
+        if (bloodCfg.bloodDecalOpacityMax < bloodCfg.bloodDecalOpacityMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': bloodDecalOpacityMax < bloodDecalOpacityMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.bloodDecalOpacityMax = cfg.bloodDecalOpacityMin;
+            bloodCfg.bloodDecalOpacityMax = bloodCfg.bloodDecalOpacityMin;
         }
 
 

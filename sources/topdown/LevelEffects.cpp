@@ -443,7 +443,7 @@ static void BuildBloodDecalRaycastSegments(
 static TopdownBloodEffectConfig BuildBloodEffectConfig(
         const TopdownPlayerWeaponConfig& weaponConfig)
 {
-    TopdownBloodEffectConfig bloodConfig;
+    TopdownBloodEffectConfig bloodConfig = weaponConfig.bloodEffects;
     if (weaponConfig.equipmentSetId == "knife") {
         bloodConfig.profile = TopdownBloodFxProfile::Knife;
     } else if (weaponConfig.equipmentSetId == "handgun") {
@@ -453,55 +453,13 @@ static TopdownBloodEffectConfig BuildBloodEffectConfig(
     } else if (weaponConfig.equipmentSetId == "shotgun") {
         bloodConfig.profile = TopdownBloodFxProfile::Shotgun;
     }
-
-    bloodConfig.bloodImpactParticleCount = weaponConfig.bloodImpactParticleCount;
-    bloodConfig.bloodImpactParticleSpeedMin = weaponConfig.bloodImpactParticleSpeedMin;
-    bloodConfig.bloodImpactParticleSpeedMax = weaponConfig.bloodImpactParticleSpeedMax;
-    bloodConfig.bloodImpactParticleLifetimeMsMin = weaponConfig.bloodImpactParticleLifetimeMsMin;
-    bloodConfig.bloodImpactParticleLifetimeMsMax = weaponConfig.bloodImpactParticleLifetimeMsMax;
-    bloodConfig.bloodImpactParticleSizeMin = weaponConfig.bloodImpactParticleSizeMin;
-    bloodConfig.bloodImpactParticleSizeMax = weaponConfig.bloodImpactParticleSizeMax;
-    bloodConfig.bloodImpactSpreadDegrees = weaponConfig.bloodImpactSpreadDegrees;
-
-    bloodConfig.bloodDecalCountMin = weaponConfig.bloodDecalCountMin;
-    bloodConfig.bloodDecalCountMax = weaponConfig.bloodDecalCountMax;
-    bloodConfig.bloodDecalDistanceMin = weaponConfig.bloodDecalDistanceMin;
-    bloodConfig.bloodDecalDistanceMax = weaponConfig.bloodDecalDistanceMax;
-    bloodConfig.bloodDecalRadiusMin = weaponConfig.bloodDecalRadiusMin;
-    bloodConfig.bloodDecalRadiusMax = weaponConfig.bloodDecalRadiusMax;
-    bloodConfig.bloodDecalSpreadDegrees = weaponConfig.bloodDecalSpreadDegrees;
-    bloodConfig.bloodDecalWallPadding = weaponConfig.bloodDecalWallPadding;
-    bloodConfig.bloodDecalOpacityMin = weaponConfig.bloodDecalOpacityMin;
-    bloodConfig.bloodDecalOpacityMax = weaponConfig.bloodDecalOpacityMax;
     return bloodConfig;
 }
 
 static TopdownBloodEffectConfig BuildBloodEffectConfig(
         const TopdownNpcAttackEffectsConfig& fxConfig)
 {
-    TopdownBloodEffectConfig bloodConfig;
-    bloodConfig.profile = TopdownBloodFxProfile::NpcMelee;
-
-    bloodConfig.bloodImpactParticleCount = fxConfig.bloodImpactParticleCount;
-    bloodConfig.bloodImpactParticleSpeedMin = fxConfig.bloodImpactParticleSpeedMin;
-    bloodConfig.bloodImpactParticleSpeedMax = fxConfig.bloodImpactParticleSpeedMax;
-    bloodConfig.bloodImpactParticleLifetimeMsMin = fxConfig.bloodImpactParticleLifetimeMsMin;
-    bloodConfig.bloodImpactParticleLifetimeMsMax = fxConfig.bloodImpactParticleLifetimeMsMax;
-    bloodConfig.bloodImpactParticleSizeMin = fxConfig.bloodImpactParticleSizeMin;
-    bloodConfig.bloodImpactParticleSizeMax = fxConfig.bloodImpactParticleSizeMax;
-    bloodConfig.bloodImpactSpreadDegrees = fxConfig.bloodImpactSpreadDegrees;
-
-    bloodConfig.bloodDecalCountMin = fxConfig.bloodDecalCountMin;
-    bloodConfig.bloodDecalCountMax = fxConfig.bloodDecalCountMax;
-    bloodConfig.bloodDecalDistanceMin = fxConfig.bloodDecalDistanceMin;
-    bloodConfig.bloodDecalDistanceMax = fxConfig.bloodDecalDistanceMax;
-    bloodConfig.bloodDecalRadiusMin = fxConfig.bloodDecalRadiusMin;
-    bloodConfig.bloodDecalRadiusMax = fxConfig.bloodDecalRadiusMax;
-    bloodConfig.bloodDecalSpreadDegrees = fxConfig.bloodDecalSpreadDegrees;
-    bloodConfig.bloodDecalWallPadding = fxConfig.bloodDecalWallPadding;
-    bloodConfig.bloodDecalOpacityMin = fxConfig.bloodDecalOpacityMin;
-    bloodConfig.bloodDecalOpacityMax = fxConfig.bloodDecalOpacityMax;
-    return bloodConfig;
+    return fxConfig.bloodEffects;
 }
 
 static float BuildBiasedBloodDecalDistance(
