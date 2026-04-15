@@ -495,6 +495,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         return;
     }
 
+    // Alert/perception only acquires target metadata; chase policy is owned by this state update.
     npc.combatState = TopdownNpcCombatState::Chase;
 
     if (HandleNpcChaseWatchdog(npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {

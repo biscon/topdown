@@ -629,6 +629,39 @@ struct TopdownNpcAttackEffectsConfig {
     float bloodDecalOpacityMax = 0.95f;
 };
 
+enum class TopdownBloodFxProfile {
+    Default,
+    Knife,
+    Handgun,
+    Rifle,
+    Shotgun,
+    NpcMelee
+};
+
+struct TopdownBloodEffectConfig {
+    TopdownBloodFxProfile profile = TopdownBloodFxProfile::Default;
+
+    int bloodImpactParticleCount = 8;
+    float bloodImpactParticleSpeedMin = 50.0f;
+    float bloodImpactParticleSpeedMax = 140.0f;
+    float bloodImpactParticleLifetimeMsMin = 90.0f;
+    float bloodImpactParticleLifetimeMsMax = 180.0f;
+    float bloodImpactParticleSizeMin = 2.0f;
+    float bloodImpactParticleSizeMax = 5.0f;
+    float bloodImpactSpreadDegrees = 80.0f;
+
+    int bloodDecalCountMin = 4;
+    int bloodDecalCountMax = 7;
+    float bloodDecalDistanceMin = 18.0f;
+    float bloodDecalDistanceMax = 110.0f;
+    float bloodDecalRadiusMin = 8.0f;
+    float bloodDecalRadiusMax = 18.0f;
+    float bloodDecalSpreadDegrees = 85.0f;
+    float bloodDecalWallPadding = 6.0f;
+    float bloodDecalOpacityMin = 0.72f;
+    float bloodDecalOpacityMax = 0.95f;
+};
+
 struct TopdownPlayerWeaponConfig {
     std::string equipmentSetId;
     int slot = 0;
@@ -714,7 +747,7 @@ struct TopdownPendingBloodDecalSpawn {
     bool active = false;
     Vector2 hitPoint{};
     Vector2 incomingShotDir{};
-    TopdownPlayerWeaponConfig weaponConfig{};
+    TopdownBloodEffectConfig bloodEffectConfig{};
     float delayMs = 0.0f;
     float elapsedMs = 0.0f;
 };

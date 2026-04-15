@@ -440,14 +440,78 @@ static void BuildBloodDecalRaycastSegments(
     }
 }
 
-static float BuildBiasedBloodDecalDistance(
+static TopdownBloodEffectConfig BuildBloodEffectConfig(
         const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    TopdownBloodEffectConfig bloodConfig;
+    if (weaponConfig.equipmentSetId == "knife") {
+        bloodConfig.profile = TopdownBloodFxProfile::Knife;
+    } else if (weaponConfig.equipmentSetId == "handgun") {
+        bloodConfig.profile = TopdownBloodFxProfile::Handgun;
+    } else if (weaponConfig.equipmentSetId == "rifle") {
+        bloodConfig.profile = TopdownBloodFxProfile::Rifle;
+    } else if (weaponConfig.equipmentSetId == "shotgun") {
+        bloodConfig.profile = TopdownBloodFxProfile::Shotgun;
+    }
+
+    bloodConfig.bloodImpactParticleCount = weaponConfig.bloodImpactParticleCount;
+    bloodConfig.bloodImpactParticleSpeedMin = weaponConfig.bloodImpactParticleSpeedMin;
+    bloodConfig.bloodImpactParticleSpeedMax = weaponConfig.bloodImpactParticleSpeedMax;
+    bloodConfig.bloodImpactParticleLifetimeMsMin = weaponConfig.bloodImpactParticleLifetimeMsMin;
+    bloodConfig.bloodImpactParticleLifetimeMsMax = weaponConfig.bloodImpactParticleLifetimeMsMax;
+    bloodConfig.bloodImpactParticleSizeMin = weaponConfig.bloodImpactParticleSizeMin;
+    bloodConfig.bloodImpactParticleSizeMax = weaponConfig.bloodImpactParticleSizeMax;
+    bloodConfig.bloodImpactSpreadDegrees = weaponConfig.bloodImpactSpreadDegrees;
+
+    bloodConfig.bloodDecalCountMin = weaponConfig.bloodDecalCountMin;
+    bloodConfig.bloodDecalCountMax = weaponConfig.bloodDecalCountMax;
+    bloodConfig.bloodDecalDistanceMin = weaponConfig.bloodDecalDistanceMin;
+    bloodConfig.bloodDecalDistanceMax = weaponConfig.bloodDecalDistanceMax;
+    bloodConfig.bloodDecalRadiusMin = weaponConfig.bloodDecalRadiusMin;
+    bloodConfig.bloodDecalRadiusMax = weaponConfig.bloodDecalRadiusMax;
+    bloodConfig.bloodDecalSpreadDegrees = weaponConfig.bloodDecalSpreadDegrees;
+    bloodConfig.bloodDecalWallPadding = weaponConfig.bloodDecalWallPadding;
+    bloodConfig.bloodDecalOpacityMin = weaponConfig.bloodDecalOpacityMin;
+    bloodConfig.bloodDecalOpacityMax = weaponConfig.bloodDecalOpacityMax;
+    return bloodConfig;
+}
+
+static TopdownBloodEffectConfig BuildBloodEffectConfig(
+        const TopdownNpcAttackEffectsConfig& fxConfig)
+{
+    TopdownBloodEffectConfig bloodConfig;
+    bloodConfig.profile = TopdownBloodFxProfile::NpcMelee;
+
+    bloodConfig.bloodImpactParticleCount = fxConfig.bloodImpactParticleCount;
+    bloodConfig.bloodImpactParticleSpeedMin = fxConfig.bloodImpactParticleSpeedMin;
+    bloodConfig.bloodImpactParticleSpeedMax = fxConfig.bloodImpactParticleSpeedMax;
+    bloodConfig.bloodImpactParticleLifetimeMsMin = fxConfig.bloodImpactParticleLifetimeMsMin;
+    bloodConfig.bloodImpactParticleLifetimeMsMax = fxConfig.bloodImpactParticleLifetimeMsMax;
+    bloodConfig.bloodImpactParticleSizeMin = fxConfig.bloodImpactParticleSizeMin;
+    bloodConfig.bloodImpactParticleSizeMax = fxConfig.bloodImpactParticleSizeMax;
+    bloodConfig.bloodImpactSpreadDegrees = fxConfig.bloodImpactSpreadDegrees;
+
+    bloodConfig.bloodDecalCountMin = fxConfig.bloodDecalCountMin;
+    bloodConfig.bloodDecalCountMax = fxConfig.bloodDecalCountMax;
+    bloodConfig.bloodDecalDistanceMin = fxConfig.bloodDecalDistanceMin;
+    bloodConfig.bloodDecalDistanceMax = fxConfig.bloodDecalDistanceMax;
+    bloodConfig.bloodDecalRadiusMin = fxConfig.bloodDecalRadiusMin;
+    bloodConfig.bloodDecalRadiusMax = fxConfig.bloodDecalRadiusMax;
+    bloodConfig.bloodDecalSpreadDegrees = fxConfig.bloodDecalSpreadDegrees;
+    bloodConfig.bloodDecalWallPadding = fxConfig.bloodDecalWallPadding;
+    bloodConfig.bloodDecalOpacityMin = fxConfig.bloodDecalOpacityMin;
+    bloodConfig.bloodDecalOpacityMax = fxConfig.bloodDecalOpacityMax;
+    return bloodConfig;
+}
+
+static float BuildBiasedBloodDecalDistance(
+        const TopdownBloodEffectConfig& bloodConfig)
 {
     float t = RandomRangeFloat(0.0f, 1.0f);
     t = t * t;
 
-    return weaponConfig.bloodDecalDistanceMin +
-           (weaponConfig.bloodDecalDistanceMax - weaponConfig.bloodDecalDistanceMin) * t;
+    return bloodConfig.bloodDecalDistanceMin +
+           (bloodConfig.bloodDecalDistanceMax - bloodConfig.bloodDecalDistanceMin) * t;
 }
 
 static Vector2 BuildBloodSprayDirection(
@@ -480,24 +544,31 @@ static int ChooseBloodParticleStampIndex(const TopdownBloodStampLibrary& library
 }
 
 static bool ShouldPreferStreakStamp(
-        const TopdownPlayerWeaponConfig& weaponConfig,
+        const TopdownBloodEffectConfig& bloodConfig,
         float dist01)
 {
     float baseChance = 0.06f;
     float distanceBoost = dist01 * 0.22f;
 
-    if (weaponConfig.equipmentSetId == "knife") {
+    switch (bloodConfig.profile) {
+        case TopdownBloodFxProfile::Knife:
         baseChance = 0.04f;
         distanceBoost = dist01 * 0.16f;
-    } else if (weaponConfig.equipmentSetId == "handgun") {
+        break;
+        case TopdownBloodFxProfile::Handgun:
         baseChance = 0.06f;
         distanceBoost = dist01 * 0.18f;
-    } else if (weaponConfig.equipmentSetId == "rifle") {
+        break;
+        case TopdownBloodFxProfile::Rifle:
         baseChance = 0.08f;
         distanceBoost = dist01 * 0.28f;
-    } else if (weaponConfig.equipmentSetId == "shotgun") {
+        break;
+        case TopdownBloodFxProfile::Shotgun:
         baseChance = 0.07f;
         distanceBoost = dist01 * 0.22f;
+        break;
+        default:
+        break;
     }
 
     const float streakChance = baseChance + distanceBoost;
@@ -519,13 +590,13 @@ static float ChooseBloodDecalStretch(bool preferStreakStamp)
     return RandomRangeFloat(0.95f, 1.22f);
 }
 
-void SpawnBloodSpatterDecals(
+static void SpawnBloodSpatterDecalsWithConfig(
         GameState& state,
         Vector2 hitPoint,
         Vector2 incomingShotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig)
+        const TopdownBloodEffectConfig& bloodConfig)
 {
-    if (weaponConfig.bloodDecalCountMax <= 0) {
+    if (bloodConfig.bloodDecalCountMax <= 0) {
         return;
     }
 
@@ -538,11 +609,11 @@ void SpawnBloodSpatterDecals(
     const Vector2 baseRight{ -baseDir.y, baseDir.x };
 
     const int decalCount =
-            (weaponConfig.bloodDecalCountMin == weaponConfig.bloodDecalCountMax)
-            ? weaponConfig.bloodDecalCountMin
+            (bloodConfig.bloodDecalCountMin == bloodConfig.bloodDecalCountMax)
+            ? bloodConfig.bloodDecalCountMin
             : GetRandomValue(
-                    weaponConfig.bloodDecalCountMin,
-                    weaponConfig.bloodDecalCountMax);
+                    bloodConfig.bloodDecalCountMin,
+                    bloodConfig.bloodDecalCountMax);
 
     if (decalCount <= 0) {
         return;
@@ -552,7 +623,7 @@ void SpawnBloodSpatterDecals(
     BuildBloodDecalRaycastSegments(state, segments);
 
     const float halfSpreadRadians =
-            weaponConfig.bloodDecalSpreadDegrees * 0.5f * DEG2RAD;
+            bloodConfig.bloodDecalSpreadDegrees * 0.5f * DEG2RAD;
 
     const TopdownBloodStampLibrary& library = state.topdown.bloodStampLibrary;
 
@@ -569,13 +640,13 @@ void SpawnBloodSpatterDecals(
     for (int i = 0; i < clusterCount; ++i) {
         const float forward =
                 RandomRangeFloat(
-                        weaponConfig.bloodDecalDistanceMin * 0.25f,
-                        weaponConfig.bloodDecalDistanceMax * 0.80f);
+                        bloodConfig.bloodDecalDistanceMin * 0.25f,
+                        bloodConfig.bloodDecalDistanceMax * 0.80f);
 
         const float side =
                 RandomRangeFloat(
-                        -weaponConfig.bloodDecalDistanceMax * 0.18f,
-                        weaponConfig.bloodDecalDistanceMax * 0.18f);
+                        -bloodConfig.bloodDecalDistanceMax * 0.18f,
+                        bloodConfig.bloodDecalDistanceMax * 0.18f);
 
         Vector2 center = TopdownAdd(
                 hitPoint,
@@ -619,7 +690,7 @@ void SpawnBloodSpatterDecals(
                             TopdownMul(right, sideJitter)));
         } else {
             const float desiredDistance =
-                    BuildBiasedBloodDecalDistance(weaponConfig);
+                    BuildBiasedBloodDecalDistance(bloodConfig);
 
             float finalDistance = desiredDistance;
 
@@ -634,7 +705,7 @@ void SpawnBloodSpatterDecals(
                         desiredDistance,
                         wallHitPoint,
                         &wallHitDistance)) {
-                    finalDistance = wallHitDistance - weaponConfig.bloodDecalWallPadding;
+                    finalDistance = wallHitDistance - bloodConfig.bloodDecalWallPadding;
                 }
             }
 
@@ -671,7 +742,7 @@ void SpawnBloodSpatterDecals(
                         wallHitPoint,
                         &wallHitDistance)) {
                     const float safeDistance =
-                            std::max(2.0f, wallHitDistance - weaponConfig.bloodDecalWallPadding);
+                            std::max(2.0f, wallHitDistance - bloodConfig.bloodDecalWallPadding);
 
                     targetPos = TopdownAdd(hitPoint, TopdownMul(rayDir, safeDistance));
                 }
@@ -680,8 +751,8 @@ void SpawnBloodSpatterDecals(
 
         const float travelDist = TopdownLength(TopdownSub(targetPos, hitPoint));
         const float dist01 = Clamp(
-                (travelDist - weaponConfig.bloodDecalDistanceMin) /
-                std::max(weaponConfig.bloodDecalDistanceMax - weaponConfig.bloodDecalDistanceMin, 0.001f),
+                (travelDist - bloodConfig.bloodDecalDistanceMin) /
+                std::max(bloodConfig.bloodDecalDistanceMax - bloodConfig.bloodDecalDistanceMin, 0.001f),
                 0.0f,
                 1.0f);
 
@@ -692,18 +763,18 @@ void SpawnBloodSpatterDecals(
         decal.kind = TopdownBloodDecalKind::Spatter;
         decal.position = targetPos;
         decal.radius = RandomRangeFloat(
-                weaponConfig.bloodDecalRadiusMin,
-                weaponConfig.bloodDecalRadiusMax);
+                bloodConfig.bloodDecalRadiusMin,
+                bloodConfig.bloodDecalRadiusMax);
         decal.targetRadius = decal.radius;
         decal.growthRate = 0.0f;
         decal.opacity = RandomRangeFloat(
-                weaponConfig.bloodDecalOpacityMin,
-                weaponConfig.bloodDecalOpacityMax);
+                bloodConfig.bloodDecalOpacityMin,
+                bloodConfig.bloodDecalOpacityMax);
         decal.ageMs = 0.0f;
         decal.variantSeed = static_cast<unsigned int>(GetRandomValue(0, 0x7fffffff));
 
         decal.useGeneratedStamp = library.generated;
-        decal.preferStreakStamp = ShouldPreferStreakStamp(weaponConfig, dist01);
+        decal.preferStreakStamp = ShouldPreferStreakStamp(bloodConfig, dist01);
         decal.stretch = ChooseBloodDecalStretch(decal.preferStreakStamp);
 
         if (decal.useGeneratedStamp) {
@@ -735,56 +806,58 @@ void SpawnBloodSpatterDecals(
     MarkTopdownBloodRenderTargetDirty(state);
 }
 
+void SpawnBloodSpatterDecals(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    SpawnBloodSpatterDecalsWithConfig(
+            state,
+            hitPoint,
+            incomingShotDir,
+            BuildBloodEffectConfig(weaponConfig));
+}
+
+static float ComputeQueuedBloodDecalDelayMs(const TopdownBloodEffectConfig& bloodConfig)
+{
+    if (bloodConfig.profile == TopdownBloodFxProfile::Handgun) {
+        return RandomRangeFloat(90.0f, 140.0f);
+    }
+    if (bloodConfig.profile == TopdownBloodFxProfile::Shotgun) {
+        return RandomRangeFloat(120.0f, 190.0f);
+    }
+    return 0.0f;
+}
+
+static void QueueBloodSpatterDecalsWithConfig(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownBloodEffectConfig& bloodConfig)
+{
+    TopdownPendingBloodDecalSpawn pending;
+    pending.active = true;
+    pending.hitPoint = hitPoint;
+    pending.incomingShotDir = incomingShotDir;
+    pending.bloodEffectConfig = bloodConfig;
+    pending.elapsedMs = 0.0f;
+    pending.delayMs = ComputeQueuedBloodDecalDelayMs(bloodConfig);
+
+    state.topdown.runtime.render.pendingBloodDecalSpawns.push_back(pending);
+}
+
 void QueueBloodSpatterDecals(
         GameState& state,
         Vector2 hitPoint,
         Vector2 incomingShotDir,
         const TopdownPlayerWeaponConfig& weaponConfig)
 {
-    TopdownPendingBloodDecalSpawn pending;
-    pending.active = true;
-    pending.hitPoint = hitPoint;
-    pending.incomingShotDir = incomingShotDir;
-    pending.weaponConfig = weaponConfig;
-    pending.elapsedMs = 0.0f;
-
-    if (weaponConfig.equipmentSetId == "handgun") {
-        pending.delayMs = RandomRangeFloat(90.0f, 140.0f);
-    } else if (weaponConfig.equipmentSetId == "shotgun") {
-        pending.delayMs = RandomRangeFloat(120.0f, 190.0f);
-    } else {
-        pending.delayMs = 0.0f;
-    }
-
-    state.topdown.runtime.render.pendingBloodDecalSpawns.push_back(pending);
-}
-
-static TopdownPlayerWeaponConfig BuildBloodOnlyWeaponConfig(
-        const TopdownNpcAttackEffectsConfig& fxConfig)
-{
-    TopdownPlayerWeaponConfig weaponConfig;
-    weaponConfig.equipmentSetId = "npc_attack_fx";
-
-    weaponConfig.bloodImpactParticleCount = fxConfig.bloodImpactParticleCount;
-    weaponConfig.bloodImpactParticleSpeedMin = fxConfig.bloodImpactParticleSpeedMin;
-    weaponConfig.bloodImpactParticleSpeedMax = fxConfig.bloodImpactParticleSpeedMax;
-    weaponConfig.bloodImpactParticleLifetimeMsMin = fxConfig.bloodImpactParticleLifetimeMsMin;
-    weaponConfig.bloodImpactParticleLifetimeMsMax = fxConfig.bloodImpactParticleLifetimeMsMax;
-    weaponConfig.bloodImpactParticleSizeMin = fxConfig.bloodImpactParticleSizeMin;
-    weaponConfig.bloodImpactParticleSizeMax = fxConfig.bloodImpactParticleSizeMax;
-    weaponConfig.bloodImpactSpreadDegrees = fxConfig.bloodImpactSpreadDegrees;
-
-    weaponConfig.bloodDecalCountMin = fxConfig.bloodDecalCountMin;
-    weaponConfig.bloodDecalCountMax = fxConfig.bloodDecalCountMax;
-    weaponConfig.bloodDecalDistanceMin = fxConfig.bloodDecalDistanceMin;
-    weaponConfig.bloodDecalDistanceMax = fxConfig.bloodDecalDistanceMax;
-    weaponConfig.bloodDecalRadiusMin = fxConfig.bloodDecalRadiusMin;
-    weaponConfig.bloodDecalRadiusMax = fxConfig.bloodDecalRadiusMax;
-    weaponConfig.bloodDecalSpreadDegrees = fxConfig.bloodDecalSpreadDegrees;
-    weaponConfig.bloodDecalWallPadding = fxConfig.bloodDecalWallPadding;
-    weaponConfig.bloodDecalOpacityMin = fxConfig.bloodDecalOpacityMin;
-    weaponConfig.bloodDecalOpacityMax = fxConfig.bloodDecalOpacityMax;
-    return weaponConfig;
+    QueueBloodSpatterDecalsWithConfig(
+            state,
+            hitPoint,
+            incomingShotDir,
+            BuildBloodEffectConfig(weaponConfig));
 }
 
 void QueueBloodSpatterDecals(
@@ -793,11 +866,11 @@ void QueueBloodSpatterDecals(
         Vector2 incomingShotDir,
         const TopdownNpcAttackEffectsConfig& fxConfig)
 {
-    QueueBloodSpatterDecals(
+    QueueBloodSpatterDecalsWithConfig(
             state,
             hitPoint,
             incomingShotDir,
-            BuildBloodOnlyWeaponConfig(fxConfig));
+            BuildBloodEffectConfig(fxConfig));
 }
 
 void SpawnBloodPoolEmitter(
@@ -828,13 +901,13 @@ static void EnforceBloodImpactParticleCap(TopdownRenderWorld& renderWorld)
     }
 }
 
-void SpawnBloodImpactParticles(
+static void SpawnBloodImpactParticlesWithConfig(
         GameState& state,
         Vector2 hitPoint,
         Vector2 incomingShotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig)
+        const TopdownBloodEffectConfig& bloodConfig)
 {
-    const int particleCount = weaponConfig.bloodImpactParticleCount;
+    const int particleCount = bloodConfig.bloodImpactParticleCount;
     if (particleCount <= 0) {
         return;
     }
@@ -848,7 +921,7 @@ void SpawnBloodImpactParticles(
     const Vector2 baseRight{ -baseDir.y, baseDir.x };
 
     const float halfSpreadRadians =
-            weaponConfig.bloodImpactSpreadDegrees * 0.5f * DEG2RAD;
+            bloodConfig.bloodImpactSpreadDegrees * 0.5f * DEG2RAD;
 
     const TopdownBloodStampLibrary& library = state.topdown.bloodStampLibrary;
 
@@ -873,8 +946,8 @@ void SpawnBloodImpactParticles(
                         TopdownMul(right, sideJitter)));
 
         const float speed = RandomRangeFloat(
-                weaponConfig.bloodImpactParticleSpeedMin,
-                weaponConfig.bloodImpactParticleSpeedMax);
+                bloodConfig.bloodImpactParticleSpeedMin,
+                bloodConfig.bloodImpactParticleSpeedMax);
 
         particle.velocity = TopdownMul(dir, speed);
 
@@ -888,12 +961,12 @@ void SpawnBloodImpactParticles(
 
         particle.ageMs = 0.0f;
         particle.lifetimeMs = RandomRangeFloat(
-                weaponConfig.bloodImpactParticleLifetimeMsMin,
-                weaponConfig.bloodImpactParticleLifetimeMsMax);
+                bloodConfig.bloodImpactParticleLifetimeMsMin,
+                bloodConfig.bloodImpactParticleLifetimeMsMax);
 
         particle.size = RandomRangeFloat(
-                weaponConfig.bloodImpactParticleSizeMin,
-                weaponConfig.bloodImpactParticleSizeMax);
+                bloodConfig.bloodImpactParticleSizeMin,
+                bloodConfig.bloodImpactParticleSizeMax);
 
         particle.alpha = 1.0f;
 
@@ -924,13 +997,26 @@ void SpawnBloodImpactParticles(
         GameState& state,
         Vector2 hitPoint,
         Vector2 incomingShotDir,
-        const TopdownNpcAttackEffectsConfig& fxConfig)
+        const TopdownPlayerWeaponConfig& weaponConfig)
 {
-    SpawnBloodImpactParticles(
+    SpawnBloodImpactParticlesWithConfig(
             state,
             hitPoint,
             incomingShotDir,
-            BuildBloodOnlyWeaponConfig(fxConfig));
+            BuildBloodEffectConfig(weaponConfig));
+}
+
+void SpawnBloodImpactParticles(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownNpcAttackEffectsConfig& fxConfig)
+{
+    SpawnBloodImpactParticlesWithConfig(
+            state,
+            hitPoint,
+            incomingShotDir,
+            BuildBloodEffectConfig(fxConfig));
 }
 
 bool TopdownShakeScreen(GameState& state,
@@ -1043,11 +1129,11 @@ static void UpdatePendingBloodDecalSpawns(GameState& state, float dt)
 
         spawn.elapsedMs += dt * 1000.0f;
         if (spawn.elapsedMs >= spawn.delayMs) {
-            SpawnBloodSpatterDecals(
+            SpawnBloodSpatterDecalsWithConfig(
                     state,
                     spawn.hitPoint,
                     spawn.incomingShotDir,
-                    spawn.weaponConfig);
+                    spawn.bloodEffectConfig);
             spawn.active = false;
         }
     }
