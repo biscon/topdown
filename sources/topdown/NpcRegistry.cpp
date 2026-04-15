@@ -264,6 +264,7 @@ static int FindFirstClipIndexByTagName(
         const SpriteAssetResource& asset,
         const std::string& tagName)
 {
+    // Tag matching is exact ("Idle", "Walk", ...), so authored clip names must match exactly.
     for (int i = 0; i < static_cast<int>(asset.clips.size()); ++i) {
         if (asset.clips[i].name == tagName) {
             return i;
@@ -278,6 +279,7 @@ static void AssignNpcClipIfPresent(
         const SpriteAssetResource& sprite,
         const char* tagName)
 {
+    // First matching clip wins across all animation sources; later sources only fill missing roles.
     if (TopdownNpcClipRefIsValid(dst)) {
         return;
     }
@@ -882,6 +884,7 @@ static bool TryResolveSmartSpawnPosition(
     const float slotArcLength = std::max(kMinRadiusStep, npcRadius * 2.0f + kSpawnPadding);
 
     for (int ringIndex = 1; ringIndex <= kMaxRings; ++ringIndex) {
+        // Probe concentric rings around the preferred spawn and keep the first unblocked candidate.
         const float ringRadius = radiusStep * static_cast<float>(ringIndex);
         const float circumference = 2.0f * PI * ringRadius;
         const int slotCount = std::max(6, static_cast<int>(std::ceil(circumference / slotArcLength)));

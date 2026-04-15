@@ -11,36 +11,8 @@
 #include "raymath.h"
 #include "LevelCollision.h"
 
+// Give up hard chase and enter search if the player becomes implausibly far away.
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
-
-static TopdownPlayerWeaponConfig BuildNpcAttackEffectsAsWeaponConfig(
-        const TopdownNpcAttackEffectsConfig& fx)
-{
-    TopdownPlayerWeaponConfig cfg;
-    cfg.equipmentSetId = "npc_attack_fx";
-
-    cfg.bloodImpactParticleCount = fx.bloodImpactParticleCount;
-    cfg.bloodImpactParticleSpeedMin = fx.bloodImpactParticleSpeedMin;
-    cfg.bloodImpactParticleSpeedMax = fx.bloodImpactParticleSpeedMax;
-    cfg.bloodImpactParticleLifetimeMsMin = fx.bloodImpactParticleLifetimeMsMin;
-    cfg.bloodImpactParticleLifetimeMsMax = fx.bloodImpactParticleLifetimeMsMax;
-    cfg.bloodImpactParticleSizeMin = fx.bloodImpactParticleSizeMin;
-    cfg.bloodImpactParticleSizeMax = fx.bloodImpactParticleSizeMax;
-    cfg.bloodImpactSpreadDegrees = fx.bloodImpactSpreadDegrees;
-
-    cfg.bloodDecalCountMin = fx.bloodDecalCountMin;
-    cfg.bloodDecalCountMax = fx.bloodDecalCountMax;
-    cfg.bloodDecalDistanceMin = fx.bloodDecalDistanceMin;
-    cfg.bloodDecalDistanceMax = fx.bloodDecalDistanceMax;
-    cfg.bloodDecalRadiusMin = fx.bloodDecalRadiusMin;
-    cfg.bloodDecalRadiusMax = fx.bloodDecalRadiusMax;
-    cfg.bloodDecalSpreadDegrees = fx.bloodDecalSpreadDegrees;
-    cfg.bloodDecalWallPadding = fx.bloodDecalWallPadding;
-    cfg.bloodDecalOpacityMin = fx.bloodDecalOpacityMin;
-    cfg.bloodDecalOpacityMax = fx.bloodDecalOpacityMax;
-
-    return cfg;
-}
 
 static bool TryBuildNpcMeleeHitWorldPosition(
         const GameState& state,
@@ -84,7 +56,7 @@ static bool TryBuildNpcMeleeHitWorldPosition(
     return true;
 }
 
-static Vector2 BuildNpcFallbackMeleeHitWorldPosition(
+static Vector2 BuildNpcMeleeFallbackImpactPointOnPlayer(
         const GameState& state,
         const TopdownNpcRuntime& npc)
 {
@@ -190,23 +162,20 @@ static void UpdateNpcAttackState(
 
                 Vector2 bloodOrigin{};
                 if (!TryBuildNpcMeleeHitWorldPosition(state, npc, bloodOrigin)) {
-                    bloodOrigin = BuildNpcFallbackMeleeHitWorldPosition(state, npc);
+                    bloodOrigin = BuildNpcMeleeFallbackImpactPointOnPlayer(state, npc);
                 }
-
-                const TopdownPlayerWeaponConfig bloodConfig =
-                        BuildNpcAttackEffectsAsWeaponConfig(npc.attackEffects);
 
                 SpawnBloodImpactParticles(
                         state,
                         bloodOrigin,
                         hitDir,
-                        bloodConfig);
+                        npc.attackEffects);
 
                 QueueBloodSpatterDecals(
                         state,
                         bloodOrigin,
                         hitDir,
-                        bloodConfig);
+                        npc.attackEffects);
             }
 
             npc.attackHitApplied = true;
@@ -259,7 +228,7 @@ static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
     npc.awarenessState = TopdownNpcAwarenessState::Idle;
     npc.combatState = TopdownNpcCombatState::None;
     TopdownStopNpcMovement(npc);
-    TopdownClearNpcSearchState(npc);
+    TopdownResetNpcSearchTimers(npc);
 }
 
 static void UpdateNpcAttackCooldown(TopdownNpcRuntime& npc, float dtMs)
@@ -286,10 +255,6 @@ static bool HandleNpcMotionInterrupts(TopdownNpcRuntime& npc)
 {
     if (npc.hurtStunRemainingMs > 0.0f) {
         TopdownResetNpcChaseStuckWatchdog(npc);
-        npc.combatState =
-                npc.hasPlayerTarget
-                ? TopdownNpcCombatState::Chase
-                : TopdownNpcCombatState::None;
         npc.currentVelocity = Vector2{};
         return true;
     }
@@ -309,11 +274,6 @@ static bool HandleNpcImmediateCombatStates(
 {
     if (npc.combatState == TopdownNpcCombatState::Attack) {
         UpdateNpcAttackState(state, npc, dt);
-        return true;
-    }
-
-    if (npc.combatState == TopdownNpcCombatState::Search) {
-        TopdownUpdateNpcSearchState(state, npc, dt);
         return true;
     }
 
@@ -390,13 +350,8 @@ static bool HandleNpcHardChaseCutoff(
 
 static void UpdateNpcFacingTowardPlayer(
         GameState& state,
-        TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer)
+        TopdownNpcRuntime& npc)
 {
-    if (!currentlyDetectsPlayer) {
-        return;
-    }
-
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const Vector2 toPlayer = TopdownSub(player.position, npc.position);
 
@@ -532,12 +487,15 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         return;
     }
 
-    UpdateNpcFacingTowardPlayer(state, npc, currentlyDetectsPlayer);
+    if (currentlyDetectsPlayer) {
+        UpdateNpcFacingTowardPlayer(state, npc);
+    }
 
     if (HandleNpcAttackOrRecover(state, npc, currentlyDetectsPlayer)) {
         return;
     }
 
+    // Alert/perception only acquires target metadata; chase policy is owned by this state update.
     npc.combatState = TopdownNpcCombatState::Chase;
 
     if (HandleNpcChaseWatchdog(npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {

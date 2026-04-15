@@ -53,7 +53,7 @@ bool TopdownHasNpcReachedPoint(
     return distSqr <= radius * radius;
 }
 
-void TopdownClearNpcSearchState(TopdownNpcRuntime& npc)
+void TopdownResetNpcSearchTimers(TopdownNpcRuntime& npc)
 {
     npc.searchStateTimeMs = 0.0f;
     npc.searchDurationMs = 0.0f;
@@ -93,7 +93,7 @@ void TopdownFinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
 
     TopdownResetNpcLostTargetProgress(npc);
     TopdownResetNpcChaseStuckWatchdog(npc);
-    TopdownClearNpcSearchState(npc);
+    TopdownResetNpcSearchTimers(npc);
     TopdownStopNpcMovement(npc);
 }
 
@@ -134,6 +134,7 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
         float probePeriodMs,
         float minDistancePerProbe)
 {
+    // Periodically sample chase movement progress; callers treat "moved too little" as stuck.
     if (npc.chaseStuckTimerMs <= 0.0f) {
         npc.chaseStuckLastPosition = npc.position;
         npc.chaseStuckTimerMs = dtMs;
@@ -209,6 +210,7 @@ void TopdownUpdateNpcSearchState(
 
     float signedOffsetRadians = 0.0f;
 
+    // Sweep left -> right -> return to center over normalized search duration.
     if (totalT < (1.0f / 3.0f)) {
         const float t = SmoothStep01(totalT / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
@@ -232,7 +234,8 @@ void TopdownUpdateNpcSearchState(
     if (TopdownNpcCanSeePlayer(state, npc) ||
         TopdownNpcCanHearPlayer(state, npc)) {
         TopdownAlertNpcToPlayer(state, npc);
-        TopdownClearNpcSearchState(npc);
+        npc.combatState = TopdownNpcCombatState::Chase;
+        TopdownResetNpcSearchTimers(npc);
         return;
     }
 
@@ -295,18 +298,13 @@ void TopdownAlertNpcToPlayer(
     }
 
     const bool newlyAcquiredTarget = !npc.hasPlayerTarget;
-
     npc.hasPlayerTarget = true;
     npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
     npc.loseTargetTimerMs = 0.0f;
     npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-
+    TopdownResetNpcLostTargetProgress(npc);
     if (newlyAcquiredTarget) {
         npc.repathTimerMs = 0.0f;
-    }
-
-    if (npc.combatState != TopdownNpcCombatState::Attack) {
-        npc.combatState = TopdownNpcCombatState::Chase;
     }
 }
 
@@ -350,6 +348,9 @@ void TopdownAlertNearbyNpcs(
         }
 
         TopdownAlertNpcToPlayer(state, otherNpc);
+        if (otherNpc.combatState != TopdownNpcCombatState::Attack) {
+            otherNpc.combatState = TopdownNpcCombatState::Chase;
+        }
     }
 }
 
@@ -389,6 +390,9 @@ void TopdownAlertNpcsByGunshot(
         }
 
         TopdownAlertNpcToPlayer(state, npc);
+        if (npc.combatState != TopdownNpcCombatState::Attack) {
+            npc.combatState = TopdownNpcCombatState::Chase;
+        }
     }
 }
 
@@ -623,15 +627,7 @@ void TopdownUpdateNpcPerception(
     const bool hearsPlayer = TopdownNpcCanHearPlayer(state, npc);
 
     if (seesPlayer || hearsPlayer) {
-        if (!npc.hasPlayerTarget) {
-            npc.hasPlayerTarget = true;
-            npc.repathTimerMs = 0.0f;
-        }
-
-        npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
-        npc.loseTargetTimerMs = 0.0f;
-        TopdownResetNpcLostTargetProgress(npc);
-        npc.awarenessState = TopdownNpcAwarenessState::Alerted;
+        TopdownAlertNpcToPlayer(state, npc);
 
         const float nearbyAlertRadius =
                 std::max(180.0f, npc.hearingRange);
@@ -663,10 +659,12 @@ void TopdownUpdateNpcPerception(
                 npc.lostTargetProgressTimerMs += dtMs;
             }
 
+            // Probe chase progress every 800 ms to avoid infinite pursuit on bad pathing.
             if (npc.lostTargetProgressTimerMs >= 800.0f) {
                 const float progress =
                         npc.lostTargetLastDistance - currentDistance;
 
+                // If we barely closed distance since the last probe, transition into search.
                 const bool madeTooLittleProgress = progress < 20.0f;
                 if (madeTooLittleProgress) {
                     TopdownBeginNpcSearchState(npc);
@@ -822,20 +820,23 @@ void TopdownBuildNpcPathToTarget(
 
     if (!builtPath) {
         if (owner == TopdownNpcMoveOwner::Script) {
+            // Scripted move targets may intentionally request direct movement when nav pathing fails.
             pathPoints.clear();
             pathPoints.push_back(targetPos);
             resolvedEndPos = targetPos;
         } else {
-            // Keep existing AI move if we already had one.
+            // AI keeps the existing path if repath fails to avoid snapping to a full stop.
             return;
         }
     }
 
+    // Preserve current speed across repaths so chase movement does not jitter stop/start.
     const float preservedSpeed = npc.move.currentSpeed;
 
     npc.move = {};
     npc.move.active = !pathPoints.empty();
     npc.move.owner = owner;
+    // AI/script path requests default to running for responsive melee pursuit.
     npc.move.running = true;
     npc.move.pathPoints = pathPoints;
     npc.move.currentPoint = 0;

@@ -43,6 +43,11 @@ void QueueBloodSpatterDecals(
         Vector2 hitPoint,
         Vector2 incomingShotDir,
         const TopdownPlayerWeaponConfig& weaponConfig);
+void QueueBloodSpatterDecals(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownNpcAttackEffectsConfig& fxConfig);
 
 void SpawnBloodPoolEmitter(
         GameState& state,
@@ -55,8 +60,12 @@ void SpawnBloodImpactParticles(
         Vector2 hitPoint,
         Vector2 incomingShotDir,
         const TopdownPlayerWeaponConfig& weaponConfig);
+void SpawnBloodImpactParticles(
+        GameState& state,
+        Vector2 hitPoint,
+        Vector2 incomingShotDir,
+        const TopdownNpcAttackEffectsConfig& fxConfig);
 
 
 
 void TopdownUpdateLevelEffects(GameState& state, float dt);
-
