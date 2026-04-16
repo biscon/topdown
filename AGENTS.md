@@ -179,6 +179,22 @@ Bad:
 
 ---
 
+### State machine updates
+When an update function changes a high-level gameplay/AI state, prefer to return immediately rather than also processing the newly-entered state in the same frame. Let the new state run from the top on the next frame unless there is a very strong reason not to. This avoids transition-frame bugs and keeps state flow easier to reason about.
+
+Additional state machine guidance:
+
+- Keep enum responsibilities distinct. In AI code, `AiMode`, `AwarenessState`, and `CombatState` should not silently stand in for each other. Use each enum only for the kind of state it is meant to represent.
+- Prefer dedicated enter/leave/reset helpers for meaningful states instead of directly poking enum values and related fields at random call sites. If a state has setup or cleanup, centralize it.
+- Active exclusive substates should be updated in one obvious dispatch point. Do not update the same state from multiple places in the same frame.
+- Transitioning into a state and updating that state are separate steps. Prefer: enter state now, update it next frame.
+- Perception / target-acquisition code should primarily update knowledge and awareness, not repeatedly re-enter, restart, or reset active execution states every frame.
+- Separate persistent tactical memory from transient state-local execution data. For example, last known target position may survive a state change, but investigation slot claims and search sweep timers should not.
+- Each state should have clear ownership of its local data. Timers, slot claims, watchdog values, path goals, and similar fields should belong to one state and be reset explicitly when leaving that state.
+- When a state owns several related fields, prefer grouping them into a dedicated embedded data struct such as `SearchStateData`, `InvestigationStateData`, or `ChaseStateData` instead of scattering them as loose fields on the main runtime struct. Keep these structs plain and embedded; do not introduce heap allocation or OOP state objects for this.
+- Prefer state-local data names and helpers that make ownership obvious. It should be easy to see which fields belong to Search, Investigation, Chase, or Attack without relying on comments or tribal knowledge.
+- When extending an existing FSM, prefer small hygiene improvements over architectural rewrites: centralize transitions, centralize resets, reduce duplicate dispatch, make ownership of state-local fields explicit, and group related per-state data when it improves clarity.
+
 ## Third-Party Libraries
 
 These are vendored directly into the repository:
