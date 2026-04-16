@@ -233,15 +233,19 @@ static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
     TopdownResetNpcInvestigationState(npc);
 }
 
-static void BeginNpcLostTargetState(
+static void BeginNpcNonPersistentLostTargetFallback(
         GameState& state,
         TopdownNpcRuntime& npc)
 {
-    if (!npc.persistentChase &&
-        TopdownBeginNpcInvestigationState(state, npc)) {
+    if (TopdownBeginNpcInvestigationState(state, npc)) {
         return;
     }
 
+    TopdownBeginNpcSearchState(npc);
+}
+
+static void BeginNpcForcedSearchFallback(TopdownNpcRuntime& npc)
+{
     TopdownBeginNpcSearchState(npc);
 }
 
@@ -367,10 +371,14 @@ static bool HandleNpcMissingChaseTarget(
     return true;
 }
 
-static bool HandleNpcHardChaseCutoff(
+static bool HandleNpcPersistentHardChaseCutoff(
         GameState& state,
         TopdownNpcRuntime& npc)
 {
+    if (!npc.persistentChase || !npc.hasPlayerTarget) {
+        return false;
+    }
+
     const float distanceToPlayer =
             TopdownLength(
                     TopdownSub(
@@ -381,7 +389,7 @@ static bool HandleNpcHardChaseCutoff(
         return false;
     }
 
-    BeginNpcLostTargetState(state, npc);
+    BeginNpcForcedSearchFallback(npc);
     return true;
 }
 
@@ -427,20 +435,49 @@ static bool HandleNpcAttackOrRecover(
     return true;
 }
 
-static bool HandleNpcChaseWatchdog(
+static bool HandleNpcNonPersistentLostTargetFallback(
         GameState& state,
         TopdownNpcRuntime& npc,
-        bool persistentChaseActive,
         bool currentlyDetectsPlayer,
         float dtMs)
 {
-    if (persistentChaseActive && !currentlyDetectsPlayer) {
-        if (TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
-            BeginNpcLostTargetState(state, npc);
+    if (npc.persistentChase || currentlyDetectsPlayer || !npc.hasPlayerTarget) {
+        TopdownResetNpcLostTargetProgress(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
+        return false;
+    }
+
+    const float currentDistance =
+            TopdownLength(
+                    TopdownSub(
+                            npc.lastKnownPlayerPosition,
+                            npc.position));
+
+    if (npc.lostTargetProgressTimerMs <= 0.0f) {
+        npc.lostTargetLastDistance = currentDistance;
+        npc.lostTargetProgressTimerMs = dtMs;
+    } else {
+        npc.lostTargetProgressTimerMs += dtMs;
+    }
+
+    // Give up on non-persistent chase if we make too little progress toward
+    // the last known player position.
+    if (npc.lostTargetProgressTimerMs >= 800.0f) {
+        const float progress = npc.lostTargetLastDistance - currentDistance;
+        const bool madeTooLittleProgress = progress < 20.0f;
+
+        npc.lostTargetLastDistance = currentDistance;
+        npc.lostTargetProgressTimerMs = 0.0f;
+
+        if (madeTooLittleProgress) {
+            BeginNpcNonPersistentLostTargetFallback(state, npc);
             return true;
         }
-    } else {
-        TopdownResetNpcChaseStuckWatchdog(npc);
+    }
+
+    if (TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
+        BeginNpcNonPersistentLostTargetFallback(state, npc);
+        return true;
     }
 
     return false;
@@ -502,10 +539,6 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     const bool currentlyHearsPlayer = TopdownNpcCanHearPlayer(state, npc);
     const bool currentlyDetectsPlayer = currentlySeesPlayer || currentlyHearsPlayer;
 
-    const bool persistentChaseActive =
-            npc.persistentChase &&
-            npc.hasPlayerTarget;
-
     UpdateNpcTargetingPhase(state, npc, dtMs, currentlyDetectsPlayer);
 
     if (HasNpcEnteredExclusiveCombatStateThisFrame(
@@ -518,12 +551,19 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         return;
     }
 
+    if (!npc.persistentChase &&
+        !currentlyDetectsPlayer &&
+        npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
+        BeginNpcNonPersistentLostTargetFallback(state, npc);
+        return;
+    }
+
     Vector2 chaseTarget{};
     if (HandleNpcMissingChaseTarget(state, npc, currentlyDetectsPlayer, chaseTarget)) {
         return;
     }
 
-    if (HandleNpcHardChaseCutoff(state, npc)) {
+    if (HandleNpcPersistentHardChaseCutoff(state, npc)) {
         return;
     }
 
@@ -538,7 +578,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     // Alert/perception only acquires target metadata; chase policy is owned by this state update.
     npc.combatState = TopdownNpcCombatState::Chase;
 
-    if (HandleNpcChaseWatchdog(state, npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {
+    if (HandleNpcNonPersistentLostTargetFallback(state, npc, currentlyDetectsPlayer, dtMs)) {
         return;
     }
 

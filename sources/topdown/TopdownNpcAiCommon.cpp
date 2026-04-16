@@ -651,52 +651,6 @@ void TopdownUpdateNpcPerception(
         npc.loseTargetTimerMs += dtMs;
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
-        if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-            if (!npc.persistentChase) {
-                if (TopdownBeginNpcInvestigationState(state, npc)) {
-                    return;
-                }
-
-                TopdownBeginNpcSearchState(npc);
-                return;
-            }
-
-            if (TopdownHasNpcReachedLastKnownTarget(npc, 50.0f)) {
-                TopdownBeginNpcSearchState(npc);
-                return;
-            }
-
-            const float currentDistance =
-                    TopdownLength(
-                            TopdownSub(
-                                    npc.lastKnownPlayerPosition,
-                                    npc.position));
-
-            if (npc.lostTargetProgressTimerMs <= 0.0f) {
-                npc.lostTargetLastDistance = currentDistance;
-                npc.lostTargetProgressTimerMs = dtMs;
-            } else {
-                npc.lostTargetProgressTimerMs += dtMs;
-            }
-
-            // Probe chase progress every 800 ms to avoid infinite pursuit on bad pathing.
-            if (npc.lostTargetProgressTimerMs >= 800.0f) {
-                const float progress =
-                        npc.lostTargetLastDistance - currentDistance;
-
-                const bool madeTooLittleProgress = progress < 20.0f;
-                if (madeTooLittleProgress) {
-                    TopdownBeginNpcSearchState(npc);
-                    return;
-                }
-
-                npc.lostTargetLastDistance = currentDistance;
-                npc.lostTargetProgressTimerMs = 0.0f;
-            }
-        } else {
-            TopdownResetNpcLostTargetProgress(npc);
-        }
-
         return;
     }
 
