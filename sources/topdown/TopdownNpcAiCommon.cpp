@@ -5,12 +5,14 @@
 #include <vector>
 
 #include "topdown/TopdownHelpers.h"
+#include "topdown/TopdownNpcInvestigation.h"
 #include "topdown/NpcRegistry.h"
 #include "topdown/LevelCollision.h"
 #include "nav/NavMeshQuery.h"
 #include "resources/AsepriteAsset.h"
 #include "LevelDoors.h"
 #include "raymath.h"
+#include "TopdownNpcInvestigation.h"
 
 const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
 {
@@ -27,6 +29,7 @@ const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state)
     switch (state) {
         case TopdownNpcCombatState::None:    return "None";
         case TopdownNpcCombatState::Chase:   return "Chase";
+        case TopdownNpcCombatState::Investigation: return "Investigation";
         case TopdownNpcCombatState::Attack:  return "Attack";
         case TopdownNpcCombatState::Recover: return "Recover";
         case TopdownNpcCombatState::Search:  return "Search";
@@ -94,6 +97,10 @@ void TopdownFinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
     TopdownResetNpcLostTargetProgress(npc);
     TopdownResetNpcChaseStuckWatchdog(npc);
     TopdownResetNpcSearchTimers(npc);
+    npc.investigationContextHandle = -1;
+    npc.investigationSlotIndex = -1;
+    npc.investigationProgressTimerMs = 0.0f;
+    npc.investigationLastDistance = 0.0f;
     TopdownStopNpcMovement(npc);
 }
 
@@ -295,6 +302,10 @@ void TopdownAlertNpcToPlayer(
 
     if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
         return;
+    }
+
+    if (npc.combatState == TopdownNpcCombatState::Investigation) {
+        TopdownLeaveNpcInvestigationState(state, npc);
     }
 
     const bool newlyAcquiredTarget = !npc.hasPlayerTarget;
@@ -641,7 +652,16 @@ void TopdownUpdateNpcPerception(
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
         if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-            if (TopdownHasNpcReachedLastKnownTarget(npc)) {
+            if (!npc.persistentChase) {
+                if (TopdownBeginNpcInvestigationState(state, npc)) {
+                    return;
+                }
+
+                TopdownBeginNpcSearchState(npc);
+                return;
+            }
+
+            if (TopdownHasNpcReachedLastKnownTarget(npc, 50.0f)) {
                 TopdownBeginNpcSearchState(npc);
                 return;
             }
@@ -664,7 +684,6 @@ void TopdownUpdateNpcPerception(
                 const float progress =
                         npc.lostTargetLastDistance - currentDistance;
 
-                // If we barely closed distance since the last probe, transition into search.
                 const bool madeTooLittleProgress = progress < 20.0f;
                 if (madeTooLittleProgress) {
                     TopdownBeginNpcSearchState(npc);
