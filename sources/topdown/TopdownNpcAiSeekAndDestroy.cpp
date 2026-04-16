@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "topdown/TopdownHelpers.h"
+#include "topdown/TopdownNpcInvestigation.h"
 #include "topdown/NpcRegistry.h"
 #include "topdown/LevelEffects.h"
 #include "resources/AsepriteAsset.h"
@@ -229,6 +230,19 @@ static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
     npc.combatState = TopdownNpcCombatState::None;
     TopdownStopNpcMovement(npc);
     TopdownResetNpcSearchTimers(npc);
+    TopdownResetNpcInvestigationState(npc);
+}
+
+static void BeginNpcLostTargetState(
+        GameState& state,
+        TopdownNpcRuntime& npc)
+{
+    if (!npc.persistentChase &&
+        TopdownBeginNpcInvestigationState(state, npc)) {
+        return;
+    }
+
+    TopdownBeginNpcSearchState(npc);
 }
 
 static void UpdateNpcAttackCooldown(TopdownNpcRuntime& npc, float dtMs)
@@ -274,6 +288,10 @@ static bool HandleNpcImmediateCombatStates(
 {
     if (npc.combatState == TopdownNpcCombatState::Attack) {
         UpdateNpcAttackState(state, npc, dt);
+        return true;
+    }
+    if (npc.combatState == TopdownNpcCombatState::Investigation) {
+        TopdownUpdateNpcInvestigationState(state, npc, dt);
         return true;
     }
     // Search must be handled before normal targeting/perception.
@@ -350,7 +368,7 @@ static bool HandleNpcHardChaseCutoff(
         return false;
     }
 
-    TopdownBeginNpcSearchState(npc);
+    BeginNpcLostTargetState(state, npc);
     return true;
 }
 
@@ -397,6 +415,7 @@ static bool HandleNpcAttackOrRecover(
 }
 
 static bool HandleNpcChaseWatchdog(
+        GameState& state,
         TopdownNpcRuntime& npc,
         bool persistentChaseActive,
         bool currentlyDetectsPlayer,
@@ -404,7 +423,7 @@ static bool HandleNpcChaseWatchdog(
 {
     if (persistentChaseActive && !currentlyDetectsPlayer) {
         if (TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
-            TopdownBeginNpcSearchState(npc);
+            BeginNpcLostTargetState(state, npc);
             return true;
         }
     } else {
@@ -479,6 +498,10 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         TopdownUpdateNpcSearchState(state, npc, dt);
         return;
     }
+    if (npc.combatState == TopdownNpcCombatState::Investigation) {
+        TopdownUpdateNpcInvestigationState(state, npc, dt);
+        return;
+    }
 
     if (HandleNpcNoTargetState(npc)) {
         return;
@@ -504,7 +527,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     // Alert/perception only acquires target metadata; chase policy is owned by this state update.
     npc.combatState = TopdownNpcCombatState::Chase;
 
-    if (HandleNpcChaseWatchdog(npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {
+    if (HandleNpcChaseWatchdog(state, npc, persistentChaseActive, currentlyDetectsPlayer, dtMs)) {
         return;
     }
 

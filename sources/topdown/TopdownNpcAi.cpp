@@ -2,6 +2,8 @@
 
 void TopdownUpdateNpcAi(GameState& state, float dt)
 {
+    TopdownCleanupNpcInvestigationContexts(state);
+
     if (state.topdown.runtime.aiFrozen) {
         for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
             if (!npc.active || !npc.hostile) {
@@ -14,8 +16,13 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
             npc.attackHitApplied = false;
             npc.attackStateTimeMs = 0.0f;
             npc.attackAnimationDurationMs = 0.0f;
+            npc.investigationContextHandle = -1;
+            npc.investigationSlotIndex = -1;
+            npc.investigationProgressTimerMs = 0.0f;
+            npc.investigationLastDistance = 0.0f;
             npc.currentVelocity = Vector2{};
         }
+        TopdownCleanupNpcInvestigationContexts(state);
         return;
     }
 
@@ -34,4 +41,6 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
                 break;
         }
     }
+
+    TopdownCleanupNpcInvestigationContexts(state);
 }

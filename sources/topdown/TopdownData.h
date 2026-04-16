@@ -88,6 +88,7 @@ enum class TopdownNpcAwarenessState {
 enum class TopdownNpcCombatState {
     None,
     Chase,
+    Investigation,
     Attack,
     Recover,
     Search
@@ -1146,6 +1147,23 @@ struct TopdownNpcRuntime {
 
     float chaseStuckTimerMs = 0.0f;
     Vector2 chaseStuckLastPosition{};
+
+    int investigationContextHandle = -1;
+    int investigationSlotIndex = -1;
+    float investigationProgressTimerMs = 0.0f;
+    float investigationLastDistance = 0.0f;
+};
+
+struct TopdownNpcInvestigationSlot {
+    Vector2 position{};
+    int claimedByNpcHandle = -1;
+};
+
+struct TopdownNpcInvestigationContext {
+    bool active = false;
+    int handle = -1;
+    Vector2 origin{};
+    std::vector<TopdownNpcInvestigationSlot> slots;
 };
 
 struct TopdownLevelRegistryEntry {
@@ -1266,6 +1284,8 @@ struct TopdownRuntimeData {
     TopdownBloodRenderTarget bloodRenderTarget{};
 
     TopdownRvoState rvo;
+    int nextNpcInvestigationContextHandle = 1;
+    std::vector<TopdownNpcInvestigationContext> npcInvestigations;
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
