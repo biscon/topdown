@@ -264,6 +264,7 @@ bool TopdownBeginNpcInvestigationState(
                 npc.handle);
     }
 
+
     if (context == nullptr) {
         return false;
     }

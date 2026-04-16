@@ -12,6 +12,7 @@
 #include "resources/AsepriteAsset.h"
 #include "LevelDoors.h"
 #include "raymath.h"
+#include "TopdownNpcInvestigation.h"
 
 const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
 {
@@ -651,11 +652,16 @@ void TopdownUpdateNpcPerception(
         npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
 
         if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-            if (TopdownHasNpcReachedLastKnownTarget(npc)) {
-                if (!npc.persistentChase &&
-                    TopdownBeginNpcInvestigationState(state, npc)) {
+            if (!npc.persistentChase) {
+                if (TopdownBeginNpcInvestigationState(state, npc)) {
                     return;
                 }
+
+                TopdownBeginNpcSearchState(npc);
+                return;
+            }
+
+            if (TopdownHasNpcReachedLastKnownTarget(npc, 50.0f)) {
                 TopdownBeginNpcSearchState(npc);
                 return;
             }
@@ -678,13 +684,8 @@ void TopdownUpdateNpcPerception(
                 const float progress =
                         npc.lostTargetLastDistance - currentDistance;
 
-                // If we barely closed distance since the last probe, transition into search.
                 const bool madeTooLittleProgress = progress < 20.0f;
                 if (madeTooLittleProgress) {
-                    if (!npc.persistentChase &&
-                        TopdownBeginNpcInvestigationState(state, npc)) {
-                        return;
-                    }
                     TopdownBeginNpcSearchState(npc);
                     return;
                 }
