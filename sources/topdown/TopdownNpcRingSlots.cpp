@@ -113,16 +113,18 @@ void TopdownCollectValidNpcRingSlots(
     std::vector<TopdownSegment> blockingSegments;
     TopdownBuildNpcBlockingSegments(runtime, blockingSegments);
 
-    if (!TopdownCandidateOverlapsNpcBlockingGeometry(
-                runtime,
-                origin,
-                npcRadius,
-                blockingSegments,
-                config.candidatePadding,
-                ignoreNpcHandle)) {
-        outSlots.push_back(origin);
-        if (maxSlotCount > 0 && static_cast<int>(outSlots.size()) >= maxSlotCount) {
-            return;
+    if (config.includeOriginCandidate) {
+        if (!TopdownCandidateOverlapsNpcBlockingGeometry(
+                    runtime,
+                    origin,
+                    npcRadius,
+                    blockingSegments,
+                    config.candidatePadding,
+                    ignoreNpcHandle)) {
+            outSlots.push_back(origin);
+            if (maxSlotCount > 0 && static_cast<int>(outSlots.size()) >= maxSlotCount) {
+                return;
+            }
         }
     }
 

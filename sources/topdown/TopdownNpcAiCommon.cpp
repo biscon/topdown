@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "topdown/TopdownHelpers.h"
+#include "topdown/TopdownNpcInvestigation.h"
 #include "topdown/NpcRegistry.h"
 #include "topdown/LevelCollision.h"
 #include "nav/NavMeshQuery.h"

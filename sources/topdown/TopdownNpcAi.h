@@ -96,21 +96,6 @@ void TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt);
 
-bool TopdownBeginNpcInvestigationState(
-        GameState& state,
-        TopdownNpcRuntime& npc);
-
-void TopdownLeaveNpcInvestigationState(
-        GameState& state,
-        TopdownNpcRuntime& npc);
-
-void TopdownUpdateNpcInvestigationState(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dt);
-
-void TopdownCleanupNpcInvestigationContexts(GameState& state);
-
 void TopdownUpdateNpcPerception(
         GameState& state,
         TopdownNpcRuntime& npc,

@@ -10,6 +10,7 @@ struct TopdownNpcRingSlotBuildConfig {
     int maxRings = 3;
     float minRadiusStep = 12.0f;
     float raycastEpsilon = 0.001f;
+    bool includeOriginCandidate = true;
 };
 
 void TopdownBuildNpcBlockingSegments(

@@ -63,6 +63,7 @@ TopdownNpcInvestigationContext* CreateInvestigationContext(
     ringConfig.candidatePadding = 8.0f;
     ringConfig.maxRings = 3;
     ringConfig.minRadiusStep = 16.0f;
+    ringConfig.includeOriginCandidate = false;
 
     std::vector<Vector2> slotPositions;
     TopdownCollectValidNpcRingSlots(

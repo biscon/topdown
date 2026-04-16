@@ -321,6 +321,19 @@ static void UpdateNpcTargetingPhase(
     }
 }
 
+static bool HasNpcEnteredExclusiveCombatStateThisFrame(
+        TopdownNpcCombatState combatStateAtFrameStart,
+        TopdownNpcCombatState combatStateNow)
+{
+    if (combatStateNow == combatStateAtFrameStart) {
+        return false;
+    }
+
+    return combatStateNow == TopdownNpcCombatState::Attack ||
+           combatStateNow == TopdownNpcCombatState::Investigation ||
+           combatStateNow == TopdownNpcCombatState::Search;
+}
+
 static bool HandleNpcNoTargetState(TopdownNpcRuntime& npc)
 {
     if (npc.hasPlayerTarget) {
@@ -462,6 +475,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         float dt)
 {
     const float dtMs = dt * 1000.0f;
+    const TopdownNpcCombatState combatStateAtFrameStart = npc.combatState;
 
     if (ShouldSkipNpcAiUpdate(npc)) {
         npc.currentVelocity = Vector2{};
@@ -494,12 +508,9 @@ void TopdownUpdateNpcAiSeekAndDestroy(
 
     UpdateNpcTargetingPhase(state, npc, dtMs, currentlyDetectsPlayer);
 
-    if (npc.combatState == TopdownNpcCombatState::Search) {
-        TopdownUpdateNpcSearchState(state, npc, dt);
-        return;
-    }
-    if (npc.combatState == TopdownNpcCombatState::Investigation) {
-        TopdownUpdateNpcInvestigationState(state, npc, dt);
+    if (HasNpcEnteredExclusiveCombatStateThisFrame(
+                combatStateAtFrameStart,
+                npc.combatState)) {
         return;
     }
 

@@ -1,4 +1,5 @@
 #include "topdown/TopdownNpcAi.h"
+#include "topdown/TopdownNpcInvestigation.h"
 
 void TopdownUpdateNpcAi(GameState& state, float dt)
 {

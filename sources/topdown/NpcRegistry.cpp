@@ -794,6 +794,7 @@ static bool TryResolveSmartSpawnPosition(
     ringConfig.maxRings = 3;
     ringConfig.minRadiusStep = 12.0f;
     ringConfig.raycastEpsilon = 0.001f;
+    ringConfig.includeOriginCandidate = true;
 
     std::vector<Vector2> slots;
     TopdownCollectValidNpcRingSlots(
