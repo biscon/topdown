@@ -100,6 +100,10 @@ static void UpdateNpcEngagementState(
     }
 
     if (npc.hasPlayerTarget) {
+        if (npc.persistentChase) {
+            npc.engagementState = TopdownNpcEngagementState::Engaged;
+            return;
+        }
         switch (npc.engagementState) {
             case TopdownNpcEngagementState::Engaged:
                 npc.loseTargetTimerMs += dtMs;
@@ -120,7 +124,6 @@ static void UpdateNpcEngagementState(
                 return;
         }
     }
-
 
     if(npc.engagementState == TopdownNpcEngagementState::Investigating) {
         return;
@@ -143,6 +146,12 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
 
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (!npc.active) {
+            continue;
+        }
+        if (npc.dead || npc.corpse) {
+            npc.engagementState = TopdownNpcEngagementState::Unaware;
+            npc.combatState = TopdownNpcCombatState::None;
+            npc.hasPlayerTarget = false;
             continue;
         }
 

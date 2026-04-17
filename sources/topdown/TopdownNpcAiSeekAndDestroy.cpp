@@ -596,6 +596,7 @@ void TopdownNpcAiSeekAndDestroy_UpdateInvestigating(
             npc.hasPlayerTarget = false;
             npc.combatState = TopdownNpcCombatState::None;
             npc.engagementState = TopdownNpcEngagementState::Unaware;
+            TraceLog(LOG_INFO, "Must have been the wind...");
         }
         return;
     }
@@ -652,6 +653,25 @@ void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
     } else if (npc.hasPlayerTarget) {
         chaseTarget = npc.lastKnownPlayerPosition;
         hasChaseTarget = true;
+    }
+    // always set chaseTarget to player while in persistent chase
+    if(npc.persistentChase) {
+        chaseTarget = state.topdown.runtime.player.position;
+        hasChaseTarget = true;
+    }
+
+    // sanity upper bound cut off for persistentChase
+    if (npc.persistentChase && hasChaseTarget) {
+        const float distanceToChaseTarget =
+                TopdownLength(TopdownSub(chaseTarget, npc.position));
+
+        if (distanceToChaseTarget >= kHardChaseCutoffDistance) {
+            npc.hasPlayerTarget = false;
+            npc.combatState = TopdownNpcCombatState::None;
+            npc.engagementState = TopdownNpcEngagementState::Unaware;
+            TopdownStopNpcMovement(npc);
+            return;
+        }
     }
 
     if (hasChaseTarget) {
