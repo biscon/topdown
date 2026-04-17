@@ -1,10 +1,8 @@
 #include "topdown/TopdownNpcInvestigation.h"
 
-#include <algorithm>
-
 #include "topdown/TopdownHelpers.h"
-#include "topdown/TopdownNpcAi.h"
 #include "topdown/TopdownNpcRingSlots.h"
+#include "TopdownNpcAiCommon.h"
 
 namespace {
 constexpr float kInvestigationJoinRadius = 180.0f;
@@ -301,7 +299,7 @@ void TopdownLeaveNpcInvestigationState(
         TopdownNpcRuntime& npc)
 {
     ReleaseNpcInvestigationSlot(state.topdown.runtime, npc);
-    TopdownCleanupNpcInvestigationContexts(state);
+    TopdownPruneNpcInvestigationContexts(state);
 }
 
 void TopdownUpdateNpcInvestigationState(
@@ -378,7 +376,7 @@ void TopdownUpdateNpcInvestigationState(
     }
 }
 
-void TopdownCleanupNpcInvestigationContexts(GameState& state)
+void TopdownPruneNpcInvestigationContexts(GameState& state)
 {
     TopdownRuntimeData& runtime = state.topdown.runtime;
 

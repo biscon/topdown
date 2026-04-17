@@ -212,6 +212,14 @@ static void ReadPlayerWeaponConfigs(
             continue;
         }
 
+        cfg.noiseRadius = entry.value("noiseRadius", cfg.noiseRadius);
+        if (cfg.noiseRadius < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Player weapon config '%s': noiseRadius < 0, clamping to 0",
+                     cfg.equipmentSetId.c_str());
+            cfg.noiseRadius = 0.0f;
+        }
+
         {
             const std::string attackTypeStr =
                     entry.value("primaryAttackType", std::string("none"));

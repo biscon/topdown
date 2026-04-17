@@ -17,4 +17,5 @@ void TopdownUpdateNpcInvestigationState(
         TopdownNpcRuntime& npc,
         float dt);
 
-void TopdownCleanupNpcInvestigationContexts(GameState& state);
+void TopdownPruneNpcInvestigationContexts(GameState& state);
+

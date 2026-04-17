@@ -1,3 +1,4 @@
+#include "topdown/TopdownNpcAiSeekAndDestroy.h"
 #include "topdown/TopdownNpcAi.h"
 
 #include <algorithm>
@@ -11,6 +12,7 @@
 #include "audio/Audio.h"
 #include "raymath.h"
 #include "LevelCollision.h"
+#include "TopdownNpcAiCommon.h"
 
 // Give up hard chase and enter search if the player becomes implausibly far away.
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
@@ -115,15 +117,11 @@ static void StartNpcAttack(
     }
 }
 
-static void UpdateNpcAttackState(
+static bool UpdateNpcAttackState(
         GameState& state,
         TopdownNpcRuntime& npc,
         float dt)
 {
-    if (npc.combatState != TopdownNpcCombatState::Attack) {
-        return;
-    }
-
     npc.attackStateTimeMs += dt * 1000.0f;
 
     const float durationMs = std::max(1.0f, npc.attackAnimationDurationMs);
@@ -191,17 +189,9 @@ static void UpdateNpcAttackState(
         npc.attackAnimationDurationMs = 0.0f;
         npc.attackHitPending = false;
         npc.attackHitApplied = false;
-
-        if (TopdownIsPlayerAlive(state) && npc.hasPlayerTarget) {
-            if (TopdownIsPlayerWithinNpcAttackRange(npc, state.topdown.runtime.player)) {
-                npc.combatState = TopdownNpcCombatState::Recover;
-            } else {
-                npc.combatState = TopdownNpcCombatState::Chase;
-            }
-        } else {
-            npc.combatState = TopdownNpcCombatState::None;
-        }
+        return true;
     }
+    return false;
 }
 
 static bool ShouldSkipNpcAiUpdate(const TopdownNpcRuntime& npc)
@@ -219,18 +209,6 @@ static bool ShouldSkipNpcAiUpdate(const TopdownNpcRuntime& npc)
     }
 
     return false;
-}
-
-static void StopNpcAiForDeadPlayer(TopdownNpcRuntime& npc)
-{
-    npc.hasPlayerTarget = false;
-    TopdownResetNpcLostTargetProgress(npc);
-    TopdownResetNpcChaseStuckWatchdog(npc);
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.combatState = TopdownNpcCombatState::None;
-    TopdownStopNpcMovement(npc);
-    TopdownResetNpcSearchTimers(npc);
-    TopdownResetNpcInvestigationState(npc);
 }
 
 static void BeginNpcNonPersistentLostTargetFallback(
@@ -302,7 +280,7 @@ static bool HandleNpcImmediateCombatStates(
     // Otherwise perception can re-enter Search every frame, resetting the
     // search timers and causing NPCs to spin indefinitely without finishing.
     if (npc.combatState == TopdownNpcCombatState::Search) {
-        TopdownUpdateNpcSearchState(state, npc, dt);
+        //TopdownUpdateNpcSearchState(state, npc, dt);
         return true;
     }
     return false;
@@ -409,7 +387,7 @@ static void UpdateNpcFacingTowardPlayer(
     npc.rotationRadians = std::atan2(facing.y, facing.x);
 }
 
-static bool HandleNpcAttackOrRecover(
+static bool TryNpcAttackOrRecover(
         GameState& state,
         TopdownNpcRuntime& npc,
         bool currentlyDetectsPlayer)
@@ -493,9 +471,7 @@ static void UpdateNpcChasePathing(
         TopdownNpcRuntime& npc,
         Vector2 chaseTarget)
 {
-    if (!npc.move.active ||
-        npc.move.owner != TopdownNpcMoveOwner::Ai ||
-        npc.repathTimerMs <= 0.0f) {
+    if (!npc.move.active || npc.repathTimerMs <= 0.0f) {
         TopdownBuildNpcPathToTarget(
                 state,
                 npc,
@@ -520,7 +496,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     }
 
     if (!TopdownIsPlayerAlive(state)) {
-        StopNpcAiForDeadPlayer(npc);
+        //StopNpcAiForDeadPlayer(npc);
         return;
     }
 
@@ -571,7 +547,7 @@ void TopdownUpdateNpcAiSeekAndDestroy(
         UpdateNpcFacingTowardPlayer(state, npc);
     }
 
-    if (HandleNpcAttackOrRecover(state, npc, currentlyDetectsPlayer)) {
+    if (TryNpcAttackOrRecover(state, npc, currentlyDetectsPlayer)) {
         return;
     }
 
@@ -587,4 +563,98 @@ void TopdownUpdateNpcAiSeekAndDestroy(
     }
 
     UpdateNpcChasePathing(state, npc, chaseTarget);
+}
+
+static void StopNpcEngagedExecution(TopdownNpcRuntime& npc)
+{
+    npc.hasPlayerTarget = false;
+    TopdownResetNpcLostTargetProgress(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
+    npc.combatState = TopdownNpcCombatState::None;
+    TopdownStopNpcMovement(npc);
+    TopdownResetNpcSearchTimers(npc);
+}
+
+// ------------------------------ new FSM ---------------------------------------------------
+void TopdownNpcAiSeekAndDestroy_UpdateInvestigating(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        const TopdownNpcPerceptionResult& perception,
+        float dt)
+{
+    const float dtMs = dt * 1000.0f;
+    if (npc.combatState != TopdownNpcCombatState::Search) {
+        TopdownBeginNpcSearchState(npc);
+    }
+
+    if (npc.combatState == TopdownNpcCombatState::Search) {
+        const TopdownNpcSearchUpdateResult result =
+                TopdownUpdateNpcSearchState(npc, dt);
+
+        if (result == TopdownNpcSearchUpdateResult::Finished) {
+            TopdownResetNpcSearchTimers(npc);
+            npc.hasPlayerTarget = false;
+            npc.combatState = TopdownNpcCombatState::None;
+            npc.engagementState = TopdownNpcEngagementState::Unaware;
+        }
+        return;
+    }
+}
+
+void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
+        GameState& state,
+        TopdownNpcRuntime& npc,
+        const TopdownNpcPerceptionResult& perception,
+        float dt)
+{
+    if (npc.dead || npc.corpse || !npc.hostile) {
+        return;
+    }
+
+    // early out if player is dead
+    if (!TopdownIsPlayerAlive(state)) {
+        StopNpcEngagedExecution(npc);
+        return;
+    }
+
+    const float dtMs = dt * 1000.0f;
+
+    UpdateNpcAttackCooldown(npc, dtMs);
+    UpdateNpcRepathTimer(npc, dtMs);
+
+    if (HandleNpcMotionInterrupts(npc)) {
+        return;
+    }
+
+    if (npc.combatState == TopdownNpcCombatState::Attack) {
+        const bool attackFinished = UpdateNpcAttackState(state, npc, dt);
+        if (attackFinished) {
+            npc.combatState = TopdownNpcCombatState::None;
+        }
+        return;
+    }
+
+    if(perception.detectsPlayer) UpdateNpcFacingTowardPlayer(state, npc);
+
+    if (TryNpcAttackOrRecover(state, npc, perception.detectsPlayer)) {
+        return;
+    }
+
+    // Npc has acquired the player at this point, set chase since neither attack nor recover was possible
+    npc.combatState = TopdownNpcCombatState::Chase;
+
+    Vector2 chaseTarget{};
+    bool hasChaseTarget = false;
+
+    if (perception.detectsPlayer) {
+        chaseTarget = state.topdown.runtime.player.position;
+        hasChaseTarget = true;
+    } else if (npc.hasPlayerTarget) {
+        chaseTarget = npc.lastKnownPlayerPosition;
+        hasChaseTarget = true;
+    }
+
+    if (hasChaseTarget) {
+        UpdateNpcChasePathing(state, npc, chaseTarget);
+    }
 }

@@ -11,7 +11,7 @@
 #include "NpcRegistry.h"
 #include "resources/AsepriteAsset.h"
 #include "PlayerRegistry.h"
-#include "TopdownNpcAi.h"
+#include "TopdownNpcAiCommon.h"
 
 
 static void DrawPolygonOutline(const GameState& state, const std::vector<Vector2>& points, Color color, float thickness = 2.0f)
@@ -649,7 +649,7 @@ static void DrawNpcAiDebug(const GameState& state)
 
         const Color baseColor =
                 npc.hostile
-                ? Color{255, 110, 110, 255}
+                ? Color{0, 0, 255, 255}
                 : Color{110, 220, 255, 255};
 
         if (npc.visionRange > 0.0f) {
@@ -725,8 +725,8 @@ static void DrawNpcAiDebug(const GameState& state)
                 baseColor);
 
         DrawText(
-                TextFormat("aware=%s  combat=%s  target=%s",
-                           TopdownNpcAwarenessStateToString(npc.awarenessState),
+                TextFormat("engagement=%s  combat=%s  target=%s",
+                           TopdownNpcEngagementStateToString(npc.engagementState),
                            TopdownNpcCombatStateToString(npc.combatState),
                            npc.hasPlayerTarget ? "yes" : "no"),
                 static_cast<int>(npcScreen.x + 10.0f),

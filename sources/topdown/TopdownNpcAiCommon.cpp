@@ -1,4 +1,4 @@
-#include "topdown/TopdownNpcAi.h"
+#include "topdown/TopdownNpcAiCommon.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,7 +12,16 @@
 #include "resources/AsepriteAsset.h"
 #include "LevelDoors.h"
 #include "raymath.h"
-#include "TopdownNpcInvestigation.h"
+
+const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state)
+{
+    switch (state) {
+        case TopdownNpcEngagementState::Unaware:        return "Unaware";
+        case TopdownNpcEngagementState::Investigating:  return "Investigating";
+        case TopdownNpcEngagementState::Engaged:        return "Engaged";
+        default:                                        return "Unknown";
+    }
+}
 
 const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
 {
@@ -110,7 +119,6 @@ void TopdownBeginNpcSearchState(
         float sweepDegrees)
 {
     TopdownStopNpcMovement(npc);
-    TopdownResetNpcChaseStuckWatchdog(npc);
 
     npc.combatState = TopdownNpcCombatState::Search;
     npc.searchStateTimeMs = 0.0f;
@@ -198,15 +206,10 @@ static float SmoothStep01(float t)
     return t * t * (3.0f - 2.0f * t);
 }
 
-void TopdownUpdateNpcSearchState(
-        GameState& state,
+TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt)
 {
-    if (npc.combatState != TopdownNpcCombatState::Search) {
-        return;
-    }
-
     npc.searchStateTimeMs += dt * 1000.0f;
 
     const float durationMs = std::max(1.0f, npc.searchDurationMs);
@@ -217,7 +220,6 @@ void TopdownUpdateNpcSearchState(
 
     float signedOffsetRadians = 0.0f;
 
-    // Sweep left -> right -> return to center over normalized search duration.
     if (totalT < (1.0f / 3.0f)) {
         const float t = SmoothStep01(totalT / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
@@ -238,14 +240,6 @@ void TopdownUpdateNpcSearchState(
             std::sin(newAngle)
     };
 
-    if (TopdownNpcCanSeePlayer(state, npc) ||
-        TopdownNpcCanHearPlayer(state, npc)) {
-        TopdownAlertNpcToPlayer(state, npc);
-        npc.combatState = TopdownNpcCombatState::Chase;
-        TopdownResetNpcSearchTimers(npc);
-        return;
-    }
-
     if (npc.searchStateTimeMs >= durationMs) {
         npc.rotationRadians = npc.searchBaseFacingRadians;
         npc.facing = Vector2{
@@ -253,10 +247,11 @@ void TopdownUpdateNpcSearchState(
                 std::sin(npc.searchBaseFacingRadians)
         };
 
-        TopdownFinishNpcSearchAndForgetTarget(npc);
+        return TopdownNpcSearchUpdateResult::Finished;
     }
-}
 
+    return TopdownNpcSearchUpdateResult::Running;
+}
 
 static bool HasDoorBetweenPoints(
         GameState& state,
