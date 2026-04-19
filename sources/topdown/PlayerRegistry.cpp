@@ -357,11 +357,11 @@ static void ReadPlayerWeaponConfigs(
         }
 
         if (entry.contains("muzzleOriginX") && entry["muzzleOriginX"].is_number()) {
-            cfg.muzzleOrigin.x = entry["muzzleOriginX"].get<float>();
+            cfg.muzzleEffects.muzzleX = entry["muzzleOriginX"].get<float>();
         }
 
         if (entry.contains("muzzleOriginY") && entry["muzzleOriginY"].is_number()) {
-            cfg.muzzleOrigin.y = entry["muzzleOriginY"].get<float>();
+            cfg.muzzleEffects.muzzleY = entry["muzzleOriginY"].get<float>();
         }
 
         {
@@ -378,193 +378,193 @@ static void ReadPlayerWeaponConfigs(
         }
 
         // walls
-        cfg.wallImpactParticleCount = entry.value("wallImpactParticleCount", cfg.wallImpactParticleCount);
-        if (cfg.wallImpactParticleCount < 0) {
+        cfg.ballisticImpactEffects.wallImpactParticleCount = entry.value("wallImpactParticleCount", cfg.ballisticImpactEffects.wallImpactParticleCount);
+        if (cfg.ballisticImpactEffects.wallImpactParticleCount < 0) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleCount < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleCount = 0;
+            cfg.ballisticImpactEffects.wallImpactParticleCount = 0;
         }
 
-        cfg.wallImpactParticleSpeedMin = entry.value("wallImpactParticleSpeedMin", cfg.wallImpactParticleSpeedMin);
-        cfg.wallImpactParticleSpeedMax = entry.value("wallImpactParticleSpeedMax", cfg.wallImpactParticleSpeedMax);
+        cfg.ballisticImpactEffects.wallImpactParticleSpeedMin = entry.value("wallImpactParticleSpeedMin", cfg.ballisticImpactEffects.wallImpactParticleSpeedMin);
+        cfg.ballisticImpactEffects.wallImpactParticleSpeedMax = entry.value("wallImpactParticleSpeedMax", cfg.ballisticImpactEffects.wallImpactParticleSpeedMax);
 
-        if (cfg.wallImpactParticleSpeedMin < 0.0f) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleSpeedMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleSpeedMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleSpeedMin = 0.0f;
+            cfg.ballisticImpactEffects.wallImpactParticleSpeedMin = 0.0f;
         }
 
-        if (cfg.wallImpactParticleSpeedMax < cfg.wallImpactParticleSpeedMin) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleSpeedMax < cfg.ballisticImpactEffects.wallImpactParticleSpeedMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleSpeedMax < wallImpactParticleSpeedMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleSpeedMax = cfg.wallImpactParticleSpeedMin;
+            cfg.ballisticImpactEffects.wallImpactParticleSpeedMax = cfg.ballisticImpactEffects.wallImpactParticleSpeedMin;
         }
 
-        cfg.wallImpactParticleLifetimeMsMin =
-                entry.value("wallImpactParticleLifetimeMsMin", cfg.wallImpactParticleLifetimeMsMin);
-        cfg.wallImpactParticleLifetimeMsMax =
-                entry.value("wallImpactParticleLifetimeMsMax", cfg.wallImpactParticleLifetimeMsMax);
+        cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin =
+                entry.value("wallImpactParticleLifetimeMsMin", cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin);
+        cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMax =
+                entry.value("wallImpactParticleLifetimeMsMax", cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMax);
 
-        if (cfg.wallImpactParticleLifetimeMsMin < 0.0f) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleLifetimeMsMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleLifetimeMsMin = 0.0f;
+            cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin = 0.0f;
         }
 
-        if (cfg.wallImpactParticleLifetimeMsMax < cfg.wallImpactParticleLifetimeMsMin) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMax < cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleLifetimeMsMax < wallImpactParticleLifetimeMsMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleLifetimeMsMax = cfg.wallImpactParticleLifetimeMsMin;
+            cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMax = cfg.ballisticImpactEffects.wallImpactParticleLifetimeMsMin;
         }
 
-        cfg.wallImpactParticleSizeMin =
-                entry.value("wallImpactParticleSizeMin", cfg.wallImpactParticleSizeMin);
-        cfg.wallImpactParticleSizeMax =
-                entry.value("wallImpactParticleSizeMax", cfg.wallImpactParticleSizeMax);
+        cfg.ballisticImpactEffects.wallImpactParticleSizeMin =
+                entry.value("wallImpactParticleSizeMin", cfg.ballisticImpactEffects.wallImpactParticleSizeMin);
+        cfg.ballisticImpactEffects.wallImpactParticleSizeMax =
+                entry.value("wallImpactParticleSizeMax", cfg.ballisticImpactEffects.wallImpactParticleSizeMax);
 
-        if (cfg.wallImpactParticleSizeMin < 0.0f) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleSizeMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleSizeMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleSizeMin = 0.0f;
+            cfg.ballisticImpactEffects.wallImpactParticleSizeMin = 0.0f;
         }
 
-        if (cfg.wallImpactParticleSizeMax < cfg.wallImpactParticleSizeMin) {
+        if (cfg.ballisticImpactEffects.wallImpactParticleSizeMax < cfg.ballisticImpactEffects.wallImpactParticleSizeMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactParticleSizeMax < wallImpactParticleSizeMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactParticleSizeMax = cfg.wallImpactParticleSizeMin;
+            cfg.ballisticImpactEffects.wallImpactParticleSizeMax = cfg.ballisticImpactEffects.wallImpactParticleSizeMin;
         }
 
-        cfg.wallImpactSpreadDegrees =
-                entry.value("wallImpactSpreadDegrees", cfg.wallImpactSpreadDegrees);
+        cfg.ballisticImpactEffects.wallImpactSpreadDegrees =
+                entry.value("wallImpactSpreadDegrees", cfg.ballisticImpactEffects.wallImpactSpreadDegrees);
 
-        if (cfg.wallImpactSpreadDegrees < 0.0f) {
+        if (cfg.ballisticImpactEffects.wallImpactSpreadDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': wallImpactSpreadDegrees < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.wallImpactSpreadDegrees = 0.0f;
+            cfg.ballisticImpactEffects.wallImpactSpreadDegrees = 0.0f;
         }
 
-        cfg.muzzleFlashLifetimeMs =
-                entry.value("muzzleFlashLifetimeMs", cfg.muzzleFlashLifetimeMs);
-        if (cfg.muzzleFlashLifetimeMs < 0.0f) {
+        cfg.muzzleEffects.muzzleFlashLifetimeMs =
+                entry.value("muzzleFlashLifetimeMs", cfg.muzzleEffects.muzzleFlashLifetimeMs);
+        if (cfg.muzzleEffects.muzzleFlashLifetimeMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleFlashLifetimeMs < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleFlashLifetimeMs = 0.0f;
+            cfg.muzzleEffects.muzzleFlashLifetimeMs = 0.0f;
         }
 
-        cfg.muzzleFlashForwardLength =
-                entry.value("muzzleFlashForwardLength", cfg.muzzleFlashForwardLength);
-        if (cfg.muzzleFlashForwardLength < 0.0f) {
+        cfg.muzzleEffects.muzzleFlashForwardLength =
+                entry.value("muzzleFlashForwardLength", cfg.muzzleEffects.muzzleFlashForwardLength);
+        if (cfg.muzzleEffects.muzzleFlashForwardLength < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleFlashForwardLength < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleFlashForwardLength = 0.0f;
+            cfg.muzzleEffects.muzzleFlashForwardLength = 0.0f;
         }
 
-        cfg.muzzleFlashSideWidth =
-                entry.value("muzzleFlashSideWidth", cfg.muzzleFlashSideWidth);
-        if (cfg.muzzleFlashSideWidth < 0.0f) {
+        cfg.muzzleEffects.muzzleFlashSideWidth =
+                entry.value("muzzleFlashSideWidth", cfg.muzzleEffects.muzzleFlashSideWidth);
+        if (cfg.muzzleEffects.muzzleFlashSideWidth < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleFlashSideWidth < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleFlashSideWidth = 0.0f;
+            cfg.muzzleEffects.muzzleFlashSideWidth = 0.0f;
         }
 
-        cfg.muzzleSmokeParticleCount =
-                entry.value("muzzleSmokeParticleCount", cfg.muzzleSmokeParticleCount);
-        if (cfg.muzzleSmokeParticleCount < 0) {
+        cfg.muzzleEffects.muzzleSmokeParticleCount =
+                entry.value("muzzleSmokeParticleCount", cfg.muzzleEffects.muzzleSmokeParticleCount);
+        if (cfg.muzzleEffects.muzzleSmokeParticleCount < 0) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeParticleCount < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeParticleCount = 0;
+            cfg.muzzleEffects.muzzleSmokeParticleCount = 0;
         }
 
-        cfg.muzzleSmokeSpeedMin =
-                entry.value("muzzleSmokeSpeedMin", cfg.muzzleSmokeSpeedMin);
-        cfg.muzzleSmokeSpeedMax =
-                entry.value("muzzleSmokeSpeedMax", cfg.muzzleSmokeSpeedMax);
+        cfg.muzzleEffects.muzzleSmokeSpeedMin =
+                entry.value("muzzleSmokeSpeedMin", cfg.muzzleEffects.muzzleSmokeSpeedMin);
+        cfg.muzzleEffects.muzzleSmokeSpeedMax =
+                entry.value("muzzleSmokeSpeedMax", cfg.muzzleEffects.muzzleSmokeSpeedMax);
 
-        if (cfg.muzzleSmokeSpeedMin < 0.0f) {
+        if (cfg.muzzleEffects.muzzleSmokeSpeedMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeSpeedMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeSpeedMin = 0.0f;
+            cfg.muzzleEffects.muzzleSmokeSpeedMin = 0.0f;
         }
 
-        if (cfg.muzzleSmokeSpeedMax < cfg.muzzleSmokeSpeedMin) {
+        if (cfg.muzzleEffects.muzzleSmokeSpeedMax < cfg.muzzleEffects.muzzleSmokeSpeedMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeSpeedMax < muzzleSmokeSpeedMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeSpeedMax = cfg.muzzleSmokeSpeedMin;
+            cfg.muzzleEffects.muzzleSmokeSpeedMax = cfg.muzzleEffects.muzzleSmokeSpeedMin;
         }
 
-        cfg.muzzleSmokeLifetimeMsMin =
-                entry.value("muzzleSmokeLifetimeMsMin", cfg.muzzleSmokeLifetimeMsMin);
-        cfg.muzzleSmokeLifetimeMsMax =
-                entry.value("muzzleSmokeLifetimeMsMax", cfg.muzzleSmokeLifetimeMsMax);
+        cfg.muzzleEffects.muzzleSmokeLifetimeMsMin =
+                entry.value("muzzleSmokeLifetimeMsMin", cfg.muzzleEffects.muzzleSmokeLifetimeMsMin);
+        cfg.muzzleEffects.muzzleSmokeLifetimeMsMax =
+                entry.value("muzzleSmokeLifetimeMsMax", cfg.muzzleEffects.muzzleSmokeLifetimeMsMax);
 
-        if (cfg.muzzleSmokeLifetimeMsMin < 0.0f) {
+        if (cfg.muzzleEffects.muzzleSmokeLifetimeMsMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeLifetimeMsMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeLifetimeMsMin = 0.0f;
+            cfg.muzzleEffects.muzzleSmokeLifetimeMsMin = 0.0f;
         }
 
-        if (cfg.muzzleSmokeLifetimeMsMax < cfg.muzzleSmokeLifetimeMsMin) {
+        if (cfg.muzzleEffects.muzzleSmokeLifetimeMsMax < cfg.muzzleEffects.muzzleSmokeLifetimeMsMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeLifetimeMsMax < muzzleSmokeLifetimeMsMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeLifetimeMsMax = cfg.muzzleSmokeLifetimeMsMin;
+            cfg.muzzleEffects.muzzleSmokeLifetimeMsMax = cfg.muzzleEffects.muzzleSmokeLifetimeMsMin;
         }
 
-        cfg.muzzleSmokeSizeMin =
-                entry.value("muzzleSmokeSizeMin", cfg.muzzleSmokeSizeMin);
-        cfg.muzzleSmokeSizeMax =
-                entry.value("muzzleSmokeSizeMax", cfg.muzzleSmokeSizeMax);
+        cfg.muzzleEffects.muzzleSmokeSizeMin =
+                entry.value("muzzleSmokeSizeMin", cfg.muzzleEffects.muzzleSmokeSizeMin);
+        cfg.muzzleEffects.muzzleSmokeSizeMax =
+                entry.value("muzzleSmokeSizeMax", cfg.muzzleEffects.muzzleSmokeSizeMax);
 
-        if (cfg.muzzleSmokeSizeMin < 0.0f) {
+        if (cfg.muzzleEffects.muzzleSmokeSizeMin < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeSizeMin < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeSizeMin = 0.0f;
+            cfg.muzzleEffects.muzzleSmokeSizeMin = 0.0f;
         }
 
-        if (cfg.muzzleSmokeSizeMax < cfg.muzzleSmokeSizeMin) {
+        if (cfg.muzzleEffects.muzzleSmokeSizeMax < cfg.muzzleEffects.muzzleSmokeSizeMin) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeSizeMax < muzzleSmokeSizeMin, clamping",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeSizeMax = cfg.muzzleSmokeSizeMin;
+            cfg.muzzleEffects.muzzleSmokeSizeMax = cfg.muzzleEffects.muzzleSmokeSizeMin;
         }
 
-        cfg.muzzleSmokeSpreadDegrees =
-                entry.value("muzzleSmokeSpreadDegrees", cfg.muzzleSmokeSpreadDegrees);
-        if (cfg.muzzleSmokeSpreadDegrees < 0.0f) {
+        cfg.muzzleEffects.muzzleSmokeSpreadDegrees =
+                entry.value("muzzleSmokeSpreadDegrees", cfg.muzzleEffects.muzzleSmokeSpreadDegrees);
+        if (cfg.muzzleEffects.muzzleSmokeSpreadDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeSpreadDegrees < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeSpreadDegrees = 0.0f;
+            cfg.muzzleEffects.muzzleSmokeSpreadDegrees = 0.0f;
         }
 
-        cfg.muzzleSmokeForwardBias =
-                entry.value("muzzleSmokeForwardBias", cfg.muzzleSmokeForwardBias);
-        if (cfg.muzzleSmokeForwardBias < 0.0f) {
+        cfg.muzzleEffects.muzzleSmokeForwardBias =
+                entry.value("muzzleSmokeForwardBias", cfg.muzzleEffects.muzzleSmokeForwardBias);
+        if (cfg.muzzleEffects.muzzleSmokeForwardBias < 0.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeForwardBias < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeForwardBias = 0.0f;
-        } else if (cfg.muzzleSmokeForwardBias > 1.0f) {
+            cfg.muzzleEffects.muzzleSmokeForwardBias = 0.0f;
+        } else if (cfg.muzzleEffects.muzzleSmokeForwardBias > 1.0f) {
             TraceLog(LOG_WARNING,
                      "Player weapon config '%s': muzzleSmokeForwardBias > 1, clamping to 1",
                      cfg.equipmentSetId.c_str());
-            cfg.muzzleSmokeForwardBias = 1.0f;
+            cfg.muzzleEffects.muzzleSmokeForwardBias = 1.0f;
         }
 
         // blood

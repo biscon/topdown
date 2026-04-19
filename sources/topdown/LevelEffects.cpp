@@ -8,8 +8,23 @@
 static constexpr int kMaxBloodDecals = 900;
 static constexpr int kMaxBloodImpactParticles = 512;
 
-void AppendPlayerTracerEffect(
+static TopdownNpcRuntime* FindRuntimeNpcByHandle(
         GameState& state,
+        TopdownCharacterHandle handle)
+{
+    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (npc.handle == handle) {
+            return &npc;
+        }
+    }
+
+    return nullptr;
+}
+
+static void AppendAnchoredTracerEffect(
+        GameState& state,
+        bool anchoredToPlayer,
+        TopdownCharacterHandle anchoredNpcHandle,
         Vector2 start,
         Vector2 end,
         TopdownTracerStyle style)
@@ -42,10 +57,19 @@ void AppendPlayerTracerEffect(
             break;
     }
 
-    const Vector2 playerPos = state.topdown.runtime.player.position;
-
-    tracer.anchorStartToPlayer = true;
-    tracer.localStartOffset = TopdownSub(start, playerPos);
+    tracer.anchoredToPlayer = anchoredToPlayer;
+    tracer.anchoredNpcHandle = anchoredNpcHandle;
+    if (anchoredToPlayer) {
+        const Vector2 playerPos = state.topdown.runtime.player.position;
+        tracer.localStartOffset = TopdownSub(start, playerPos);
+    } else if (anchoredNpcHandle >= 0) {
+        TopdownNpcRuntime* npc = FindRuntimeNpcByHandle(state, anchoredNpcHandle);
+        if (npc != nullptr) {
+            tracer.localStartOffset = TopdownSub(start, npc->position);
+        } else {
+            tracer.anchoredNpcHandle = -1;
+        }
+    }
 
     // IMPORTANT: end stays world-space
     tracer.end = end;
@@ -53,20 +77,39 @@ void AppendPlayerTracerEffect(
     state.topdown.runtime.render.tracers.push_back(tracer);
 }
 
+void AppendTracerEffectAnchoredToPlayer(
+        GameState& state,
+        Vector2 start,
+        Vector2 end,
+        TopdownTracerStyle style)
+{
+    AppendAnchoredTracerEffect(state, true, -1, start, end, style);
+}
+
+void AppendTracerEffectAnchoredToNpc(
+        GameState& state,
+        TopdownCharacterHandle npcHandle,
+        Vector2 start,
+        Vector2 end,
+        TopdownTracerStyle style)
+{
+    AppendAnchoredTracerEffect(state, false, npcHandle, start, end, style);
+}
+
 void SpawnWallImpactParticles(
         GameState& state,
         Vector2 hitPoint,
         Vector2 hitNormal,
-        const TopdownPlayerWeaponConfig& weaponConfig)
+        const TopdownBallisticImpactEffectConfig& fxConfig)
 {
-    const int particleCount = weaponConfig.wallImpactParticleCount;
+    const int particleCount = fxConfig.wallImpactParticleCount;
 
     if (particleCount <= 0) {
         return;
     }
 
     const float halfSpreadRadians =
-            weaponConfig.wallImpactSpreadDegrees * 0.5f * DEG2RAD;
+            fxConfig.wallImpactSpreadDegrees * 0.5f * DEG2RAD;
 
     for (int i = 0; i < particleCount; ++i) {
         TopdownWallImpactParticle particle;
@@ -78,18 +121,18 @@ void SpawnWallImpactParticles(
 
         const float speed =
                 RandomRangeFloat(
-                        weaponConfig.wallImpactParticleSpeedMin,
-                        weaponConfig.wallImpactParticleSpeedMax);
+                        fxConfig.wallImpactParticleSpeedMin,
+                        fxConfig.wallImpactParticleSpeedMax);
 
         const float size =
                 RandomRangeFloat(
-                        weaponConfig.wallImpactParticleSizeMin,
-                        weaponConfig.wallImpactParticleSizeMax);
+                        fxConfig.wallImpactParticleSizeMin,
+                        fxConfig.wallImpactParticleSizeMax);
 
         const float lifetimeMs =
                 RandomRangeFloat(
-                        weaponConfig.wallImpactParticleLifetimeMsMin,
-                        weaponConfig.wallImpactParticleLifetimeMsMax);
+                        fxConfig.wallImpactParticleLifetimeMsMin,
+                        fxConfig.wallImpactParticleLifetimeMsMax);
 
         Vector2 dir = RotateVector(hitNormal, spreadRadians);
         dir = TopdownNormalizeOrZero(dir);
@@ -109,14 +152,16 @@ void SpawnWallImpactParticles(
     }
 }
 
-void SpawnMuzzleFlashEffect(
+static void SpawnMuzzleFlashEffectAnchored(
         GameState& state,
+        bool anchoredToPlayer,
+        TopdownCharacterHandle anchoredNpcHandle,
         Vector2 muzzleWorld,
         Vector2 shotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig)
+        const TopdownMuzzleEffectConfig& fxConfig)
 {
-    if (weaponConfig.muzzleFlashLifetimeMs <= 0.0f ||
-        weaponConfig.muzzleFlashForwardLength <= 0.0f) {
+    if (fxConfig.muzzleFlashLifetimeMs <= 0.0f ||
+        fxConfig.muzzleFlashForwardLength <= 0.0f) {
         return;
     }
 
@@ -130,26 +175,54 @@ void SpawnMuzzleFlashEffect(
 
     flash.position = muzzleWorld;
 
-    // --- Anchor to player ---
-    const Vector2 playerPos = state.topdown.runtime.player.position;
-    flash.localOffset = TopdownSub(muzzleWorld, playerPos);
-    flash.anchoredToPlayer = true;
+    flash.anchoredToPlayer = anchoredToPlayer;
+    flash.anchoredNpcHandle = anchoredNpcHandle;
+    if (anchoredToPlayer) {
+        const Vector2 playerPos = state.topdown.runtime.player.position;
+        flash.localOffset = TopdownSub(muzzleWorld, playerPos);
+    } else if (anchoredNpcHandle >= 0) {
+        TopdownNpcRuntime* npc = FindRuntimeNpcByHandle(state, anchoredNpcHandle);
+        if (npc != nullptr) {
+            flash.localOffset = TopdownSub(muzzleWorld, npc->position);
+        } else {
+            flash.anchoredNpcHandle = -1;
+        }
+    }
 
     flash.ageMs = 0.0f;
-    flash.lifetimeMs = weaponConfig.muzzleFlashLifetimeMs;
-    flash.forwardLength = weaponConfig.muzzleFlashForwardLength;
-    flash.sideWidth = weaponConfig.muzzleFlashSideWidth;
+    flash.lifetimeMs = fxConfig.muzzleFlashLifetimeMs;
+    flash.forwardLength = fxConfig.muzzleFlashForwardLength;
+    flash.sideWidth = fxConfig.muzzleFlashSideWidth;
 
     state.topdown.runtime.render.muzzleFlashes.push_back(flash);
+}
+
+void SpawnMuzzleFlashEffectAnchoredToPlayer(
+        GameState& state,
+        Vector2 muzzleWorld,
+        Vector2 shotDir,
+        const TopdownMuzzleEffectConfig& fxConfig)
+{
+    SpawnMuzzleFlashEffectAnchored(state, true, -1, muzzleWorld, shotDir, fxConfig);
+}
+
+void SpawnMuzzleFlashEffectAnchoredToNpc(
+        GameState& state,
+        TopdownCharacterHandle npcHandle,
+        Vector2 muzzleWorld,
+        Vector2 shotDir,
+        const TopdownMuzzleEffectConfig& fxConfig)
+{
+    SpawnMuzzleFlashEffectAnchored(state, false, npcHandle, muzzleWorld, shotDir, fxConfig);
 }
 
 void SpawnMuzzleSmokeParticles(
         GameState& state,
         Vector2 muzzleWorld,
         Vector2 shotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig)
+        const TopdownMuzzleEffectConfig& fxConfig)
 {
-    const int particleCount = weaponConfig.muzzleSmokeParticleCount;
+    const int particleCount = fxConfig.muzzleSmokeParticleCount;
     if (particleCount <= 0) {
         return;
     }
@@ -161,7 +234,7 @@ void SpawnMuzzleSmokeParticles(
 
     const Vector2 right{ -shotDir.y, shotDir.x };
     const float halfSpreadRadians =
-            weaponConfig.muzzleSmokeSpreadDegrees * 0.5f * DEG2RAD;
+            fxConfig.muzzleSmokeSpreadDegrees * 0.5f * DEG2RAD;
 
     static constexpr float kMuzzleSmokeBackOffset = 15.0f;
 
@@ -189,25 +262,25 @@ void SpawnMuzzleSmokeParticles(
 
         Vector2 finalDir = TopdownNormalizeOrZero(
                 TopdownAdd(
-                        TopdownMul(spreadDir, 1.0f - weaponConfig.muzzleSmokeForwardBias),
-                        TopdownMul(shotDir, weaponConfig.muzzleSmokeForwardBias)));
+                        TopdownMul(spreadDir, 1.0f - fxConfig.muzzleSmokeForwardBias),
+                        TopdownMul(shotDir, fxConfig.muzzleSmokeForwardBias)));
 
         if (TopdownLengthSqr(finalDir) <= 0.000001f) {
             finalDir = shotDir;
         }
 
         const float speed = RandomRangeFloat(
-                weaponConfig.muzzleSmokeSpeedMin,
-                weaponConfig.muzzleSmokeSpeedMax);
+                fxConfig.muzzleSmokeSpeedMin,
+                fxConfig.muzzleSmokeSpeedMax);
 
         particle.velocity = TopdownMul(finalDir, speed);
         particle.lifetimeMs = RandomRangeFloat(
-                weaponConfig.muzzleSmokeLifetimeMsMin,
-                weaponConfig.muzzleSmokeLifetimeMsMax);
+                fxConfig.muzzleSmokeLifetimeMsMin,
+                fxConfig.muzzleSmokeLifetimeMsMax);
 
         particle.size = RandomRangeFloat(
-                weaponConfig.muzzleSmokeSizeMin * 0.35f,
-                weaponConfig.muzzleSmokeSizeMax * 0.50f);
+                fxConfig.muzzleSmokeSizeMin * 0.35f,
+                fxConfig.muzzleSmokeSizeMax * 0.50f);
 
         particle.ageMs = 0.0f;
         particle.alpha = 0.0f;
@@ -232,8 +305,14 @@ static void UpdateTracerEffects(GameState& state, float dt)
             continue;
         }
 
-        if (tracer.anchorStartToPlayer) {
+        if (tracer.anchoredToPlayer) {
             tracer.start = TopdownAdd(playerPos, tracer.localStartOffset);
+        } else if (tracer.anchoredNpcHandle >= 0) {
+            TopdownNpcRuntime* npc =
+                    FindRuntimeNpcByHandle(state, tracer.anchoredNpcHandle);
+            if (npc != nullptr) {
+                tracer.start = TopdownAdd(npc->position, tracer.localStartOffset);
+            }
         }
 
         tracer.ageMs += dt * 1000.0f;
@@ -296,9 +375,14 @@ static void UpdateMuzzleFlashEffects(GameState& state, float dt)
             continue;
         }
 
-        // --- FOLLOW PLAYER ---
         if (flash.anchoredToPlayer) {
             flash.position = TopdownAdd(playerPos, flash.localOffset);
+        } else if (flash.anchoredNpcHandle >= 0) {
+            TopdownNpcRuntime* npc =
+                    FindRuntimeNpcByHandle(state, flash.anchoredNpcHandle);
+            if (npc != nullptr) {
+                flash.position = TopdownAdd(npc->position, flash.localOffset);
+            }
         }
 
         flash.ageMs += dt * 1000.0f;

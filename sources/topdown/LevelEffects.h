@@ -2,8 +2,14 @@
 
 #include "data/GameState.h"
 
-void AppendPlayerTracerEffect(
+void AppendTracerEffectAnchoredToPlayer(
         GameState& state,
+        Vector2 start,
+        Vector2 end,
+        TopdownTracerStyle style);
+void AppendTracerEffectAnchoredToNpc(
+        GameState& state,
+        TopdownCharacterHandle npcHandle,
         Vector2 start,
         Vector2 end,
         TopdownTracerStyle style);
@@ -12,19 +18,25 @@ void SpawnWallImpactParticles(
         GameState& state,
         Vector2 hitPoint,
         Vector2 hitNormal,
-        const TopdownPlayerWeaponConfig& weaponConfig);
+        const TopdownBallisticImpactEffectConfig& fxConfig);
 
-void SpawnMuzzleFlashEffect(
+void SpawnMuzzleFlashEffectAnchoredToPlayer(
         GameState& state,
         Vector2 muzzleWorld,
         Vector2 shotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig);
+        const TopdownMuzzleEffectConfig& fxConfig);
+void SpawnMuzzleFlashEffectAnchoredToNpc(
+        GameState& state,
+        TopdownCharacterHandle npcHandle,
+        Vector2 muzzleWorld,
+        Vector2 shotDir,
+        const TopdownMuzzleEffectConfig& fxConfig);
 
 void SpawnMuzzleSmokeParticles(
         GameState& state,
         Vector2 muzzleWorld,
         Vector2 shotDir,
-        const TopdownPlayerWeaponConfig& weaponConfig);
+        const TopdownMuzzleEffectConfig& fxConfig);
 
 bool TopdownShakeScreen(GameState& state,
                         float durationMs,

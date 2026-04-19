@@ -110,8 +110,8 @@ static Vector2 ComputePlayerWeaponMuzzleWorldPosition(
     return TopdownAdd(
             player.position,
             TopdownAdd(
-                    TopdownMul(forward, weaponConfig.muzzleOrigin.x),
-                    TopdownMul(right, weaponConfig.muzzleOrigin.y)));
+                    TopdownMul(forward, weaponConfig.muzzleEffects.muzzleX),
+                    TopdownMul(right, weaponConfig.muzzleEffects.muzzleY)));
 }
 
 static bool TryComputePlayerAttackAnimationMuzzleWorldPosition(
@@ -447,17 +447,17 @@ static void PlayPlayerRangedAttackAudioAndFx(
         const TopdownPlayerWeaponConfig& weaponConfig,
         const PlayerRangedAttackContext& ctx)
 {
-    SpawnMuzzleFlashEffect(
+    SpawnMuzzleFlashEffectAnchoredToPlayer(
             state,
             ctx.muzzleWorld,
             ctx.baseDir,
-            weaponConfig);
+            weaponConfig.muzzleEffects);
 
     SpawnMuzzleSmokeParticles(
             state,
             ctx.muzzleWorld,
             ctx.baseDir,
-            weaponConfig);
+            weaponConfig.muzzleEffects);
 
     TriggerPlayerWeaponScreenShake(state, weaponConfig);
 
@@ -621,7 +621,7 @@ static void CollectPlayerRangedHits(
                 ? playerOriginHit
                 : hit;
 
-        AppendPlayerTracerEffect(
+        AppendTracerEffectAnchoredToPlayer(
                 state,
                 tracerStart,
                 effectiveHit.point,
@@ -632,7 +632,7 @@ static void CollectPlayerRangedHits(
                     state,
                     effectiveHit.point,
                     effectiveHit.normal,
-                    weaponConfig);
+                    weaponConfig.ballisticImpactEffects);
             continue;
         }
 
@@ -681,7 +681,7 @@ static void ApplyPendingDoorShots(
                 state,
                 pending.hitPoint,
                 pending.hitNormal,
-                weaponConfig);
+                weaponConfig.ballisticImpactEffects);
 
         ApplyDoorBallisticImpulse(
                 *pending.door,
@@ -875,7 +875,7 @@ static void ResolvePlayerMeleeDoorHit(
             state,
             hitPoint,
             hitNormal,
-            weaponConfig);
+            weaponConfig.ballisticImpactEffects);
 
     ApplyDoorBallisticImpulse(
             *hitDoor,

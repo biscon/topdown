@@ -1064,8 +1064,8 @@ static bool TryBuildDebugMuzzleWorldPosition(
     outMuzzleWorld = TopdownAdd(
             player.position,
             TopdownAdd(
-                    TopdownMul(forward, weaponConfig.muzzleOrigin.x),
-                    TopdownMul(right, weaponConfig.muzzleOrigin.y)));
+                    TopdownMul(forward, weaponConfig.muzzleEffects.muzzleX),
+                    TopdownMul(right, weaponConfig.muzzleEffects.muzzleY)));
 
     return true;
 }

@@ -17,6 +17,26 @@
 // Give up hard chase and enter search if the player becomes implausibly far away.
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
 
+static Vector2 ComputeNpcMuzzleWorldPosition(
+        const TopdownNpcRuntime& npc,
+        const TopdownNpcAssetRuntime& asset)
+{
+    const Vector2 forward{
+            std::cos(npc.rotationRadians),
+            std::sin(npc.rotationRadians)
+    };
+    const Vector2 right{
+            -forward.y,
+            forward.x
+    };
+
+    return TopdownAdd(
+            npc.position,
+            TopdownAdd(
+                    TopdownMul(forward, asset.muzzleEffects.muzzleX),
+                    TopdownMul(right, asset.muzzleEffects.muzzleY)));
+}
+
 static void FireNpcHitscanWeapon(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -41,6 +61,7 @@ static void FireNpcHitscanWeapon(
         baseDir = Vector2{1.0f, 0.0f};
     }
 
+    const Vector2 muzzleWorld = ComputeNpcMuzzleWorldPosition(npc, *asset);
     const int pelletCount = std::max(1, asset->rangedPelletCount);
 
     for (int i = 0; i < pelletCount; ++i) {
@@ -59,15 +80,29 @@ static void FireNpcHitscanWeapon(
                 FindFirstNpcHitscanHit(
                         state,
                         npc,
-                        npc.position,
+                        muzzleWorld,
                         shotDir,
                         asset->rangedMaxRange);
 
-        AppendPlayerTracerEffect(
+        AppendTracerEffectAnchoredToNpc(
                 state,
-                npc.position,
+                npc.handle,
+                muzzleWorld,
                 hit.point,
                 asset->rangedTracerStyle);
+
+        SpawnMuzzleFlashEffectAnchoredToNpc(
+                state,
+                npc.handle,
+                muzzleWorld,
+                shotDir,
+                asset->muzzleEffects);
+
+        SpawnMuzzleSmokeParticles(
+                state,
+                muzzleWorld,
+                shotDir,
+                asset->muzzleEffects);
 
         /*
         // Make other npcs investigates this npcs gunshots
@@ -83,7 +118,7 @@ static void FireNpcHitscanWeapon(
                     state,
                     hit.point,
                     hit.normal,
-                    state.topdown.playerCharacterAsset.weaponConfigs[0]); // temporary reuse
+                    asset->ballisticImpactEffects);
             continue;
         }
 
@@ -92,7 +127,7 @@ static void FireNpcHitscanWeapon(
                     state,
                     hit.point,
                     hit.normal,
-                    state.topdown.playerCharacterAsset.weaponConfigs[0]); // temporary reuse
+                    asset->ballisticImpactEffects);
             continue;
         }
 

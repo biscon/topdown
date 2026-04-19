@@ -477,7 +477,8 @@ struct TopdownTracerEffect {
     float thickness = 4.0f;
     TopdownTracerStyle style = TopdownTracerStyle::Handgun;
 
-    bool anchorStartToPlayer = false;
+    bool anchoredToPlayer = false;
+    TopdownCharacterHandle anchoredNpcHandle = -1;
     Vector2 localStartOffset{};
 };
 
@@ -515,7 +516,8 @@ struct TopdownMuzzleFlashEffect {
     float sideWidth = 14.0f;
 
     bool anchoredToPlayer = false;
-    Vector2 localOffset{}; // relative to player.position
+    TopdownCharacterHandle anchoredNpcHandle = -1;
+    Vector2 localOffset{};
 };
 
 struct TopdownMuzzleSmokeParticle {
@@ -675,6 +677,36 @@ struct TopdownNpcAttackEffectsConfig {
             0.95f};
 };
 
+struct TopdownBallisticImpactEffectConfig {
+    int wallImpactParticleCount = 6;
+    float wallImpactParticleSpeedMin = 70.0f;
+    float wallImpactParticleSpeedMax = 180.0f;
+    float wallImpactParticleLifetimeMsMin = 120.0f;
+    float wallImpactParticleLifetimeMsMax = 260.0f;
+    float wallImpactParticleSizeMin = 2.0f;
+    float wallImpactParticleSizeMax = 5.0f;
+    float wallImpactSpreadDegrees = 65.0f;
+};
+
+struct TopdownMuzzleEffectConfig {
+    float muzzleX = 0.0f;
+    float muzzleY = 0.0f;
+
+    float muzzleFlashLifetimeMs = 28.0f;
+    float muzzleFlashForwardLength = 42.0f;
+    float muzzleFlashSideWidth = 14.0f;
+
+    int muzzleSmokeParticleCount = 3;
+    float muzzleSmokeSpeedMin = 18.0f;
+    float muzzleSmokeSpeedMax = 55.0f;
+    float muzzleSmokeLifetimeMsMin = 180.0f;
+    float muzzleSmokeLifetimeMsMax = 320.0f;
+    float muzzleSmokeSizeMin = 4.0f;
+    float muzzleSmokeSizeMax = 9.0f;
+    float muzzleSmokeSpreadDegrees = 85.0f;
+    float muzzleSmokeForwardBias = 0.35f;
+};
+
 struct TopdownPlayerWeaponConfig {
     std::string equipmentSetId;
     int slot = 0;
@@ -703,33 +735,10 @@ struct TopdownPlayerWeaponConfig {
     float meleeDoorImpulse = 0.0f;
     float noiseRadius = 1200.0f;
 
-    Vector2 muzzleOrigin{};
-
     TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
 
-    int wallImpactParticleCount = 6;
-    float wallImpactParticleSpeedMin = 70.0f;
-    float wallImpactParticleSpeedMax = 180.0f;
-    float wallImpactParticleLifetimeMsMin = 120.0f;
-    float wallImpactParticleLifetimeMsMax = 260.0f;
-    float wallImpactParticleSizeMin = 2.0f;
-    float wallImpactParticleSizeMax = 5.0f;
-    float wallImpactSpreadDegrees = 65.0f;
-
-    float muzzleFlashLifetimeMs = 28.0f;
-    float muzzleFlashForwardLength = 42.0f;
-    float muzzleFlashSideWidth = 14.0f;
-
-    int muzzleSmokeParticleCount = 3;
-    float muzzleSmokeSpeedMin = 18.0f;
-    float muzzleSmokeSpeedMax = 55.0f;
-    float muzzleSmokeLifetimeMsMin = 180.0f;
-    float muzzleSmokeLifetimeMsMax = 320.0f;
-    float muzzleSmokeSizeMin = 4.0f;
-    float muzzleSmokeSizeMax = 9.0f;
-    float muzzleSmokeSpreadDegrees = 85.0f;
-    float muzzleSmokeForwardBias = 0.35f;
-
+    TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
+    TopdownMuzzleEffectConfig muzzleEffects{};
     TopdownBloodEffectConfig bloodEffects{};
 
     std::vector<TopdownFireMode> supportedFireModes;
@@ -986,6 +995,8 @@ struct TopdownNpcAssetDefinition {
     int rangedPelletCount = 1;
     float rangedSpreadDegrees = 6.0f;
     float rangedMaxRange = 800.0f;
+    TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
+    TopdownMuzzleEffectConfig muzzleEffects{};
     float reactionTimeMs = 180.0f;
     float aimInaccuracyMinDegrees = 2.0f;
     float aimInaccuracyMaxDegrees = 10.0f;
@@ -1053,6 +1064,8 @@ struct TopdownNpcAssetRuntime {
     int rangedPelletCount = 1;
     float rangedSpreadDegrees = 6.0f;
     float rangedMaxRange = 800.0f;
+    TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
+    TopdownMuzzleEffectConfig muzzleEffects{};
     float reactionTimeMs = 180.0f;
     float aimInaccuracyMinDegrees = 2.0f;
     float aimInaccuracyMaxDegrees = 10.0f;
