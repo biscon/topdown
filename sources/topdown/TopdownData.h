@@ -1067,6 +1067,7 @@ struct TopdownNpcAssetRuntime {
     TopdownNpcAttackEffectsConfig attackEffects;
 };
 
+
 struct TopdownNpcRuntime {
     TopdownCharacterHandle handle = -1;
 
@@ -1172,7 +1173,7 @@ struct TopdownNpcRuntime {
     int investigationContextHandle = -1;
     int investigationSlotIndex = -1;
     float investigationProgressTimerMs = 0.0f;
-    float investigationLastDistance = 0.0f;
+    Vector2 investigationLastPosition{};
 };
 
 struct TopdownNpcInvestigationSlot {

@@ -582,9 +582,32 @@ void TopdownNpcAiSeekAndDestroy_UpdateInvestigating(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
-    const float dtMs = dt * 1000.0f;
-    if (npc.combatState != TopdownNpcCombatState::Search) {
-        TopdownBeginNpcSearchState(npc);
+    if (npc.combatState != TopdownNpcCombatState::Investigation &&
+        npc.combatState != TopdownNpcCombatState::Search) {
+        if (!TopdownBeginNpcInvestigationState(state, npc)) {
+            TopdownBeginNpcSearchState(npc);
+        }
+        return;
+    }
+
+    if (npc.combatState == TopdownNpcCombatState::Investigation) {
+        const TopdownNpcInvestigationUpdateResult result =
+                TopdownUpdateNpcInvestigationState(state, npc, dt);
+
+        switch (result) {
+            case TopdownNpcInvestigationUpdateResult::Running:
+                return;
+
+            case TopdownNpcInvestigationUpdateResult::Arrived: {
+                TraceLog(LOG_INFO, "Investigation ended: arrived");
+                TopdownBeginNpcSearchState(npc);
+                return;
+            }
+            case TopdownNpcInvestigationUpdateResult::Failed:
+                TraceLog(LOG_INFO, "Investigation ended: failed");
+                TopdownBeginNpcSearchState(npc);
+                return;
+        }
     }
 
     if (npc.combatState == TopdownNpcCombatState::Search) {
@@ -600,6 +623,8 @@ void TopdownNpcAiSeekAndDestroy_UpdateInvestigating(
         }
         return;
     }
+
+    TraceLog(LOG_WARNING, "Investigating execution ended with unexpected combat state");
 }
 
 void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
@@ -641,8 +666,13 @@ void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
         return;
     }
 
-    // Npc has acquired the player at this point, set chase since neither attack nor recover was possible
-    npc.combatState = TopdownNpcCombatState::Chase;
+    // Always fallback to chase
+    if(npc.combatState != TopdownNpcCombatState::Chase) {
+        npc.combatState = TopdownNpcCombatState::Chase;
+        TopdownResetNpcChaseStuckWatchdog(npc);
+        return;
+    }
+
 
     Vector2 chaseTarget{};
     bool hasChaseTarget = false;
@@ -655,7 +685,7 @@ void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
         hasChaseTarget = true;
     }
     // always set chaseTarget to player while in persistent chase
-    if(npc.persistentChase) {
+    if (npc.persistentChase) {
         chaseTarget = state.topdown.runtime.player.position;
         hasChaseTarget = true;
     }
@@ -672,6 +702,16 @@ void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
             TopdownStopNpcMovement(npc);
             return;
         }
+    }
+
+    // Check ChaseStuck timer and bail on the chase if NPC is getting nowhere fast
+    if(TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
+        npc.hasPlayerTarget = false;
+        npc.combatState = TopdownNpcCombatState::None;
+        npc.engagementState = TopdownNpcEngagementState::Unaware;
+        TopdownStopNpcMovement(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
+        return;
     }
 
     if (hasChaseTarget) {

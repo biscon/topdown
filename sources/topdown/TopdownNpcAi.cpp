@@ -79,23 +79,34 @@ static void UpdateNpcEngagementState(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
-    const float dtMs = dt * 1000.0f;
+    const bool wasEngaged =
+            npc.engagementState == TopdownNpcEngagementState::Engaged;
 
     if (perception.detectsPlayer) {
+        const bool newlyDetectedPlayer =
+                !wasEngaged;
         npc.hasPlayerTarget = true;
         npc.loseTargetTimerMs = 0.0f;
         npc.lastKnownPlayerPosition = perception.detectedPlayerPosition;
         npc.investigationPosition = perception.detectedPlayerPosition;
         npc.engagementState = TopdownNpcEngagementState::Engaged;
+        if (newlyDetectedPlayer) {
+            const float nearbyAlertRadius =
+                    std::max(180.0f, npc.hearingRange);
+
+            TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
+        }
         return;
     }
 
-    if (perception.heardGunshot && !npc.hasPlayerTarget) {
+    if (perception.heardGunshot &&
+        npc.engagementState != TopdownNpcEngagementState::Engaged) {
         npc.hasPlayerTarget = true;
         npc.investigationPosition = perception.heardGunshotPosition;
         npc.loseTargetTimerMs = 0.0f;
         npc.combatState = TopdownNpcCombatState::None;
         npc.engagementState = TopdownNpcEngagementState::Investigating;
+        TopdownStopNpcMovement(npc);
         return;
     }
 
@@ -104,15 +115,13 @@ static void UpdateNpcEngagementState(
             npc.engagementState = TopdownNpcEngagementState::Engaged;
             return;
         }
+
         switch (npc.engagementState) {
             case TopdownNpcEngagementState::Engaged:
-                npc.loseTargetTimerMs += dtMs;
-
-                if (npc.loseTargetTimerMs >= npc.loseTargetTimeoutMs) {
-                    npc.loseTargetTimerMs = 0.0f;
-                    npc.combatState = TopdownNpcCombatState::None;
-                    npc.engagementState = TopdownNpcEngagementState::Investigating;
-                }
+                npc.loseTargetTimerMs = 0.0f;
+                npc.combatState = TopdownNpcCombatState::None;
+                npc.engagementState = TopdownNpcEngagementState::Investigating;
+                TopdownStopNpcMovement(npc);
                 return;
 
             case TopdownNpcEngagementState::Investigating:

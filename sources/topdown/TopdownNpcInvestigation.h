@@ -2,6 +2,12 @@
 
 #include "data/GameState.h"
 
+enum class TopdownNpcInvestigationUpdateResult {
+    Running,
+    Arrived,
+    Failed
+};
+
 void TopdownResetNpcInvestigationState(TopdownNpcRuntime& npc);
 
 bool TopdownBeginNpcInvestigationState(
@@ -12,10 +18,9 @@ void TopdownLeaveNpcInvestigationState(
         GameState& state,
         TopdownNpcRuntime& npc);
 
-void TopdownUpdateNpcInvestigationState(
+TopdownNpcInvestigationUpdateResult TopdownUpdateNpcInvestigationState(
         GameState& state,
         TopdownNpcRuntime& npc,
         float dt);
 
 void TopdownPruneNpcInvestigationContexts(GameState& state);
-

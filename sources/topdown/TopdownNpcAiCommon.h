@@ -68,11 +68,6 @@ void TopdownResetNpcSearchTimers(TopdownNpcRuntime& npc);
 void TopdownResetNpcLostTargetProgress(TopdownNpcRuntime& npc);
 void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc);
 
-bool TopdownHasNpcReachedLastKnownTarget(
-        const TopdownNpcRuntime& npc,
-        float arriveRadius = 300.0f);
-
-void TopdownFinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc);
 void TopdownBeginNpcSearchState(
         TopdownNpcRuntime& npc,
         float durationMs = 3600.0f,

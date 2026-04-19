@@ -85,33 +85,6 @@ void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc)
     npc.chaseStuckLastPosition = npc.position;
 }
 
-bool TopdownHasNpcReachedLastKnownTarget(
-        const TopdownNpcRuntime& npc,
-        float arriveRadius)
-{
-    return TopdownHasNpcReachedPoint(
-            npc,
-            npc.lastKnownPlayerPosition,
-            arriveRadius);
-}
-
-void TopdownFinishNpcSearchAndForgetTarget(TopdownNpcRuntime& npc)
-{
-    npc.hasPlayerTarget = false;
-    npc.loseTargetTimerMs = 0.0f;
-    npc.repathTimerMs = 0.0f;
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.combatState = TopdownNpcCombatState::None;
-
-    TopdownResetNpcLostTargetProgress(npc);
-    TopdownResetNpcChaseStuckWatchdog(npc);
-    TopdownResetNpcSearchTimers(npc);
-    npc.investigationContextHandle = -1;
-    npc.investigationSlotIndex = -1;
-    npc.investigationProgressTimerMs = 0.0f;
-    npc.investigationLastDistance = 0.0f;
-    TopdownStopNpcMovement(npc);
-}
 
 void TopdownBeginNpcSearchState(
         TopdownNpcRuntime& npc,
@@ -338,10 +311,6 @@ void TopdownAlertNearbyNpcs(
             continue;
         }
 
-        if (otherNpc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
-            continue;
-        }
-
         const float distSqr =
                 TopdownLengthSqr(TopdownSub(otherNpc.position, sourceNpc.position));
 
@@ -353,10 +322,11 @@ void TopdownAlertNearbyNpcs(
             continue;
         }
 
-        TopdownAlertNpcToPlayer(state, otherNpc);
-        if (otherNpc.combatState != TopdownNpcCombatState::Attack) {
-            otherNpc.combatState = TopdownNpcCombatState::Chase;
-        }
+        otherNpc.hasPlayerTarget = true;
+        otherNpc.lastKnownPlayerPosition = sourceNpc.lastKnownPlayerPosition;
+        otherNpc.investigationPosition = sourceNpc.lastKnownPlayerPosition;
+        otherNpc.engagementState = TopdownNpcEngagementState::Engaged;
+        otherNpc.combatState = TopdownNpcCombatState::None;
     }
 }
 

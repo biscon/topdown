@@ -54,12 +54,15 @@ static Vector2 BuildNpcFallbackPathVelocity(
     const float speed = std::min(std::max(0.0f, npc.move.currentSpeed), maxSpeed);
 
     // Look a bit ahead down the corridor instead of steering only to the next point.
+    /*
     const float lookaheadDistance = std::max(
             80.0f,
             npc.collisionRadius * 3.0f);
 
     const Vector2 steeringTarget =
             TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
+    */
+    const Vector2 steeringTarget = npc.move.pathPoints[npc.move.currentPoint];
 
     const Vector2 delta = TopdownSub(steeringTarget, npc.position);
     const float dist = TopdownLength(delta);
@@ -90,6 +93,7 @@ static void UpdateNpcMovementAndCollision(
     const Vector2 startPos = npc.position;
 
     Vector2 velocity{};
+
 
     if (TopdownRvoHasAgent(state, npc.handle)) {
         velocity = TopdownRvoGetVelocity(state, npc.handle);
@@ -146,6 +150,36 @@ static void UpdateNpcMovementAndCollision(
     }
 }
 
+static bool HasNpcPassedPathWaypoint(
+        const TopdownNpcMoveState& move,
+        const TopdownNpcRuntime& npc)
+{
+    if (!move.active) {
+        return false;
+    }
+
+    if (move.currentPoint <= 0 ||
+        move.currentPoint >= static_cast<int>(move.pathPoints.size())) {
+        return false;
+    }
+
+    const Vector2 previous = move.pathPoints[move.currentPoint - 1];
+    const Vector2 current = move.pathPoints[move.currentPoint];
+
+    const Vector2 segment = TopdownSub(current, previous);
+    const float segmentLenSqr = TopdownLengthSqr(segment);
+
+    if (segmentLenSqr <= 0.000001f) {
+        return false;
+    }
+
+    const Vector2 fromCurrentToNpc = TopdownSub(npc.position, current);
+
+    // If we've moved beyond the current waypoint in the direction of the segment,
+    // treat it as passed even if we missed the arrival radius.
+    return TopdownDot(fromCurrentToNpc, segment) > 0.0f;
+}
+
 static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
 {
     TopdownNpcMoveState& move = npc.move;
@@ -178,11 +212,17 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
         const Vector2 delta = TopdownSub(target, npc.position);
         const float dist = TopdownLength(delta);
 
-        if (dist > move.arrivalRadius) {
+        const bool reachedByDistance = dist <= move.arrivalRadius;
+        const bool passedWaypoint = HasNpcPassedPathWaypoint(move, npc);
+
+        if (!reachedByDistance && !passedWaypoint) {
             break;
         }
 
-        npc.position = target;
+        if (reachedByDistance) {
+            npc.position = target;
+        }
+
         move.currentPoint++;
     }
 
@@ -219,11 +259,15 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
             targetSpeed,
             ((targetSpeed > move.currentSpeed) ? move.acceleration : move.deceleration) * dt);
 
+    /*
     const float lookaheadDistance = std::max(
             80.0f,
             npc.collisionRadius * 3.0f);
 
     const Vector2 target = TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
+     */
+    const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
+
     const Vector2 delta = TopdownSub(target, npc.position);
     const Vector2 dir = TopdownNormalizeOrZero(delta);
 

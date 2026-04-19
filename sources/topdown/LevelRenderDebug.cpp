@@ -639,8 +639,98 @@ static const char* TopdownNpcAiModeToString(TopdownNpcAiMode mode)
 static void DrawNpcAiDebug(const GameState& state)
 {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownRuntimeData& runtime = state.topdown.runtime;
 
-    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+    auto FindNpcByHandle = [&](int handle) -> const TopdownNpcRuntime*
+    {
+        for (const TopdownNpcRuntime& npc : runtime.npcs) {
+            if (!npc.active) {
+                continue;
+            }
+
+            if (npc.handle == handle) {
+                return &npc;
+            }
+        }
+
+        return nullptr;
+    };
+
+    // Draw active shared investigation contexts first so NPC overlays stay readable on top.
+    for (const TopdownNpcInvestigationContext& context : runtime.npcInvestigations) {
+        if (!context.active) {
+            continue;
+        }
+
+        const Vector2 contextScreen = TopdownWorldToScreen(state, context.origin);
+
+        DrawCircleLines(
+                static_cast<int>(std::round(contextScreen.x)),
+                static_cast<int>(std::round(contextScreen.y)),
+                14.0f,
+                Color{0, 220, 255, 230});
+
+        DrawCircleLines(
+                static_cast<int>(std::round(contextScreen.x)),
+                static_cast<int>(std::round(contextScreen.y)),
+                18.0f,
+                Color{0, 220, 255, 120});
+
+        DrawText(
+                TextFormat("ctx %d", context.handle),
+                static_cast<int>(contextScreen.x + 10.0f),
+                static_cast<int>(contextScreen.y - 8.0f),
+                16,
+                Color{0, 220, 255, 230});
+
+        for (int slotIndex = 0; slotIndex < static_cast<int>(context.slots.size()); ++slotIndex) {
+            const TopdownNpcInvestigationSlot& slot = context.slots[slotIndex];
+            const Vector2 slotScreen = TopdownWorldToScreen(state, slot.position);
+
+            const bool claimed = slot.claimedByNpcHandle >= 0;
+            const Color slotColor =
+                    claimed
+                    ? Color{220, 80, 255, 230}
+                    : Color{140, 80, 255, 210};
+
+            DrawCircleLines(
+                    static_cast<int>(std::round(slotScreen.x)),
+                    static_cast<int>(std::round(slotScreen.y)),
+                    8.0f,
+                    slotColor);
+
+            DrawText(
+                    TextFormat("%d", slotIndex),
+                    static_cast<int>(slotScreen.x + 8.0f),
+                    static_cast<int>(slotScreen.y - 8.0f),
+                    14,
+                    slotColor);
+
+            DrawLineEx(
+                    contextScreen,
+                    slotScreen,
+                    1.5f,
+                    Color{90, 70, 200, 120});
+
+            if (claimed) {
+                const TopdownNpcRuntime* ownerNpc =
+                        FindNpcByHandle(slot.claimedByNpcHandle);
+
+                if (ownerNpc != nullptr) {
+                    const Vector2 ownerScreen =
+                            TopdownWorldToScreen(state, ownerNpc->position);
+
+                    DrawLineEx(
+                            ownerScreen,
+                            slotScreen,
+                            2.0f,
+                            Color{220, 80, 255, 180});
+                }
+            }
+        }
+    }
+
+    for (const TopdownNpcRuntime& npc : runtime.npcs) {
         if (!npc.active || !npc.visible) {
             continue;
         }
@@ -657,7 +747,7 @@ static void DrawNpcAiDebug(const GameState& state)
                     static_cast<int>(std::round(npcScreen.x)),
                     static_cast<int>(std::round(npcScreen.y)),
                     npc.visionRange,
-                    Color{255, 180, 80, 90});
+                    Color{255, 140, 0, 90});
         }
 
         if (npc.hearingRange > 0.0f) {
@@ -673,7 +763,7 @@ static void DrawNpcAiDebug(const GameState& state)
                     static_cast<int>(std::round(npcScreen.x)),
                     static_cast<int>(std::round(npcScreen.y)),
                     npc.collisionRadius + player.radius + npc.attackRange,
-                    Color{255, 60, 60, 110});
+                    Color{180, 40, 255, 120});
         }
 
         const float facingAngle = std::atan2(npc.facing.y, npc.facing.x);
@@ -688,19 +778,29 @@ static void DrawNpcAiDebug(const GameState& state)
                 npc.position.y + std::sin(facingAngle + halfAngle) * std::min(npc.visionRange, 160.0f)
         };
 
-        DrawLineEx(npcScreen, TopdownWorldToScreen(state, leftRay), 1.5f, Color{255, 180, 80, 180});
-        DrawLineEx(npcScreen, TopdownWorldToScreen(state, rightRay), 1.5f, Color{255, 180, 80, 180});
+        DrawLineEx(
+                npcScreen,
+                TopdownWorldToScreen(state, leftRay),
+                1.5f,
+                Color{255, 140, 0, 180});
+        DrawLineEx(
+                npcScreen,
+                TopdownWorldToScreen(state, rightRay),
+                1.5f,
+                Color{255, 140, 0, 180});
 
         if (npc.hasPlayerTarget) {
             DrawLineEx(
                     npcScreen,
                     TopdownWorldToScreen(state, player.position),
                     1.5f,
-                    Color{255, 60, 60, 180});
+                    Color{170, 0, 255, 180});
         }
 
         if (npc.hasPlayerTarget) {
-            const Vector2 lastKnownScreen = TopdownWorldToScreen(state, npc.lastKnownPlayerPosition);
+            const Vector2 lastKnownScreen =
+                    TopdownWorldToScreen(state, npc.lastKnownPlayerPosition);
+
             DrawCircleLines(
                     static_cast<int>(std::round(lastKnownScreen.x)),
                     static_cast<int>(std::round(lastKnownScreen.y)),
@@ -708,11 +808,39 @@ static void DrawNpcAiDebug(const GameState& state)
                     WHITE);
         }
 
+        if (npc.engagementState == TopdownNpcEngagementState::Investigating ||
+            npc.combatState == TopdownNpcCombatState::Investigation ||
+            npc.combatState == TopdownNpcCombatState::Search) {
+            const Vector2 investigationScreen =
+                    TopdownWorldToScreen(state, npc.investigationPosition);
+
+            DrawCircleLines(
+                    static_cast<int>(std::round(investigationScreen.x)),
+                    static_cast<int>(std::round(investigationScreen.y)),
+                    20.0f,
+                    Color{30, 90, 255, 230});
+
+            DrawCircleLines(
+                    static_cast<int>(std::round(investigationScreen.x)),
+                    static_cast<int>(std::round(investigationScreen.y)),
+                    24.0f,
+                    Color{30, 90, 255, 120});
+
+            DrawLineEx(
+                    npcScreen,
+                    investigationScreen,
+                    1.5f,
+                    Color{30, 90, 255, 160});
+        }
+
         const float distToPlayer =
                 TopdownLength(TopdownSub(player.position, npc.position));
 
         const float distToLastKnown =
                 TopdownLength(TopdownSub(npc.lastKnownPlayerPosition, npc.position));
+
+        const float distToInvestigation =
+                TopdownLength(TopdownSub(npc.investigationPosition, npc.position));
 
         DrawText(
                 TextFormat("ai=%s  hostile=%s  persistent=%s",
@@ -745,18 +873,21 @@ static void DrawNpcAiDebug(const GameState& state)
                 baseColor);
 
         DrawText(
-                TextFormat("distPlayer=%.0f  distLast=%.0f",
+                TextFormat("distPlayer=%.0f  distLast=%.0f  distInv=%.0f",
                            distToPlayer,
-                           distToLastKnown),
+                           distToLastKnown,
+                           distToInvestigation),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 88.0f),
                 16,
                 baseColor);
 
         DrawText(
-                TextFormat("progressT=%.0f  progressLast=%.0f",
+                TextFormat("progressT=%.0f  progressLast=%.0f  invCtx=%d  invSlot=%d",
                            npc.lostTargetProgressTimerMs,
-                           npc.lostTargetLastDistance),
+                           npc.lostTargetLastDistance,
+                           npc.investigationContextHandle,
+                           npc.investigationSlotIndex),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 106.0f),
                 16,
