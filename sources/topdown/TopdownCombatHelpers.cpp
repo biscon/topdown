@@ -7,6 +7,7 @@
 #include "NpcUpdate.h"
 #include "audio/Audio.h"
 #include "TopdownNpcAiCommon.h"
+#include "resources/AsepriteAsset.h"
 
 Vector2 ComputeShotDirectionWithSpread(
         Vector2 baseDir,
@@ -493,3 +494,87 @@ TopdownShotHitResult FindFirstNpcHitscanHit(
 
     return result;
 }
+
+bool TopdownIsNpcShotBlockedByOtherNpc(
+        GameState& state,
+        const TopdownNpcRuntime& shooter,
+        Vector2 origin,
+        Vector2 targetPoint,
+        float maxRange)
+{
+    Vector2 toTarget = TopdownSub(targetPoint, origin);
+    float dist = TopdownLength(toTarget);
+
+    if (dist <= 0.000001f) {
+        return false;
+    }
+
+    Vector2 dir = TopdownMul(toTarget, 1.0f / dist);
+
+    TopdownShotHitResult hit =
+            FindFirstNpcHitscanHit(
+                    state,
+                    shooter,
+                    origin,
+                    dir,
+                    std::min(dist, maxRange));
+
+    return hit.type == TopdownShotHitType::Npc && hit.npc != nullptr;
+}
+
+bool TopdownComputeNpcMuzzleWorldPosition(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        const TopdownNpcAssetRuntime& asset,
+        Vector2& outWorldPos)
+{
+    const TopdownNpcClipRef* clipRef = nullptr;
+
+    if (npc.oneShotActive && TopdownNpcClipRefIsValid(npc.oneShotClip)) {
+        clipRef = &npc.oneShotClip;
+    } else if (TopdownNpcClipRefIsValid(asset.rangedAttackClip)) {
+        clipRef = &asset.rangedAttackClip;
+    } else if (TopdownNpcClipRefIsValid(npc.automaticLoopClip)) {
+        clipRef = &npc.automaticLoopClip;
+    } else if (TopdownNpcClipRefIsValid(asset.idleClip)) {
+        clipRef = &asset.idleClip;
+    }
+
+    if (clipRef == nullptr || !TopdownNpcClipRefIsValid(*clipRef)) {
+        return false;
+    }
+
+    const SpriteAssetResource* sprite =
+            FindSpriteAssetResource(state.resources, clipRef->spriteHandle);
+
+    if (sprite == nullptr || !sprite->loaded || !sprite->hasExplicitOrigin) {
+        return false;
+    }
+
+    const float drawScale = sprite->baseDrawScale;
+
+    const float localX =
+            (asset.muzzleEffects.muzzleX - sprite->origin.x) * drawScale;
+    const float localY =
+            (asset.muzzleEffects.muzzleY - sprite->origin.y) * drawScale;
+
+    const float radians = npc.rotationRadians;
+    const Vector2 forward{
+            std::cos(radians),
+            std::sin(radians)
+    };
+    const Vector2 right{
+            -forward.y,
+            forward.x
+    };
+
+    outWorldPos = TopdownAdd(
+            npc.position,
+            TopdownAdd(
+                    TopdownMul(forward, localX),
+                    TopdownMul(right, localY)));
+
+    return true;
+}
+
+

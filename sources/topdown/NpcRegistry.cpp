@@ -138,6 +138,120 @@ static void ClampNpcAttackEffectsConfig(TopdownNpcAttackEffectsConfig& cfg)
     }
 }
 
+static void ClampBallisticImpactEffectsConfig(
+        TopdownBallisticImpactEffectConfig& cfg)
+{
+    if (cfg.wallImpactParticleCount < 0) cfg.wallImpactParticleCount = 0;
+    if (cfg.wallImpactParticleSpeedMin < 0.0f) cfg.wallImpactParticleSpeedMin = 0.0f;
+    if (cfg.wallImpactParticleSpeedMax < cfg.wallImpactParticleSpeedMin) {
+        cfg.wallImpactParticleSpeedMax = cfg.wallImpactParticleSpeedMin;
+    }
+    if (cfg.wallImpactParticleLifetimeMsMin < 0.0f) cfg.wallImpactParticleLifetimeMsMin = 0.0f;
+    if (cfg.wallImpactParticleLifetimeMsMax < cfg.wallImpactParticleLifetimeMsMin) {
+        cfg.wallImpactParticleLifetimeMsMax = cfg.wallImpactParticleLifetimeMsMin;
+    }
+    if (cfg.wallImpactParticleSizeMin < 0.0f) cfg.wallImpactParticleSizeMin = 0.0f;
+    if (cfg.wallImpactParticleSizeMax < cfg.wallImpactParticleSizeMin) {
+        cfg.wallImpactParticleSizeMax = cfg.wallImpactParticleSizeMin;
+    }
+    if (cfg.wallImpactSpreadDegrees < 0.0f) cfg.wallImpactSpreadDegrees = 0.0f;
+}
+
+static void ClampMuzzleEffectsConfig(
+        TopdownMuzzleEffectConfig& cfg)
+{
+    if (cfg.muzzleFlashLifetimeMs < 0.0f) cfg.muzzleFlashLifetimeMs = 0.0f;
+    if (cfg.muzzleFlashForwardLength < 0.0f) cfg.muzzleFlashForwardLength = 0.0f;
+    if (cfg.muzzleFlashSideWidth < 0.0f) cfg.muzzleFlashSideWidth = 0.0f;
+    if (cfg.muzzleSmokeParticleCount < 0) cfg.muzzleSmokeParticleCount = 0;
+    if (cfg.muzzleSmokeSpeedMin < 0.0f) cfg.muzzleSmokeSpeedMin = 0.0f;
+    if (cfg.muzzleSmokeSpeedMax < cfg.muzzleSmokeSpeedMin) {
+        cfg.muzzleSmokeSpeedMax = cfg.muzzleSmokeSpeedMin;
+    }
+    if (cfg.muzzleSmokeLifetimeMsMin < 0.0f) cfg.muzzleSmokeLifetimeMsMin = 0.0f;
+    if (cfg.muzzleSmokeLifetimeMsMax < cfg.muzzleSmokeLifetimeMsMin) {
+        cfg.muzzleSmokeLifetimeMsMax = cfg.muzzleSmokeLifetimeMsMin;
+    }
+    if (cfg.muzzleSmokeSizeMin < 0.0f) cfg.muzzleSmokeSizeMin = 0.0f;
+    if (cfg.muzzleSmokeSizeMax < cfg.muzzleSmokeSizeMin) {
+        cfg.muzzleSmokeSizeMax = cfg.muzzleSmokeSizeMin;
+    }
+    if (cfg.muzzleSmokeSpreadDegrees < 0.0f) cfg.muzzleSmokeSpreadDegrees = 0.0f;
+    cfg.muzzleSmokeForwardBias = Clamp(cfg.muzzleSmokeForwardBias, 0.0f, 1.0f);
+}
+
+static void ReadNpcBallisticImpactEffectsConfig(
+        const json& entry,
+        TopdownBallisticImpactEffectConfig& outCfg)
+{
+    auto it = entry.find("ballisticImpactEffects");
+    if (it == entry.end() || !it->is_object()) {
+        ClampBallisticImpactEffectsConfig(outCfg);
+        return;
+    }
+
+    const json& fx = *it;
+    outCfg.wallImpactParticleCount =
+            fx.value("wallImpactParticleCount", outCfg.wallImpactParticleCount);
+    outCfg.wallImpactParticleSpeedMin =
+            fx.value("wallImpactParticleSpeedMin", outCfg.wallImpactParticleSpeedMin);
+    outCfg.wallImpactParticleSpeedMax =
+            fx.value("wallImpactParticleSpeedMax", outCfg.wallImpactParticleSpeedMax);
+    outCfg.wallImpactParticleLifetimeMsMin =
+            fx.value("wallImpactParticleLifetimeMsMin", outCfg.wallImpactParticleLifetimeMsMin);
+    outCfg.wallImpactParticleLifetimeMsMax =
+            fx.value("wallImpactParticleLifetimeMsMax", outCfg.wallImpactParticleLifetimeMsMax);
+    outCfg.wallImpactParticleSizeMin =
+            fx.value("wallImpactParticleSizeMin", outCfg.wallImpactParticleSizeMin);
+    outCfg.wallImpactParticleSizeMax =
+            fx.value("wallImpactParticleSizeMax", outCfg.wallImpactParticleSizeMax);
+    outCfg.wallImpactSpreadDegrees =
+            fx.value("wallImpactSpreadDegrees", outCfg.wallImpactSpreadDegrees);
+
+    ClampBallisticImpactEffectsConfig(outCfg);
+}
+
+static void ReadNpcMuzzleEffectsConfig(
+        const json& entry,
+        TopdownMuzzleEffectConfig& outCfg)
+{
+    auto it = entry.find("muzzleEffects");
+    if (it == entry.end() || !it->is_object()) {
+        ClampMuzzleEffectsConfig(outCfg);
+        return;
+    }
+
+    const json& fx = *it;
+    outCfg.muzzleX = fx.value("muzzleX", outCfg.muzzleX);
+    outCfg.muzzleY = fx.value("muzzleY", outCfg.muzzleY);
+    outCfg.muzzleFlashLifetimeMs =
+            fx.value("muzzleFlashLifetimeMs", outCfg.muzzleFlashLifetimeMs);
+    outCfg.muzzleFlashForwardLength =
+            fx.value("muzzleFlashForwardLength", outCfg.muzzleFlashForwardLength);
+    outCfg.muzzleFlashSideWidth =
+            fx.value("muzzleFlashSideWidth", outCfg.muzzleFlashSideWidth);
+    outCfg.muzzleSmokeParticleCount =
+            fx.value("muzzleSmokeParticleCount", outCfg.muzzleSmokeParticleCount);
+    outCfg.muzzleSmokeSpeedMin =
+            fx.value("muzzleSmokeSpeedMin", outCfg.muzzleSmokeSpeedMin);
+    outCfg.muzzleSmokeSpeedMax =
+            fx.value("muzzleSmokeSpeedMax", outCfg.muzzleSmokeSpeedMax);
+    outCfg.muzzleSmokeLifetimeMsMin =
+            fx.value("muzzleSmokeLifetimeMsMin", outCfg.muzzleSmokeLifetimeMsMin);
+    outCfg.muzzleSmokeLifetimeMsMax =
+            fx.value("muzzleSmokeLifetimeMsMax", outCfg.muzzleSmokeLifetimeMsMax);
+    outCfg.muzzleSmokeSizeMin =
+            fx.value("muzzleSmokeSizeMin", outCfg.muzzleSmokeSizeMin);
+    outCfg.muzzleSmokeSizeMax =
+            fx.value("muzzleSmokeSizeMax", outCfg.muzzleSmokeSizeMax);
+    outCfg.muzzleSmokeSpreadDegrees =
+            fx.value("muzzleSmokeSpreadDegrees", outCfg.muzzleSmokeSpreadDegrees);
+    outCfg.muzzleSmokeForwardBias =
+            fx.value("muzzleSmokeForwardBias", outCfg.muzzleSmokeForwardBias);
+
+    ClampMuzzleEffectsConfig(outCfg);
+}
+
 static void ReadNpcAttackEffectsConfig(
         const json& entry,
         TopdownNpcAttackEffectsConfig& outCfg)
@@ -432,6 +546,8 @@ static void MergeNpcRegistryFile(
         def.rangedPelletCount = entry.value("rangedPelletCount", 1);
         def.rangedSpreadDegrees = entry.value("rangedSpreadDegrees", 6.0f);
         def.rangedMaxRange = entry.value("rangedMaxRange", 800.0f);
+        ReadNpcBallisticImpactEffectsConfig(entry, def.ballisticImpactEffects);
+        ReadNpcMuzzleEffectsConfig(entry, def.muzzleEffects);
         def.reactionTimeMs = entry.value("reactionTimeMs", 180.0f);
         def.aimInaccuracyMinDegrees = entry.value("aimInaccuracyMinDegrees", 2.0f);
         def.aimInaccuracyMaxDegrees = entry.value("aimInaccuracyMaxDegrees", 10.0f);
@@ -803,6 +919,8 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
     runtime.rangedPelletCount = def->rangedPelletCount;
     runtime.rangedSpreadDegrees = def->rangedSpreadDegrees;
     runtime.rangedMaxRange = def->rangedMaxRange;
+    runtime.ballisticImpactEffects = def->ballisticImpactEffects;
+    runtime.muzzleEffects = def->muzzleEffects;
     runtime.reactionTimeMs = def->reactionTimeMs;
     runtime.aimInaccuracyMinDegrees = def->aimInaccuracyMinDegrees;
     runtime.aimInaccuracyMaxDegrees = def->aimInaccuracyMaxDegrees;

@@ -85,3 +85,4 @@ bool RaycastPlayerDetailed(
         float& outDistance,
         Vector2& outHitPoint,
         Vector2& outHitNormal);
+

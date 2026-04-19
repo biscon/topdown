@@ -4,6 +4,7 @@
 #include "TopdownNpcAiSeekAndDestroy.h"
 #include "TopdownHelpers.h"
 #include "TopdownNpcAiHoldAndFire.h"
+#include "NpcRegistry.h"
 
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
 {
@@ -94,24 +95,52 @@ static void UpdateNpcEngagementState(
         npc.investigationRetargetCooldownMs = 0.0f;
     }
 
-    const bool wasEngaged =
-            npc.engagementState == TopdownNpcEngagementState::Engaged;
+    const TopdownNpcAssetRuntime* asset =
+            FindTopdownNpcAssetRuntime(state, npc.assetId);
+
+    const float reactionTimeMs =
+            (asset != nullptr && asset->loaded)
+            ? std::max(0.0f, asset->reactionTimeMs)
+            : 0.0f;
 
     if (perception.detectsPlayer) {
         const bool newlyDetectedPlayer =
-                !wasEngaged;
+                !npc.hasPlayerTarget;
+
         npc.hasPlayerTarget = true;
         npc.lastKnownPlayerPosition = perception.detectedPlayerPosition;
         npc.investigationPosition = perception.detectedPlayerPosition;
-        npc.engagementState = TopdownNpcEngagementState::Engaged;
-        if (newlyDetectedPlayer) {
-            const float nearbyAlertRadius =
-                    std::max(180.0f, npc.hearingRange);
 
-            TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
+        if (newlyDetectedPlayer) {
+            npc.reactionTimerMs = 0.0f;
+            npc.hasReactedToPlayer = false;
+        }
+
+        if (!npc.hasReactedToPlayer) {
+            npc.reactionTimerMs += dtMs;
+
+            if (npc.reactionTimerMs >= reactionTimeMs) {
+                npc.reactionTimerMs = reactionTimeMs;
+                npc.hasReactedToPlayer = true;
+                npc.engagementState = TopdownNpcEngagementState::Engaged;
+                const float nearbyAlertRadius =
+                        std::max(180.0f, npc.hearingRange);
+
+                TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
+            } else {
+                npc.combatState = TopdownNpcCombatState::None;
+                npc.engagementState = TopdownNpcEngagementState::Unaware;
+            }
+        } else {
+            npc.engagementState = TopdownNpcEngagementState::Engaged;
         }
         return;
     }
+
+    // Lost current direct detection: clear reaction gate so reacquiring the player
+    // later will require a new reaction delay.
+    npc.reactionTimerMs = 0.0f;
+    npc.hasReactedToPlayer = false;
 
     if (perception.heardGunshot &&
         npc.engagementState != TopdownNpcEngagementState::Engaged) {
@@ -161,14 +190,13 @@ static void UpdateNpcEngagementState(
         }
     }
 
-    if(npc.engagementState == TopdownNpcEngagementState::Investigating) {
+    if (npc.engagementState == TopdownNpcEngagementState::Investigating) {
         return;
     }
 
     npc.combatState = TopdownNpcCombatState::None;
     npc.engagementState = TopdownNpcEngagementState::Unaware;
 }
-
 
 void TopdownUpdateNpcAi(GameState& state, float dt)
 {
