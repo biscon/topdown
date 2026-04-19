@@ -475,9 +475,6 @@ static void BeginNpcDeath(
     npc.corpse = false;
 
     npc.hasPlayerTarget = false;
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.combatState = TopdownNpcCombatState::None;
-    npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
 
     npc.attackHitPending = false;
@@ -1341,7 +1338,8 @@ static bool TryStartPlayerAttack(
 
         TopdownPushWorldEvent(state,
                               TopdownWorldEventType::Gunshot,
-                              ctx.muzzleWorld,
+                              //ctx.muzzleWorld,
+                              state.topdown.runtime.player.position,
                               weaponConfig->noiseRadius,
                               TopdownWorldEventSourceType::Player, -1);
 

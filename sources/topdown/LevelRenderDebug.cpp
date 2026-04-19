@@ -863,10 +863,9 @@ static void DrawNpcAiDebug(const GameState& state)
                 baseColor);
 
         DrawText(
-                TextFormat("atkCd=%.0f  repath=%.0f  lose=%.0f",
+                TextFormat("atkCd=%.0f  repath=%.0f",
                            npc.attackCooldownRemainingMs,
-                           npc.repathTimerMs,
-                           npc.loseTargetTimerMs),
+                           npc.repathTimerMs),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 70.0f),
                 16,
@@ -883,9 +882,7 @@ static void DrawNpcAiDebug(const GameState& state)
                 baseColor);
 
         DrawText(
-                TextFormat("progressT=%.0f  progressLast=%.0f  invCtx=%d  invSlot=%d",
-                           npc.lostTargetProgressTimerMs,
-                           npc.lostTargetLastDistance,
+                TextFormat("invCtx=%d  invSlot=%d",
                            npc.investigationContextHandle,
                            npc.investigationSlotIndex),
                 static_cast<int>(npcScreen.x + 10.0f),

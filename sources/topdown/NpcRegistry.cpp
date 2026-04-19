@@ -368,7 +368,6 @@ static void MergeNpcRegistryFile(
         ReadNpcAttackEffectsConfig(entry, def.attackEffects);
 
         def.chaseRepathIntervalMs = entry.value("chaseRepathIntervalMs", 250.0f);
-        def.loseTargetTimeoutMs = entry.value("loseTargetTimeoutMs", 1200.0f);
 
         if (def.hurtStunMs < 0.0f) {
             TraceLog(LOG_WARNING,
@@ -470,13 +469,6 @@ static void MergeNpcRegistryFile(
                      "NPC definition '%s' has chaseRepathIntervalMs < 0, clamping to 0",
                      def.assetId.c_str());
             def.chaseRepathIntervalMs = 0.0f;
-        }
-
-        if (def.loseTargetTimeoutMs < 0.0f) {
-            TraceLog(LOG_WARNING,
-                     "NPC definition '%s' has loseTargetTimeoutMs < 0, clamping to 0",
-                     def.assetId.c_str());
-            def.loseTargetTimeoutMs = 0.0f;
         }
 
         if (def.assetId.empty()) {
@@ -691,7 +683,6 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
     runtime.attackEffects = def->attackEffects;
 
     runtime.chaseRepathIntervalMs = def->chaseRepathIntervalMs;
-    runtime.loseTargetTimeoutMs = def->loseTargetTimeoutMs;
 
     for (const TopdownNpcAnimationSourceDefinition& animSource : def->animations) {
         SpriteAssetHandle spriteHandle = -1;
@@ -873,7 +864,7 @@ bool TopdownSpawnNpcRuntime(
     npc.hostile = asset->hostile;
     npc.persistentChase = persistentChase;
     npc.aiMode = asset->aiMode;
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
+    npc.engagementState = TopdownNpcEngagementState::Unaware;
     npc.combatState = TopdownNpcCombatState::None;
 
     npc.visionRange = asset->visionRange;
@@ -897,11 +888,9 @@ bool TopdownSpawnNpcRuntime(
     npc.attackEffects = asset->attackEffects;
 
     npc.chaseRepathIntervalMs = asset->chaseRepathIntervalMs;
-    npc.loseTargetTimeoutMs = asset->loseTargetTimeoutMs;
 
     npc.hasPlayerTarget = false;
     npc.lastKnownPlayerPosition = {};
-    npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
 
     npc.attackHitPending = false;

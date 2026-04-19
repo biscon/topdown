@@ -8,7 +8,6 @@ enum class TopdownNpcSearchUpdateResult {
 };
 
 const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state);
-const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state);
 const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state);
 
 void TopdownStopNpcMovement(TopdownNpcRuntime& npc);
@@ -55,17 +54,12 @@ void TopdownAlertNearbyNpcs(
         const TopdownNpcRuntime& sourceNpc,
         float radius);
 
-void TopdownAlertNpcsByGunshot(
-        GameState& state,
-        Vector2 shotOrigin);
-
 bool TopdownHasNpcReachedPoint(
         const TopdownNpcRuntime& npc,
         Vector2 point,
         float radius);
 
 void TopdownResetNpcSearchTimers(TopdownNpcRuntime& npc);
-void TopdownResetNpcLostTargetProgress(TopdownNpcRuntime& npc);
 void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc);
 
 void TopdownBeginNpcSearchState(
@@ -79,23 +73,6 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
         float probePeriodMs = 800.0f,
         float minDistancePerProbe = 20.0f);
 
-bool TopdownTryBuildNpcChaseTarget(
-        const GameState& state,
-        const TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer,
-        Vector2& outChaseTarget);
-
-
 TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt);
-
-void TopdownUpdateNpcPerception(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dtMs);
-
-void TopdownUpdateNpcPersistentChaseState(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer);

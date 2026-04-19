@@ -998,7 +998,6 @@ struct TopdownNpcAssetDefinition {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     float meleeHitPosX = 0.0f;
     float meleeHitPosY = 0.0f;
@@ -1056,7 +1055,6 @@ struct TopdownNpcAssetRuntime {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     float meleeHitPosX = 0.0f;
     float meleeHitPosY = 0.0f;
@@ -1082,8 +1080,6 @@ struct TopdownNpcRuntime {
     bool persistentChase = false;
 
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
-    // old top level, should be removed later
-    TopdownNpcAwarenessState awarenessState = TopdownNpcAwarenessState::Idle;
 
     TopdownNpcEngagementState engagementState = TopdownNpcEngagementState::Unaware;
     TopdownNpcCombatState combatState = TopdownNpcCombatState::None;
@@ -1105,12 +1101,11 @@ struct TopdownNpcRuntime {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     bool hasPlayerTarget = false;
     Vector2 lastKnownPlayerPosition{};
     Vector2 investigationPosition{};
-    float loseTargetTimerMs = 0.0f;
+
     float repathTimerMs = 0.0f;
 
     bool attackHitPending = false;
@@ -1164,9 +1159,6 @@ struct TopdownNpcRuntime {
 
     TopdownNpcAttackEffectsConfig attackEffects;
 
-    float lostTargetProgressTimerMs = 0.0f;
-    float lostTargetLastDistance = 0.0f;
-
     float chaseStuckTimerMs = 0.0f;
     Vector2 chaseStuckLastPosition{};
 
@@ -1174,6 +1166,7 @@ struct TopdownNpcRuntime {
     int investigationSlotIndex = -1;
     float investigationProgressTimerMs = 0.0f;
     Vector2 investigationLastPosition{};
+    float investigationRetargetCooldownMs = 300;
 };
 
 struct TopdownNpcInvestigationSlot {

@@ -25,7 +25,6 @@
             "attackRecoverMs": 300.0,
 
             "chaseRepathIntervalMs": 250.0,
-            "loseTargetTimeoutMs": 1400.0,
 
             "meleeHitPosX": 75,
             "meleeHitPosY": 40,

@@ -79,6 +79,12 @@ static void UpdateNpcEngagementState(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
+    const float dtMs = dt * 1000.0f;
+    npc.investigationRetargetCooldownMs -= dtMs;
+    if (npc.investigationRetargetCooldownMs < 0.0f) {
+        npc.investigationRetargetCooldownMs = 0.0f;
+    }
+
     const bool wasEngaged =
             npc.engagementState == TopdownNpcEngagementState::Engaged;
 
@@ -86,7 +92,6 @@ static void UpdateNpcEngagementState(
         const bool newlyDetectedPlayer =
                 !wasEngaged;
         npc.hasPlayerTarget = true;
-        npc.loseTargetTimerMs = 0.0f;
         npc.lastKnownPlayerPosition = perception.detectedPlayerPosition;
         npc.investigationPosition = perception.detectedPlayerPosition;
         npc.engagementState = TopdownNpcEngagementState::Engaged;
@@ -101,12 +106,26 @@ static void UpdateNpcEngagementState(
 
     if (perception.heardGunshot &&
         npc.engagementState != TopdownNpcEngagementState::Engaged) {
-        npc.hasPlayerTarget = true;
-        npc.investigationPosition = perception.heardGunshotPosition;
-        npc.loseTargetTimerMs = 0.0f;
-        npc.combatState = TopdownNpcCombatState::None;
-        npc.engagementState = TopdownNpcEngagementState::Investigating;
-        TopdownStopNpcMovement(npc);
+
+        const float distToCurrentInvestigation =
+                TopdownLength(TopdownSub(
+                        perception.heardGunshotPosition,
+                        npc.investigationPosition));
+
+        const bool canRetargetByTime =
+                npc.investigationRetargetCooldownMs <= 0.0f;
+
+        const bool canRetargetByDistance =
+                distToCurrentInvestigation >= 300.0f;
+
+        if (!npc.hasPlayerTarget || canRetargetByTime || canRetargetByDistance) {
+            npc.hasPlayerTarget = true;
+            npc.investigationPosition = perception.heardGunshotPosition;
+            npc.combatState = TopdownNpcCombatState::None;
+            npc.engagementState = TopdownNpcEngagementState::Investigating;
+            TopdownStopNpcMovement(npc);
+            npc.investigationRetargetCooldownMs = 300.0f;
+        }
         return;
     }
 
@@ -118,7 +137,6 @@ static void UpdateNpcEngagementState(
 
         switch (npc.engagementState) {
             case TopdownNpcEngagementState::Engaged:
-                npc.loseTargetTimerMs = 0.0f;
                 npc.combatState = TopdownNpcCombatState::None;
                 npc.engagementState = TopdownNpcEngagementState::Investigating;
                 TopdownStopNpcMovement(npc);

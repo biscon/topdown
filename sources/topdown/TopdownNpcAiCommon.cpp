@@ -23,16 +23,6 @@ const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state)
     }
 }
 
-const char* TopdownNpcAwarenessStateToString(TopdownNpcAwarenessState state)
-{
-    switch (state) {
-        case TopdownNpcAwarenessState::Idle:       return "Idle";
-        case TopdownNpcAwarenessState::Suspicious: return "Suspicious";
-        case TopdownNpcAwarenessState::Alerted:    return "Alerted";
-        default:                                   return "Unknown";
-    }
-}
-
 const char* TopdownNpcCombatStateToString(TopdownNpcCombatState state)
 {
     switch (state) {
@@ -73,18 +63,11 @@ void TopdownResetNpcSearchTimers(TopdownNpcRuntime& npc)
     npc.searchSweepDegrees = 0.0f;
 }
 
-void TopdownResetNpcLostTargetProgress(TopdownNpcRuntime& npc)
-{
-    npc.lostTargetProgressTimerMs = 0.0f;
-    npc.lostTargetLastDistance = 0.0f;
-}
-
 void TopdownResetNpcChaseStuckWatchdog(TopdownNpcRuntime& npc)
 {
     npc.chaseStuckTimerMs = 0.0f;
     npc.chaseStuckLastPosition = npc.position;
 }
-
 
 void TopdownBeginNpcSearchState(
         TopdownNpcRuntime& npc,
@@ -149,30 +132,6 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
     return movedTooLittle;
 }
 
-bool TopdownTryBuildNpcChaseTarget(
-        const GameState& state,
-        const TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer,
-        Vector2& outChaseTarget)
-{
-    if (!npc.hasPlayerTarget) {
-        return false;
-    }
-
-    if (npc.persistentChase) {
-        outChaseTarget = state.topdown.runtime.player.position;
-        return true;
-    }
-
-    if (currentlyDetectsPlayer) {
-        outChaseTarget = state.topdown.runtime.player.position;
-        return true;
-    }
-
-    outChaseTarget = npc.lastKnownPlayerPosition;
-    return true;
-}
-
 static float SmoothStep01(float t)
 {
     t = Clamp(t, 0.0f, 1.0f);
@@ -226,36 +185,6 @@ TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
     return TopdownNpcSearchUpdateResult::Running;
 }
 
-static bool HasDoorBetweenPoints(
-        GameState& state,
-        Vector2 from,
-        Vector2 to)
-{
-    Vector2 delta = TopdownSub(to, from);
-    const float dist = TopdownLength(delta);
-
-    if (dist <= 0.000001f) {
-        return false;
-    }
-
-    const Vector2 dir = TopdownMul(delta, 1.0f / dist);
-
-    TopdownRuntimeDoor* hitDoor = nullptr;
-    Vector2 hitPoint{};
-    Vector2 hitNormal{};
-    float hitDistance = dist;
-
-    return RaycastClosestDoor(
-            state,
-            from,
-            dir,
-            dist,
-            hitDoor,
-            hitPoint,
-            hitNormal,
-            hitDistance);
-}
-
 void TopdownAlertNpcToPlayer(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -268,23 +197,18 @@ void TopdownAlertNpcToPlayer(
         return;
     }
 
-    if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
-        return;
-    }
-
-    if (npc.combatState == TopdownNpcCombatState::Investigation) {
+    if (npc.investigationContextHandle >= 0) {
         TopdownLeaveNpcInvestigationState(state, npc);
     }
 
-    const bool newlyAcquiredTarget = !npc.hasPlayerTarget;
     npc.hasPlayerTarget = true;
     npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
-    npc.loseTargetTimerMs = 0.0f;
-    npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-    TopdownResetNpcLostTargetProgress(npc);
-    if (newlyAcquiredTarget) {
-        npc.repathTimerMs = 0.0f;
-    }
+    npc.investigationPosition = state.topdown.runtime.player.position;
+    npc.engagementState = TopdownNpcEngagementState::Engaged;
+    npc.combatState = TopdownNpcCombatState::None;
+    TopdownStopNpcMovement(npc);
+    TopdownResetNpcChaseStuckWatchdog(npc);
+    npc.repathTimerMs = 0.0f;
 }
 
 void TopdownAlertNearbyNpcs(
@@ -322,53 +246,18 @@ void TopdownAlertNearbyNpcs(
             continue;
         }
 
+        if (otherNpc.investigationContextHandle >= 0) {
+            TopdownLeaveNpcInvestigationState(state, otherNpc);
+        }
         otherNpc.hasPlayerTarget = true;
         otherNpc.lastKnownPlayerPosition = sourceNpc.lastKnownPlayerPosition;
-        otherNpc.investigationPosition = sourceNpc.lastKnownPlayerPosition;
+        otherNpc.investigationPosition = sourceNpc.investigationPosition;
         otherNpc.engagementState = TopdownNpcEngagementState::Engaged;
         otherNpc.combatState = TopdownNpcCombatState::None;
-    }
-}
+        TopdownStopNpcMovement(otherNpc);
 
-void TopdownAlertNpcsByGunshot(
-        GameState& state,
-        Vector2 shotOrigin)
-{
-    static constexpr float kAspectRatioCompensation =
-            static_cast<float>(INTERNAL_HEIGHT) / static_cast<float>(INTERNAL_WIDTH);
-
-    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
-        if (!npc.active || npc.dead || npc.corpse) {
-            continue;
-        }
-
-        if (!npc.hostile) {
-            continue;
-        }
-
-        if (npc.aiMode != TopdownNpcAiMode::SeekAndDestroy) {
-            continue;
-        }
-
-        const float range = std::max(0.0f, npc.gunshotHearingRange);
-        if (range <= 0.0f) {
-            continue;
-        }
-
-        const Vector2 delta = TopdownSub(npc.position, shotOrigin);
-        const Vector2 weightedDelta{
-                delta.x * kAspectRatioCompensation,
-                delta.y
-        };
-
-        if (TopdownLengthSqr(weightedDelta) > range * range) {
-            continue;
-        }
-
-        TopdownAlertNpcToPlayer(state, npc);
-        if (npc.combatState != TopdownNpcCombatState::Attack) {
-            npc.combatState = TopdownNpcCombatState::Chase;
-        }
+        TopdownResetNpcChaseStuckWatchdog(otherNpc);
+        otherNpc.repathTimerMs = 0.0f;
     }
 }
 
@@ -568,6 +457,36 @@ bool TopdownNpcCanSeePlayer(
     return HasNpcLineOfSightToPlayer(state, npc, range);
 }
 
+static bool HasDoorBetweenPoints(
+        GameState& state,
+        Vector2 from,
+        Vector2 to)
+{
+    Vector2 delta = TopdownSub(to, from);
+    const float dist = TopdownLength(delta);
+
+    if (dist <= 0.000001f) {
+        return false;
+    }
+
+    const Vector2 dir = TopdownMul(delta, 1.0f / dist);
+
+    TopdownRuntimeDoor* hitDoor = nullptr;
+    Vector2 hitPoint{};
+    Vector2 hitNormal{};
+    float hitDistance = dist;
+
+    return RaycastClosestDoor(
+            state,
+            from,
+            dir,
+            dist,
+            hitDoor,
+            hitPoint,
+            hitNormal,
+            hitDistance);
+}
+
 bool TopdownNpcCanHearPlayer(
         GameState& state,
         const TopdownNpcRuntime& npc)
@@ -592,54 +511,6 @@ bool TopdownNpcCanHearPlayer(
 
     const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
     return distSqr <= range * range;
-}
-
-void TopdownUpdateNpcPerception(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        float dtMs)
-{
-    const bool seesPlayer = TopdownNpcCanSeePlayer(state, npc);
-    const bool hearsPlayer = TopdownNpcCanHearPlayer(state, npc);
-
-    if (seesPlayer || hearsPlayer) {
-        TopdownAlertNpcToPlayer(state, npc);
-
-        const float nearbyAlertRadius =
-                std::max(180.0f, npc.hearingRange);
-
-        TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
-        return;
-    }
-
-    if (npc.hasPlayerTarget) {
-        npc.loseTargetTimerMs += dtMs;
-        npc.awarenessState = TopdownNpcAwarenessState::Suspicious;
-
-        return;
-    }
-
-    TopdownResetNpcLostTargetProgress(npc);
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-}
-
-void TopdownUpdateNpcPersistentChaseState(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        bool currentlyDetectsPlayer)
-{
-    if (!npc.hasPlayerTarget) {
-        return;
-    }
-
-    npc.awarenessState = TopdownNpcAwarenessState::Alerted;
-    npc.loseTargetTimerMs = 0.0f;
-    npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
-    TopdownResetNpcLostTargetProgress(npc);
-
-    if (currentlyDetectsPlayer) {
-        TopdownResetNpcChaseStuckWatchdog(npc);
-    }
 }
 
 bool TopdownIsPlayerWithinNpcAttackRange(
@@ -837,6 +708,4 @@ void TopdownApplyDamageToPlayer(
         state.topdown.runtime.playerAttack.pendingPrimaryAttack = false;
         state.topdown.runtime.playerAttack.pendingSecondaryAttack = false;
     }
-
-    (void)attackerPos;
 }
