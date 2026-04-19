@@ -85,6 +85,22 @@ enum class TopdownNpcAwarenessState {
     Alerted
 };
 
+enum class TopdownNpcEngagementState {
+    Unaware,      // no target, passive
+    Investigating,// has stimulus, moving/searching
+    Engaged       // has target, full combat allowed
+};
+
+struct TopdownNpcPerceptionResult {
+    bool seesPlayer = false;
+    bool hearsPlayer = false;
+    bool detectsPlayer = false;
+
+    bool heardGunshot = false;
+    Vector2 detectedPlayerPosition{};
+    Vector2 heardGunshotPosition{};
+};
+
 enum class TopdownNpcCombatState {
     None,
     Chase,
@@ -690,6 +706,7 @@ struct TopdownPlayerWeaponConfig {
 
     float rangedDoorImpulse = 0.0f;
     float meleeDoorImpulse = 0.0f;
+    float noiseRadius = 1200.0f;
 
     Vector2 muzzleOrigin{};
 
@@ -981,7 +998,6 @@ struct TopdownNpcAssetDefinition {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     float meleeHitPosX = 0.0f;
     float meleeHitPosY = 0.0f;
@@ -1039,7 +1055,6 @@ struct TopdownNpcAssetRuntime {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     float meleeHitPosX = 0.0f;
     float meleeHitPosY = 0.0f;
@@ -1049,6 +1064,7 @@ struct TopdownNpcAssetRuntime {
 
     TopdownNpcAttackEffectsConfig attackEffects;
 };
+
 
 struct TopdownNpcRuntime {
     TopdownCharacterHandle handle = -1;
@@ -1064,7 +1080,8 @@ struct TopdownNpcRuntime {
     bool persistentChase = false;
 
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
-    TopdownNpcAwarenessState awarenessState = TopdownNpcAwarenessState::Idle;
+
+    TopdownNpcEngagementState engagementState = TopdownNpcEngagementState::Unaware;
     TopdownNpcCombatState combatState = TopdownNpcCombatState::None;
 
     float health = 100.0f;
@@ -1084,11 +1101,11 @@ struct TopdownNpcRuntime {
     float attackRecoverMs = 250.0f;
 
     float chaseRepathIntervalMs = 250.0f;
-    float loseTargetTimeoutMs = 1200.0f;
 
     bool hasPlayerTarget = false;
     Vector2 lastKnownPlayerPosition{};
-    float loseTargetTimerMs = 0.0f;
+    Vector2 investigationPosition{};
+
     float repathTimerMs = 0.0f;
 
     bool attackHitPending = false;
@@ -1097,7 +1114,7 @@ struct TopdownNpcRuntime {
     float attackAnimationDurationMs = 0.0f;
 
     float searchStateTimeMs = 0.0f;
-    float searchDurationMs = 900.0f;
+    float searchDurationMs = 1600.0f;
     float searchBaseFacingRadians = 0.0f;
     float searchSweepDegrees = 300.0f;
 
@@ -1142,16 +1159,14 @@ struct TopdownNpcRuntime {
 
     TopdownNpcAttackEffectsConfig attackEffects;
 
-    float lostTargetProgressTimerMs = 0.0f;
-    float lostTargetLastDistance = 0.0f;
-
     float chaseStuckTimerMs = 0.0f;
     Vector2 chaseStuckLastPosition{};
 
     int investigationContextHandle = -1;
     int investigationSlotIndex = -1;
     float investigationProgressTimerMs = 0.0f;
-    float investigationLastDistance = 0.0f;
+    Vector2 investigationLastPosition{};
+    float investigationRetargetCooldownMs = 300;
 };
 
 struct TopdownNpcInvestigationSlot {
@@ -1254,6 +1269,33 @@ struct TopdownRvoState {
     size_t playerRvoId = RVO::RVO_ERROR;
 };
 
+enum class TopdownWorldEventType {
+    Gunshot,
+    Explosion,
+    Footstep,
+    Impact,
+    AllyDown
+};
+
+enum class TopdownWorldEventSourceType {
+    None,
+    Player,
+    Npc,
+    System
+};
+
+struct TopdownWorldEvent {
+    TopdownWorldEventType type{};
+    Vector2 position{};
+    float radius = 0.0f;
+    float createdAtMs = 0.0f;
+    float ttlMs = 0.0f;
+
+    TopdownWorldEventSourceType sourceType = TopdownWorldEventSourceType::None;
+    int sourceNpcHandle = -1; // only valid if sourceType == Npc
+};
+
+
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -1290,6 +1332,9 @@ struct TopdownRuntimeData {
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
     std::vector<TopdownRuntimeWindow> windows;
+
+    std::vector<TopdownWorldEvent> worldEvents;
+    float timeMs; // global timer, advances each frame
 };
 
 struct TopdownData {

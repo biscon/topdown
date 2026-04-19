@@ -180,6 +180,20 @@ static void UpdateTriggers(GameState& state, float dt)
     }
 }
 
+static void PruneWorldEvents(GameState& state) {
+    const float nowMs = state.topdown.runtime.timeMs;
+    auto& events = state.topdown.runtime.worldEvents;
+    events.erase(
+            std::remove_if(
+                    events.begin(),
+                    events.end(),
+                    [nowMs](const TopdownWorldEvent& evt)
+                    {
+                        return (nowMs - evt.createdAtMs) > evt.ttlMs;
+                    }),
+            events.end());
+}
+
 void TopdownUpdate(GameState& state, float dt)
 {
     if (!state.topdown.runtime.levelActive) {
@@ -188,6 +202,12 @@ void TopdownUpdate(GameState& state, float dt)
 
     TopdownPlayerRuntime& player = state.topdown.runtime.player;
     TopdownRuntimeData& runtime = state.topdown.runtime;
+
+    // Tick global timer
+    runtime.timeMs += dt * 1000.0f;
+
+    // Prune stale events
+    PruneWorldEvents(state);
 
     // --- trigger game over ---
     if (!runtime.gameOverActive &&

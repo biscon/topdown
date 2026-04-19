@@ -13,10 +13,10 @@
 #include "LevelCollision.h"
 #include "NpcUpdate.h"
 #include "LevelEffects.h"
-#include "TopdownNpcAi.h"
 #include "TopdownRvo.h"
 #include "LevelDoors.h"
 #include "LevelWindows.h"
+#include "topdown/TopdownNpcAiCommon.h"
 
 enum class TopdownShotHitType
 {
@@ -475,9 +475,6 @@ static void BeginNpcDeath(
     npc.corpse = false;
 
     npc.hasPlayerTarget = false;
-    npc.awarenessState = TopdownNpcAwarenessState::Idle;
-    npc.combatState = TopdownNpcCombatState::None;
-    npc.loseTargetTimerMs = 0.0f;
     npc.repathTimerMs = 0.0f;
 
     npc.attackHitPending = false;
@@ -1338,7 +1335,13 @@ static bool TryStartPlayerAttack(
                 BuildPlayerRangedAttackContext(state, *weaponConfig);
 
         PlayPlayerRangedAttackAudioAndFx(state, *weaponConfig, ctx);
-        TopdownAlertNpcsByGunshot(state, ctx.muzzleWorld);
+
+        TopdownPushWorldEvent(state,
+                              TopdownWorldEventType::Gunshot,
+                              //ctx.muzzleWorld,
+                              state.topdown.runtime.player.position,
+                              weaponConfig->noiseRadius,
+                              TopdownWorldEventSourceType::Player, -1);
 
         std::vector<PendingNpcShotResult> pendingNpcHits;
         std::vector<PendingDoorShotResult> pendingDoorHits;

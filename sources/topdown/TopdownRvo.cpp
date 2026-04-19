@@ -206,21 +206,15 @@ static Vector2 BuildNpcFallbackPreferredVelocity(
             std::max(0.0f, npc.move.currentSpeed),
             maxSpeed);
 
-    const float lookaheadDistance = std::max(
-            100.0f,
-            npc.collisionRadius * 4.0f);
-
-    const Vector2 steeringTarget =
-            TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
-
-    const Vector2 toTarget = TopdownSub(steeringTarget, npc.position);
+    const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
+    const Vector2 toTarget = TopdownSub(target, npc.position);
     const float dist = TopdownLength(toTarget);
 
     if (dist <= std::max(1.0f, npc.move.arrivalRadius)) {
         return Vector2{};
     }
 
-    const Vector2 dir = TopdownMul(toTarget, 1.0f / dist);
+    const Vector2 dir = TopdownNormalizeOrZero(toTarget);
     return TopdownMul(dir, desiredSpeed);
 }
 

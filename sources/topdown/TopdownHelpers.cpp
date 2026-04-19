@@ -405,3 +405,38 @@ Vector2 TopdownBuildNpcPathSteeringTarget(
 
     return points.back();
 }
+
+void TopdownPushWorldEvent(
+        GameState& state,
+        TopdownWorldEventType type,
+        Vector2 position,
+        float radius,
+        TopdownWorldEventSourceType sourceType,
+        int sourceNpcHandle, float ttl)
+{
+    TopdownWorldEvent evt;
+    evt.type = type;
+    evt.position = position;
+    evt.radius = radius;
+    evt.sourceType = sourceType;
+    evt.sourceNpcHandle = sourceNpcHandle;
+    evt.createdAtMs = state.topdown.runtime.timeMs;
+    evt.ttlMs = ttl;
+
+    state.topdown.runtime.worldEvents.push_back(evt);
+}
+
+void TopdownForEachWorldEventOfType(
+        const GameState& state,
+        TopdownWorldEventType type,
+        const std::function<void(const TopdownWorldEvent&)>& fn)
+{
+    const std::vector<TopdownWorldEvent>& events =
+            state.topdown.runtime.worldEvents;
+
+    for (const TopdownWorldEvent& evt : events) {
+        if (evt.type == type) {
+            fn(evt);
+        }
+    }
+}

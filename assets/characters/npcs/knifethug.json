@@ -4,7 +4,7 @@
             "assetId": "knifethug",
             "baseDrawScale": 3.0,
             "collisionRadius": 38.0,
-            "walkSpeed": 200,
+            "walkSpeed": 300,
             "runSpeed": 600,
             "hurtStunMs": 300,
             "maxHealth": 100,
@@ -25,7 +25,6 @@
             "attackRecoverMs": 300.0,
 
             "chaseRepathIntervalMs": 250.0,
-            "loseTargetTimeoutMs": 1400.0,
 
             "meleeHitPosX": 75,
             "meleeHitPosY": 40,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include "raylib.h"
 #include "topdown/TopdownData.h"
 #include "data/GameState.h"
@@ -57,3 +58,17 @@ void TopdownBuildDoorCorners(
 Vector2 TopdownBuildNpcPathSteeringTarget(
         const TopdownNpcRuntime& npc,
         float lookaheadDistance);
+
+void TopdownPushWorldEvent(
+        GameState& state,
+        TopdownWorldEventType type,
+        Vector2 position,
+        float radius,
+        TopdownWorldEventSourceType sourceType = TopdownWorldEventSourceType::None,
+        int sourceNpcHandle = -1,
+        float ttl = 150.0f);
+
+void TopdownForEachWorldEventOfType(
+        const GameState& state,
+        TopdownWorldEventType type,
+        const std::function<void(const TopdownWorldEvent&)>& fn);
