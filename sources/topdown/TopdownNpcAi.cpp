@@ -3,6 +3,7 @@
 #include "TopdownNpcAiCommon.h"
 #include "TopdownNpcAiSeekAndDestroy.h"
 #include "TopdownHelpers.h"
+#include "TopdownNpcAiHoldAndFire.h"
 
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
 {
@@ -29,6 +30,10 @@ static void DispatchNpcInvestigatingExecution(GameState& state, TopdownNpcRuntim
             TopdownNpcAiSeekAndDestroy_UpdateInvestigating(state, npc, perception, dt);
             break;
 
+        case TopdownNpcAiMode::HoldAndFire:
+            TopdownNpcAiHoldAndFire_UpdateInvestigating(state, npc, perception, dt);
+            break;
+
         case TopdownNpcAiMode::None:
         default:
             break;
@@ -40,6 +45,10 @@ static void DispatchNpcEngagedExecution(GameState& state, TopdownNpcRuntime& npc
     switch (npc.aiMode) {
         case TopdownNpcAiMode::SeekAndDestroy:
             TopdownNpcAiSeekAndDestroy_UpdateEngaged(state, npc, perception, dt);
+            break;
+
+        case TopdownNpcAiMode::HoldAndFire:
+            TopdownNpcAiHoldAndFire_UpdateEngaged(state, npc, perception, dt);
             break;
 
         case TopdownNpcAiMode::None:

@@ -19,8 +19,8 @@ end
 
 --local count = 1
 function Level_onTestTrigger2()
-    spawnNpcSmart("enemy_" .. count, "knifethug", "patrol_1", false)
-    --count = count + 1
+    spawnNpcSmart("enemy_" .. count, "pistolthug", "patrol_1", false)
+    count = count + 1
 end
 
 function WalkAround()

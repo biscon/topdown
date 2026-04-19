@@ -12,6 +12,7 @@
 
             "hostile": true,
             "aiMode": "seek_and_destroy",
+            "attackType": "melee",
 
             "visionRange": 900.0,
             "hearingRange": 320.0,

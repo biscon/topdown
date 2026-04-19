@@ -76,3 +76,12 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
 TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt);
+
+bool RaycastPlayerDetailed(
+        GameState& state,
+        Vector2 origin,
+        Vector2 dir,
+        float maxDistance,
+        float& outDistance,
+        Vector2& outHitPoint,
+        Vector2& outHitNormal);

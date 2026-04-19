@@ -76,13 +76,8 @@ enum class TopdownGameOverState {
 
 enum class TopdownNpcAiMode {
     None,
-    SeekAndDestroy
-};
-
-enum class TopdownNpcAwarenessState {
-    Idle,
-    Suspicious,
-    Alerted
+    SeekAndDestroy,
+    HoldAndFire
 };
 
 enum class TopdownNpcEngagementState {
@@ -986,6 +981,16 @@ struct TopdownNpcAssetDefinition {
     bool hostile = true;
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
 
+    TopdownAttackType attackType;
+    TopdownTracerStyle rangedTracerStyle = TopdownTracerStyle::Handgun;
+    int rangedPelletCount = 1;
+    float rangedSpreadDegrees = 6.0f;
+    float rangedMaxRange = 800.0f;
+    float reactionTimeMs = 180.0f;
+    float aimInaccuracyMinDegrees = 2.0f;
+    float aimInaccuracyMaxDegrees = 10.0f;
+
+
     float visionRange = 700.0f;
     float hearingRange = 220.0f;
     float gunshotHearingRange = 1000.0f;
@@ -1042,6 +1047,15 @@ struct TopdownNpcAssetRuntime {
 
     bool hostile = true;
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+
+    TopdownAttackType attackType;
+    TopdownTracerStyle rangedTracerStyle = TopdownTracerStyle::Handgun;
+    int rangedPelletCount = 1;
+    float rangedSpreadDegrees = 6.0f;
+    float rangedMaxRange = 800.0f;
+    float reactionTimeMs = 180.0f;
+    float aimInaccuracyMinDegrees = 2.0f;
+    float aimInaccuracyMaxDegrees = 10.0f;
 
     float visionRange = 700.0f;
     float hearingRange = 220.0f;

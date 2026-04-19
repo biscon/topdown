@@ -266,7 +266,7 @@ bool TopdownIsPlayerAlive(const GameState& state)
     return state.topdown.runtime.player.lifeState == TopdownPlayerLifeState::Alive;
 }
 
-static bool RaycastPlayerDetailed(
+bool RaycastPlayerDetailed(
         GameState& state,
         Vector2 origin,
         Vector2 dir,

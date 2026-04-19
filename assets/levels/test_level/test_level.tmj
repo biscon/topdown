@@ -3999,7 +3999,7 @@
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"knifethug"
+                         "value":"pistolthug"
                         }, 
                         {
                          "name":"orientation",
@@ -4009,7 +4009,7 @@
                         {
                          "name":"persistentChase",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }],
                  "rotation":0,
                  "type":"",
@@ -4028,7 +4028,7 @@
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"knifethug"
+                         "value":"pistolthug"
                         }, 
                         {
                          "name":"orientation",
@@ -4038,7 +4038,7 @@
                         {
                          "name":"persistentChase",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }],
                  "rotation":0,
                  "type":"",
@@ -4057,7 +4057,7 @@
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"knifethug"
+                         "value":"pistolthug"
                         }, 
                         {
                          "name":"orientation",
@@ -4067,7 +4067,7 @@
                         {
                          "name":"persistentChase",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }],
                  "rotation":0,
                  "type":"",
@@ -4086,7 +4086,7 @@
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"knifethug"
+                         "value":"pistolthug"
                         }, 
                         {
                          "name":"orientation",
@@ -4096,7 +4096,7 @@
                         {
                          "name":"persistentChase",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }],
                  "rotation":0,
                  "type":"",
@@ -4842,7 +4842,7 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":true,
+                 "visible":false,
                  "width":84.6666666666667,
                  "x":560.666666666667,
                  "y":138.666666666666

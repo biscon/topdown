@@ -33,6 +33,60 @@ static bool ParseNpcAiModeString(
         return true;
     }
 
+    if (s == "hold_and_fire" || s == "HoldAndFire") {
+        outMode = TopdownNpcAiMode::HoldAndFire;
+        return true;
+    }
+
+    return false;
+}
+
+static bool ParseTopdownAttackTypeString(
+        const std::string& s,
+        TopdownAttackType& outType)
+{
+    if (s.empty() || s == "none") {
+        outType = TopdownAttackType::None;
+        return true;
+    }
+
+    if (s == "melee" || s == "Melee") {
+        outType = TopdownAttackType::Melee;
+        return true;
+    }
+
+    if (s == "ranged" || s == "Ranged") {
+        outType = TopdownAttackType::Ranged;
+        return true;
+    }
+
+    return false;
+}
+
+static bool ParseTopdownTracerStyleString(
+        const std::string& s,
+        TopdownTracerStyle& outStyle)
+{
+    if (s.empty() || s == "none") {
+        outStyle = TopdownTracerStyle::None;
+        return true;
+    }
+
+    if (s == "handgun" || s == "Handgun") {
+        outStyle = TopdownTracerStyle::Handgun;
+        return true;
+    }
+
+    if (s == "shotgun" || s == "Shotgun") {
+        outStyle = TopdownTracerStyle::Shotgun;
+        return true;
+    }
+
+    if (s == "rifle" || s == "Rifle") {
+        outStyle = TopdownTracerStyle::Rifle;
+        return true;
+    }
+
     return false;
 }
 
@@ -268,7 +322,6 @@ static int FindFirstClipIndexByTagName(
         const SpriteAssetResource& asset,
         const std::string& tagName)
 {
-    // Tag matching is exact ("Idle", "Walk", ...), so authored clip names must match exactly.
     for (int i = 0; i < static_cast<int>(asset.clips.size()); ++i) {
         if (asset.clips[i].name == tagName) {
             return i;
@@ -283,7 +336,6 @@ static void AssignNpcClipIfPresent(
         const SpriteAssetResource& sprite,
         const char* tagName)
 {
-    // First matching clip wins across all animation sources; later sources only fill missing roles.
     if (TopdownNpcClipRefIsValid(dst)) {
         return;
     }
@@ -350,6 +402,39 @@ static void MergeNpcRegistryFile(
                 def.aiMode = TopdownNpcAiMode::None;
             }
         }
+
+        {
+            const std::string attackTypeStr =
+                    entry.value("attackType", std::string("none"));
+
+            if (!ParseTopdownAttackTypeString(attackTypeStr, def.attackType)) {
+                TraceLog(LOG_WARNING,
+                         "NPC definition '%s' has invalid attackType '%s', defaulting to none",
+                         def.assetId.c_str(),
+                         attackTypeStr.c_str());
+                def.attackType = TopdownAttackType::None;
+            }
+        }
+
+        {
+            const std::string tracerStyleStr =
+                    entry.value("rangedTracerStyle", std::string("handgun"));
+
+            if (!ParseTopdownTracerStyleString(tracerStyleStr, def.rangedTracerStyle)) {
+                TraceLog(LOG_WARNING,
+                         "NPC definition '%s' has invalid rangedTracerStyle '%s', defaulting to handgun",
+                         def.assetId.c_str(),
+                         tracerStyleStr.c_str());
+                def.rangedTracerStyle = TopdownTracerStyle::Handgun;
+            }
+        }
+
+        def.rangedPelletCount = entry.value("rangedPelletCount", 1);
+        def.rangedSpreadDegrees = entry.value("rangedSpreadDegrees", 6.0f);
+        def.rangedMaxRange = entry.value("rangedMaxRange", 800.0f);
+        def.reactionTimeMs = entry.value("reactionTimeMs", 180.0f);
+        def.aimInaccuracyMinDegrees = entry.value("aimInaccuracyMinDegrees", 2.0f);
+        def.aimInaccuracyMaxDegrees = entry.value("aimInaccuracyMaxDegrees", 10.0f);
 
         def.visionRange = entry.value("visionRange", 700.0f);
         def.hearingRange = entry.value("hearingRange", 220.0f);
@@ -469,6 +554,55 @@ static void MergeNpcRegistryFile(
                      "NPC definition '%s' has chaseRepathIntervalMs < 0, clamping to 0",
                      def.assetId.c_str());
             def.chaseRepathIntervalMs = 0.0f;
+        }
+
+        if (def.rangedPelletCount < 1) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has rangedPelletCount < 1, clamping to 1",
+                     def.assetId.c_str());
+            def.rangedPelletCount = 1;
+        }
+
+        if (def.rangedSpreadDegrees < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has rangedSpreadDegrees < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.rangedSpreadDegrees = 0.0f;
+        }
+
+        if (def.rangedMaxRange < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has rangedMaxRange < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.rangedMaxRange = 0.0f;
+        }
+
+        if (def.reactionTimeMs < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has reactionTimeMs < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.reactionTimeMs = 0.0f;
+        }
+
+        if (def.aimInaccuracyMinDegrees < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has aimInaccuracyMinDegrees < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.aimInaccuracyMinDegrees = 0.0f;
+        }
+
+        if (def.aimInaccuracyMaxDegrees < 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has aimInaccuracyMaxDegrees < 0, clamping to 0",
+                     def.assetId.c_str());
+            def.aimInaccuracyMaxDegrees = 0.0f;
+        }
+
+        if (def.aimInaccuracyMaxDegrees < def.aimInaccuracyMinDegrees) {
+            TraceLog(LOG_WARNING,
+                     "NPC definition '%s' has aimInaccuracyMaxDegrees < aimInaccuracyMinDegrees, clamping max up to min",
+                     def.assetId.c_str());
+            def.aimInaccuracyMaxDegrees = def.aimInaccuracyMinDegrees;
         }
 
         if (def.assetId.empty()) {
@@ -664,6 +798,15 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
     runtime.hostile = def->hostile;
     runtime.aiMode = def->aiMode;
 
+    runtime.attackType = def->attackType;
+    runtime.rangedTracerStyle = def->rangedTracerStyle;
+    runtime.rangedPelletCount = def->rangedPelletCount;
+    runtime.rangedSpreadDegrees = def->rangedSpreadDegrees;
+    runtime.rangedMaxRange = def->rangedMaxRange;
+    runtime.reactionTimeMs = def->reactionTimeMs;
+    runtime.aimInaccuracyMinDegrees = def->aimInaccuracyMinDegrees;
+    runtime.aimInaccuracyMaxDegrees = def->aimInaccuracyMaxDegrees;
+
     runtime.visionRange = def->visionRange;
     runtime.hearingRange = def->hearingRange;
     runtime.gunshotHearingRange = def->gunshotHearingRange;
@@ -833,10 +976,10 @@ bool TopdownSpawnNpcRuntime(
     if (smartPlacement) {
         Vector2 resolvedPosition{};
         if (!TryResolveSmartSpawnPosition(
-                    state.topdown.runtime,
-                    position,
-                    asset->collisionRadius,
-                    resolvedPosition)) {
+                state.topdown.runtime,
+                position,
+                asset->collisionRadius,
+                resolvedPosition)) {
             TraceLog(LOG_WARNING,
                      "Unable to find smart spawn position for NPC '%s' near %.1f, %.1f",
                      npcId.c_str(),

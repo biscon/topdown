@@ -630,9 +630,10 @@ static void DrawSingleNpcPathDebug(const GameState& state, const TopdownNpcRunti
 static const char* TopdownNpcAiModeToString(TopdownNpcAiMode mode)
 {
     switch (mode) {
-        case TopdownNpcAiMode::None:           return "none";
-        case TopdownNpcAiMode::SeekAndDestroy: return "seek_destroy";
-        default:                               return "unknown";
+        case TopdownNpcAiMode::None:            return "none";
+        case TopdownNpcAiMode::SeekAndDestroy:  return "seek_destroy";
+        case TopdownNpcAiMode::HoldAndFire:     return "hold_fire";
+        default:                                return "unknown";
     }
 }
 

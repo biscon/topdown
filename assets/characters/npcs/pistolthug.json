@@ -1,0 +1,73 @@
+{
+    "npcs": [
+        {
+            "assetId": "pistolthug",
+            "baseDrawScale": 3.0,
+            "collisionRadius": 38.0,
+            "walkSpeed": 250.0,
+            "runSpeed": 450.0,
+            "hurtStunMs": 220.0,
+            "maxHealth": 100.0,
+            "corpseExpirationMs": -1.0,
+            "hostile": true,
+            "aiMode": "hold_and_fire",
+            "attackType": "ranged",
+            "rangedTracerStyle": "handgun",
+            "rangedPelletCount": 1,
+            "rangedSpreadDegrees": 6.0,
+            "rangedMaxRange": 900.0,
+            "reactionTimeMs": 180.0,
+            "aimInaccuracyMinDegrees": 2.0,
+            "aimInaccuracyMaxDegrees": 10.0,
+            "visionRange": 900.0,
+            "hearingRange": 320.0,
+            "gunshotHearingRange": 1000.0,
+            "visionHalfAngleDegrees": 70.0,
+            "attackRange": 520.0,
+            "attackCooldownMs": 700.0,
+            "attackDamage": 18.0,
+            "attackHitNormalizedTime": 0.35,
+            "attackRecoverMs": 220.0,
+            "chaseRepathIntervalMs": 250.0,
+            "sounds": {
+                "attackStart": "pistol_shot",
+                "attackConnect": "",
+                "hitReaction": [
+                    "human_pain_01",
+                    "human_pain_02",
+                    "human_pain_03",
+                    "human_pain_04",
+                    "human_pain_05",
+                    "human_pain_06"
+                ]
+            },
+            "attackEffects": {
+                "bloodImpactParticleCount": 8,
+                "bloodImpactParticleSpeedMin": 50.0,
+                "bloodImpactParticleSpeedMax": 140.0,
+                "bloodImpactParticleLifetimeMsMin": 90.0,
+                "bloodImpactParticleLifetimeMsMax": 180.0,
+                "bloodImpactParticleSizeMin": 2.0,
+                "bloodImpactParticleSizeMax": 5.0,
+                "bloodImpactSpreadDegrees": 80.0,
+                "bloodDecalCountMin": 4,
+                "bloodDecalCountMax": 7,
+                "bloodDecalDistanceMin": 18.0,
+                "bloodDecalDistanceMax": 110.0,
+                "bloodDecalRadiusMin": 8.0,
+                "bloodDecalRadiusMax": 18.0,
+                "bloodDecalSpreadDegrees": 85.0,
+                "bloodDecalWallPadding": 6.0,
+                "bloodDecalOpacityMin": 0.72,
+                "bloodDecalOpacityMax": 0.95
+            },
+            "animations": [
+                {
+                    "asepriteJson": "pistolthug/pistolthug.json",
+                    "originX": 40,
+                    "originY": 40
+                }
+            ]
+        }
+    ]
+}
