@@ -21,7 +21,7 @@
     "maxHealth": 100.0,
     "hurtCooldownMs": 350.0,
     "meleeHitSlowdownMs": 1000.0,
-    "meleeHitSlowdownMultiplier": 0.45,
+    "meleeHitSlowdownMultiplier": 0.55,
 
     "weaponConfigs": [
         {

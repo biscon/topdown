@@ -1194,6 +1194,9 @@ struct TopdownNpcRuntime {
     float investigationProgressTimerMs = 0.0f;
     Vector2 investigationLastPosition{};
     float investigationRetargetCooldownMs = 300;
+
+    float reactionTimerMs = 0.0f;
+    bool hasReactedToPlayer = false;
 };
 
 struct TopdownNpcInvestigationSlot {

@@ -17,26 +17,6 @@
 // Give up hard chase and enter search if the player becomes implausibly far away.
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
 
-static Vector2 ComputeNpcMuzzleWorldPosition(
-        const TopdownNpcRuntime& npc,
-        const TopdownNpcAssetRuntime& asset)
-{
-    const Vector2 forward{
-            std::cos(npc.rotationRadians),
-            std::sin(npc.rotationRadians)
-    };
-    const Vector2 right{
-            -forward.y,
-            forward.x
-    };
-
-    return TopdownAdd(
-            npc.position,
-            TopdownAdd(
-                    TopdownMul(forward, asset.muzzleEffects.muzzleX),
-                    TopdownMul(right, asset.muzzleEffects.muzzleY)));
-}
-
 static void FireNpcHitscanWeapon(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -61,8 +41,33 @@ static void FireNpcHitscanWeapon(
         baseDir = Vector2{1.0f, 0.0f};
     }
 
-    const Vector2 muzzleWorld = ComputeNpcMuzzleWorldPosition(npc, *asset);
+    Vector2 muzzleWorld{};
+    if (!TopdownComputeNpcMuzzleWorldPosition(state, npc, *asset, muzzleWorld)) {
+        muzzleWorld = npc.position;
+    }
     const int pelletCount = std::max(1, asset->rangedPelletCount);
+
+    SpawnMuzzleFlashEffectAnchoredToNpc(
+            state,
+            npc.handle,
+            muzzleWorld,
+            baseDir,
+            asset->muzzleEffects);
+
+    SpawnMuzzleSmokeParticles(
+            state,
+            muzzleWorld,
+            baseDir,
+            asset->muzzleEffects);
+
+    /*
+        // Make other npcs investigates this npcs gunshots
+        TopdownPushWorldEvent(state,
+                              TopdownWorldEventType::Gunshot,
+                              npc.position,
+                              1000,
+                              TopdownWorldEventSourceType::Npc, -1);
+    */
 
     for (int i = 0; i < pelletCount; ++i) {
         const float dist = TopdownLength(toPlayer);
@@ -84,6 +89,7 @@ static void FireNpcHitscanWeapon(
                         shotDir,
                         asset->rangedMaxRange);
 
+
         AppendTracerEffectAnchoredToNpc(
                 state,
                 npc.handle,
@@ -91,27 +97,6 @@ static void FireNpcHitscanWeapon(
                 hit.point,
                 asset->rangedTracerStyle);
 
-        SpawnMuzzleFlashEffectAnchoredToNpc(
-                state,
-                npc.handle,
-                muzzleWorld,
-                shotDir,
-                asset->muzzleEffects);
-
-        SpawnMuzzleSmokeParticles(
-                state,
-                muzzleWorld,
-                shotDir,
-                asset->muzzleEffects);
-
-        /*
-        // Make other npcs investigates this npcs gunshots
-        TopdownPushWorldEvent(state,
-                              TopdownWorldEventType::Gunshot,
-                              npc.position,
-                              1000,
-                              TopdownWorldEventSourceType::Npc, -1);
-                              */
 
         if (hit.type == TopdownShotHitType::Wall) {
             SpawnWallImpactParticles(
@@ -273,28 +258,6 @@ static void UpdateNpcFacingTowardPlayer(
     npc.rotationRadians = std::atan2(facing.y, facing.x);
 }
 
-static bool TryNpcAttackOrRecover(
-        GameState& state,
-        TopdownNpcRuntime& npc,
-        bool currentlySeesPlayer)
-{
-    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
-    const bool inAttackRange =
-            TopdownIsPlayerWithinNpcAttackRange(npc, player);
-
-    if (!(currentlySeesPlayer && inAttackRange)) {
-        return false;
-    }
-
-    TopdownStopNpcMovement(npc);
-    TopdownResetNpcChaseStuckWatchdog(npc);
-
-    if (npc.attackCooldownRemainingMs <= 0.0f) {
-        StartNpcRangedAttack(state, npc);
-    }
-
-    return true;
-}
 
 static void UpdateNpcChasePathing(
         GameState& state,
@@ -411,7 +374,48 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         UpdateNpcFacingTowardPlayer(state, npc);
     }
 
-    if (TryNpcAttackOrRecover(state, npc, perception.seesPlayer)) {
+
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownNpcAssetRuntime* asset =
+            FindTopdownNpcAssetRuntime(state, npc.assetId);
+
+    if (asset == nullptr || !asset->loaded) {
+        StopNpcEngagedExecution(npc);
+        return;
+    }
+
+    const bool inAttackRange =
+            TopdownIsPlayerWithinNpcAttackRange(npc, player);
+
+    bool clearShot = false;
+
+    if (perception.seesPlayer) {
+        Vector2 muzzleWorld{};
+        if (!TopdownComputeNpcMuzzleWorldPosition(state, npc, *asset, muzzleWorld)) {
+            muzzleWorld = npc.position;
+        }
+
+        clearShot = !TopdownIsNpcShotBlockedByOtherNpc(
+                state,
+                npc,
+                muzzleWorld,
+                player.position,
+                asset->rangedMaxRange);
+    }
+
+    const bool canTakeShot =
+            perception.seesPlayer &&
+            inAttackRange &&
+            clearShot;
+
+    if (canTakeShot) {
+        TopdownStopNpcMovement(npc);
+        TopdownResetNpcChaseStuckWatchdog(npc);
+
+        if (npc.attackCooldownRemainingMs <= 0.0f) {
+            StartNpcRangedAttack(state, npc);
+        }
+
         return;
     }
 
@@ -425,15 +429,13 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
     bool hasChaseTarget = false;
 
     if (perception.seesPlayer) {
-        const TopdownPlayerRuntime& player = state.topdown.runtime.player;
-
         const Vector2 toPlayer = TopdownSub(player.position, npc.position);
         const float centerDist = TopdownLength(toPlayer);
         const float edgeDist = centerDist - player.radius - npc.collisionRadius;
 
         const float desiredDistance = npc.attackRange * 0.8f;
 
-        if (edgeDist > desiredDistance) {
+        if (edgeDist > desiredDistance || !clearShot) {
             chaseTarget = player.position;
             hasChaseTarget = true;
         } else {

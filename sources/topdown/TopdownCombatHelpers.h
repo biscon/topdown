@@ -38,3 +38,16 @@ void ApplyNpcHitReaction(
         TopdownNpcRuntime& npc,
         Vector2 hitDir,
         float knockbackDistance);
+
+bool TopdownIsNpcShotBlockedByOtherNpc(
+        GameState& state,
+        const TopdownNpcRuntime& shooter,
+        Vector2 origin,
+        Vector2 targetPoint,
+        float maxRange);
+
+bool TopdownComputeNpcMuzzleWorldPosition(
+        const GameState& state,
+        const TopdownNpcRuntime& npc,
+        const TopdownNpcAssetRuntime& asset,
+        Vector2& outWorldPos);
