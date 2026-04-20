@@ -129,7 +129,8 @@ static void UpdateNpcEngagementState(
                 TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
             } else {
                 npc.combatState = TopdownNpcCombatState::None;
-                npc.engagementState = TopdownNpcEngagementState::Unaware;
+                npc.engagementState = TopdownNpcEngagementState::Reacting;
+                TopdownStopNpcMovement(npc);
             }
         } else {
             npc.engagementState = TopdownNpcEngagementState::Engaged;
@@ -174,6 +175,7 @@ static void UpdateNpcEngagementState(
         }
 
         switch (npc.engagementState) {
+            case TopdownNpcEngagementState::Reacting:
             case TopdownNpcEngagementState::Engaged:
                 npc.combatState = TopdownNpcCombatState::None;
                 npc.engagementState = TopdownNpcEngagementState::Investigating;
@@ -226,9 +228,15 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
             case TopdownNpcEngagementState::Unaware:
                 // do nothing idle
                 break;
+
+            case TopdownNpcEngagementState::Reacting:
+                // direct detection acquired, but reaction timer has not completed yet
+                break;
+
             case TopdownNpcEngagementState::Investigating:
                 DispatchNpcInvestigatingExecution(state, npc, perception, dt);
                 break;
+
             case TopdownNpcEngagementState::Engaged:
                 DispatchNpcEngagedExecution(state, npc, perception, dt);
                 break;

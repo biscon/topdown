@@ -17,6 +17,7 @@ const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state)
 {
     switch (state) {
         case TopdownNpcEngagementState::Unaware:        return "Unaware";
+        case TopdownNpcEngagementState::Reacting:       return "Reacting";
         case TopdownNpcEngagementState::Investigating:  return "Investigating";
         case TopdownNpcEngagementState::Engaged:        return "Engaged";
         default:                                        return "Unknown";
@@ -201,11 +202,18 @@ void TopdownAlertNpcToPlayer(
         TopdownLeaveNpcInvestigationState(state, npc);
     }
 
-    npc.hasPlayerTarget = true;
     npc.lastKnownPlayerPosition = state.topdown.runtime.player.position;
     npc.investigationPosition = state.topdown.runtime.player.position;
-    npc.engagementState = TopdownNpcEngagementState::Engaged;
+
+    if (npc.hasPlayerTarget) {
+        return;
+    }
+
+    npc.hasPlayerTarget = true;
+    npc.engagementState = TopdownNpcEngagementState::Reacting;
     npc.combatState = TopdownNpcCombatState::None;
+    npc.reactionTimerMs = 0.0f;
+    npc.hasReactedToPlayer = false;
     TopdownStopNpcMovement(npc);
     TopdownResetNpcChaseStuckWatchdog(npc);
     npc.repathTimerMs = 0.0f;
@@ -249,11 +257,20 @@ void TopdownAlertNearbyNpcs(
         if (otherNpc.investigationContextHandle >= 0) {
             TopdownLeaveNpcInvestigationState(state, otherNpc);
         }
+
+        if (otherNpc.hasPlayerTarget) {
+            otherNpc.lastKnownPlayerPosition = sourceNpc.lastKnownPlayerPosition;
+            otherNpc.investigationPosition = sourceNpc.investigationPosition;
+            continue;
+        }
+
         otherNpc.hasPlayerTarget = true;
         otherNpc.lastKnownPlayerPosition = sourceNpc.lastKnownPlayerPosition;
         otherNpc.investigationPosition = sourceNpc.investigationPosition;
-        otherNpc.engagementState = TopdownNpcEngagementState::Engaged;
+        otherNpc.engagementState = TopdownNpcEngagementState::Reacting;
         otherNpc.combatState = TopdownNpcCombatState::None;
+        otherNpc.reactionTimerMs = 0.0f;
+        otherNpc.hasReactedToPlayer = false;
         TopdownStopNpcMovement(otherNpc);
 
         TopdownResetNpcChaseStuckWatchdog(otherNpc);

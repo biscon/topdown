@@ -81,9 +81,10 @@ enum class TopdownNpcAiMode {
 };
 
 enum class TopdownNpcEngagementState {
-    Unaware,      // no target, passive
-    Investigating,// has stimulus, moving/searching
-    Engaged       // has target, full combat allowed
+    Unaware,       // no target, passive
+    Reacting,      // directly detected player, but not yet allowed to execute combat behavior
+    Investigating, // has stimulus / last known position, moving/searching
+    Engaged        // has target, full combat allowed
 };
 
 struct TopdownNpcPerceptionResult {

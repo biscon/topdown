@@ -62,6 +62,7 @@ static void FireNpcHitscanWeapon(
 
 
     // Make other npcs investigates this npcs gunshots
+
     TopdownPushWorldEvent(state,
                           TopdownWorldEventType::Gunshot,
                           npc.position,
