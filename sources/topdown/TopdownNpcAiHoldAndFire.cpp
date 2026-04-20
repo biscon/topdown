@@ -60,14 +60,13 @@ static void FireNpcHitscanWeapon(
             baseDir,
             asset->muzzleEffects);
 
-    /*
-        // Make other npcs investigates this npcs gunshots
-        TopdownPushWorldEvent(state,
-                              TopdownWorldEventType::Gunshot,
-                              npc.position,
-                              1000,
-                              TopdownWorldEventSourceType::Npc, -1);
-    */
+
+    // Make other npcs investigates this npcs gunshots
+    TopdownPushWorldEvent(state,
+                          TopdownWorldEventType::Gunshot,
+                          npc.position,
+                          1000,
+                          TopdownWorldEventSourceType::Npc, -1);
 
     for (int i = 0; i < pelletCount; ++i) {
         const float dist = TopdownLength(toPlayer);
