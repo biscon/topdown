@@ -949,7 +949,8 @@ enum class TopdownNpcAnimationMode {
 enum class TopdownNpcMoveOwner {
     None,
     Ai,
-    Script
+    ScriptCommand,
+    Patrol
 };
 
 enum class TopdownNpcScriptBehaviorMode {

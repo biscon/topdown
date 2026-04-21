@@ -26,6 +26,12 @@ static float ComputeRemainingNpcPathDistance(const TopdownNpcMoveState& move, Ve
     return total;
 }
 
+static bool IsScriptedNpcMoveOwner(TopdownNpcMoveOwner owner)
+{
+    return owner == TopdownNpcMoveOwner::ScriptCommand ||
+           owner == TopdownNpcMoveOwner::Patrol;
+}
+
 static TopdownNpcRuntime* FindActiveNpcById(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
@@ -242,7 +248,7 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
 
     float targetSpeed = maxSpeed;
 
-    if (move.owner == TopdownNpcMoveOwner::Script) {
+    if (IsScriptedNpcMoveOwner(move.owner)) {
         const float remainingDistance = ComputeRemainingNpcPathDistance(move, npc.position);
 
         if (remainingDistance < move.stopDistance) {
@@ -305,7 +311,7 @@ static void ApplyNpcScriptedMovement(GameState& state, float dt)
             continue;
         }
 
-        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Script) {
+        if (!npc.move.active || !IsScriptedNpcMoveOwner(npc.move.owner)) {
             continue;
         }
 
@@ -335,7 +341,7 @@ static void PrepareNpcScriptedMovement(GameState& state, float dt)
             continue;
         }
 
-        if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Script) {
+        if (!npc.move.active || !IsScriptedNpcMoveOwner(npc.move.owner)) {
             continue;
         }
 

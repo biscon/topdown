@@ -148,6 +148,7 @@ static bool StartNpcPathMove(
 
     npc.move = {};
     npc.move.active = true;
+    npc.move.owner = TopdownNpcMoveOwner::ScriptCommand;
     npc.move.running = running;
     npc.move.pathPoints = pathPoints;
     npc.move.currentPoint = 0;

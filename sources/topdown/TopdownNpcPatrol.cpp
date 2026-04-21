@@ -19,7 +19,7 @@ static const TopdownAuthoredSpawn* FindSpawnById(GameState& state, const std::st
 
 static void StopPatrolScriptMove(TopdownNpcRuntime& npc)
 {
-    if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Script) {
+    if (!npc.move.active || npc.move.owner != TopdownNpcMoveOwner::Patrol) {
         return;
     }
 
@@ -162,7 +162,7 @@ void TopdownUpdateNpcPatrol(
         return;
     }
 
-    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Script) {
+    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Patrol) {
         npc.move.running = patrol.running;
         npc.running = patrol.running;
         return;
@@ -182,11 +182,10 @@ void TopdownUpdateNpcPatrol(
             state,
             npc,
             targetSpawn->position,
-            TopdownNpcMoveOwner::Script);
+            TopdownNpcMoveOwner::Patrol);
 
-    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Script) {
+    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Patrol) {
         npc.move.running = patrol.running;
         npc.running = patrol.running;
     }
 }
-
