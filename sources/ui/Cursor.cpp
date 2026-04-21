@@ -9,6 +9,14 @@
 
 namespace {
 
+static constexpr float kAimCursorShadowOffset = 2.0f;
+static constexpr float kAimCursorLineThickness = 2.0f;
+static constexpr float kAimCursorBaseCenterGap = 4.0f;
+static constexpr float kAimCursorBaseArmLength = 10.0f;
+static constexpr float kAimCursorPulseSpeed = 3.0f;
+static constexpr float kAimCursorPulseAmplitude = 1.2f;
+static constexpr float kAimCursorScaleMultiplier = 1.0f;
+
 static Texture2D LoadTexturePreMultiplied(const char* fileName)
 {
     Image img = LoadImage(fileName);
@@ -36,7 +44,9 @@ enum class AimCursorColorState {
 
 bool ShouldRenderAimCursor(const GameState& state)
 {
-    return state.mode == GameMode::TopDown && state.topdown.runtime.levelActive;
+    return state.mode == GameMode::TopDown &&
+           state.topdown.runtime.levelActive &&
+           state.cursor.type == CursorType::Aim;
 }
 
 bool IsMouseOverHostileNpc(const GameState& state, Vector2 mouseWorld)
@@ -99,10 +109,14 @@ Color GetAimCursorColor(AimCursorColorState colorState)
 
 void DrawAimCursorCrosshair(Vector2 center, float pulseOffset, float scale, Color color)
 {
-    const float lineThickness = std::max(1.0f, 2.0f * scale);
-    const float centerGap = (4.0f + pulseOffset) * scale;
-    const float armLength = (10.0f + pulseOffset) * scale;
-    const Vector2 shadowOffset{2.0f * scale, 2.0f * scale};
+    const float crosshairScale = scale * kAimCursorScaleMultiplier;
+    const float lineThickness = std::max(1.0f, kAimCursorLineThickness * crosshairScale);
+    const float centerGap = (kAimCursorBaseCenterGap + pulseOffset) * crosshairScale;
+    const float armLength = (kAimCursorBaseArmLength + pulseOffset) * crosshairScale;
+    const Vector2 shadowOffset{
+            kAimCursorShadowOffset * crosshairScale,
+            kAimCursorShadowOffset * crosshairScale
+    };
 
     const auto drawCrosshair = [&](Vector2 offset, Color drawColor) {
         DrawLineEx(
@@ -176,8 +190,8 @@ void RenderAimCursor(const GameState& state, float scale)
     mouse.x *= scale;
     mouse.y *= scale;
 
-    const float pulsePhase = state.cursor.aimPulseTimeSeconds * 3.0f;
-    const float pulseOffset = std::sin(pulsePhase) * 1.2f;
+    const float pulsePhase = state.cursor.aimPulseTimeSeconds * kAimCursorPulseSpeed;
+    const float pulseOffset = std::sin(pulsePhase) * kAimCursorPulseAmplitude;
 
     const AimCursorColorState colorState = EvaluateAimCursorColorState(state);
     DrawAimCursorCrosshair(mouse, pulseOffset, scale, GetAimCursorColor(colorState));
