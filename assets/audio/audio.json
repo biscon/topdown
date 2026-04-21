@@ -82,7 +82,7 @@
             "id": "wind_ambience",
             "file": "ambience/wind.ogg",
             "type": "sound",
-            "volume": 0.45,
+            "volume": 0.75,
             "loop": true
         },
         {
@@ -114,10 +114,16 @@
             "loop": false
         },
         {
-            "id": "minimal_piano",
-            "file": "music/minimal_piano.mp3",
+            "id": "drama",
+            "file": "sfx/drama.wav",
+            "type": "sound",
+            "volume": 1.0
+        },
+        {
+            "id": "pistolero",
+            "file": "music/pistolero.ogg",
             "type": "music",
-            "volume": 0.8,
+            "volume": 0.7,
             "loop": false
         },
         {

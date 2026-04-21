@@ -235,9 +235,10 @@ void InitAudio(GameState& state)
         return;
     }
 
-    InitAudioDevice();
+
     //SetAudioStreamBufferSizeDefault(16384);
     SetAudioStreamBufferSizeDefault(32768);
+    InitAudioDevice();
     state.audio = {};
     state.audio.initialized = true;
 
@@ -279,6 +280,9 @@ void InitAudio(GameState& state)
     TraceLog(LOG_INFO,
              "Audio initialized with %d global definitions",
              static_cast<int>(state.audio.definitions.size()));
+    TraceLog(LOG_INFO, "InitAudio: musicVolume=%.2f soundVolume=%.2f",
+             state.settings.musicVolume,
+             state.settings.soundVolume);
 }
 
 void ShutdownAudio(GameState& state)
@@ -356,9 +360,19 @@ void UpdateAudio(GameState& state, float dt)
             }
         }
 
+        if (playingDef == nullptr) {
+            m = {};
+            return;
+        }
+
+        // Non-looping music finished naturally: clear slot state.
+        if (!playingDef->loop && !IsMusicStreamPlaying(*music)) {
+            m = {};
+            return;
+        }
+
         const float settingsVolume = state.settings.musicVolume;
-        const float baseTargetVolume =
-                (playingDef != nullptr) ? playingDef->volume : m.targetVolume;
+        const float baseTargetVolume = playingDef->volume;
 
         m.targetVolume = baseTargetVolume;
 
@@ -574,6 +588,7 @@ bool IsSoundPlayingById(const GameState& state, const std::string& id)
 
 bool PlayMusicById(GameState& state, const std::string& id, float fadeMs)
 {
+    TraceLog(LOG_INFO, "PlayMusicById called: id=%s fadeMs=%.2f", id.c_str(), fadeMs);
     AudioDefinitionData* def = FindAudioDef(state, id);
     if (def == nullptr) {
         WarnMissingAudioIdOnce(state, id);
@@ -627,7 +642,9 @@ bool PlayMusicById(GameState& state, const std::string& id, float fadeMs)
         next.volume = def->volume;
         next.fadeMode = MusicFadeMode::None;
     }
-
+    StopMusicStream(*music);
+    SeekMusicStream(*music, 0.0f);
+    music->looping = def->loop;
     PlayMusicStream(*music);
     SetMusicVolume(*music, next.volume * state.settings.musicVolume);
 

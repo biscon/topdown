@@ -7,6 +7,7 @@ function Level_onEnter()
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
+    startScript("BeachHouseAudioLoop")
     --SpawnThugPatrol()
 
     spawnPatrol(
@@ -22,6 +23,7 @@ function Level_onEnter()
             waitMs = 5000
         }
     )
+    playMusic("pistolero", 3000)
     delay(3000)
     showNarration("Coming Home", "Upon returning to my Florida beach house, I noticed something was off.", 5)
     delay(7000)
@@ -159,4 +161,36 @@ function CeilingLampGlowLoop()
         0.00,
         0.45
     )
+end
+
+-- Audio -----------------------------------------------------------------
+function BeachHouseAudioLoop()
+    -- start base ambience
+    playSound("wind_ambience")
+
+    while true do
+        -- random delay between events (important!)
+        delay(math.random(6000, 18000)) -- 6–18 seconds
+
+        local roll = math.random(1, 100)
+
+        if roll <= 30 then
+            -- seagulls (rare, long sounds)
+            playSound((math.random(1, 2) == 1) and "seagull1" or "seagull2")
+
+            -- extra long cooldown after gulls so they don’t overlap
+            delay(math.random(15000, 30000)) -- 15–30 sec
+
+        elseif roll <= 65 then
+            -- wood creaks (mid frequency)
+            playSound((math.random(1, 2) == 1) and "wood_creak1" or "wood_creak2")
+
+        else
+            -- metal pipe (rare, eerie punctuation)
+            playSound("metal_pipe")
+
+            -- slight pause after metallic sound so it "lands"
+            delay(math.random(4000, 8000))
+        end
+    end
 end
