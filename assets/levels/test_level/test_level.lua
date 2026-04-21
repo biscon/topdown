@@ -7,7 +7,22 @@ function Level_onEnter()
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
-    SpawnThugPatrol()
+    --SpawnThugPatrol()
+
+    spawnPatrol(
+        "guard_",
+        "zombie",
+        "patrol_start",
+        false,
+        4,
+        {"patrol_1", "patrol_2", "patrol_3", "patrol_4"},
+        {
+            loop = true,
+            running = true,
+            waitMs = 250
+        }
+    )
+
 end
 
 local count = 1
@@ -68,18 +83,56 @@ end
 function SpawnThugPatrol()
     spawnNpcSmart("guard_a", "zombie", "patrol_start", false)
     spawnNpcSmart("guard_b", "zombie", "patrol_start", false)
+    spawnNpcSmart("guard_c", "zombie", "patrol_start", false)
+    spawnNpcSmart("guard_d", "zombie", "patrol_start", false)
     assignNpcPatrolRoute("guard_a", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
-        loop = true,
-        running = true,
-        waitMs = 0
-    })
-    assignNpcPatrolRoute("guard_b", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
         loop = true,
         running = false,
         waitMs = 0
     })
-    --spawnNpcSmart("guard_b", "knifethug", "patrol_1", false)
+    assignNpcPatrolRoute("guard_b", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+        loop = true,
+        running = false,
+        waitMs = 0
+    })
+    assignNpcPatrolRoute("guard_c", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+        loop = true,
+        running = false,
+        waitMs = 0
+    })
+    assignNpcPatrolRoute("guard_d", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+        loop = true,
+        running = false,
+        waitMs = 0
+    })
+end
 
+function spawnPatrol(id_prefix, asset_id, spawn_wp, persistentChase, count, route_spawn_points, options)
+    options = options or {}
+
+    local loop = options.loop
+    if loop == nil then
+        loop = true
+    end
+
+    local running = options.running == true
+    local waitMs = options.waitMs or 0
+
+    if count == nil or count <= 0 then
+        return
+    end
+
+    for i = 1, count do
+        local npcId = id_prefix .. tostring(i)
+
+        spawnNpcSmart(npcId, asset_id, spawn_wp, persistentChase)
+
+        assignNpcPatrolRoute(npcId, route_spawn_points, {
+            loop = loop,
+            running = running,
+            waitMs = waitMs
+        })
+    end
 end
 
 function Level_onExit()
