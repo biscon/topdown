@@ -17,8 +17,8 @@ bool TopdownAssignNpcPatrolRoute(
         const std::vector<std::string>& spawnIds,
         const TopdownNpcPatrolRouteOptions& options);
 
-void TopdownClearNpcPatrol(TopdownNpcRuntime& npc);
-bool TopdownPauseNpcPatrol(TopdownNpcRuntime& npc);
+void TopdownClearNpcPatrol(GameState& state, TopdownNpcRuntime& npc);
+bool TopdownPauseNpcPatrol(GameState& state, TopdownNpcRuntime& npc);
 bool TopdownResumeNpcPatrol(TopdownNpcRuntime& npc);
 
 void TopdownUpdateNpcPatrol(
@@ -26,3 +26,4 @@ void TopdownUpdateNpcPatrol(
         TopdownNpcRuntime& npc,
         float dt);
 
+void TopdownPruneNpcPatrolContexts(GameState& state);

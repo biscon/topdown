@@ -147,7 +147,7 @@ static bool StartNpcPathMove(
     }
 
     // Clear any ongoing patrol
-    TopdownClearNpcPatrol(npc);
+    TopdownClearNpcPatrol(state, npc);
 
     npc.move = {};
     npc.move.active = true;
@@ -388,7 +388,7 @@ bool TopdownScriptClearNpcPatrol(GameState& state, const std::string& npcId)
         return false;
     }
 
-    TopdownClearNpcPatrol(*npc);
+    TopdownClearNpcPatrol(state, *npc);
     return true;
 }
 
@@ -400,7 +400,7 @@ bool TopdownScriptPauseNpcPatrol(GameState& state, const std::string& npcId)
         return false;
     }
 
-    return TopdownPauseNpcPatrol(*npc);
+    return TopdownPauseNpcPatrol(state, *npc);
 }
 
 bool TopdownScriptResumeNpcPatrol(GameState& state, const std::string& npcId)

@@ -985,6 +985,8 @@ struct TopdownNpcPatrolState {
 
     std::vector<std::string> spawnIds;
     int currentPointIndex = 0;
+    int contextHandle = -1;
+    int slotIndex = -1;
 
     float waitDurationMs = 0.0f;
     float waitTimerMs = 0.0f;
@@ -1230,6 +1232,19 @@ struct TopdownNpcInvestigationSlot {
     int claimedByNpcHandle = -1;
 };
 
+struct TopdownNpcPatrolSlot {
+    Vector2 position{};
+    int claimedByNpcHandle = -1;
+};
+
+struct TopdownNpcPatrolContext {
+    bool active = false;
+    int handle = -1;
+    std::string waypointSpawnId;
+    Vector2 origin{};
+    std::vector<TopdownNpcPatrolSlot> slots;
+};
+
 struct TopdownNpcInvestigationContext {
     bool active = false;
     int handle = -1;
@@ -1384,6 +1399,8 @@ struct TopdownRuntimeData {
     TopdownRvoState rvo;
     int nextNpcInvestigationContextHandle = 1;
     std::vector<TopdownNpcInvestigationContext> npcInvestigations;
+    int nextNpcPatrolContextHandle = 1;
+    std::vector<TopdownNpcPatrolContext> npcPatrolContexts;
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
