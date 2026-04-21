@@ -18,6 +18,7 @@ bool TopdownAssignNpcPatrolRoute(
         const TopdownNpcPatrolRouteOptions& options);
 
 void TopdownClearNpcPatrol(GameState& state, TopdownNpcRuntime& npc);
+bool TopdownInterruptNpcPatrol(GameState& state, TopdownNpcRuntime& npc);
 bool TopdownPauseNpcPatrol(GameState& state, TopdownNpcRuntime& npc);
 bool TopdownResumeNpcPatrol(TopdownNpcRuntime& npc);
 

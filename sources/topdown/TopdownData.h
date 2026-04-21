@@ -980,6 +980,7 @@ struct TopdownNpcMoveState {
 struct TopdownNpcPatrolState {
     bool active = false;
     bool paused = false;
+    bool interrupted = false;
     bool loop = true;
     bool running = false;
 
