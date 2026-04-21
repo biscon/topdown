@@ -731,6 +731,80 @@ static void DrawNpcAiDebug(const GameState& state)
         }
     }
 
+    // Draw active shared patrol contexts and slots.
+    for (const TopdownNpcPatrolContext& context : runtime.npcPatrolContexts) {
+        if (!context.active) {
+            continue;
+        }
+
+        const Vector2 contextScreen = TopdownWorldToScreen(state, context.origin);
+
+        DrawCircleLines(
+                static_cast<int>(std::round(contextScreen.x)),
+                static_cast<int>(std::round(contextScreen.y)),
+                14.0f,
+                Color{80, 255, 120, 230});
+
+        DrawCircleLines(
+                static_cast<int>(std::round(contextScreen.x)),
+                static_cast<int>(std::round(contextScreen.y)),
+                18.0f,
+                Color{80, 255, 120, 120});
+
+        DrawText(
+                TextFormat("patrol ctx %d [%s]", context.handle, context.waypointSpawnId.c_str()),
+                static_cast<int>(contextScreen.x + 10.0f),
+                static_cast<int>(contextScreen.y - 8.0f),
+                16,
+                Color{80, 255, 120, 230});
+
+        for (int slotIndex = 0; slotIndex < static_cast<int>(context.slots.size()); ++slotIndex) {
+            const TopdownNpcPatrolSlot& slot = context.slots[slotIndex];
+            const Vector2 slotScreen = TopdownWorldToScreen(state, slot.position);
+
+            const bool claimed = slot.claimedByNpcHandle >= 0;
+            const Color slotColor =
+                    claimed
+                    ? Color{255, 190, 70, 240}
+                    : Color{180, 255, 120, 220};
+
+            DrawCircleLines(
+                    static_cast<int>(std::round(slotScreen.x)),
+                    static_cast<int>(std::round(slotScreen.y)),
+                    8.0f,
+                    slotColor);
+
+            DrawText(
+                    TextFormat("%d", slotIndex),
+                    static_cast<int>(slotScreen.x + 8.0f),
+                    static_cast<int>(slotScreen.y - 8.0f),
+                    14,
+                    slotColor);
+
+            DrawLineEx(
+                    contextScreen,
+                    slotScreen,
+                    1.5f,
+                    Color{70, 180, 90, 130});
+
+            if (claimed) {
+                const TopdownNpcRuntime* ownerNpc =
+                        FindNpcByHandle(slot.claimedByNpcHandle);
+
+                if (ownerNpc != nullptr) {
+                    const Vector2 ownerScreen =
+                            TopdownWorldToScreen(state, ownerNpc->position);
+
+                    DrawLineEx(
+                            ownerScreen,
+                            slotScreen,
+                            2.0f,
+                            Color{255, 190, 70, 190});
+                }
+            }
+        }
+    }
+
     for (const TopdownNpcRuntime& npc : runtime.npcs) {
         if (!npc.active || !npc.visible) {
             continue;
@@ -890,6 +964,15 @@ static void DrawNpcAiDebug(const GameState& state)
                 static_cast<int>(npcScreen.y + 106.0f),
                 16,
                 baseColor);
+
+        DrawText(
+                TextFormat("patrolCtx=%d  patrolSlot=%d",
+                           npc.scriptBehavior.patrol.contextHandle,
+                           npc.scriptBehavior.patrol.slotIndex),
+                static_cast<int>(npcScreen.x + 10.0f),
+                static_cast<int>(npcScreen.y + 124.0f),
+                16,
+                Color{80, 255, 120, 230});
     }
 }
 
