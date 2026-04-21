@@ -18,8 +18,8 @@ function Level_onEnter()
         {"patrol_1", "patrol_2", "patrol_3", "patrol_4"},
         {
             loop = true,
-            running = true,
-            waitMs = 250
+            running = false,
+            waitMs = 5000
         }
     )
 

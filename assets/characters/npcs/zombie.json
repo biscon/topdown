@@ -5,8 +5,8 @@
             "baseDrawScale": 1.0,
             "collisionRadius": 38.0,
             "walkSpeed": 200,
-            "runSpeed": 450,
-            "hurtStunMs": 300,
+            "runSpeed": 400,
+            "hurtStunMs": 500,
             "maxHealth": 100,
             "corpseExpirationMs": 250,
 
@@ -14,7 +14,7 @@
             "aiMode": "seek_and_destroy",
             "attackType": "melee",
 
-            "visionRange": 270.0,
+            "visionRange": 700.0,
             "hearingRange": 260.0,
             "gunshotHearingRange": 1000.0,
             "visionHalfAngleDegrees": 70.0,
