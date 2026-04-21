@@ -219,7 +219,7 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
             npc.engagementState = TopdownNpcEngagementState::Unaware;
             npc.combatState = TopdownNpcCombatState::None;
             npc.hasPlayerTarget = false;
-            TopdownClearNpcPatrol(npc);
+            TopdownClearNpcPatrol(state, npc);
             continue;
         }
 
@@ -227,7 +227,7 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
         UpdateNpcEngagementState(state, npc, perception, dt);
 
         if (npc.engagementState != TopdownNpcEngagementState::Unaware) {
-            TopdownClearNpcPatrol(npc);
+            TopdownClearNpcPatrol(state, npc);
         }
 
         switch(npc.engagementState) {
@@ -250,4 +250,5 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
     }
 
     TopdownPruneNpcInvestigationContexts(state);
+    TopdownPruneNpcPatrolContexts(state);
 }
