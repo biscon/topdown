@@ -17,6 +17,7 @@
 #include "LevelDoors.h"
 #include "LevelEffects.h"
 #include "LevelWindows.h"
+#include "ui/NarrationPopups.h"
 
 static bool IsPointInsideTrigger(
         const TopdownAuthoredTrigger& trigger,
@@ -236,6 +237,7 @@ void TopdownUpdate(GameState& state, float dt)
     TopdownUpdateLevelEffects(state, dt);
     TopdownUpdateWindows(state, dt);
     UpdateTriggers(state, dt);
+    TopdownUpdateNarrationPopups(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);

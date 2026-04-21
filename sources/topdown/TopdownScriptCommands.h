@@ -6,6 +6,11 @@
 
 // Controls
 bool TopdownScriptSetControlsEnabled(GameState& state, bool enabled);
+bool TopdownScriptShowNarration(
+        GameState& state,
+        const std::string& title,
+        const std::string& body,
+        float durationSeconds = 0.0f);
 
 // Scripted player movement
 bool TopdownScriptStartWalkTo(GameState& state, Vector2 target);

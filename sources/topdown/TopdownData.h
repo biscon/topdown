@@ -7,6 +7,7 @@
 #include "render/EffectTypes.h"
 #include "nav/NavMeshData.h"
 #include "rvo2/RVOSimulator.h"
+#include "ui/NarrationPopupsData.h"
 
 using TopdownObstacleHandle = int;
 using TopdownImageLayerHandle = int;
@@ -1408,6 +1409,7 @@ struct TopdownRuntimeData {
     std::vector<TopdownRuntimeWindow> windows;
 
     std::vector<TopdownWorldEvent> worldEvents;
+    TopdownNarrationPopupsRuntime narrationPopups;
     float timeMs; // global timer, advances each frame
 };
 
