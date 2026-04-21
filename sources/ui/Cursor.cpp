@@ -9,13 +9,13 @@
 
 namespace {
 
-static constexpr float kAimCursorShadowOffset = 2.0f;
+static constexpr float kAimCursorShadowOffset = 1.5f;
 static constexpr float kAimCursorLineThickness = 2.0f;
-static constexpr float kAimCursorBaseCenterGap = 4.0f;
-static constexpr float kAimCursorBaseArmLength = 10.0f;
-static constexpr float kAimCursorPulseSpeed = 3.0f;
-static constexpr float kAimCursorPulseAmplitude = 1.2f;
-static constexpr float kAimCursorScaleMultiplier = 1.0f;
+static constexpr float kAimCursorBaseCenterGap = 6.0f;
+static constexpr float kAimCursorBaseArmLength = 14.0f;
+static constexpr float kAimCursorPulseSpeed = 6.0f;
+static constexpr float kAimCursorPulseAmplitude = 1.5f;
+static constexpr float kAimCursorScaleMultiplier = 2.0f;
 
 static Texture2D LoadTexturePreMultiplied(const char* fileName)
 {
@@ -141,7 +141,7 @@ void DrawAimCursorCrosshair(Vector2 center, float pulseOffset, float scale, Colo
                 drawColor);
     };
 
-    drawCrosshair(shadowOffset, BLACK);
+    drawCrosshair(shadowOffset, Fade(BLACK, 0.75f));
     drawCrosshair(Vector2{}, color);
 }
 
@@ -238,6 +238,12 @@ void UpdateCursor(GameState& state)
         HideCursor();
     } else {
         ShowCursor();
+    }
+
+    if (state.mode == GameMode::TopDown && state.topdown.runtime.levelActive) {
+        state.cursor.type = CursorType::Aim;
+    } else {
+        state.cursor.type = CursorType::Default;
     }
 
     state.cursor.aimPulseTimeSeconds += GetFrameTime();
