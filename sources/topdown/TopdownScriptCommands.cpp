@@ -146,6 +146,9 @@ static bool StartNpcPathMove(
         return false;
     }
 
+    // Clear any ongoing patrol
+    TopdownClearNpcPatrol(npc);
+
     npc.move = {};
     npc.move.active = true;
     npc.move.owner = TopdownNpcMoveOwner::ScriptCommand;

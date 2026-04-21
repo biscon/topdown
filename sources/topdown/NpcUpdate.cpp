@@ -186,6 +186,21 @@ static bool HasNpcPassedPathWaypoint(
     return TopdownDot(fromCurrentToNpc, segment) > 0.0f;
 }
 
+static float RotateAngleTowards(float current, float target, float maxStep)
+{
+    const float delta = NormalizeAngleRadians(target - current);
+
+    if (std::fabs(delta) <= maxStep) {
+        return target;
+    }
+
+    if (delta > 0.0f) {
+        return NormalizeAngleRadians(current + maxStep);
+    }
+
+    return NormalizeAngleRadians(current - maxStep);
+}
+
 static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
 {
     TopdownNpcMoveState& move = npc.move;
@@ -265,21 +280,26 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
             targetSpeed,
             ((targetSpeed > move.currentSpeed) ? move.acceleration : move.deceleration) * dt);
 
-    /*
-    const float lookaheadDistance = std::max(
-            80.0f,
-            npc.collisionRadius * 3.0f);
-
-    const Vector2 target = TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
-     */
     const Vector2 target = npc.move.pathPoints[npc.move.currentPoint];
-
     const Vector2 delta = TopdownSub(target, npc.position);
     const Vector2 dir = TopdownNormalizeOrZero(delta);
 
     if (TopdownLengthSqr(dir) > 0.000001f) {
-        npc.facing = dir;
-        npc.rotationRadians = std::atan2(dir.y, dir.x);
+        const float targetRotation = std::atan2(dir.y, dir.x);
+
+        const float turnSpeedRadiansPerSecond =
+                move.running ? 10.0f : 6.0f;
+
+        npc.rotationRadians = RotateAngleTowards(
+                npc.rotationRadians,
+                targetRotation,
+                turnSpeedRadiansPerSecond * dt);
+
+        npc.facing = Vector2{
+                std::cos(npc.rotationRadians),
+                std::sin(npc.rotationRadians)
+        };
+
         npc.moving = true;
         npc.running = move.running;
     } else {
