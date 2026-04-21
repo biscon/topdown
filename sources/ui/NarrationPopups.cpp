@@ -13,8 +13,8 @@
 #include "ui/NarrationPopupsData.h"
 
 namespace {
-constexpr float POPUP_ENTER_DURATION_SECONDS = 0.22f;
-constexpr float POPUP_EXIT_DURATION_SECONDS = 0.22f;
+constexpr float POPUP_ENTER_DURATION_SECONDS = 0.35f;
+constexpr float POPUP_EXIT_DURATION_SECONDS = 0.35f;
 constexpr int POPUP_VISIBLE_CAP = 4;
 
 constexpr float STACK_MARGIN_LEFT = 32.0f;
@@ -27,8 +27,8 @@ constexpr float POPUP_PADDING_Y = 18.0f;
 constexpr float TITLE_BODY_SPACING = 14.0f;
 constexpr float TITLE_STRIP_HEIGHT = 60.0f;
 
-constexpr float TITLE_FONT_SIZE = 40.0f;
-constexpr float BODY_FONT_SIZE = 30.0f;
+constexpr float TITLE_FONT_SIZE = 42.0f;
+constexpr float BODY_FONT_SIZE = 32.0f;
 constexpr float FONT_SPACING = 1.0f;
 constexpr float BODY_LINE_HEIGHT_MULTIPLIER = 1.3f;
 
@@ -40,21 +40,44 @@ constexpr int PANEL_CORNER_SEGMENTS = 8;
 constexpr float PANEL_BORDER_THICKNESS = 1.8f;
 constexpr float SHADOW_OFFSET_X = 7.0f;
 constexpr float SHADOW_OFFSET_Y = 8.0f;
-constexpr float ACCENT_BAR_WIDTH = 4.0f;
+constexpr float ACCENT_BAR_WIDTH = 1.0f;
 
 constexpr float BASE_HOLD_SECONDS = 2.2f;
 constexpr float EXTRA_PER_CHAR_SECONDS = 0.027f;
 constexpr float HOLD_MIN_SECONDS = 2.8f;
 constexpr float HOLD_MAX_SECONDS = 8.0f;
 
-const Color PANEL_FILL_COLOR = {18, 22, 30, 255};
-const Color PANEL_TITLE_STRIP_COLOR = {30, 38, 51, 255};
-const Color PANEL_BORDER_COLOR = {96, 112, 130, 255};
-const Color PANEL_INNER_LINE_COLOR = {58, 70, 86, 255};
-const Color PANEL_ACCENT_COLOR = {140, 118, 92, 255};
-const Color PANEL_SHADOW_COLOR = {4, 6, 9, 255};
-const Color TITLE_TEXT_COLOR = {244, 236, 226, 255};
-const Color BODY_TEXT_COLOR = {202, 208, 214, 255};
+/*
+const Color PANEL_FILL_COLOR = {28, 22, 18, 255};
+const Color PANEL_TITLE_STRIP_COLOR = {42, 32, 26, 255};
+const Color PANEL_BORDER_COLOR = {120, 96, 72, 255};
+const Color PANEL_INNER_LINE_COLOR = {72, 56, 44, 255};
+const Color PANEL_ACCENT_COLOR = {168, 124, 72, 255};
+const Color PANEL_SHADOW_COLOR = {10, 8, 6, 255};
+const Color TITLE_TEXT_COLOR = {244, 230, 210, 255};
+const Color BODY_TEXT_COLOR = {210, 196, 176, 255};
+ */
+
+
+const Color PANEL_FILL_COLOR = {34, 26, 20, 255};
+const Color PANEL_TITLE_STRIP_COLOR = {52, 38, 28, 255};
+const Color PANEL_BORDER_COLOR = {150, 110, 70, 255};
+const Color PANEL_INNER_LINE_COLOR = {90, 64, 44, 255};
+const Color PANEL_ACCENT_COLOR = {196, 140, 70, 255};
+const Color PANEL_SHADOW_COLOR = {12, 9, 7, 255};
+const Color TITLE_TEXT_COLOR = {250, 232, 200, 255};
+const Color BODY_TEXT_COLOR = {222, 200, 168, 255};
+
+/*
+const Color PANEL_FILL_COLOR = {30, 20, 18, 255};
+const Color PANEL_TITLE_STRIP_COLOR = {46, 30, 26, 255};
+const Color PANEL_BORDER_COLOR = {140, 90, 80, 255};
+const Color PANEL_INNER_LINE_COLOR = {84, 54, 48, 255};
+const Color PANEL_ACCENT_COLOR = {190, 110, 80, 255};
+const Color PANEL_SHADOW_COLOR = {8, 6, 5, 255};
+const Color TITLE_TEXT_COLOR = {250, 224, 210, 255};
+const Color BODY_TEXT_COLOR = {220, 190, 178, 255};
+ */
 
 static float SmoothStep01(float t)
 {
@@ -328,6 +351,7 @@ void TopdownRenderNarrationPopups(GameState& state)
         float alpha01 = 1.0f;
         float slideX = 0.0f;
         float liftY = 0.0f;
+
         if (popup.phase == TopdownNarrationPopupPhase::Enter) {
             const float t = SmoothStep01(popup.phaseElapsed / POPUP_ENTER_DURATION_SECONDS);
             alpha01 = t;
@@ -358,6 +382,7 @@ void TopdownRenderNarrationPopups(GameState& state)
                 box.width,
                 box.height
         };
+
         DrawRectangleRounded(
                 shadowBox,
                 PANEL_CORNER_ROUNDNESS,
@@ -370,29 +395,57 @@ void TopdownRenderNarrationPopups(GameState& state)
                 PANEL_CORNER_SEGMENTS,
                 ScaleColorAlpha(PANEL_FILL_COLOR, alpha01));
 
-        const Rectangle titleStrip{
+        // Title strip:
+        // Draw a rounded rectangle, but clip it so only the top band remains visible.
+        const Rectangle titleClip{
                 box.x + 1.0f,
                 box.y + 1.0f,
                 box.width - 2.0f,
                 TITLE_STRIP_HEIGHT
         };
-        DrawRectangleRec(titleStrip, ScaleColorAlpha(PANEL_TITLE_STRIP_COLOR, alpha01));
+
+        // Make this a bit taller so the top rounding has room to breathe,
+        // but clip it to the title band.
+        const Rectangle titleStripRounded{
+                box.x + 1.0f,
+                box.y + 1.0f,
+                box.width - 2.0f,
+                TITLE_STRIP_HEIGHT + 24.0f
+        };
+
+        BeginScissorMode(
+                static_cast<int>(titleClip.x),
+                static_cast<int>(titleClip.y),
+                static_cast<int>(titleClip.width),
+                static_cast<int>(titleClip.height));
+
+        DrawRectangleRounded(
+                titleStripRounded,
+                PANEL_CORNER_ROUNDNESS,
+                PANEL_CORNER_SEGMENTS,
+                ScaleColorAlpha(PANEL_TITLE_STRIP_COLOR, alpha01));
+
+        EndScissorMode();
 
         const Rectangle accentBar{
                 box.x + 10.0f,
-                box.y + 10.0f,
+                box.y + TITLE_STRIP_HEIGHT + 10.0f,
                 ACCENT_BAR_WIDTH,
-                box.height - 20.0f
+                box.height - TITLE_STRIP_HEIGHT - 20.0f
         };
-        DrawRectangleRec(accentBar, ScaleColorAlpha(PANEL_ACCENT_COLOR, alpha01));
+        DrawRectangleRec(
+                accentBar,
+                ScaleColorAlpha(PANEL_ACCENT_COLOR, alpha01));
 
         const Rectangle innerLine{
                 box.x + POPUP_PADDING_X,
                 box.y + TITLE_STRIP_HEIGHT,
                 box.width - POPUP_PADDING_X * 2.0f,
-                1.0f
+                2.0f
         };
-        DrawRectangleRec(innerLine, ScaleColorAlpha(PANEL_INNER_LINE_COLOR, alpha01));
+        DrawRectangleRec(
+                innerLine,
+                ScaleColorAlpha(PANEL_INNER_LINE_COLOR, alpha01));
 
         DrawRectangleRoundedLinesEx(
                 box,
@@ -403,22 +456,29 @@ void TopdownRenderNarrationPopups(GameState& state)
 
         const Vector2 titlePos = {
                 box.x + POPUP_PADDING_X + 2.0f,
-                box.y + POPUP_PADDING_Y + 1.0f
+                box.y + POPUP_PADDING_Y - 4.0f
         };
-        DrawTextEx(state.narrationTitleFont,
-                   popup.title.c_str(),
-                   titlePos,
-                   TITLE_FONT_SIZE,
-                   FONT_SPACING,
-                   ScaleColorAlpha(TITLE_TEXT_COLOR, alpha01));
+
+        DrawTextEx(
+                state.narrationTitleFont,
+                popup.title.c_str(),
+                titlePos,
+                TITLE_FONT_SIZE,
+                FONT_SPACING,
+                ScaleColorAlpha(TITLE_TEXT_COLOR, alpha01));
 
         const Vector2 bodyPos = {
                 box.x + POPUP_PADDING_X,
                 box.y + TITLE_STRIP_HEIGHT + TITLE_BODY_SPACING
         };
 
-        DrawWrappedBodyText(state, popup, bodyPos, ScaleColorAlpha(BODY_TEXT_COLOR, alpha01));
+        DrawWrappedBodyText(
+                state,
+                popup,
+                bodyPos,
+                ScaleColorAlpha(BODY_TEXT_COLOR, alpha01));
 
         yCursor -= boxHeight + POPUP_STACK_SPACING;
     }
 }
+
