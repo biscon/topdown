@@ -4,7 +4,9 @@
 #include <vector>
 
 enum class TopdownNarrationPopupPhase {
-    Enter,
+    PanelBuild,
+    BorderReveal,
+    TextReveal,
     Hold,
     Exit
 };
@@ -15,7 +17,7 @@ struct TopdownNarrationPopupEntry {
     std::string title;
     std::string body;
 
-    TopdownNarrationPopupPhase phase = TopdownNarrationPopupPhase::Enter;
+    TopdownNarrationPopupPhase phase = TopdownNarrationPopupPhase::PanelBuild;
     float phaseElapsed = 0.0f;
     float holdDuration = 0.0f;
 

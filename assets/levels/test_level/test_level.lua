@@ -24,9 +24,9 @@ function Level_onEnter()
     )
     delay(3000)
     showNarration("Coming Home", "Upon returning to my Florida beach house, I noticed something was off.", 5)
-    delay(6000)
+    delay(7000)
     showNarration("Coming Home", "At first, it was the cars - too many of them, all lined up along the pavement like they belonged to the same man.", 5)
-    delay(6000)
+    delay(7000)
     showNarration("Coming Home", "Then there was the silence. Not the peaceful kind you pay good money for out here, but the kind that settles in when something's already gone wrong. I proceeded with caution.", 10)
 end
 
