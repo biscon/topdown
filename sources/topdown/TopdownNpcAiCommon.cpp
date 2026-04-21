@@ -645,7 +645,7 @@ void TopdownBuildNpcPathToTarget(
     }
 
     if (!builtPath) {
-        if (owner == TopdownNpcMoveOwner::Script) {
+        if (owner != TopdownNpcMoveOwner::Ai) {
             // Scripted move targets may intentionally request direct movement when nav pathing fails.
             pathPoints.clear();
             pathPoints.push_back(targetPos);
@@ -672,7 +672,7 @@ void TopdownBuildNpcPathToTarget(
     npc.move.acceleration = 1800.0f;
     npc.move.deceleration = 2200.0f;
     npc.move.arrivalRadius = 12.0f;
-    npc.move.stopDistance = (owner == TopdownNpcMoveOwner::Script) ? 100.0f : 12.0f;
+    npc.move.stopDistance = (owner != TopdownNpcMoveOwner::Ai) ? 100.0f : 12.0f;
     npc.move.debugTrianglePath = trianglePath;
 
     npc.moving = npc.move.active;

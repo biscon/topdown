@@ -210,18 +210,6 @@ Guidelines:
 
 ---
 
-## Legacy Code (Adventure Engine)
-
-- Exists for **code reuse only**
-- Must compile, but does not need to function
-- Not part of the active architecture
-
-When working:
-- Ignore it unless explicitly required
-- Do not refactor it as part of unrelated changes
-
----
-
 ## Refactoring Rules
 
 - Do NOT rewrite large systems unless explicitly asked.

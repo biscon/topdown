@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include "scripting/ScriptSystemInternal.h"
 #include "scripting/ScriptSystem.h"
@@ -83,6 +84,40 @@ static bool ParseOptionalStringList(
     }
 
     return true;
+}
+
+static void ParseNpcPatrolOptions(
+        lua_State* L,
+        int argIndex,
+        bool& outLoop,
+        bool& outRunning,
+        float& outWaitMs)
+{
+    outLoop = true;
+    outRunning = false;
+    outWaitMs = 0.0f;
+
+    if (lua_gettop(L) < argIndex || lua_isnoneornil(L, argIndex) || !lua_istable(L, argIndex)) {
+        return;
+    }
+
+    lua_getfield(L, argIndex, "loop");
+    if (lua_isboolean(L, -1)) {
+        outLoop = lua_toboolean(L, -1) != 0;
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, argIndex, "running");
+    if (lua_isboolean(L, -1)) {
+        outRunning = lua_toboolean(L, -1) != 0;
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, argIndex, "waitMs");
+    if (lua_isnumber(L, -1)) {
+        outWaitMs = std::max(0.0f, static_cast<float>(lua_tonumber(L, -1)));
+    }
+    lua_pop(L, 1);
 }
 
 
@@ -1031,6 +1066,80 @@ static int Lua_clearNpcAnimation(lua_State* L)
     return 1;
 }
 
+static int Lua_assignNpcPatrolRoute(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+
+    std::vector<std::string> spawnIds;
+    if (!ParseOptionalStringList(L, 2, spawnIds) || spawnIds.empty()) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    bool loop = true;
+    bool running = false;
+    float waitMs = 0.0f;
+    ParseNpcPatrolOptions(L, 3, loop, running, waitMs);
+
+    if (gameState == nullptr || npcId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptAssignNpcPatrolRoute(
+            *gameState,
+            std::string(npcId),
+            spawnIds,
+            loop,
+            running,
+            waitMs);
+
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_clearNpcPatrol(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || npcId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptClearNpcPatrol(*gameState, std::string(npcId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_pauseNpcPatrol(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || npcId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptPauseNpcPatrol(*gameState, std::string(npcId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_resumeNpcPatrol(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || npcId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptResumeNpcPatrol(*gameState, std::string(npcId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 void RegisterLuaAPI(lua_State* L)
 {
     lua_register(L, "setFlag", Lua_setFlag);
@@ -1068,6 +1177,10 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "clearNpcAnimation", Lua_clearNpcAnimation);
     lua_register(L, "playNpcAnimation", Lua_playNpcAnimation);
     lua_register(L, "playNpcAnimation", Lua_playNpcAnimation);
+    lua_register(L, "assignNpcPatrolRoute", Lua_assignNpcPatrolRoute);
+    lua_register(L, "clearNpcPatrol", Lua_clearNpcPatrol);
+    lua_register(L, "pauseNpcPatrol", Lua_pauseNpcPatrol);
+    lua_register(L, "resumeNpcPatrol", Lua_resumeNpcPatrol);
 
     lua_register(L, "disableControls", Lua_disableControls);
     lua_register(L, "enableControls", Lua_enableControls);

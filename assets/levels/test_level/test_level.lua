@@ -5,9 +5,9 @@ function Level_onEnter()
     --startScript("WalkAround")
     --startScript("ZombiePatrol")
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
-    --SpawnThugs()
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
+    SpawnThugPatrol()
 end
 
 local count = 1
@@ -65,11 +65,21 @@ function ZombiePatrol()
     end
 end
 
-function SpawnThugs()
-    spawnNpc("knifethug_a", "knifethug", "patrol_1")
-    spawnNpc("knifethug_b", "knifethug", "patrol_2")
-    spawnNpc("knifethug_c", "knifethug", "patrol_3")
-    spawnNpc("knifethug_d", "knifethug", "patrol_4")
+function SpawnThugPatrol()
+    spawnNpcSmart("guard_a", "zombie", "patrol_start", false)
+    spawnNpcSmart("guard_b", "zombie", "patrol_start", false)
+    assignNpcPatrolRoute("guard_a", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+        loop = true,
+        running = true,
+        waitMs = 0
+    })
+    assignNpcPatrolRoute("guard_b", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
+        loop = true,
+        running = false,
+        waitMs = 0
+    })
+    --spawnNpcSmart("guard_b", "knifethug", "patrol_1", false)
+
 end
 
 function Level_onExit()

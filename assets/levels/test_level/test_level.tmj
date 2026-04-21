@@ -1485,7 +1485,7 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":317,
+                 "x":0,
                  "y":-612
                 }, 
                 {
@@ -1517,8 +1517,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":760,
-                 "y":-308
+                 "x":712,
+                 "y":-374
                 }, 
                 {
                  "height":0,
@@ -1526,18 +1526,12 @@
                  "name":"patrol_2",
                  "opacity":1,
                  "point":true,
-                 "properties":[
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":90
-                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":223.666666667,
-                 "y":-262.666666667
+                 "x":429.000000000333,
+                 "y":-178.000000000333
                 }, 
                 {
                  "height":0,
@@ -1549,8 +1543,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":230,
-                 "y":-444
+                 "x":172.666666666667,
+                 "y":-364
                 }, 
                 {
                  "height":0,
@@ -1562,8 +1556,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":328,
-                 "y":-188
+                 "x":489.333333333333,
+                 "y":-540
                 }, 
                 {
                  "height":0,
@@ -1583,6 +1577,25 @@
                  "width":0,
                  "x":430,
                  "y":-758.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":124,
+                 "name":"patrol_start",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":90
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":853.333333333333,
+                 "y":-384.666666666667
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -2796,7 +2809,7 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":true,
+                 "visible":false,
                  "width":0,
                  "x":-103.606060606061,
                  "y":1553.18181818183
@@ -3986,8 +3999,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":895,
-                 "y":176
+                 "x":1217,
+                 "y":-642.666666666667
                 }, 
                 {
                  "height":0,
@@ -4009,101 +4022,14 @@
                         {
                          "name":"persistentChase",
                          "type":"bool",
-                         "value":true
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":625,
-                 "y":-168.666666666667
-                }, 
-                {
-                 "height":0,
-                 "id":91,
-                 "name":"knife_thug_2",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"pistolthug"
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":0
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
                          "value":false
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":357.5,
-                 "y":236.833333333333
-                }, 
-                {
-                 "height":0,
-                 "id":92,
-                 "name":"knife_thug_3",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"pistolthug"
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":45
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":165.666666666667,
-                 "y":-100.5
-                }, 
-                {
-                 "height":0,
-                 "id":93,
-                 "name":"knife_thug_4",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"pistolthug"
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":-180
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":512,
-                 "y":-35.3333333333333
+                 "x":1153,
+                 "y":-634.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -4908,7 +4834,7 @@
          "y":0
         }],
  "nextlayerid":43,
- "nextobjectid":124,
+ "nextobjectid":125,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
