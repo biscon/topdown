@@ -4,7 +4,8 @@
 
 enum class CursorType {
     Default,
-    Interact
+    Interact,
+    Aim
 };
 
 struct CursorData {
@@ -15,6 +16,8 @@ struct CursorData {
 
     Vector2 defaultHotspot{0, 0};
     Vector2 interactHotspot{0, 0};
+
+    float aimPulseTimeSeconds = 0.0f;
 
     bool initialized = false;
 };
