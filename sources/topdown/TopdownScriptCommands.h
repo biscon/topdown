@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "data/GameState.h"
 
 // Controls
@@ -32,6 +33,16 @@ bool TopdownScriptStartWalkNpcTo(GameState& state, const std::string& npcId, Vec
 bool TopdownScriptStartRunNpcTo(GameState& state, const std::string& npcId, Vector2 target);
 bool TopdownScriptStartWalkNpcToSpawn(GameState& state, const std::string& npcId, const std::string& spawnId);
 bool TopdownScriptStartRunNpcToSpawn(GameState& state, const std::string& npcId, const std::string& spawnId);
+bool TopdownScriptAssignNpcPatrolRoute(
+        GameState& state,
+        const std::string& npcId,
+        const std::vector<std::string>& spawnIds,
+        bool loop = true,
+        bool running = false,
+        float waitMs = 0.0f);
+bool TopdownScriptClearNpcPatrol(GameState& state, const std::string& npcId);
+bool TopdownScriptPauseNpcPatrol(GameState& state, const std::string& npcId);
+bool TopdownScriptResumeNpcPatrol(GameState& state, const std::string& npcId);
 
 // NPC animation
 bool TopdownScriptSetNpcAnimation(GameState& state, const std::string& npcId, const std::string& animationName);

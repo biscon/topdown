@@ -4,6 +4,7 @@
 #include "TopdownNpcAiSeekAndDestroy.h"
 #include "TopdownHelpers.h"
 #include "TopdownNpcAiHoldAndFire.h"
+#include "TopdownNpcPatrol.h"
 #include "NpcRegistry.h"
 
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
@@ -218,15 +219,20 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
             npc.engagementState = TopdownNpcEngagementState::Unaware;
             npc.combatState = TopdownNpcCombatState::None;
             npc.hasPlayerTarget = false;
+            TopdownClearNpcPatrol(npc);
             continue;
         }
 
         TopdownNpcPerceptionResult perception = EvaluateNpcPerception(state, npc);
         UpdateNpcEngagementState(state, npc, perception, dt);
 
+        if (npc.engagementState != TopdownNpcEngagementState::Unaware) {
+            TopdownClearNpcPatrol(npc);
+        }
+
         switch(npc.engagementState) {
             case TopdownNpcEngagementState::Unaware:
-                // do nothing idle
+                TopdownUpdateNpcPatrol(state, npc, dt);
                 break;
 
             case TopdownNpcEngagementState::Reacting:

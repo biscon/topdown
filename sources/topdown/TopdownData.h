@@ -952,6 +952,11 @@ enum class TopdownNpcMoveOwner {
     Script
 };
 
+enum class TopdownNpcScriptBehaviorMode {
+    None,
+    PatrolRoute
+};
+
 struct TopdownNpcMoveState {
     bool active = false;
     bool running = false;
@@ -969,6 +974,24 @@ struct TopdownNpcMoveState {
     float deceleration = 2200.0f;
     float arrivalRadius = 6.0f;
     float stopDistance = 140.0f;
+};
+
+struct TopdownNpcPatrolState {
+    bool active = false;
+    bool paused = false;
+    bool loop = true;
+    bool running = false;
+
+    std::vector<std::string> spawnIds;
+    int currentPointIndex = 0;
+
+    float waitDurationMs = 0.0f;
+    float waitTimerMs = 0.0f;
+};
+
+struct TopdownNpcScriptBehaviorState {
+    TopdownNpcScriptBehaviorMode mode = TopdownNpcScriptBehaviorMode::None;
+    TopdownNpcPatrolState patrol;
 };
 
 struct TopdownNpcAnimationSourceDefinition {
@@ -1174,6 +1197,7 @@ struct TopdownNpcRuntime {
     float knockbackDeceleration = 5000.0f;
 
     TopdownNpcMoveState move;
+    TopdownNpcScriptBehaviorState scriptBehavior;
 
     bool moving = false;
     bool running = false;

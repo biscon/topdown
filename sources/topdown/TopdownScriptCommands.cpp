@@ -5,6 +5,7 @@
 #include "nav/NavMeshQuery.h"
 #include "raymath.h"
 #include "topdown/NpcRegistry.h"
+#include "topdown/TopdownNpcPatrol.h"
 #include "audio/Audio.h"
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
@@ -351,6 +352,62 @@ bool TopdownScriptStartRunNpcToSpawn(GameState& state, const std::string& npcId,
     }
 
     return StartNpcPathMove(state, *npc, spawn->position, true);
+}
+
+bool TopdownScriptAssignNpcPatrolRoute(
+        GameState& state,
+        const std::string& npcId,
+        const std::vector<std::string>& spawnIds,
+        bool loop,
+        bool running,
+        float waitMs)
+{
+    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    if (npc == nullptr) {
+        TraceLog(LOG_WARNING, "assignNpcPatrolRoute: npc '%s' not found", npcId.c_str());
+        return false;
+    }
+
+    TopdownNpcPatrolRouteOptions options;
+    options.loop = loop;
+    options.running = running;
+    options.waitMs = waitMs;
+
+    return TopdownAssignNpcPatrolRoute(state, *npc, spawnIds, options);
+}
+
+bool TopdownScriptClearNpcPatrol(GameState& state, const std::string& npcId)
+{
+    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    if (npc == nullptr) {
+        TraceLog(LOG_WARNING, "clearNpcPatrol: npc '%s' not found", npcId.c_str());
+        return false;
+    }
+
+    TopdownClearNpcPatrol(*npc);
+    return true;
+}
+
+bool TopdownScriptPauseNpcPatrol(GameState& state, const std::string& npcId)
+{
+    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    if (npc == nullptr) {
+        TraceLog(LOG_WARNING, "pauseNpcPatrol: npc '%s' not found", npcId.c_str());
+        return false;
+    }
+
+    return TopdownPauseNpcPatrol(*npc);
+}
+
+bool TopdownScriptResumeNpcPatrol(GameState& state, const std::string& npcId)
+{
+    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    if (npc == nullptr) {
+        TraceLog(LOG_WARNING, "resumeNpcPatrol: npc '%s' not found", npcId.c_str());
+        return false;
+    }
+
+    return TopdownResumeNpcPatrol(*npc);
 }
 
 // --------------------------------------------------
