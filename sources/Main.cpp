@@ -103,35 +103,36 @@ static void ProcessGameModeInput(GameState& state)
 }
 
 static bool LoadFonts(GameState& state) {
-    const std::string fontPath = std::string(ASSETS_PATH) + "fonts/IBMPlexSans-Bold.ttf";
-    state.dialogueFont = LoadFontEx(fontPath.c_str(), 46, nullptr, 0);
+    const std::string boldFontPath = std::string(ASSETS_PATH) + "fonts/IBMPlexSans-Bold.ttf";
+    const std::string regularFontPath = std::string(ASSETS_PATH) + "fonts/IBMPlexSans-Regular.ttf";
+    state.dialogueFont = LoadFontEx(boldFontPath.c_str(), 46, nullptr, 0);
     if(state.dialogueFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load dialogue font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load dialogue font from %s", boldFontPath.c_str());
         return false;
     }
-    state.hoverLabelFont = LoadFontEx(fontPath.c_str(), 58, nullptr, 0);
+    state.hoverLabelFont = LoadFontEx(boldFontPath.c_str(), 58, nullptr, 0);
     if(state.hoverLabelFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load hover label font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load hover label font from %s", boldFontPath.c_str());
         return false;
     }
-    state.speechFont = LoadFontEx(fontPath.c_str(), 50, nullptr, 0);
+    state.speechFont = LoadFontEx(boldFontPath.c_str(), 50, nullptr, 0);
     if(state.speechFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load speech font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load speech font from %s", boldFontPath.c_str());
         return false;
     }
-    state.ambientSpeechFont = LoadFontEx(fontPath.c_str(), 44, nullptr, 0);
+    state.ambientSpeechFont = LoadFontEx(boldFontPath.c_str(), 44, nullptr, 0);
     if(state.ambientSpeechFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load ambient speech font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load ambient speech font from %s", boldFontPath.c_str());
         return false;
     }
-    state.narrationTitleFont = LoadFontEx(fontPath.c_str(), 42, nullptr, 0);
+    state.narrationTitleFont = LoadFontEx(boldFontPath.c_str(), 42, nullptr, 0);
     if(state.narrationTitleFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load narration title font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load narration title font from %s", boldFontPath.c_str());
         return false;
     }
-    state.narrationBodyFont = LoadFontEx(fontPath.c_str(), 32, nullptr, 0);
+    state.narrationBodyFont = LoadFontEx(regularFontPath.c_str(), 32, nullptr, 0);
     if(state.narrationBodyFont.texture.id == 0) {
-        TraceLog(LOG_ERROR, "Could not load narration body font from %s", fontPath.c_str());
+        TraceLog(LOG_ERROR, "Could not load narration body font from %s", regularFontPath.c_str());
         return false;
     }
     return true;
