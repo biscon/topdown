@@ -7,66 +7,16 @@
 #include <cstdio>
 
 #include "utils/json.hpp"
-#include "scene/SceneLoad.h"
-#include "adventure/AdventureHelpers.h"
-#include "adventure/Inventory.h"
-#include "adventure/Dialogue.h"
 #include "debug/DebugConsole.h"
 #include "resources/Resources.h"
-#include "adventure/AdventureCamera.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 2;
+    static constexpr int SAVE_VERSION = 1;
 
-    struct SavedInventoryData {
-        std::string actorId;
-        std::vector<std::string> itemIds;
-        std::string heldItemId;
-        int pageStartIndex = 0;
-    };
-
-    struct SavedActorState {
-        std::string actorId;
-        Vector2 feetPos{};
-        std::string facing;
-        bool visible = true;
-        bool activeInScene = true;
-        std::string currentAnimation;
-        bool flipX = false;
-        float animationTimeMs = 0.0f;
-    };
-
-    struct SavedPropState {
-        std::string id;
-        Vector2 feetPos{};
-        bool visible = true;
-        bool flipX = false;
-        std::string currentAnimation;
-        float animationTimeMs = 0.0f;
-    };
-
-    struct SavedEffectSpriteState {
-        std::string id;
-        bool visible = true;
-        float opacity = 1.0f;
-        Color tint = WHITE;
-    };
-
-    struct SavedEffectRegionState {
-        std::string id;
-        bool visible = true;
-        float opacity = 1.0f;
-    };
-
-    struct SavedSoundEmitterState {
-        std::string id;
-        bool enabled = true;
-        float volume = 1.0f;
-    };
 
     struct SavedMusicSlotState {
         std::string audioId;
@@ -86,20 +36,12 @@ namespace
     };
 
     struct SaveRestoreData {
-        std::string sceneId;
-        std::string controlledActorId;
         bool controlsEnabled = true;
 
         std::unordered_map<std::string, bool> flags;
         std::unordered_map<std::string, int> ints;
         std::unordered_map<std::string, std::string> strings;
 
-        std::vector<SavedInventoryData> inventories;
-        std::vector<SavedActorState> actors;
-        std::vector<SavedPropState> props;
-        std::vector<SavedEffectSpriteState> effectSprites;
-        std::vector<SavedEffectRegionState> effectRegions;
-        std::vector<SavedSoundEmitterState> soundEmitters;
         SavedAudioState audio;
     };
 
@@ -174,30 +116,6 @@ namespace
         return !ec;
     }
 
-    static const char* FacingToString(ActorFacing facing)
-    {
-        switch (facing) {
-            case ActorFacing::Left:  return "left";
-            case ActorFacing::Right: return "right";
-            case ActorFacing::Back:  return "back";
-            case ActorFacing::Front:
-            default:                 return "front";
-        }
-    }
-
-    static ActorFacing StringToActorFacing(const std::string& s)
-    {
-        if (s == "left") {
-            return ActorFacing::Left;
-        }
-        if (s == "right") {
-            return ActorFacing::Right;
-        }
-        if (s == "back") {
-            return ActorFacing::Back;
-        }
-        return ActorFacing::Front;
-    }
 
     static json SerializeVector2(Vector2 v)
     {
@@ -257,121 +175,6 @@ namespace
         outRoot["scriptState"] = scriptState;
     }
 
-    static void SerializeInventories(const GameState& state, json& outRoot)
-    {
-        outRoot["inventories"] = json::array();
-
-        for (const ActorInventoryData& inv : state.adventure.actorInventories) {
-            json j;
-            j["actorId"] = inv.actorId;
-            j["itemIds"] = inv.itemIds;
-            j["heldItemId"] = inv.heldItemId;
-            j["pageStartIndex"] = inv.pageStartIndex;
-            outRoot["inventories"].push_back(j);
-        }
-    }
-
-    static void SerializeActors(const GameState& state, json& outRoot)
-    {
-        outRoot["actors"] = json::array();
-
-        for (const ActorInstance& actor : state.adventure.actors) {
-            json j;
-            j["actorId"] = actor.actorId;
-            j["feetPos"] = SerializeVector2(actor.feetPos);
-            j["facing"] = FacingToString(actor.facing);
-            j["visible"] = actor.visible;
-            j["activeInScene"] = actor.activeInScene;
-            j["currentAnimation"] = actor.currentAnimation;
-            j["flipX"] = actor.flipX;
-            j["animationTimeMs"] = actor.animationTimeMs;
-            outRoot["actors"].push_back(j);
-        }
-    }
-
-    static void SerializeProps(const GameState& state, json& outRoot)
-    {
-        outRoot["props"] = json::array();
-
-        const int count = std::min(
-                static_cast<int>(state.adventure.currentScene.props.size()),
-                static_cast<int>(state.adventure.props.size()));
-
-        for (int i = 0; i < count; ++i) {
-            const ScenePropData& sceneProp = state.adventure.currentScene.props[i];
-            const PropInstance& prop = state.adventure.props[i];
-
-            json j;
-            j["id"] = sceneProp.id;
-            j["feetPos"] = SerializeVector2(prop.feetPos);
-            j["visible"] = prop.visible;
-            j["flipX"] = prop.flipX;
-            j["currentAnimation"] = prop.currentAnimation;
-            j["animationTimeMs"] = prop.animationTimeMs;
-            outRoot["props"].push_back(j);
-        }
-    }
-
-    static void SerializeEffectSprites(const GameState& state, json& outRoot)
-    {
-        outRoot["effectSprites"] = json::array();
-
-        const int count = std::min(
-                static_cast<int>(state.adventure.currentScene.effectSprites.size()),
-                static_cast<int>(state.adventure.effectSprites.size()));
-
-        for (int i = 0; i < count; ++i) {
-            const SceneEffectSpriteData& sceneEffect = state.adventure.currentScene.effectSprites[i];
-            const EffectSpriteInstance& effect = state.adventure.effectSprites[i];
-
-            json j;
-            j["id"] = sceneEffect.id;
-            j["visible"] = effect.visible;
-            j["opacity"] = effect.opacity;
-            j["tint"] = SerializeColor(effect.tint);
-            outRoot["effectSprites"].push_back(j);
-        }
-    }
-
-    static void SerializeEffectRegions(const GameState& state, json& outRoot)
-    {
-        outRoot["effectRegions"] = json::array();
-
-        const int count = std::min(
-                static_cast<int>(state.adventure.currentScene.effectRegions.size()),
-                static_cast<int>(state.adventure.effectRegions.size()));
-
-        for (int i = 0; i < count; ++i) {
-            const SceneEffectRegionData& sceneEffectRegion = state.adventure.currentScene.effectRegions[i];
-            const EffectRegionInstance& effectRegion = state.adventure.effectRegions[i];
-
-            json j;
-            j["id"] = sceneEffectRegion.id;
-            j["visible"] = effectRegion.visible;
-            j["opacity"] = effectRegion.opacity;
-            outRoot["effectRegions"].push_back(j);
-        }
-    }
-
-    static void SerializeSoundEmitters(const GameState& state, json& outRoot)
-    {
-        outRoot["soundEmitters"] = json::array();
-
-        const int count = std::min(
-                static_cast<int>(state.adventure.currentScene.soundEmitters.size()),
-                static_cast<int>(state.audio.sceneEmitters.size()));
-
-        for (int i = 0; i < count; ++i) {
-            const SceneSoundEmitterData& sceneEmitter = state.adventure.currentScene.soundEmitters[i];
-            const SoundEmitterInstance& emitter = state.audio.sceneEmitters[i];
-
-            json j;
-            j["id"] = sceneEmitter.id;
-            j["enabled"] = emitter.enabled;
-            j["volume"] = emitter.volume;
-            outRoot["soundEmitters"].push_back(j);
-        }
-    }
 
     static const AudioDefinitionData* FindAudioDefinitionByMusicHandle(
             const GameState& state,
@@ -438,6 +241,7 @@ namespace
         outRoot["audioState"] = audioState;
     }
 
+
     static bool ParseSaveFile(const fs::path& savePath, SaveRestoreData& outData)
     {
         outData = {};
@@ -461,14 +265,8 @@ namespace
             return false;
         }
 
-        outData.sceneId = root.value("sceneId", "");
-        outData.controlledActorId = root.value("controlledActorId", "");
         outData.controlsEnabled = root.value("controlsEnabled", true);
 
-        if (outData.sceneId.empty()) {
-            TraceLog(LOG_ERROR, "Save file missing sceneId: %s", savePath.string().c_str());
-            return false;
-        }
 
         if (root.contains("scriptState") && root["scriptState"].is_object()) {
             const json& scriptState = root["scriptState"];
@@ -492,94 +290,6 @@ namespace
             }
         }
 
-        if (root.contains("inventories") && root["inventories"].is_array()) {
-            for (const json& j : root["inventories"]) {
-                SavedInventoryData inv;
-                inv.actorId = j.value("actorId", "");
-                inv.itemIds = j.value("itemIds", std::vector<std::string>{});
-                inv.heldItemId = j.value("heldItemId", "");
-                inv.pageStartIndex = j.value("pageStartIndex", 0);
-
-                if (!inv.actorId.empty()) {
-                    outData.inventories.push_back(inv);
-                }
-            }
-        }
-
-        if (root.contains("actors") && root["actors"].is_array()) {
-            for (const json& j : root["actors"]) {
-                SavedActorState actor;
-                actor.actorId = j.value("actorId", "");
-                actor.feetPos = j.contains("feetPos") ? DeserializeVector2(j["feetPos"]) : Vector2{};
-                actor.facing = j.value("facing", "front");
-                actor.visible = j.value("visible", true);
-                actor.activeInScene = j.value("activeInScene", true);
-                actor.currentAnimation = j.value("currentAnimation", "");
-                actor.flipX = j.value("flipX", false);
-                actor.animationTimeMs = j.value("animationTimeMs", 0.0f);
-
-                if (!actor.actorId.empty()) {
-                    outData.actors.push_back(actor);
-                }
-            }
-        }
-
-        if (root.contains("props") && root["props"].is_array()) {
-            for (const json& j : root["props"]) {
-                SavedPropState prop;
-                prop.id = j.value("id", "");
-                prop.feetPos = j.contains("feetPos") ? DeserializeVector2(j["feetPos"]) : Vector2{};
-                prop.visible = j.value("visible", true);
-                prop.flipX = j.value("flipX", false);
-                prop.currentAnimation = j.value("currentAnimation", "");
-                prop.animationTimeMs = j.value("animationTimeMs", 0.0f);
-
-                if (!prop.id.empty()) {
-                    outData.props.push_back(prop);
-                }
-            }
-        }
-
-        if (root.contains("effectSprites") && root["effectSprites"].is_array()) {
-            for (const json& j : root["effectSprites"]) {
-                SavedEffectSpriteState effect;
-                effect.id = j.value("id", "");
-                effect.visible = j.value("visible", true);
-                effect.opacity = j.value("opacity", 1.0f);
-                effect.tint = j.contains("tint") ? DeserializeColor(j["tint"]) : WHITE;
-
-                if (!effect.id.empty()) {
-                    outData.effectSprites.push_back(effect);
-                }
-            }
-        }
-
-        if (root.contains("effectRegions") && root["effectRegions"].is_array()) {
-            for (const json& j : root["effectRegions"]) {
-                SavedEffectRegionState effectRegion;
-                effectRegion.id = j.value("id", "");
-                effectRegion.visible = j.value("visible", true);
-                effectRegion.opacity = j.value("opacity", 1.0f);
-
-                if (!effectRegion.id.empty()) {
-                    outData.effectRegions.push_back(effectRegion);
-                }
-            }
-        }
-
-        if (root.contains("soundEmitters") && root["soundEmitters"].is_array()) {
-            for (const json& j : root["soundEmitters"]) {
-                SavedSoundEmitterState emitter;
-                emitter.id = j.value("id", "");
-                emitter.enabled = j.value("enabled", true);
-                emitter.volume = j.value("volume", 1.0f);
-
-                if (!emitter.id.empty()) {
-                    outData.soundEmitters.push_back(emitter);
-                }
-            }
-        }
-
         if (root.contains("audioState") && root["audioState"].is_object()) {
             const json& audioState = root["audioState"];
 
@@ -597,29 +307,6 @@ namespace
         return true;
     }
 
-    static void ClearTransientUiAndRuntimeState(GameState& state)
-    {
-        state.adventure.pendingInteraction = {};
-        state.adventure.actionQueue = {};
-        state.adventure.speechUi = {};
-        state.adventure.ambientSpeechUis.clear();
-        state.adventure.hoverUi = {};
-        state.adventure.dialogueUi = {};
-
-        state.adventure.inventoryUi.open = false;
-        state.adventure.inventoryUi.openAmount = 0.0f;
-        state.adventure.inventoryUi.closeDelayRemainingMs = 0.0f;
-        state.adventure.inventoryUi.hoveringInventory = false;
-        state.adventure.inventoryUi.hoveredSlotIndex = -1;
-        state.adventure.inventoryUi.hoveringPrevPage = false;
-        state.adventure.inventoryUi.hoveringNextPage = false;
-        state.adventure.inventoryUi.pickupPopup = {};
-
-        state.adventure.hasLastClickWorldPos = false;
-        state.adventure.hasLastResolvedTargetPos = false;
-        state.adventure.debugTrianglePath.clear();
-    }
-
     static void RestoreScriptState(GameState& state, const SaveRestoreData& data)
     {
         state.script.flags = data.flags;
@@ -627,197 +314,6 @@ namespace
         state.script.strings = data.strings;
     }
 
-    static void RestoreInventories(GameState& state, const SaveRestoreData& data)
-    {
-        state.adventure.actorInventories.clear();
-
-        for (const SavedInventoryData& saved : data.inventories) {
-            ActorInventoryData inv;
-            inv.actorId = saved.actorId;
-            inv.itemIds = saved.itemIds;
-            inv.heldItemId = saved.heldItemId;
-            inv.pageStartIndex = saved.pageStartIndex;
-            state.adventure.actorInventories.push_back(inv);
-        }
-    }
-
-    static void RestoreControlledActor(GameState& state, const SaveRestoreData& data)
-    {
-        if (data.controlledActorId.empty()) {
-            return;
-        }
-
-        const int actorIndex = FindActorInstanceIndexById(state, data.controlledActorId);
-        if (actorIndex >= 0) {
-            state.adventure.controlledActorIndex = actorIndex;
-        }
-    }
-
-    static void RestoreCameraFromControlledActor(GameState& state)
-    {
-        ActorInstance* controlledActor = GetControlledActor(state);
-        if (controlledActor == nullptr) {
-            return;
-        }
-
-        state.adventure.camera.mode = CameraModeData::FollowControlledActor;
-        state.adventure.camera.followedActor = -1;
-        state.adventure.camera.moving = false;
-        state.adventure.camera.moveStart = {};
-        state.adventure.camera.moveTarget = {};
-        state.adventure.camera.moveElapsedMs = 0.0f;
-        state.adventure.camera.moveDurationMs = 0.0f;
-        state.adventure.camera.biasLatch = CameraBiasLatch::None;
-        state.adventure.camera.currentBiasShiftX = 0.0f;
-        state.adventure.camera.position =
-                GetImmediateCenteredCameraPosition(state, *controlledActor);
-    }
-
-    static void RestoreActors(GameState& state, const SaveRestoreData& data)
-    {
-        for (const SavedActorState& saved : data.actors) {
-            const int actorIndex = FindActorInstanceIndexById(state, saved.actorId);
-            if (actorIndex < 0 ||
-                actorIndex >= static_cast<int>(state.adventure.actors.size())) {
-                continue;
-            }
-
-            ActorInstance& actor = state.adventure.actors[actorIndex];
-            actor.feetPos = saved.feetPos;
-            actor.facing = StringToActorFacing(saved.facing);
-            actor.visible = saved.visible;
-            actor.activeInScene = saved.activeInScene;
-            actor.flipX = saved.flipX;
-            actor.animationTimeMs = saved.animationTimeMs;
-
-            if (!saved.currentAnimation.empty()) {
-                actor.currentAnimation = saved.currentAnimation;
-            }
-
-            actor.path = {};
-            actor.scriptAnimationActive = false;
-            actor.scriptAnimationDurationMs = 0.0f;
-        }
-    }
-
-    static int FindScenePropIndexById(const GameState& state, const std::string& propId)
-    {
-        for (int i = 0; i < static_cast<int>(state.adventure.currentScene.props.size()); ++i) {
-            if (state.adventure.currentScene.props[i].id == propId) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    static int FindSceneEffectSpriteIndexById(const GameState& state, const std::string& effectId)
-    {
-        for (int i = 0; i < static_cast<int>(state.adventure.currentScene.effectSprites.size()); ++i) {
-            if (state.adventure.currentScene.effectSprites[i].id == effectId) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    static int FindSceneEffectRegionIndexById(const GameState& state, const std::string& effectRegionId)
-    {
-        for (int i = 0; i < static_cast<int>(state.adventure.currentScene.effectRegions.size()); ++i) {
-            if (state.adventure.currentScene.effectRegions[i].id == effectRegionId) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    static void RestoreProps(GameState& state, const SaveRestoreData& data)
-    {
-        for (const SavedPropState& saved : data.props) {
-            const int propIndex = FindScenePropIndexById(state, saved.id);
-            if (propIndex < 0 ||
-                propIndex >= static_cast<int>(state.adventure.props.size())) {
-                continue;
-            }
-
-            PropInstance& prop = state.adventure.props[propIndex];
-            prop.feetPos = saved.feetPos;
-            prop.visible = saved.visible;
-            prop.flipX = saved.flipX;
-            prop.animationTimeMs = saved.animationTimeMs;
-
-            if (!saved.currentAnimation.empty()) {
-                prop.currentAnimation = saved.currentAnimation;
-            }
-
-            prop.oneShotActive = false;
-            prop.oneShotDurationMs = 0.0f;
-            prop.moveActive = false;
-            prop.moveStartPos = prop.feetPos;
-            prop.moveTargetPos = prop.feetPos;
-            prop.moveElapsedMs = 0.0f;
-            prop.moveDurationMs = 0.0f;
-        }
-    }
-
-    static void RestoreEffectSprites(GameState& state, const SaveRestoreData& data)
-    {
-        for (const SavedEffectSpriteState& saved : data.effectSprites) {
-            const int effectIndex = FindSceneEffectSpriteIndexById(state, saved.id);
-            if (effectIndex < 0 ||
-                effectIndex >= static_cast<int>(state.adventure.effectSprites.size())) {
-                continue;
-            }
-
-            EffectSpriteInstance& effect = state.adventure.effectSprites[effectIndex];
-            effect.visible = saved.visible;
-            effect.opacity = saved.opacity;
-            effect.tint = saved.tint;
-        }
-    }
-
-    static void RestoreEffectRegions(GameState& state, const SaveRestoreData& data)
-    {
-        for (const SavedEffectRegionState& saved : data.effectRegions) {
-            const int effectRegionIndex = FindSceneEffectRegionIndexById(state, saved.id);
-            if (effectRegionIndex < 0 ||
-                effectRegionIndex >= static_cast<int>(state.adventure.effectRegions.size())) {
-                continue;
-            }
-
-            EffectRegionInstance& effectRegion = state.adventure.effectRegions[effectRegionIndex];
-            effectRegion.visible = saved.visible;
-            effectRegion.opacity = saved.opacity;
-        }
-    }
-
-    static int FindSceneSoundEmitterIndexById(const GameState& state, const std::string& emitterId)
-    {
-        for (int i = 0; i < static_cast<int>(state.adventure.currentScene.soundEmitters.size()); ++i) {
-            if (state.adventure.currentScene.soundEmitters[i].id == emitterId) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    static void RestoreSoundEmitters(GameState& state, const SaveRestoreData& data)
-    {
-        for (const SavedSoundEmitterState& saved : data.soundEmitters) {
-            const int emitterIndex = FindSceneSoundEmitterIndexById(state, saved.id);
-            if (emitterIndex < 0 ||
-                emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size())) {
-                continue;
-            }
-
-            SoundEmitterInstance& emitter = state.audio.sceneEmitters[emitterIndex];
-            emitter.enabled = saved.enabled;
-
-            float volume = saved.volume;
-            if (volume < 0.0f) volume = 0.0f;
-            if (volume > 1.0f) volume = 1.0f;
-            emitter.volume = volume;
-        }
-    }
 
     static bool RestoreMusicSlotState(
             GameState& state,
@@ -903,25 +399,13 @@ namespace
 
     static bool ApplySaveRestoreData(GameState& state, const SaveRestoreData& data)
     {
-        if (!LoadSceneById(state, data.sceneId.c_str(), SceneLoadMode::FromSave)) {
-            TraceLog(LOG_ERROR, "Failed to load save scene: %s", data.sceneId.c_str());
-            return false;
-        }
 
         RestoreScriptState(state, data);
-        RestoreInventories(state, data);
-        RestoreActors(state, data);
-        RestoreProps(state, data);
-        RestoreEffectSprites(state, data);
-        RestoreEffectRegions(state, data);
-        RestoreSoundEmitters(state, data);
-        RestoreAudioState(state, data);
-        RestoreControlledActor(state, data);
-        RestoreCameraFromControlledActor(state);
 
-        state.adventure.controlsEnabled = data.controlsEnabled;
-        ClearTransientUiAndRuntimeState(state);
-        state.mode = GameMode::Game;
+        RestoreAudioState(state, data);
+
+        state.topdown.runtime.controlsEnabled = data.controlsEnabled;
+        state.mode = GameMode::TopDown;
         return true;
     }
 }
@@ -933,11 +417,6 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
         return false;
     }
 
-    if (!state.adventure.currentScene.loaded) {
-        TraceLog(LOG_ERROR, "Cannot save without a loaded scene");
-        return false;
-    }
-
     if (!EnsureSaveDirExists()) {
         TraceLog(LOG_ERROR, "Failed to create save directory");
         return false;
@@ -945,23 +424,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
 
     json root;
     root["version"] = SAVE_VERSION;
-    root["sceneId"] = state.adventure.currentScene.sceneId;
-    root["saveName"] = !state.adventure.currentScene.saveName.empty()
-                       ? state.adventure.currentScene.saveName
-                       : state.adventure.currentScene.sceneId;
-    root["savedAt"] = BuildCurrentSaveTimestamp();
-    root["controlsEnabled"] = state.adventure.controlsEnabled;
-
-    const ActorInstance* controlledActor = GetControlledActor(state);
-    root["controlledActorId"] = controlledActor != nullptr ? controlledActor->actorId : "";
-
     SerializeScriptState(state, root);
-    SerializeInventories(state, root);
-    SerializeActors(state, root);
-    SerializeProps(state, root);
-    SerializeEffectSprites(state, root);
-    SerializeEffectRegions(state, root);
-    SerializeSoundEmitters(state, root);
     SerializeAudioState(state, root);
 
     const fs::path savePath = GetSaveSlotPath(slotIndex);

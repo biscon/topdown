@@ -6,7 +6,6 @@
 #include "settings/SettingsData.h"
 #include "input/InputData.h"
 #include "resources/ResourceData.h"
-#include "adventure/AdventureData.h"
 #include "debug/DebugData.h"
 #include "scripting/ScriptData.h"
 #include "audio/AudioData.h"
@@ -29,7 +28,6 @@ struct GameState {
     GameMode mode = GameMode::Menu;
 
     ResourceData resources;
-    AdventureData adventure;
     DebugData debug;
     ScriptData script;
     AudioData audio;

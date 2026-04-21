@@ -5,6 +5,7 @@
 #include "nav/NavMeshQuery.h"
 #include "raymath.h"
 #include "topdown/NpcRegistry.h"
+#include "audio/Audio.h"
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
@@ -530,5 +531,177 @@ bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerI
     }
 
     trigger->repeat = repeat;
+    return true;
+}
+
+// Audio
+
+static int FindSoundEmitterIndexById(const GameState& state, const std::string& emitterId)
+{
+    /*
+    const int count = std::min(
+            static_cast<int>(state.adventure.currentScene.soundEmitters.size()),
+            static_cast<int>(state.audio.sceneEmitters.size()));
+
+    for (int i = 0; i < count; ++i) {
+        if (state.adventure.currentScene.soundEmitters[i].id == emitterId) {
+            return i;
+        }
+    }
+     */
+
+    return -1;
+}
+
+bool TopdownScriptPlaySound(GameState& state, const std::string& audioId)
+{
+    if (audioId.empty()) {
+        return false;
+    }
+
+    return PlaySoundById(state, audioId);
+}
+
+bool TopdownScriptStopSound(GameState& state, const std::string& audioId)
+{
+    if (audioId.empty()) {
+        return false;
+    }
+    return StopSoundById(state, audioId);
+}
+
+bool TopdownScriptPlayMusic(GameState& state, const std::string& audioId, float fadeMs)
+{
+    if (audioId.empty()) {
+        return false;
+    }
+
+    return PlayMusicById(state, audioId, fadeMs);
+}
+
+bool TopdownScriptStopMusic(GameState& state, float fadeMs)
+{
+    StopMusic(state, fadeMs);
+    return true;
+}
+
+bool TopdownScriptSetSoundEmitterEnabled(GameState& state, const std::string& emitterId, bool enabled)
+{
+    /*
+    if (!state.adventure.currentScene.loaded) {
+        return false;
+    }
+     */
+
+    const int emitterIndex = FindSoundEmitterIndexById(state, emitterId);
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size())) {
+        return false;
+    }
+
+    state.audio.sceneEmitters[emitterIndex].enabled = enabled;
+    return true;
+}
+
+bool TopdownScriptGetSoundEmitterEnabled(const GameState& state, const std::string& emitterId, bool& outEnabled)
+{
+    /*
+    if (!state.adventure.currentScene.loaded) {
+        return false;
+    }
+     */
+
+    const int emitterIndex = FindSoundEmitterIndexById(state, emitterId);
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size())) {
+        return false;
+    }
+
+    outEnabled = state.audio.sceneEmitters[emitterIndex].enabled;
+    return true;
+}
+
+bool TopdownScriptSetSoundEmitterVolume(GameState& state, const std::string& emitterId, float volume)
+{
+    /*
+    if (!state.adventure.currentScene.loaded) {
+        return false;
+    }
+     */
+
+    const int emitterIndex = FindSoundEmitterIndexById(state, emitterId);
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size())) {
+        return false;
+    }
+
+    if (volume < 0.0f) volume = 0.0f;
+    if (volume > 1.0f) volume = 1.0f;
+
+    state.audio.sceneEmitters[emitterIndex].volume = volume;
+    return true;
+}
+
+bool TopdownScriptPlayEmitter(GameState& state, const std::string& emitterId)
+{
+    if (emitterId.empty()) {
+        return false;
+    }
+
+    //return PlaySoundEmitterById(state, emitterId);
+}
+
+bool TopdownScriptStopEmitter(GameState& state, const std::string& emitterId)
+{
+    if (emitterId.empty()) {
+        return false;
+    }
+
+    //return StopSoundEmitterById(state, emitterId);
+}
+
+
+
+bool TopdownScriptShakeScreen(GameState& state,
+                                float durationMs,
+                                float strengthPx,
+                                float frequencyHz,
+                                bool smooth)
+{
+    if (durationMs <= 0.0f) {
+        return false;
+    }
+
+    if (strengthPx <= 0.0f) {
+        return false;
+    }
+
+    if (frequencyHz <= 0.0f) {
+        frequencyHz = 30.0f;
+    }
+
+    TopdownScreenShakeState& shake = state.topdown.runtime.screenShake;
+
+    if (!shake.active) {
+        shake.active = true;
+        shake.durationMs = durationMs;
+        shake.elapsedMs = 0.0f;
+        shake.strengthX = strengthPx;
+        shake.strengthY = strengthPx;
+        shake.frequencyHz = frequencyHz;
+        shake.sampleTimerMs = 0.0f;
+        shake.smooth = smooth;
+        shake.previousOffset = Vector2{0.0f, 0.0f};
+        shake.sampledOffset = Vector2{0.0f, 0.0f};
+        shake.currentOffset = Vector2{0.0f, 0.0f};
+        return true;
+    }
+
+    shake.active = true;
+    shake.durationMs = durationMs;
+    shake.elapsedMs = 0.0f;
+    shake.strengthX = std::max(shake.strengthX, strengthPx);
+    shake.strengthY = std::max(shake.strengthY, strengthPx);
+    shake.frequencyHz = std::max(shake.frequencyHz, frequencyHz);
+    shake.sampleTimerMs = 0.0f;
+    shake.smooth = smooth;
+
     return true;
 }

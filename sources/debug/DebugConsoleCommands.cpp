@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "adventure/AdventureUpdate.h"
-#include "adventure/AdventureHelpers.h"
 #include "audio/Audio.h"
 #include "save/SaveGame.h"
 #include "resources/TextureAsset.h"
@@ -470,45 +468,6 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
         return true;
     }
 
-    if (cmd == "/items") {
-        DebugConsoleAddLine(state, "item definitions:", SKYBLUE);
-
-        if (state.adventure.itemDefinitions.empty()) {
-            DebugConsoleAddLine(state, "  <none>", LIGHTGRAY);
-        } else {
-            for (const ItemDefinitionData& item : state.adventure.itemDefinitions) {
-                DebugConsoleAddLine(
-                        state,
-                        "  " + item.itemId + "  (" + item.displayName + ")",
-                        LIGHTGRAY);
-            }
-        }
-
-        DebugConsoleAddLine(state, "inventories:", SKYBLUE);
-        if (state.adventure.actorInventories.empty()) {
-            DebugConsoleAddLine(state, "  <none>", LIGHTGRAY);
-        } else {
-            for (const ActorInventoryData& inv : state.adventure.actorInventories) {
-                std::string lineText = "  " + inv.actorId + ":";
-                if (inv.itemIds.empty()) {
-                    lineText += " <empty>";
-                } else {
-                    for (const std::string& itemId : inv.itemIds) {
-                        lineText += " " + itemId;
-                    }
-                }
-
-                if (!inv.heldItemId.empty()) {
-                    lineText += "   held=" + inv.heldItemId;
-                }
-
-                DebugConsoleAddLine(state, lineText, LIGHTGRAY);
-            }
-        }
-
-        return true;
-    }
-
     if (cmd == "/effects") {
         if (!state.topdown.authored.loaded) {
             DebugConsoleAddLine(state, "no topdown level loaded", RED);
@@ -567,32 +526,6 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
         return true;
     }
 
-    if (cmd == "/exits") {
-        if (!state.adventure.currentScene.loaded) {
-            DebugConsoleAddLine(state, "no scene loaded", RED);
-            return true;
-        }
-
-        DebugConsoleAddLine(state, "exits:", SKYBLUE);
-
-        if (state.adventure.currentScene.exits.empty()) {
-            DebugConsoleAddLine(state, "  <none>", LIGHTGRAY);
-            return true;
-        }
-
-        for (const SceneExit& exitObj : state.adventure.currentScene.exits) {
-            DebugConsoleAddLine(
-                    state,
-                    "  " + exitObj.id +
-                    "  (" + exitObj.displayName + ")" +
-                    " -> scene=" + exitObj.targetScene +
-                    " spawn=" + exitObj.targetSpawn,
-                    LIGHTGRAY);
-        }
-
-        return true;
-    }
-
     if (cmd == "/spawns") {
         if (!state.topdown.authored.loaded) {
             DebugConsoleAddLine(state, "no topdown level loaded", RED);
@@ -644,37 +577,6 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
     }
 
     if (cmd == "/emitters") {
-        if (!state.adventure.currentScene.loaded) {
-            DebugConsoleAddLine(state, "no scene loaded", RED);
-            return true;
-        }
-
-        DebugConsoleAddLine(state, "sound emitters:", SKYBLUE);
-
-        const int count = std::min(
-                static_cast<int>(state.adventure.currentScene.soundEmitters.size()),
-                static_cast<int>(state.audio.sceneEmitters.size()));
-
-        if (count <= 0) {
-            DebugConsoleAddLine(state, "  <none>", LIGHTGRAY);
-            return true;
-        }
-
-        for (int i = 0; i < count; ++i) {
-            const SceneSoundEmitterData& sceneEmitter = state.adventure.currentScene.soundEmitters[i];
-            const SoundEmitterInstance& emitter = state.audio.sceneEmitters[i];
-
-            std::string line =
-                    "  " + sceneEmitter.id +
-                    " sound=" + sceneEmitter.soundId +
-                    " radius=" + std::to_string(static_cast<int>(sceneEmitter.radius)) +
-                    " loop=" + std::string(sceneEmitter.loop ? "true" : "false") +
-                    " enabled=" + std::string(emitter.enabled ? "true" : "false") +
-                    " active=" + std::string(emitter.active ? "true" : "false") +
-                    " volume=" + std::to_string(emitter.volume);
-
-            DebugConsoleAddLine(state, line, LIGHTGRAY);
-        }
 
         return true;
     }
@@ -758,12 +660,13 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
             DebugConsoleAddLine(state, "usage: /playemitter <emitterId>", RED);
             return true;
         }
-
+        /*
         if (PlaySoundEmitterById(state, args[1])) {
             DebugConsoleAddLine(state, "played emitter: " + args[1], SKYBLUE);
         } else {
             DebugConsoleAddLine(state, "failed playing emitter: " + args[1], RED);
         }
+         */
 
         return true;
     }
@@ -774,11 +677,13 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
             return true;
         }
 
+        /*
         if (StopSoundEmitterById(state, args[1])) {
             DebugConsoleAddLine(state, "stopped emitter: " + args[1], SKYBLUE);
         } else {
             DebugConsoleAddLine(state, "failed stopping emitter: " + args[1], RED);
         }
+         */
 
         return true;
     }

@@ -5,7 +5,6 @@
 #include <cmath>
 #include "audio/AudioAsset.h"
 #include "resources/Resources.h"
-#include "adventure/AdventureHelpers.h"
 #include "raylib.h"
 
 static AudioDefinitionData* FindAudioDef(GameState& state, const std::string& id)
@@ -63,6 +62,7 @@ static float Clamp01(float t)
     return t;
 }
 
+/*
 static int FindSceneEmitterIndexById(const GameState& state, const std::string& emitterId)
 {
     const int count = std::min(
@@ -212,6 +212,7 @@ static void UpdateSceneSoundEmitters(GameState& state)
         }
     }
 }
+ */
 
 static MusicPlaybackState& GetCurrentMusic(AudioData& audio)
 {
@@ -434,7 +435,7 @@ void UpdateAudio(GameState& state, float dt)
         }
     }
 
-    UpdateSceneSoundEmitters(state);
+    //UpdateSceneSoundEmitters(state);
 }
 
 bool PlaySoundById(GameState& state, const std::string& id)
@@ -651,6 +652,7 @@ bool PlayMusicById(GameState& state, const std::string& id, float fadeMs)
     return true;
 }
 
+/*
 bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
 {
     if (!state.adventure.currentScene.loaded) {
@@ -748,6 +750,7 @@ bool StopSoundEmitterById(GameState& state, const std::string& emitterId)
     StopEmitterSound(emitter);
     return true;
 }
+ */
 
 void StopMusic(GameState& state, float fadeMs)
 {
@@ -839,6 +842,7 @@ bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
     return true;
 }
 
+/*
 void BuildSceneSoundEmitters(GameState& state)
 {
     state.audio.sceneEmitters.clear();
@@ -857,6 +861,7 @@ void BuildSceneSoundEmitters(GameState& state)
         state.audio.sceneEmitters.push_back(inst);
     }
 }
+ */
 
 void ClearSceneAudio(GameState& state)
 {

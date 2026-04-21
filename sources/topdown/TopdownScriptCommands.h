@@ -55,3 +55,21 @@ bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id
 // Triggers
 bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled);
 bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat);
+
+// Audio
+bool TopdownScriptPlaySound(GameState& state, const std::string& audioId);
+bool TopdownScriptStopSound(GameState& state, const std::string& audioId);
+bool TopdownScriptPlayMusic(GameState& state, const std::string& audioId, float fadeMs = 0.0f);
+bool TopdownScriptStopMusic(GameState& state, float fadeMs = 0.0f);
+
+bool TopdownScriptSetSoundEmitterEnabled(GameState& state, const std::string& emitterId, bool enabled);
+bool TopdownScriptGetSoundEmitterEnabled(const GameState& state, const std::string& emitterId, bool& outEnabled);
+bool TopdownScriptSetSoundEmitterVolume(GameState& state, const std::string& emitterId, float volume);
+bool TopdownScriptPlayEmitter(GameState& state, const std::string& emitterId);
+bool TopdownScriptStopEmitter(GameState& state, const std::string& emitterId);
+
+bool TopdownScriptShakeScreen(GameState& state,
+                              float durationMs,
+                              float strengthPx,
+                              float frequencyHz = 30.0f,
+                              bool smooth = false);

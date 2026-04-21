@@ -4,12 +4,10 @@
 #include "menu/Menu.h"
 #include "settings/Settings.h"
 #include "input/Input.h"
-#include "adventure/ItemDefinitionAsset.h"
 #include "debug/DebugConsole.h"
 #include "debug/DebugConsoleTraceLog.h"
 #include "resources/Resources.h"
 #include "scripting/ScriptSystem.h"
-#include "adventure/DialogueChoiceAsset.h"
 #include "audio/Audio.h"
 #include "ui/Cursor.h"
 #include "render/EffectShaderRegistry.h"
@@ -201,9 +199,6 @@ int main()
         TraceLog(LOG_ERROR, "Font loading failed.");
         state.mode = GameMode::Quit;
     }
-
-    LoadAllItemDefinitions(state);
-    LoadAllDialogueChoiceSets(state);
 
     if (!TopdownScanLevelRegistry(state)) {
         TraceLog(LOG_WARNING, "Topdown level registry scan failed");

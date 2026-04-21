@@ -66,9 +66,6 @@ void RenderCursor(const GameState& state, float scale)
     if (!IsCursorOnScreen()) {
         return;
     }
-    if(!state.adventure.controlsEnabled && state.mode == GameMode::Game) {
-        return;
-    }
 
     const CursorData& cursor = state.cursor;
 

@@ -13,7 +13,6 @@
 #include "raylib.h"
 #include "save/SaveGame.h"
 #include "settings/Settings.h"
-#include "adventure/AdventureUpdate.h"
 #include "topdown/LevelRegistry.h"
 
 #if defined(__APPLE__)
@@ -102,11 +101,6 @@ static float ClampFloat(float v, float minValue, float maxValue)
     return v;
 }
 
-static bool HasAdventureLoaded()
-{
-    return game->adventure.currentScene.loaded;
-}
-
 static bool HasTopdownLoaded()
 {
     return TopdownHasActiveOrResumableLevel(*game);
@@ -114,7 +108,7 @@ static bool HasTopdownLoaded()
 
 static bool HasAnythingToResume()
 {
-    return HasTopdownLoaded() || HasAdventureLoaded();
+    return HasTopdownLoaded();
 }
 
 static void ResumeBestAvailableMode()
@@ -122,12 +116,6 @@ static void ResumeBestAvailableMode()
     if (HasTopdownLoaded()) {
         game->mode = GameMode::TopDown;
         TraceLog(LOG_DEBUG, "Resuming topdown");
-        return;
-    }
-
-    if (HasAdventureLoaded()) {
-        game->mode = GameMode::Game;
-        TraceLog(LOG_DEBUG, "Resuming adventure");
         return;
     }
 
@@ -498,7 +486,7 @@ static std::shared_ptr<Menu> createSaveMenu()
     for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
         MenuItem item;
         item.text = "Slot " + std::to_string(slot) + " - " + GetSaveSlotSummary(slot);
-        item.enabled = game->adventure.currentScene.loaded;
+        item.enabled = false;
         item.action = [slot] {
             if (SaveGameToSlot(*game, slot)) {
                 TraceLog(LOG_INFO, "Saved game to slot %d", slot);
@@ -580,13 +568,13 @@ static std::shared_ptr<Menu> createMainMenu()
         };
         menu->items.push_back(resume);
 
-        if (HasAdventureLoaded()) {
+        if (HasTopdownLoaded()) {
             MenuItem save;
             save.text = "Save Game";
             save.isSubmenu = true;
             save.submenuBuilder = createSaveMenu;
-            save.enabled = game->adventure.controlsEnabled;
-            save.color = game->adventure.controlsEnabled ? LIGHTGRAY : DARKGRAY;
+            save.enabled = game->topdown.runtime.controlsEnabled;
+            save.color = game->topdown.runtime.controlsEnabled ? LIGHTGRAY : DARKGRAY;
             menu->items.push_back(save);
         }
     }

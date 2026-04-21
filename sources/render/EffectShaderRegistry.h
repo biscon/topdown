@@ -1,7 +1,6 @@
 #pragma once
 
 #include "raylib.h"
-#include "scene/SceneData.h"
 #include "render/EffectTypes.h"
 
 struct EffectShaderEntry {
