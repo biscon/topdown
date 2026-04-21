@@ -325,6 +325,26 @@ static int Lua_delay(lua_State* L)
     return lua_yieldk(L, 0, 0, Lua_WaitContinuation);
 }
 
+static int Lua_showNarration(lua_State* L)
+{
+    const char* title = luaL_checkstring(L, 1);
+    const char* body = luaL_checkstring(L, 2);
+    const float durationSeconds = static_cast<float>(luaL_optnumber(L, 3, 0.0));
+
+    if (gameState == nullptr || title == nullptr || body == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptShowNarration(
+            *gameState,
+            std::string(title),
+            std::string(body),
+            durationSeconds);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_changeLevel(lua_State* L)
 {
     const char* levelId = luaL_checkstring(L, 1);
@@ -1153,6 +1173,7 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "runTo", Lua_runTo);
 
     lua_register(L, "delay", Lua_delay);
+    lua_register(L, "showNarration", Lua_showNarration);
     lua_register(L, "changeLevel", Lua_changeLevel);
 
     lua_register(L, "startWalkTo", Lua_startWalkTo);

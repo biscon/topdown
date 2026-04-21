@@ -124,7 +124,26 @@ static bool LoadFonts(GameState& state) {
         TraceLog(LOG_ERROR, "Could not load ambient speech font from %s", fontPath.c_str());
         return false;
     }
+    state.narrationTitleFont = LoadFontEx(fontPath.c_str(), 42, nullptr, 0);
+    if(state.narrationTitleFont.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Could not load narration title font from %s", fontPath.c_str());
+        return false;
+    }
+    state.narrationBodyFont = LoadFontEx(fontPath.c_str(), 32, nullptr, 0);
+    if(state.narrationBodyFont.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Could not load narration body font from %s", fontPath.c_str());
+        return false;
+    }
     return true;
+}
+
+static void UnloadFonts(GameState& state) {
+    if (state.narrationBodyFont.texture.id != 0) UnloadFont(state.narrationBodyFont);
+    if (state.narrationTitleFont.texture.id != 0) UnloadFont(state.narrationTitleFont);
+    if (state.ambientSpeechFont.texture.id != 0) UnloadFont(state.ambientSpeechFont);
+    if (state.speechFont.texture.id != 0) UnloadFont(state.speechFont);
+    if (state.hoverLabelFont.texture.id != 0) UnloadFont(state.hoverLabelFont);
+    if (state.dialogueFont.texture.id != 0) UnloadFont(state.dialogueFont);
 }
 
 int main()
@@ -341,6 +360,7 @@ int main()
     ShutdownTopdownPlayerVignetteSystem();
     ShutdownEffectShaderRegistry();
     ShutdownCursor(state);
+    UnloadFonts(state);
     UnloadTopdownBloodRenderTarget(state);
     UnloadTopdownBloodStampLibrary(state.topdown.bloodStampLibrary);
     TopdownRvoShutdown(state);

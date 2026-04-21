@@ -17,6 +17,7 @@
 #include "audio/Audio.h"
 #include "input/Input.h"
 #include "LevelWindows.h"
+#include "ui/NarrationPopups.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -1441,6 +1442,6 @@ void TopdownRenderUi(GameState& state)
     }
 
     DrawHealthBar(state);
+    TopdownRenderNarrationPopups(state);
     DrawGameOver(state);
 }
-

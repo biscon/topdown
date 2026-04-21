@@ -7,6 +7,7 @@
 #include "topdown/NpcRegistry.h"
 #include "topdown/TopdownNpcPatrol.h"
 #include "audio/Audio.h"
+#include "ui/NarrationPopups.h"
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
@@ -183,6 +184,15 @@ bool TopdownScriptSetControlsEnabled(GameState& state, bool enabled)
     }
 
     return true;
+}
+
+bool TopdownScriptShowNarration(
+        GameState& state,
+        const std::string& title,
+        const std::string& body,
+        float durationSeconds)
+{
+    return TopdownQueueNarrationPopup(state, title, body, durationSeconds);
 }
 
 // --------------------------------------------------

@@ -36,6 +36,8 @@ struct GameState {
     Font speechFont;
     Font ambientSpeechFont;
     Font hoverLabelFont;
+    Font narrationTitleFont;
+    Font narrationBodyFont;
 
     TopdownData topdown;
 };
