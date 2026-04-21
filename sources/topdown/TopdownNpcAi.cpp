@@ -227,7 +227,7 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
         UpdateNpcEngagementState(state, npc, perception, dt);
 
         if (npc.engagementState != TopdownNpcEngagementState::Unaware) {
-            TopdownClearNpcPatrol(state, npc);
+            TopdownInterruptNpcPatrol(state, npc);
         }
 
         switch(npc.engagementState) {

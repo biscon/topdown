@@ -417,6 +417,7 @@ bool TopdownAssignNpcPatrolRoute(
     behavior.patrol.waitDurationMs = std::max(0.0f, options.waitMs);
     behavior.patrol.waitTimerMs = 0.0f;
     behavior.patrol.currentPointIndex = 0;
+    behavior.patrol.interrupted = false;
 
     StopPatrolScriptMove(npc);
     return true;
@@ -442,6 +443,21 @@ bool TopdownPauseNpcPatrol(GameState& state, TopdownNpcRuntime& npc)
     return true;
 }
 
+bool TopdownInterruptNpcPatrol(GameState& state, TopdownNpcRuntime& npc)
+{
+    if (npc.scriptBehavior.mode != TopdownNpcScriptBehaviorMode::PatrolRoute ||
+        !npc.scriptBehavior.patrol.active) {
+        return false;
+    }
+
+    TopdownNpcPatrolState& patrol = npc.scriptBehavior.patrol;
+    patrol.interrupted = true;
+    patrol.waitTimerMs = 0.0f;
+    ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
+    StopPatrolScriptMove(npc);
+    return true;
+}
+
 bool TopdownResumeNpcPatrol(TopdownNpcRuntime& npc)
 {
     if (npc.scriptBehavior.mode != TopdownNpcScriptBehaviorMode::PatrolRoute ||
@@ -450,6 +466,7 @@ bool TopdownResumeNpcPatrol(TopdownNpcRuntime& npc)
     }
 
     npc.scriptBehavior.patrol.paused = false;
+    npc.scriptBehavior.patrol.interrupted = false;
     return true;
 }
 
@@ -466,6 +483,10 @@ void TopdownUpdateNpcPatrol(
     TopdownNpcPatrolState& patrol = behavior.patrol;
     if (!patrol.active || patrol.paused) {
         return;
+    }
+
+    if (patrol.interrupted) {
+        patrol.interrupted = false;
     }
 
     if (patrol.spawnIds.empty()) {
