@@ -417,7 +417,16 @@ bool BreakWindow(
     window.broken = true;
 
     if (!window.breakSoundId.empty()) {
-        PlaySoundById(state, window.breakSoundId, RandomRangeFloat(0.97f, 1.03f));
+        const Vector2 center{
+                window.worldRect.x + window.worldRect.width * 0.5f,
+                window.worldRect.y + window.worldRect.height * 0.5f
+        };
+        AudioPlaySoundAtPosition(
+                state,
+                window.breakSoundId,
+                center,
+                AUDIO_RADIUS_WINDOW,
+                RandomRangeFloat(0.97f, 1.03f));
     }
 
     SpawnWindowBreakParticles(state, window, hitPoint, shotDir);

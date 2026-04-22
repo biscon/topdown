@@ -110,7 +110,12 @@ static void StartNpcAttack(
     }
 
     if (!npc.attackStartSoundId.empty()) {
-        PlaySoundById(state, npc.attackStartSoundId, RandomRangeFloat(0.95f, 1.05f));
+        AudioPlaySoundAtPosition(
+                state,
+                npc.attackStartSoundId,
+                npc.position,
+                AUDIO_RADIUS_NPC_WEAPON,
+                RandomRangeFloat(0.95f, 1.05f));
     }
 }
 
@@ -134,9 +139,11 @@ static bool UpdateNpcAttackState(
                         npc.position);
 
                 if (!npc.attackConnectSoundId.empty()) {
-                    PlaySoundById(
+                    AudioPlaySoundAtPosition(
                             state,
                             npc.attackConnectSoundId,
+                            npc.position,
+                            AUDIO_RADIUS_NPC_WEAPON,
                             RandomRangeFloat(0.95f, 1.05f));
                 }
 

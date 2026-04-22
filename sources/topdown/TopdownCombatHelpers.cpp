@@ -255,9 +255,11 @@ static void PlayNpcHitReactionSound(
 
     if (!npc.hitReactionSoundIds.empty()) {
         const int idx = GetRandomValue(0, static_cast<int>(npc.hitReactionSoundIds.size()) - 1);
-        PlaySoundById(
+        AudioPlaySoundAtPosition(
                 state,
                 npc.hitReactionSoundIds[idx],
+                npc.position,
+                AUDIO_RADIUS_NPC,
                 RandomRangeFloat(0.92f, 1.08f));
         npc.painSoundCooldownMs = 750.0f;
         return;
@@ -273,7 +275,12 @@ static void PlayNpcHitReactionSound(
     };
 
     const int idx = GetRandomValue(0, 5);
-    PlaySoundById(state, fallbackPainSounds[idx], RandomRangeFloat(0.92f, 1.08f));
+    AudioPlaySoundAtPosition(
+            state,
+            fallbackPainSounds[idx],
+            npc.position,
+            AUDIO_RADIUS_NPC,
+            RandomRangeFloat(0.92f, 1.08f));
     npc.painSoundCooldownMs = 750.0f;
 }
 
@@ -576,5 +583,4 @@ bool TopdownComputeNpcMuzzleWorldPosition(
 
     return true;
 }
-
 
