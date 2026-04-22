@@ -11,6 +11,7 @@
 #include "utils/json.hpp"
 #include "resources/Resources.h"
 #include "LevelCamera.h"
+#include "audio/Audio.h"
 #include "topdown/PlayerRegistry.h"
 #include "topdown/LevelScripting.h"
 #include "scripting/ScriptSystem.h"
@@ -637,6 +638,39 @@ static void ImportNpcLayer(
         }
 
         topdown.authored.npcs.push_back(npc);
+    }
+}
+
+static void ImportSoundEmitterLayer(
+        std::vector<TopdownRuntimeSoundEmitter>& soundEmitters,
+        const json& layer,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+    const float layerOffX = layer.value("offsetx", 0.0f);
+    const float layerOffY = layer.value("offsety", 0.0f);
+
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object() || !IsPointObject(obj)) {
+            continue;
+        }
+
+        TopdownRuntimeSoundEmitter emitter;
+        emitter.id = obj.value("name", std::string());
+        emitter.position.x = (obj.value("x", 0.0f) + layerOffX) * scale;
+        emitter.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
+        emitter.soundId = GetObjectPropertyString(obj, "sound", "");
+        emitter.loop = GetObjectPropertyBool(obj, "loop", false);
+        emitter.radius = GetObjectPropertyFloat(obj, "radius", 0.0f);
+        emitter.volume = GetObjectPropertyFloat(obj, "volume", 1.0f);
+        emitter.pan = GetObjectPropertyBool(obj, "pan", false);
+        emitter.enabled = obj.value("visible", true);
+
+        soundEmitters.push_back(emitter);
     }
 }
 
@@ -2005,7 +2039,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
     const fs::path tmjPath = fs::path(tiledFilePath).lexically_normal();
     const std::string tmjNorm = NormalizePath(tmjPath);
-    const fs::path sceneDir = tmjPath.parent_path();
+    const fs::path levelDir = tmjPath.parent_path();
 
     json root;
     {
@@ -2029,6 +2063,8 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     state.topdown.currentLevelSaveName = state.topdown.authored.saveName;
     state.topdown.currentLevelTiledFilePath = tmjNorm;
     state.topdown.currentLevelBaseAssetScale = baseAssetScale;
+
+    std::vector<TopdownRuntimeSoundEmitter> parsedSoundEmitters;
 
     {
         const fs::path tmjPathObj = fs::path(state.topdown.authored.tiledFilePath);
@@ -2094,17 +2130,17 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         }
 
         if (layerName == "Bottom" && layerType == "group") {
-            ImportImageGroup(state, layer, sceneDir, state.topdown.authored.baseAssetScale, TopdownImageLayerKind::Bottom);
+            ImportImageGroup(state, layer, levelDir, state.topdown.authored.baseAssetScale, TopdownImageLayerKind::Bottom);
             continue;
         }
 
         if (layerName == "Top" && layerType == "group") {
-            ImportImageGroup(state, layer, sceneDir, state.topdown.authored.baseAssetScale, TopdownImageLayerKind::Top);
+            ImportImageGroup(state, layer, levelDir, state.topdown.authored.baseAssetScale, TopdownImageLayerKind::Top);
             continue;
         }
 
         if (layerName == "EffectRegions" && layerType == "objectgroup") {
-            ImportEffectRegionLayer(state, layer, sceneDir, state.topdown.authored.baseAssetScale);
+            ImportEffectRegionLayer(state, layer, levelDir, state.topdown.authored.baseAssetScale);
             continue;
         }
 
@@ -2127,6 +2163,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
             ImportWindowLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
             continue;
         }
+
+        if (layerName == "SoundEmitters" && layerType == "objectgroup") {
+            ImportSoundEmitterLayer(parsedSoundEmitters, layer, state.topdown.authored.baseAssetScale);
+            continue;
+        }
     }
 
     if (!foundBoundary) {
@@ -2135,9 +2176,26 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         return false;
     }
 
+    if (!LoadLevelAudioDefinitions(state, NormalizePath(levelDir))) {
+        TraceLog(LOG_ERROR, "Failed loading level audio definitions from %s", NormalizePath(levelDir).c_str());
+        TopdownUnloadLevel(state);
+        return false;
+    }
+
     state.topdown.authored.loaded = true;
 
     BuildRuntimeFromAuthored(state.topdown);
+    state.topdown.runtime.soundEmitters = std::move(parsedSoundEmitters);
+    state.audio.levelEmitters.resize(state.topdown.runtime.soundEmitters.size());
+    for (int i = 0; i < static_cast<int>(state.audio.levelEmitters.size()); ++i) {
+        SoundEmitterInstance& emitter = state.audio.levelEmitters[i];
+        const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[i];
+        emitter.levelEmitterIndex = i;
+        emitter.enabled = levelEmitter.enabled;
+        emitter.volume = levelEmitter.volume;
+        emitter.active = false;
+        emitter.sound = {};
+    }
 
     InitializeTopdownPlayerCharacterRuntime(state);
     state.topdown.runtime.aiFrozen = false;
@@ -2196,6 +2254,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
 void TopdownUnloadLevel(GameState& state)
 {
+    ClearLevelAudio(state);
     UnloadTopdownBloodRenderTarget(state);
     TopdownUnloadWindowResources(state.topdown);
     UnloadSceneResources(state.resources);

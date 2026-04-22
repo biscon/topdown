@@ -55,22 +55,14 @@ static void StopEmitterSound(SoundEmitterInstance& emitter)
     emitter.active = false;
 }
 
-static float Clamp01(float t)
-{
-    if (t < 0.0f) return 0.0f;
-    if (t > 1.0f) return 1.0f;
-    return t;
-}
-
-/*
-static int FindSceneEmitterIndexById(const GameState& state, const std::string& emitterId)
+static int FindLevelEmitterIndexById(const GameState& state, const std::string& emitterId)
 {
     const int count = std::min(
-            static_cast<int>(state.adventure.currentScene.soundEmitters.size()),
-            static_cast<int>(state.audio.sceneEmitters.size()));
+            static_cast<int>(state.topdown.runtime.soundEmitters.size()),
+            static_cast<int>(state.audio.levelEmitters.size()));
 
     for (int i = 0; i < count; ++i) {
-        if (state.adventure.currentScene.soundEmitters[i].id == emitterId) {
+        if (state.topdown.runtime.soundEmitters[i].id == emitterId) {
             return i;
         }
     }
@@ -78,41 +70,45 @@ static int FindSceneEmitterIndexById(const GameState& state, const std::string& 
     return -1;
 }
 
+static float Clamp01(float t)
+{
+    if (t < 0.0f) return 0.0f;
+    if (t > 1.0f) return 1.0f;
+    return t;
+}
+
 static bool ComputeEmitterPlaybackParams(const GameState& state,
-                                         const SceneSoundEmitterData& sceneEmitter,
+                                         const TopdownRuntimeSoundEmitter& levelEmitter,
                                          const SoundEmitterInstance& emitter,
                                          const AudioDefinitionData& def,
                                          float& outVolume,
                                          float& outPan)
 {
-    const ActorInstance* listener = GetControlledActor(state);
-    if (listener == nullptr) {
+    if (levelEmitter.radius <= 0.0f) {
         return false;
     }
 
-    if (sceneEmitter.radius <= 0.0f) {
-        return false;
-    }
-
-    const float dx = sceneEmitter.position.x - listener->feetPos.x;
-    const float dy = sceneEmitter.position.y - listener->feetPos.y;
+    const Vector2 listenerPos = state.topdown.runtime.player.position;
+    const float dx = levelEmitter.position.x - listenerPos.x;
+    const float dy = levelEmitter.position.y - listenerPos.y;
     const float dist = std::sqrt(dx * dx + dy * dy);
 
-    if (dist >= sceneEmitter.radius) {
+    if (dist >= levelEmitter.radius) {
         return false;
     }
 
-    const float atten = std::pow(1.0f - Clamp01(dist / sceneEmitter.radius), 2.0f);
+    const float atten = std::pow(1.0f - Clamp01(dist / levelEmitter.radius), 2.0f);
 
     outVolume =
             def.volume *
             state.settings.soundVolume *
             emitter.volume *
+            levelEmitter.volume *
             atten;
 
     outPan = 0.5f;
-    if (sceneEmitter.pan) {
-        float normPan = -dx / sceneEmitter.radius;
+    if (levelEmitter.pan) {
+        float normPan = -dx / levelEmitter.radius;
         if (normPan < -1.0f) normPan = -1.0f;
         if (normPan > 1.0f) normPan = 1.0f;
 
@@ -125,38 +121,38 @@ static bool ComputeEmitterPlaybackParams(const GameState& state,
     return true;
 }
 
-static void UpdateSceneSoundEmitters(GameState& state)
+static void UpdateLevelSoundEmitters(GameState& state)
 {
-    if (!state.adventure.currentScene.loaded) {
-        for (SoundEmitterInstance& emitter : state.audio.sceneEmitters) {
+    if (!state.topdown.runtime.levelActive) {
+        for (SoundEmitterInstance& emitter : state.audio.levelEmitters) {
             StopEmitterSound(emitter);
         }
         return;
     }
 
-    for (SoundEmitterInstance& emitter : state.audio.sceneEmitters) {
-        if (emitter.sceneEmitterIndex < 0 ||
-            emitter.sceneEmitterIndex >= static_cast<int>(state.adventure.currentScene.soundEmitters.size())) {
+    for (SoundEmitterInstance& emitter : state.audio.levelEmitters) {
+        if (emitter.levelEmitterIndex < 0 ||
+            emitter.levelEmitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
             StopEmitterSound(emitter);
             continue;
         }
 
-        const SceneSoundEmitterData& sceneEmitter =
-                state.adventure.currentScene.soundEmitters[emitter.sceneEmitterIndex];
+        const TopdownRuntimeSoundEmitter& levelEmitter =
+                state.topdown.runtime.soundEmitters[emitter.levelEmitterIndex];
 
-        if (!sceneEmitter.loop) {
+        if (!levelEmitter.loop) {
             StopEmitterSound(emitter);
             continue;
         }
 
-        if (!emitter.enabled || sceneEmitter.radius <= 0.0f) {
+        if (!emitter.enabled || levelEmitter.radius <= 0.0f) {
             StopEmitterSound(emitter);
             continue;
         }
 
-        AudioDefinitionData* def = FindAudioDef(state, sceneEmitter.soundId);
+        AudioDefinitionData* def = FindAudioDef(state, levelEmitter.soundId);
         if (def == nullptr) {
-            WarnMissingAudioIdOnce(state, sceneEmitter.soundId);
+            WarnMissingAudioIdOnce(state, levelEmitter.soundId);
             StopEmitterSound(emitter);
             continue;
         }
@@ -164,8 +160,8 @@ static void UpdateSceneSoundEmitters(GameState& state)
         if (def->type != AudioType::Sound) {
             TraceLog(LOG_WARNING,
                      "Sound emitter '%s' references non-sound audio id '%s'",
-                     sceneEmitter.id.c_str(),
-                     sceneEmitter.soundId.c_str());
+                     levelEmitter.id.c_str(),
+                     levelEmitter.soundId.c_str());
             StopEmitterSound(emitter);
             continue;
         }
@@ -174,15 +170,15 @@ static void UpdateSceneSoundEmitters(GameState& state)
         if (base == nullptr) {
             TraceLog(LOG_WARNING,
                      "Sound emitter '%s' missing sound resource for audio id '%s'",
-                     sceneEmitter.id.c_str(),
-                     sceneEmitter.soundId.c_str());
+                     levelEmitter.id.c_str(),
+                     levelEmitter.soundId.c_str());
             StopEmitterSound(emitter);
             continue;
         }
 
         float finalVolume = 0.0f;
         float pan = 0.5f;
-        if (!ComputeEmitterPlaybackParams(state, sceneEmitter, emitter, *def, finalVolume, pan)) {
+        if (!ComputeEmitterPlaybackParams(state, levelEmitter, emitter, *def, finalVolume, pan)) {
             StopEmitterSound(emitter);
             continue;
         }
@@ -192,7 +188,7 @@ static void UpdateSceneSoundEmitters(GameState& state)
             if (emitter.sound.frameCount <= 0) {
                 TraceLog(LOG_ERROR,
                          "Failed creating sound alias for emitter '%s'",
-                         sceneEmitter.id.c_str());
+                         levelEmitter.id.c_str());
                 emitter.sound = {};
                 emitter.active = false;
                 continue;
@@ -212,11 +208,10 @@ static void UpdateSceneSoundEmitters(GameState& state)
         }
     }
 }
- */
 
 static MusicPlaybackState& GetCurrentMusic(AudioData& audio)
 {
-return audio.musicAIsCurrent ? audio.musicA : audio.musicB;
+    return audio.musicAIsCurrent ? audio.musicA : audio.musicB;
 }
 
 static MusicPlaybackState& GetNextMusic(AudioData& audio)
@@ -302,7 +297,7 @@ void ShutdownAudio(GameState& state)
 
     state.audio.activeSounds.clear();
 
-    ClearSceneAudio(state);
+    ClearLevelAudio(state);
 
     MusicPlaybackState& current = GetCurrentMusic(state.audio);
     MusicPlaybackState& next = GetNextMusic(state.audio);
@@ -324,7 +319,7 @@ void ShutdownAudio(GameState& state)
     state.audio.musicA = {};
     state.audio.musicB = {};
     state.audio.musicAIsCurrent = true;
-    state.audio.sceneEmitters.clear();
+    state.audio.levelEmitters.clear();
 
     CloseAudioDevice();
     state.audio = {};
@@ -449,7 +444,7 @@ void UpdateAudio(GameState& state, float dt)
         }
     }
 
-    //UpdateSceneSoundEmitters(state);
+    UpdateLevelSoundEmitters(state);
 }
 
 bool PlaySoundById(GameState& state, const std::string& id)
@@ -669,39 +664,38 @@ bool PlayMusicById(GameState& state, const std::string& id, float fadeMs)
     return true;
 }
 
-/*
 bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
 {
-    if (!state.adventure.currentScene.loaded) {
+    if (!state.topdown.runtime.levelActive) {
         return false;
     }
 
-    const int emitterIndex = FindSceneEmitterIndexById(state, emitterId);
+    const int emitterIndex = FindLevelEmitterIndexById(state, emitterId);
     if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.adventure.currentScene.soundEmitters.size())) {
+        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
+        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
         return false;
     }
 
-    SoundEmitterInstance& emitter = state.audio.sceneEmitters[emitterIndex];
-    const SceneSoundEmitterData& sceneEmitter = state.adventure.currentScene.soundEmitters[emitterIndex];
+    SoundEmitterInstance& emitter = state.audio.levelEmitters[emitterIndex];
+    const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[emitterIndex];
 
-    if (sceneEmitter.loop) {
+    if (levelEmitter.loop) {
         emitter.enabled = true;
         return true;
     }
 
-    AudioDefinitionData* def = FindAudioDef(state, sceneEmitter.soundId);
+    AudioDefinitionData* def = FindAudioDef(state, levelEmitter.soundId);
     if (def == nullptr) {
-        WarnMissingAudioIdOnce(state, sceneEmitter.soundId);
+        WarnMissingAudioIdOnce(state, levelEmitter.soundId);
         return false;
     }
 
     if (def->type != AudioType::Sound) {
         TraceLog(LOG_WARNING,
                  "Triggered emitter '%s' references non-sound audio id '%s'",
-                 sceneEmitter.id.c_str(),
-                 sceneEmitter.soundId.c_str());
+                 levelEmitter.id.c_str(),
+                 levelEmitter.soundId.c_str());
         return false;
     }
 
@@ -709,14 +703,14 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
     if (base == nullptr) {
         TraceLog(LOG_WARNING,
                  "Triggered emitter '%s' missing sound resource for audio id '%s'",
-                 sceneEmitter.id.c_str(),
-                 sceneEmitter.soundId.c_str());
+                 levelEmitter.id.c_str(),
+                 levelEmitter.soundId.c_str());
         return false;
     }
 
     float finalVolume = 0.0f;
     float pan = 0.5f;
-    if (!ComputeEmitterPlaybackParams(state, sceneEmitter, emitter, *def, finalVolume, pan)) {
+    if (!ComputeEmitterPlaybackParams(state, levelEmitter, emitter, *def, finalVolume, pan)) {
         return false;
     }
 
@@ -724,7 +718,7 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
     if (alias.frameCount <= 0) {
         TraceLog(LOG_ERROR,
                  "Failed creating triggered sound alias for emitter '%s'",
-                 sceneEmitter.id.c_str());
+                 levelEmitter.id.c_str());
         return false;
     }
 
@@ -745,21 +739,21 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
 
 bool StopSoundEmitterById(GameState& state, const std::string& emitterId)
 {
-    if (!state.adventure.currentScene.loaded) {
+    if (!state.topdown.runtime.levelActive) {
         return false;
     }
 
-    const int emitterIndex = FindSceneEmitterIndexById(state, emitterId);
+    const int emitterIndex = FindLevelEmitterIndexById(state, emitterId);
     if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.sceneEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.adventure.currentScene.soundEmitters.size())) {
+        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
+        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
         return false;
     }
 
-    SoundEmitterInstance& emitter = state.audio.sceneEmitters[emitterIndex];
-    const SceneSoundEmitterData& sceneEmitter = state.adventure.currentScene.soundEmitters[emitterIndex];
+    SoundEmitterInstance& emitter = state.audio.levelEmitters[emitterIndex];
+    const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[emitterIndex];
 
-    if (!sceneEmitter.loop) {
+    if (!levelEmitter.loop) {
         return false;
     }
 
@@ -767,7 +761,6 @@ bool StopSoundEmitterById(GameState& state, const std::string& emitterId)
     StopEmitterSound(emitter);
     return true;
 }
- */
 
 void StopMusic(GameState& state, float fadeMs)
 {
@@ -803,18 +796,18 @@ void StopMusic(GameState& state, float fadeMs)
     current.fadeDuration = fadeMs;
 }
 
-bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
+bool LoadLevelAudioDefinitions(GameState& state, const std::string& levelDir)
 {
     namespace fs = std::filesystem;
 
-    const fs::path audioJsonPath = fs::path(sceneDir) / "audio.json";
+    const fs::path audioJsonPath = fs::path(levelDir) / "audio.json";
     if (!fs::exists(audioJsonPath)) {
         return true;
     }
 
     std::vector<AudioDefinitionData> defs;
     if (!LoadAudioDefinitions(audioJsonPath.lexically_normal().string(), defs)) {
-        TraceLog(LOG_ERROR, "Failed loading scene audio definitions: %s", audioJsonPath.string().c_str());
+        TraceLog(LOG_ERROR, "Failed loading level audio definitions: %s", audioJsonPath.string().c_str());
         return false;
     }
 
@@ -822,7 +815,7 @@ bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
         def.scope = ResourceScope::Scene;
 
         if (state.audio.defIndexById.find(def.id) != state.audio.defIndexById.end()) {
-            TraceLog(LOG_ERROR, "Scene audio id collides with existing audio id: %s", def.id.c_str());
+            TraceLog(LOG_ERROR, "Level audio id collides with existing audio id: %s", def.id.c_str());
             return false;
         }
 
@@ -830,7 +823,7 @@ bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
             def.soundHandle = LoadSoundResource(state, def.filePath, ResourceScope::Scene);
             if (def.soundHandle < 0) {
                 TraceLog(LOG_ERROR,
-                         "Failed resolving scene sound resource for audio id '%s' (%s)",
+                         "Failed resolving level sound resource for audio id '%s' (%s)",
                          def.id.c_str(),
                          def.filePath.c_str());
                 return false;
@@ -839,7 +832,7 @@ bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
             def.musicHandle = LoadMusicResource(state, def.filePath, ResourceScope::Scene);
             if (def.musicHandle < 0) {
                 TraceLog(LOG_ERROR,
-                         "Failed resolving scene music resource for audio id '%s' (%s)",
+                         "Failed resolving level music resource for audio id '%s' (%s)",
                          def.id.c_str(),
                          def.filePath.c_str());
                 return false;
@@ -852,37 +845,16 @@ bool LoadSceneAudioDefinitions(GameState& state, const std::string& sceneDir)
     RebuildAudioDefIndex(state);
 
     TraceLog(LOG_INFO,
-             "Loaded scene audio definitions: %d from %s",
+             "Loaded level audio definitions: %d from %s",
              static_cast<int>(defs.size()),
              audioJsonPath.string().c_str());
 
     return true;
 }
 
-/*
-void BuildSceneSoundEmitters(GameState& state)
+void ClearLevelAudio(GameState& state)
 {
-    state.audio.sceneEmitters.clear();
-    state.audio.sceneEmitters.reserve(state.adventure.currentScene.soundEmitters.size());
-
-    for (int i = 0; i < static_cast<int>(state.adventure.currentScene.soundEmitters.size()); ++i) {
-        const SceneSoundEmitterData& sceneEmitter = state.adventure.currentScene.soundEmitters[i];
-
-        SoundEmitterInstance inst;
-        inst.sceneEmitterIndex = i;
-        inst.enabled = sceneEmitter.enabled;
-        inst.volume = sceneEmitter.volume;
-        inst.active = false;
-        inst.sound = {};
-
-        state.audio.sceneEmitters.push_back(inst);
-    }
-}
- */
-
-void ClearSceneAudio(GameState& state)
-{
-    for (SoundEmitterInstance& emitter : state.audio.sceneEmitters) {
+    for (SoundEmitterInstance& emitter : state.audio.levelEmitters) {
         if (emitter.active) {
             StopSound(emitter.sound);
             UnloadSoundAlias(emitter.sound);
@@ -891,7 +863,7 @@ void ClearSceneAudio(GameState& state)
         }
     }
 
-    state.audio.sceneEmitters.clear();
+    state.audio.levelEmitters.clear();
     for (auto it = state.audio.activeSounds.begin(); it != state.audio.activeSounds.end(); ) {
         if (it->scope == ResourceScope::Scene) {
             if (it->active) {
@@ -904,7 +876,7 @@ void ClearSceneAudio(GameState& state)
         }
     }
 
-    auto StopSceneScopedMusicIfNeeded = [&](MusicPlaybackState& slot)
+    auto StopLevelScopedMusicIfNeeded = [&](MusicPlaybackState& slot)
     {
         if (!slot.playing || slot.musicHandle < 0) {
             return;
@@ -927,8 +899,8 @@ void ClearSceneAudio(GameState& state)
         }
     };
 
-    StopSceneScopedMusicIfNeeded(state.audio.musicA);
-    StopSceneScopedMusicIfNeeded(state.audio.musicB);
+    StopLevelScopedMusicIfNeeded(state.audio.musicA);
+    StopLevelScopedMusicIfNeeded(state.audio.musicB);
 
     state.audio.definitions.erase(
             std::remove_if(
@@ -940,4 +912,5 @@ void ClearSceneAudio(GameState& state)
             state.audio.definitions.end());
 
     RebuildAudioDefIndex(state);
+    state.topdown.runtime.soundEmitters.clear();
 }

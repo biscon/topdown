@@ -77,11 +77,11 @@ struct MusicPlaybackState {
 };
 
 // ------------------------------------------------------------
-// Scene sound emitter runtime
+// Level sound emitter runtime
 // ------------------------------------------------------------
 
 struct SoundEmitterInstance {
-    int sceneEmitterIndex = -1;
+    int levelEmitterIndex = -1;
 
     bool enabled = true;
     float volume = 1.0f;
@@ -107,7 +107,7 @@ struct AudioData {
     MusicPlaybackState musicB;
     bool musicAIsCurrent = true;
 
-    std::vector<SoundEmitterInstance> sceneEmitters;
+    std::vector<SoundEmitterInstance> levelEmitters;
 
     // debug: missing id suppression (filled later)
     std::vector<std::string> missingIdsLogged;
