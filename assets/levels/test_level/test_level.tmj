@@ -4832,9 +4832,64 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":43,
+         "name":"SoundEmitters",
+         "objects":[
+                {
+                 "height":0,
+                 "id":125,
+                 "name":"test_emitter",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"drama"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":-209.333333333333,
+                 "y":256.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":43,
- "nextobjectid":125,
+ "nextlayerid":44,
+ "nextobjectid":126,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

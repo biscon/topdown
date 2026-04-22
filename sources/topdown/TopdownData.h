@@ -327,6 +327,20 @@ struct TopdownWindowGlassParticle {
     Color color = Color{210, 240, 250, 255};
 };
 
+struct TopdownAuthoredSoundEmitter {
+    std::string id;
+    Vector2 position{};
+
+    std::string soundId;
+    bool loop = false;
+    bool pan = false;
+
+    float radius = 0.0f;
+    float volume = 1.0f;
+
+    bool enabled = true;
+};
+
 struct TopdownAuthoredLevelData {
     bool loaded = false;
 
@@ -345,6 +359,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredNpc> npcs;
     std::vector<TopdownAuthoredDoor> doors;
     std::vector<TopdownAuthoredWindow> windows;
+    std::vector<TopdownAuthoredSoundEmitter> soundEmitters;
 };
 
 struct TopdownRuntimeObstacle {
@@ -1368,20 +1383,6 @@ struct TopdownWorldEvent {
     int sourceNpcHandle = -1; // only valid if sourceType == Npc
 };
 
-struct TopdownRuntimeSoundEmitter {
-    std::string id;
-    Vector2 position{};
-
-    std::string soundId;
-    bool loop = false;
-    bool pan = false;
-
-    float radius = 0.0f;
-    float volume = 1.0f;
-
-    bool enabled = true;
-};
-
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -1420,7 +1421,6 @@ struct TopdownRuntimeData {
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
     std::vector<TopdownRuntimeWindow> windows;
-    std::vector<TopdownRuntimeSoundEmitter> soundEmitters;
 
     std::vector<TopdownWorldEvent> worldEvents;
     TopdownNarrationPopupsRuntime narrationPopups;

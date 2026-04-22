@@ -57,12 +57,8 @@ static void StopEmitterSound(SoundEmitterInstance& emitter)
 
 static int FindLevelEmitterIndexById(const GameState& state, const std::string& emitterId)
 {
-    const int count = std::min(
-            static_cast<int>(state.topdown.runtime.soundEmitters.size()),
-            static_cast<int>(state.audio.levelEmitters.size()));
-
-    for (int i = 0; i < count; ++i) {
-        if (state.topdown.runtime.soundEmitters[i].id == emitterId) {
+    for (int i = 0; i < static_cast<int>(state.audio.levelEmitters.size()); ++i) {
+        if (state.audio.levelEmitters[i].id == emitterId) {
             return i;
         }
     }
@@ -78,37 +74,35 @@ static float Clamp01(float t)
 }
 
 static bool ComputeEmitterPlaybackParams(const GameState& state,
-                                         const TopdownRuntimeSoundEmitter& levelEmitter,
                                          const SoundEmitterInstance& emitter,
                                          const AudioDefinitionData& def,
                                          float& outVolume,
                                          float& outPan)
 {
-    if (levelEmitter.radius <= 0.0f) {
+    if (emitter.radius <= 0.0f) {
         return false;
     }
 
     const Vector2 listenerPos = state.topdown.runtime.player.position;
-    const float dx = levelEmitter.position.x - listenerPos.x;
-    const float dy = levelEmitter.position.y - listenerPos.y;
+    const float dx = emitter.position.x - listenerPos.x;
+    const float dy = emitter.position.y - listenerPos.y;
     const float dist = std::sqrt(dx * dx + dy * dy);
 
-    if (dist >= levelEmitter.radius) {
+    if (dist >= emitter.radius) {
         return false;
     }
 
-    const float atten = std::pow(1.0f - Clamp01(dist / levelEmitter.radius), 2.0f);
+    const float atten = std::pow(1.0f - Clamp01(dist / emitter.radius), 2.0f);
 
     outVolume =
             def.volume *
             state.settings.soundVolume *
             emitter.volume *
-            levelEmitter.volume *
             atten;
 
     outPan = 0.5f;
-    if (levelEmitter.pan) {
-        float normPan = -dx / levelEmitter.radius;
+    if (emitter.pan) {
+        float normPan = -dx / emitter.radius;
         if (normPan < -1.0f) normPan = -1.0f;
         if (normPan > 1.0f) normPan = 1.0f;
 
@@ -131,28 +125,19 @@ static void UpdateLevelSoundEmitters(GameState& state)
     }
 
     for (SoundEmitterInstance& emitter : state.audio.levelEmitters) {
-        if (emitter.levelEmitterIndex < 0 ||
-            emitter.levelEmitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
+        if (!emitter.loop) {
             StopEmitterSound(emitter);
             continue;
         }
 
-        const TopdownRuntimeSoundEmitter& levelEmitter =
-                state.topdown.runtime.soundEmitters[emitter.levelEmitterIndex];
-
-        if (!levelEmitter.loop) {
+        if (!emitter.enabled || emitter.radius <= 0.0f) {
             StopEmitterSound(emitter);
             continue;
         }
 
-        if (!emitter.enabled || levelEmitter.radius <= 0.0f) {
-            StopEmitterSound(emitter);
-            continue;
-        }
-
-        AudioDefinitionData* def = FindAudioDef(state, levelEmitter.soundId);
+        AudioDefinitionData* def = FindAudioDef(state, emitter.soundId);
         if (def == nullptr) {
-            WarnMissingAudioIdOnce(state, levelEmitter.soundId);
+            WarnMissingAudioIdOnce(state, emitter.soundId);
             StopEmitterSound(emitter);
             continue;
         }
@@ -160,8 +145,8 @@ static void UpdateLevelSoundEmitters(GameState& state)
         if (def->type != AudioType::Sound) {
             TraceLog(LOG_WARNING,
                      "Sound emitter '%s' references non-sound audio id '%s'",
-                     levelEmitter.id.c_str(),
-                     levelEmitter.soundId.c_str());
+                     emitter.id.c_str(),
+                     emitter.soundId.c_str());
             StopEmitterSound(emitter);
             continue;
         }
@@ -170,15 +155,15 @@ static void UpdateLevelSoundEmitters(GameState& state)
         if (base == nullptr) {
             TraceLog(LOG_WARNING,
                      "Sound emitter '%s' missing sound resource for audio id '%s'",
-                     levelEmitter.id.c_str(),
-                     levelEmitter.soundId.c_str());
+                     emitter.id.c_str(),
+                     emitter.soundId.c_str());
             StopEmitterSound(emitter);
             continue;
         }
 
         float finalVolume = 0.0f;
         float pan = 0.5f;
-        if (!ComputeEmitterPlaybackParams(state, levelEmitter, emitter, *def, finalVolume, pan)) {
+        if (!ComputeEmitterPlaybackParams(state, emitter, *def, finalVolume, pan)) {
             StopEmitterSound(emitter);
             continue;
         }
@@ -188,7 +173,7 @@ static void UpdateLevelSoundEmitters(GameState& state)
             if (emitter.sound.frameCount <= 0) {
                 TraceLog(LOG_ERROR,
                          "Failed creating sound alias for emitter '%s'",
-                         levelEmitter.id.c_str());
+                         emitter.id.c_str());
                 emitter.sound = {};
                 emitter.active = false;
                 continue;
@@ -671,31 +656,28 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
     }
 
     const int emitterIndex = FindLevelEmitterIndexById(state, emitterId);
-    if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.levelEmitters.size())) {
         return false;
     }
 
     SoundEmitterInstance& emitter = state.audio.levelEmitters[emitterIndex];
-    const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[emitterIndex];
 
-    if (levelEmitter.loop) {
+    if (emitter.loop) {
         emitter.enabled = true;
         return true;
     }
 
-    AudioDefinitionData* def = FindAudioDef(state, levelEmitter.soundId);
+    AudioDefinitionData* def = FindAudioDef(state, emitter.soundId);
     if (def == nullptr) {
-        WarnMissingAudioIdOnce(state, levelEmitter.soundId);
+        WarnMissingAudioIdOnce(state, emitter.soundId);
         return false;
     }
 
     if (def->type != AudioType::Sound) {
         TraceLog(LOG_WARNING,
                  "Triggered emitter '%s' references non-sound audio id '%s'",
-                 levelEmitter.id.c_str(),
-                 levelEmitter.soundId.c_str());
+                 emitter.id.c_str(),
+                 emitter.soundId.c_str());
         return false;
     }
 
@@ -703,14 +685,14 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
     if (base == nullptr) {
         TraceLog(LOG_WARNING,
                  "Triggered emitter '%s' missing sound resource for audio id '%s'",
-                 levelEmitter.id.c_str(),
-                 levelEmitter.soundId.c_str());
+                 emitter.id.c_str(),
+                 emitter.soundId.c_str());
         return false;
     }
 
     float finalVolume = 0.0f;
     float pan = 0.5f;
-    if (!ComputeEmitterPlaybackParams(state, levelEmitter, emitter, *def, finalVolume, pan)) {
+    if (!ComputeEmitterPlaybackParams(state, emitter, *def, finalVolume, pan)) {
         return false;
     }
 
@@ -718,7 +700,7 @@ bool PlaySoundEmitterById(GameState& state, const std::string& emitterId)
     if (alias.frameCount <= 0) {
         TraceLog(LOG_ERROR,
                  "Failed creating triggered sound alias for emitter '%s'",
-                 levelEmitter.id.c_str());
+                 emitter.id.c_str());
         return false;
     }
 
@@ -744,16 +726,13 @@ bool StopSoundEmitterById(GameState& state, const std::string& emitterId)
     }
 
     const int emitterIndex = FindLevelEmitterIndexById(state, emitterId);
-    if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.levelEmitters.size())) {
         return false;
     }
 
     SoundEmitterInstance& emitter = state.audio.levelEmitters[emitterIndex];
-    const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[emitterIndex];
 
-    if (!levelEmitter.loop) {
+    if (!emitter.loop) {
         return false;
     }
 
@@ -912,5 +891,4 @@ void ClearLevelAudio(GameState& state)
             state.audio.definitions.end());
 
     RebuildAudioDefIndex(state);
-    state.topdown.runtime.soundEmitters.clear();
 }
