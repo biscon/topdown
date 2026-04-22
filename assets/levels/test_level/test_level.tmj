@@ -22,7 +22,7 @@
                 {
                  "id":35,
                  "image":"beach_house_bottom.png",
-                 "imageheight":1062,
+                 "imageheight":1061,
                  "imagewidth":904,
                  "name":"beach_house_bottom",
                  "offsetx":123.212121212121,
@@ -94,8 +94,8 @@
                  "imageheight":64,
                  "imagewidth":64,
                  "name":"veg3",
-                 "offsetx":284.666666666667,
-                 "offsety":273.666666666667,
+                 "offsetx":261.166666666667,
+                 "offsety":276.666666666667,
                  "opacity":1,
                  "properties":[
                         {
@@ -263,6 +263,336 @@
         {
          "id":8,
          "layers":[
+                {
+                 "id":44,
+                 "image":"..\/..\/environment\/foliage\/foliage5.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":676,
+                 "offsety":546.166666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":45,
+                 "image":"..\/..\/environment\/foliage\/foliage5.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":838,
+                 "offsety":542.166666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":48,
+                 "image":"..\/..\/environment\/foliage\/foliage5.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":839,
+                 "offsety":634.666666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":46,
+                 "image":"..\/..\/environment\/foliage\/foliage7.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":840,
+                 "offsety":680.166666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":47,
+                 "image":"..\/..\/environment\/foliage\/foliage7.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":871.5,
+                 "offsety":524.666666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":49,
+                 "image":"..\/..\/environment\/foliage\/foliage7.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "name":"veg5",
+                 "offsetx":928.5,
+                 "offsety":455.166666666667,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.3
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
                 {
                  "id":36,
                  "image":"beach_house_top.png",
@@ -512,14 +842,131 @@
                  "y":0
                 }, 
                 {
+                 "id":53,
+                 "image":"..\/..\/environment\/foliage\/palmtree3.png",
+                 "imageheight":128,
+                 "imagewidth":128,
+                 "mode":"multiply",
+                 "name":"PalmShadow6",
+                 "offsetx":888.5,
+                 "offsety":490.5,
+                 "opacity":0.4,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "tintcolor":"#000000",
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":52,
+                 "image":"..\/..\/environment\/foliage\/palmtree3.png",
+                 "imageheight":128,
+                 "imagewidth":128,
+                 "name":"Palm6",
+                 "offsetx":882.5,
+                 "offsety":467.5,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
                  "id":23,
                  "image":"..\/..\/environment\/foliage\/palmtree4.png",
                  "imageheight":128,
                  "imagewidth":128,
                  "mode":"multiply",
                  "name":"PalmShadow4",
-                 "offsetx":58.5,
-                 "offsety":528.5,
+                 "offsetx":815,
+                 "offsety":747,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -579,8 +1026,126 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"Palm4",
-                 "offsetx":46.5,
-                 "offsety":507,
+                 "offsetx":803,
+                 "offsety":725.5,
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "id":51,
+                 "image":"..\/..\/environment\/foliage\/palmtree4.png",
+                 "imageheight":128,
+                 "imagewidth":128,
+                 "mode":"multiply",
+                 "name":"PalmShadow5",
+                 "offsetx":552,
+                 "offsety":478.5,
+                 "opacity":0.4,
+                 "properties":[
+                        {
+                         "name":"distortionX",
+                         "type":"float",
+                         "value":0.0075
+                        }, 
+                        {
+                         "name":"intensity",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"noiseSpeedX",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"phaseOffset",
+                         "type":"float",
+                         "value":0.6
+                        }, 
+                        {
+                         "name":"scale",
+                         "type":"float",
+                         "value":1.5
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"wind_sway"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":1.35
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":1.9
+                        }],
+                 "tintcolor":"#000000",
+                 "type":"imagelayer",
+                 "visible":true,
+                 "x":0,
+                 "y":0
+                },
+            
+                {
+                 "id":50,
+                 "image":"..\/..\/environment\/foliage\/palmtree4.png",
+                 "imageheight":128,
+                 "imagewidth":128,
+                 "name":"Palm5",
+                 "offsetx":540,
+                 "offsety":457,
                  "opacity":1,
                  "properties":[
                         {
@@ -634,8 +1199,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"PalmShadow2",
-                 "offsetx":532.5,
-                 "offsety":619.5,
+                 "offsetx":652,
+                 "offsety":629.5,
                  "opacity":0.4,
                  "properties":[
                         {
@@ -695,8 +1260,8 @@
                  "imageheight":128,
                  "imagewidth":128,
                  "name":"Palm2",
-                 "offsetx":513,
-                 "offsety":590.5,
+                 "offsetx":632.5,
+                 "offsety":600.5,
                  "opacity":1,
                  "properties":[
                         {
@@ -1485,8 +2050,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":0,
-                 "y":-612
+                 "x":589.333333333333,
+                 "y":156
                 }, 
                 {
                  "height":0,
@@ -2780,7 +3345,7 @@
                         {
                          "name":"sortIndex",
                          "type":"int",
-                         "value":1
+                         "value":2
                         }, 
                         {
                          "name":"tintB",
@@ -2809,7 +3374,7 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":false,
+                 "visible":true,
                  "width":0,
                  "x":-103.606060606061,
                  "y":1553.18181818183
@@ -3108,7 +3673,7 @@
                          "value":1.56
                         }, 
                         {
-                         "name":"uvScaley",
+                         "name":"uvScaleY",
                          "type":"float",
                          "value":2.34
                         }],
@@ -3406,7 +3971,7 @@
                          "value":1.56
                         }, 
                         {
-                         "name":"uvScaley",
+                         "name":"uvScaleY",
                          "type":"float",
                          "value":2.34
                         }],
@@ -3728,7 +4293,7 @@
                          "value":1.56
                         }, 
                         {
-                         "name":"uvScaley",
+                         "name":"uvScaleY",
                          "type":"float",
                          "value":2.34
                         }],
@@ -3845,7 +4410,7 @@
                          "value":1.56
                         }, 
                         {
-                         "name":"uvScaley",
+                         "name":"uvScaleY",
                          "type":"float",
                          "value":2.34
                         }],
@@ -3961,6 +4526,161 @@
                  "width":0,
                  "x":550.333333333333,
                  "y":52.3333333333333
+                }, 
+                {
+                 "height":0,
+                 "id":136,
+                 "name":"driveway",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-51.6666666666667,
+                         "y":-25.8333333333333
+                        }, 
+                        {
+                         "x":-69.5025927394106,
+                         "y":-55.8684076008142
+                        }, 
+                        {
+                         "x":-137.501163131418,
+                         "y":-54.0211625554118
+                        }, 
+                        {
+                         "x":-154.984286772012,
+                         "y":-27.2337440583035
+                        }, 
+                        {
+                         "x":-603.756633996411,
+                         "y":-26.5048620069333
+                        }, 
+                        {
+                         "x":-620.063106988932,
+                         "y":-0.998712985667453
+                        }, 
+                        {
+                         "x":-620.832054678427,
+                         "y":35.3091456150086
+                        }, 
+                        {
+                         "x":-599.234289993728,
+                         "y":63.1411956931615
+                        }, 
+                        {
+                         "x":-188.551366017248,
+                         "y":64.748040321449
+                        }, 
+                        {
+                         "x":-170.316569786343,
+                         "y":106.831983510839
+                        }, 
+                        {
+                         "x":-132.666666666667,
+                         "y":156.166666666667
+                        }, 
+                        {
+                         "x":-90.2974281615764,
+                         "y":185.413137381666
+                        }, 
+                        {
+                         "x":-5.5,
+                         "y":196.833333333333
+                        }, 
+                        {
+                         "x":6.84053815197592,
+                         "y":309.998802852195
+                        }, 
+                        {
+                         "x":3.66056747432856,
+                         "y":393.499707323677
+                        }, 
+                        {
+                         "x":6.68293335834392,
+                         "y":487.176962065879
+                        },
+                    
+                        {
+                         "x":133.331699643887,
+                         "y":489.06806992724
+                        }, 
+                        {
+                         "x":132.488669133635,
+                         "y":391.667365372222
+                        }, 
+                        {
+                         "x":124.682972599753,
+                         "y":293.83594695194
+                        }, 
+                        {
+                         "x":123.166666666667,
+                         "y":194.666666666667
+                        }, 
+                        {
+                         "x":184.166114871928,
+                         "y":167.614310632633
+                        }, 
+                        {
+                         "x":215.295081967213,
+                         "y":114.912568306011
+                        }, 
+                        {
+                         "x":223.333333333333,
+                         "y":37.6666666666667
+                        }, 
+                        {
+                         "x":214.407290224771,
+                         "y":-5.7129062026234
+                        }, 
+                        {
+                         "x":192.333333333333,
+                         "y":-26.3333333333333
+                        }],
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/environment\/cobblestone.png"
+                        }, 
+                        {
+                         "name":"blendMode",
+                         "type":"string",
+                         "value":"normal"
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"after_bottom"
+                        }, 
+                        {
+                         "name":"shaderId",
+                         "type":"string",
+                         "value":"poly_clip"
+                        }, 
+                        {
+                         "name":"softness",
+                         "type":"float",
+                         "value":0.0125
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"uvScaleX",
+                         "type":"float",
+                         "value":5
+                        }, 
+                        {
+                         "name":"uvScaleY",
+                         "type":"float",
+                         "value":4.5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":727,
+                 "y":368
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -4841,7 +5561,7 @@
                 {
                  "height":0,
                  "id":125,
-                 "name":"test_emitter",
+                 "name":"wind_emitter_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -4858,7 +5578,7 @@
                         {
                          "name":"pan",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"radius",
@@ -4868,7 +5588,7 @@
                         {
                          "name":"sound",
                          "type":"string",
-                         "value":"drama"
+                         "value":"wind_ambience"
                         }, 
                         {
                          "name":"volume",
@@ -4877,10 +5597,332 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":false,
+                 "visible":true,
                  "width":0,
-                 "x":-209.333333333333,
-                 "y":256.666666666667
+                 "x":-201.333333333333,
+                 "y":381
+                }, 
+                {
+                 "height":0,
+                 "id":126,
+                 "name":"wind_emitter_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wind_ambience"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":1193.33333333333,
+                 "y":387
+                }, 
+                {
+                 "height":0,
+                 "id":127,
+                 "name":"wind_emitter_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"enabled",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":2500
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"wind_ambience"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":560,
+                 "y":788.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":129,
+                 "name":"room_emitter_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"room_tone_01"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.25
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":632.666666666667,
+                 "y":118.333333333333
+                }, 
+                {
+                 "height":0,
+                 "id":130,
+                 "name":"room_emitter_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"room_tone_01"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.25
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":330.666666666667,
+                 "y":-18.3333333333333
+                }, 
+                {
+                 "height":0,
+                 "id":132,
+                 "name":"seagull_emitter_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":3000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"seagull1"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":-23,
+                 "y":910
+                }, 
+                {
+                 "height":0,
+                 "id":133,
+                 "name":"seagull_emitter_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":3000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"seagull2"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":941,
+                 "y":890
+                }, 
+                {
+                 "height":0,
+                 "id":134,
+                 "name":"room_emitter_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"room_tone_01"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.25
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":373.333333333333,
+                 "y":-336
+                }, 
+                {
+                 "height":0,
+                 "id":135,
+                 "name":"room_emitter_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1000
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"room_tone_01"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":0.25
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":853.333333333333,
+                 "y":-342.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -4888,8 +5930,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":44,
- "nextobjectid":126,
+ "nextlayerid":54,
+ "nextobjectid":137,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

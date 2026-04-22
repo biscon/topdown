@@ -1075,7 +1075,7 @@ static void ImportEffectRegionLayer(
                 settings.wrap = TextureWrapMode::Repeat;
             } else if (effect.shaderType == EffectShaderType::PolyClip) {
                 settings.filter = TextureFilterMode::Bilinear;
-                settings.wrap = TextureWrapMode::Clamp;
+                settings.wrap = TextureWrapMode::Repeat;
             }
 
             effect.textureHandle = LoadTextureAsset(

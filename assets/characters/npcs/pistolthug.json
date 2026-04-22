@@ -16,7 +16,7 @@
             "rangedPelletCount": 1,
             "rangedSpreadDegrees": 6.0,
             "rangedMaxRange": 900.0,
-            "reactionTimeMs": 300.0,
+            "reactionTimeMs": 650.0,
             "aimInaccuracyMinDegrees": 2.0,
             "aimInaccuracyMaxDegrees": 16.0,
             "visionRange": 900.0,

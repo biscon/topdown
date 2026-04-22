@@ -42,7 +42,9 @@ void main()
         discard;
     }
 
-    vec4 texel = texture(texture0, fragTexCoord);
+    //vec4 texel = texture(texture0, fragTexCoord);
+    // Multiply coordinates by scale to adjust tiling
+    vec4 texel = texture(texture0, fragTexCoord * uUvScale);
     texel.rgb *= uTint;
     texel.a *= mask;
 

@@ -9,7 +9,7 @@ function Level_onEnter()
     startScript("CeilingLampGlowLoop")
     startScript("BeachHouseAudioLoop")
     --SpawnThugPatrol()
-
+    --[[
     spawnPatrol(
         "guard_",
         "zombie",
@@ -23,6 +23,7 @@ function Level_onEnter()
             waitMs = 5000
         }
     )
+    --]]
     --playMusic("pistolero", 3000)
     delay(3000)
     showNarration("Coming Home", "Upon returning to my Florida beach house, I noticed something was off.", 5)
@@ -56,35 +57,6 @@ function WalkAround()
         delay(2000)
     end
     enableControls()
-end
-
-function ZombiePatrol()
-    spawnNpc("zombie_a", "zombie", "patrol_1")
-    spawnNpc("zombie_b", "zombie", "patrol_2")
-    spawnNpc("zombie_c", "zombie", "patrol_3")
-    spawnNpc("zombie_d", "zombie", "patrol_4")
-    while true do
-        startWalkNpcToSpawn("zombie_a", "patrol_1")
-        startWalkNpcToSpawn("zombie_b", "patrol_2")
-        startWalkNpcToSpawn("zombie_c", "patrol_3")
-        startWalkNpcToSpawn("zombie_d", "patrol_4")
-        delay(10000)
-        startWalkNpcToSpawn("zombie_a", "patrol_2")
-        startWalkNpcToSpawn("zombie_b", "patrol_3")
-        startWalkNpcToSpawn("zombie_c", "patrol_4")
-        startWalkNpcToSpawn("zombie_d", "patrol_1")
-        delay(10000)
-        startWalkNpcToSpawn("zombie_a", "patrol_3")
-        startWalkNpcToSpawn("zombie_b", "patrol_4")
-        startWalkNpcToSpawn("zombie_c", "patrol_1")
-        startWalkNpcToSpawn("zombie_d", "patrol_2")
-        delay(10000)
-        startWalkNpcToSpawn("zombie_a", "patrol_4")
-        startWalkNpcToSpawn("zombie_b", "patrol_1")
-        startWalkNpcToSpawn("zombie_c", "patrol_2")
-        startWalkNpcToSpawn("zombie_d", "patrol_3")
-        delay(10000)
-    end
 end
 
 function SpawnThugPatrol()
@@ -165,26 +137,18 @@ end
 
 -- Audio -----------------------------------------------------------------
 function BeachHouseAudioLoop()
-    -- start base ambience
-    playSound("wind_ambience")
-
     while true do
         -- random delay between events (important!)
         delay(math.random(6000, 18000)) -- 6–18 seconds
 
         local roll = math.random(1, 100)
 
-        if roll <= 30 then
+        if roll <= 50 then
             -- seagulls (rare, long sounds)
-            playSound((math.random(1, 2) == 1) and "seagull1" or "seagull2")
+            playEmitter((math.random(1, 2) == 1) and "seagull_emitter_1" or "seagull_emitter_2")
 
             -- extra long cooldown after gulls so they don’t overlap
             delay(math.random(15000, 30000)) -- 15–30 sec
-
-        elseif roll <= 65 then
-            -- wood creaks (mid frequency)
-            playSound((math.random(1, 2) == 1) and "wood_creak1" or "wood_creak2")
-
         else
             -- metal pipe (rare, eerie punctuation)
             playSound("metal_pipe")
