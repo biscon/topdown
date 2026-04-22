@@ -642,7 +642,7 @@ static void ImportNpcLayer(
 }
 
 static void ImportSoundEmitterLayer(
-        std::vector<TopdownRuntimeSoundEmitter>& soundEmitters,
+        std::vector<TopdownAuthoredSoundEmitter>& soundEmitters,
         const json& layer,
         int baseAssetScale)
 {
@@ -659,7 +659,7 @@ static void ImportSoundEmitterLayer(
             continue;
         }
 
-        TopdownRuntimeSoundEmitter emitter;
+        TopdownAuthoredSoundEmitter emitter;
         emitter.id = obj.value("name", std::string());
         emitter.position.x = (obj.value("x", 0.0f) + layerOffX) * scale;
         emitter.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
@@ -2064,8 +2064,6 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     state.topdown.currentLevelTiledFilePath = tmjNorm;
     state.topdown.currentLevelBaseAssetScale = baseAssetScale;
 
-    std::vector<TopdownRuntimeSoundEmitter> parsedSoundEmitters;
-
     {
         const fs::path tmjPathObj = fs::path(state.topdown.authored.tiledFilePath);
         const fs::path levelDir = tmjPathObj.parent_path();
@@ -2165,7 +2163,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         }
 
         if (layerName == "SoundEmitters" && layerType == "objectgroup") {
-            ImportSoundEmitterLayer(parsedSoundEmitters, layer, state.topdown.authored.baseAssetScale);
+            ImportSoundEmitterLayer(state.topdown.authored.soundEmitters, layer, state.topdown.authored.baseAssetScale);
             continue;
         }
     }
@@ -2185,14 +2183,19 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     state.topdown.authored.loaded = true;
 
     BuildRuntimeFromAuthored(state.topdown);
-    state.topdown.runtime.soundEmitters = std::move(parsedSoundEmitters);
-    state.audio.levelEmitters.resize(state.topdown.runtime.soundEmitters.size());
+    state.audio.levelEmitters.resize(state.topdown.authored.soundEmitters.size());
     for (int i = 0; i < static_cast<int>(state.audio.levelEmitters.size()); ++i) {
         SoundEmitterInstance& emitter = state.audio.levelEmitters[i];
-        const TopdownRuntimeSoundEmitter& levelEmitter = state.topdown.runtime.soundEmitters[i];
-        emitter.levelEmitterIndex = i;
-        emitter.enabled = levelEmitter.enabled;
-        emitter.volume = levelEmitter.volume;
+        const TopdownAuthoredSoundEmitter& authoredEmitter = state.topdown.authored.soundEmitters[i];
+        emitter.id = authoredEmitter.id;
+        emitter.position = authoredEmitter.position;
+        emitter.soundId = authoredEmitter.soundId;
+        emitter.loop = authoredEmitter.loop;
+        emitter.pan = authoredEmitter.pan;
+        emitter.radius = authoredEmitter.radius;
+        emitter.enabled = authoredEmitter.enabled;
+        emitter.authoredVolume = authoredEmitter.volume;
+        emitter.volume = authoredEmitter.volume;
         emitter.active = false;
         emitter.sound = {};
     }

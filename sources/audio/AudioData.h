@@ -81,9 +81,15 @@ struct MusicPlaybackState {
 // ------------------------------------------------------------
 
 struct SoundEmitterInstance {
-    int levelEmitterIndex = -1;
+    std::string id;
+    Vector2 position{};
+    std::string soundId;
+    bool loop = false;
+    bool pan = false;
+    float radius = 0.0f;
 
     bool enabled = true;
+    float authoredVolume = 1.0f;
     float volume = 1.0f;
 
     bool active = false;

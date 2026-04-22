@@ -609,12 +609,8 @@ bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerI
 
 static int FindSoundEmitterIndexById(const GameState& state, const std::string& emitterId)
 {
-    const int count = std::min(
-            static_cast<int>(state.topdown.runtime.soundEmitters.size()),
-            static_cast<int>(state.audio.levelEmitters.size()));
-
-    for (int i = 0; i < count; ++i) {
-        if (state.topdown.runtime.soundEmitters[i].id == emitterId) {
+    for (int i = 0; i < static_cast<int>(state.audio.levelEmitters.size()); ++i) {
+        if (state.audio.levelEmitters[i].id == emitterId) {
             return i;
         }
     }
@@ -657,14 +653,11 @@ bool TopdownScriptStopMusic(GameState& state, float fadeMs)
 bool TopdownScriptSetSoundEmitterEnabled(GameState& state, const std::string& emitterId, bool enabled)
 {
     const int emitterIndex = FindSoundEmitterIndexById(state, emitterId);
-    if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.levelEmitters.size())) {
         return false;
     }
 
     state.audio.levelEmitters[emitterIndex].enabled = enabled;
-    state.topdown.runtime.soundEmitters[emitterIndex].enabled = enabled;
     return true;
 }
 
@@ -682,9 +675,7 @@ bool TopdownScriptGetSoundEmitterEnabled(const GameState& state, const std::stri
 bool TopdownScriptSetSoundEmitterVolume(GameState& state, const std::string& emitterId, float volume)
 {
     const int emitterIndex = FindSoundEmitterIndexById(state, emitterId);
-    if (emitterIndex < 0 ||
-        emitterIndex >= static_cast<int>(state.audio.levelEmitters.size()) ||
-        emitterIndex >= static_cast<int>(state.topdown.runtime.soundEmitters.size())) {
+    if (emitterIndex < 0 || emitterIndex >= static_cast<int>(state.audio.levelEmitters.size())) {
         return false;
     }
 
@@ -692,7 +683,7 @@ bool TopdownScriptSetSoundEmitterVolume(GameState& state, const std::string& emi
     if (volume > 1.0f) volume = 1.0f;
 
     state.audio.levelEmitters[emitterIndex].volume = volume;
-    state.topdown.runtime.soundEmitters[emitterIndex].volume = volume;
+    state.audio.levelEmitters[emitterIndex].authoredVolume = volume;
     return true;
 }
 
