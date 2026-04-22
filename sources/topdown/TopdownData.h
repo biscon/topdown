@@ -1368,6 +1368,19 @@ struct TopdownWorldEvent {
     int sourceNpcHandle = -1; // only valid if sourceType == Npc
 };
 
+struct TopdownRuntimeSoundEmitter {
+    std::string id;
+    Vector2 position{};
+
+    std::string soundId;
+    bool loop = false;
+    bool pan = false;
+
+    float radius = 0.0f;
+    float volume = 1.0f;
+
+    bool enabled = true;
+};
 
 struct TopdownRuntimeData {
     bool levelActive = false;
@@ -1407,6 +1420,7 @@ struct TopdownRuntimeData {
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;
     std::vector<TopdownRuntimeWindow> windows;
+    std::vector<TopdownRuntimeSoundEmitter> soundEmitters;
 
     std::vector<TopdownWorldEvent> worldEvents;
     TopdownNarrationPopupsRuntime narrationPopups;
