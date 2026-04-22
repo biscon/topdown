@@ -2,6 +2,12 @@
 
 #include "data/GameState.h"
 
+constexpr float AUDIO_RADIUS_DOOR = 2200.0f;
+constexpr float AUDIO_RADIUS_WINDOW = 2200.0f;
+constexpr float AUDIO_RADIUS_NPC = 2200.0f;
+constexpr float AUDIO_RADIUS_NPC_WEAPON = 2600.0f;
+constexpr float PAN_DISTANCE = 800.0f;
+
 void InitAudio(GameState& state);
 void ShutdownAudio(GameState& state);
 void UpdateAudio(GameState& state, float dt);
@@ -10,11 +16,6 @@ bool PlaySoundById(GameState& state, const std::string& id);
 bool PlaySoundById(GameState& state, const std::string& id, float pitch);
 bool AudioPlaySoundAtPosition(GameState& state, const std::string& soundId, Vector2 position, float radius);
 bool AudioPlaySoundAtPosition(GameState& state, const std::string& soundId, Vector2 position, float radius, float pitch);
-
-constexpr float AUDIO_RADIUS_DOOR = 2000.0f;
-constexpr float AUDIO_RADIUS_WINDOW = 2000.0f;
-constexpr float AUDIO_RADIUS_NPC = 1800.0f;
-constexpr float AUDIO_RADIUS_NPC_WEAPON = 2200.0f;
 
 bool StopSoundById(GameState& state, const std::string& id);
 bool IsSoundPlayingById(const GameState& state, const std::string& id);

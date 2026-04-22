@@ -92,7 +92,7 @@ static bool ComputeEmitterPlaybackParams(const GameState& state,
         return false;
     }
 
-    const float atten = std::pow(1.0f - Clamp01(dist / emitter.radius), 2.0f);
+    const float atten = std::pow(1.0f - Clamp01(dist / emitter.radius), 1.2f);
 
     outVolume =
             def.volume *
@@ -135,14 +135,15 @@ static bool ComputePositionalPlaybackParams(const GameState& state,
         return false;
     }
 
-    const float atten = std::pow(1.0f - Clamp01(dist / radius), 2.0f);
+    const float atten = pow(1.0f - Clamp01(dist / radius), 1.2f);
 
     outVolume =
             def.volume *
             state.settings.soundVolume *
             atten;
 
-    float normPan = -dx / radius;
+    //float normPan = -dx / radius;
+    float normPan = -dx / PAN_DISTANCE;
     if (normPan < -1.0f) normPan = -1.0f;
     if (normPan > 1.0f) normPan = 1.0f;
 
