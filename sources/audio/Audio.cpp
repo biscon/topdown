@@ -98,7 +98,6 @@ static bool ComputeEmitterPlaybackParams(const GameState& state,
             def.volume *
             state.settings.soundVolume *
             emitter.volume *
-            emitter.authoredVolume *
             atten;
 
     outPan = 0.5f;

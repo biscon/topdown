@@ -23,7 +23,7 @@ function Level_onEnter()
             waitMs = 5000
         }
     )
-    playMusic("pistolero", 3000)
+    --playMusic("pistolero", 3000)
     delay(3000)
     showNarration("Coming Home", "Upon returning to my Florida beach house, I noticed something was off.", 5)
     delay(7000)

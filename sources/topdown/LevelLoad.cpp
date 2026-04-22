@@ -2194,7 +2194,6 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         emitter.pan = authoredEmitter.pan;
         emitter.radius = authoredEmitter.radius;
         emitter.enabled = authoredEmitter.enabled;
-        emitter.authoredVolume = authoredEmitter.volume;
         emitter.volume = authoredEmitter.volume;
         emitter.active = false;
         emitter.sound = {};

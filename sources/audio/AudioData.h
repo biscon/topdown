@@ -89,7 +89,6 @@ struct SoundEmitterInstance {
     float radius = 0.0f;
 
     bool enabled = true;
-    float authoredVolume = 1.0f;
     float volume = 1.0f;
 
     bool active = false;

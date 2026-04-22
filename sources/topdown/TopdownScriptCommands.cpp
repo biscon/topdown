@@ -683,7 +683,6 @@ bool TopdownScriptSetSoundEmitterVolume(GameState& state, const std::string& emi
     if (volume > 1.0f) volume = 1.0f;
 
     state.audio.levelEmitters[emitterIndex].volume = volume;
-    state.audio.levelEmitters[emitterIndex].authoredVolume = volume;
     return true;
 }
 
