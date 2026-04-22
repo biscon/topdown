@@ -423,7 +423,12 @@ static void UpdateSingleDoorSounds(GameState& state, TopdownRuntimeDoor& door)
         !door.openSoundPlayedThisSwing &&
         std::fabs(door.angularVelocity) >= kDoorOpenSoundMinAngularSpeed) {
         if (!door.openSoundId.empty()) {
-            PlaySoundById(state, door.openSoundId, RandomRangeFloat(0.97f, 1.03f));
+            AudioPlaySoundAtPosition(
+                    state,
+                    door.openSoundId,
+                    door.hinge,
+                    AUDIO_RADIUS_DOOR,
+                    RandomRangeFloat(0.97f, 1.03f));
         }
         door.openSoundPlayedThisSwing = true;
     }
@@ -432,7 +437,12 @@ static void UpdateSingleDoorSounds(GameState& state, TopdownRuntimeDoor& door)
         !door.wasNearClosed &&
         std::fabs(door.angularVelocity) >= kDoorCloseSoundMinAngularSpeed) {
         if (!door.closeSoundId.empty()) {
-            PlaySoundById(state, door.closeSoundId, RandomRangeFloat(0.97f, 1.03f));
+            AudioPlaySoundAtPosition(
+                    state,
+                    door.closeSoundId,
+                    door.hinge,
+                    AUDIO_RADIUS_DOOR,
+                    RandomRangeFloat(0.97f, 1.03f));
         }
         door.openSoundPlayedThisSwing = false;
     }

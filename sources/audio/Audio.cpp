@@ -92,7 +92,7 @@ static bool ComputeEmitterPlaybackParams(const GameState& state,
         return false;
     }
 
-    const float atten = std::pow(1.0f - Clamp01(dist / emitter.radius), 2.0f);
+    const float atten = std::pow(1.0f - Clamp01(dist / emitter.radius), 1.2f);
 
     outVolume =
             def.volume *
@@ -113,6 +113,91 @@ static bool ComputeEmitterPlaybackParams(const GameState& state,
     }
 
     return true;
+}
+
+static bool ComputePositionalPlaybackParams(const GameState& state,
+                                            Vector2 sourcePosition,
+                                            float radius,
+                                            const AudioDefinitionData& def,
+                                            float& outVolume,
+                                            float& outPan)
+{
+    if (radius <= 0.0f) {
+        return false;
+    }
+
+    const Vector2 listenerPos = state.topdown.runtime.player.position;
+    const float dx = sourcePosition.x - listenerPos.x;
+    const float dy = sourcePosition.y - listenerPos.y;
+    const float dist = std::sqrt(dx * dx + dy * dy);
+
+    if (dist >= radius) {
+        return false;
+    }
+
+    const float atten = pow(1.0f - Clamp01(dist / radius), 1.2f);
+
+    outVolume =
+            def.volume *
+            state.settings.soundVolume *
+            atten;
+
+    //float normPan = -dx / radius;
+    float normPan = -dx / PAN_DISTANCE;
+    if (normPan < -1.0f) normPan = -1.0f;
+    if (normPan > 1.0f) normPan = 1.0f;
+
+    const float maxPanAmount = 0.35f;
+    outPan = 0.5f + normPan * maxPanAmount;
+    if (outPan < 0.0f) outPan = 0.0f;
+    if (outPan > 1.0f) outPan = 1.0f;
+
+    return true;
+}
+
+static bool LoadSoundAliasById(GameState& state,
+                               const std::string& id,
+                               AudioDefinitionData*& outDef,
+                               Sound& outAlias)
+{
+    outDef = FindAudioDef(state, id);
+    if (outDef == nullptr) {
+        WarnMissingAudioIdOnce(state, id);
+        return false;
+    }
+
+    if (outDef->type != AudioType::Sound) {
+        TraceLog(LOG_WARNING, "Audio id '%s' is not a sound", id.c_str());
+        return false;
+    }
+
+    Sound* base = GetSoundResource(state, outDef->soundHandle);
+    if (base == nullptr) {
+        TraceLog(LOG_WARNING, "Sound resource missing for audio id '%s'", id.c_str());
+        return false;
+    }
+
+    outAlias = LoadSoundAlias(*base);
+    if (outAlias.frameCount <= 0) {
+        TraceLog(LOG_ERROR, "Failed creating sound alias for audio id '%s'", id.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+static void TrackActiveSoundInstance(GameState& state,
+                                     const AudioDefinitionData& def,
+                                     Sound alias,
+                                     bool loop)
+{
+    ActiveSoundInstance inst;
+    inst.sound = alias;
+    inst.baseSoundHandle = def.soundHandle;
+    inst.scope = def.scope;
+    inst.loop = loop;
+    inst.active = true;
+    state.audio.activeSounds.push_back(inst);
 }
 
 static void UpdateLevelSoundEmitters(GameState& state)
@@ -434,66 +519,25 @@ void UpdateAudio(GameState& state, float dt)
 
 bool PlaySoundById(GameState& state, const std::string& id)
 {
-    AudioDefinitionData* def = FindAudioDef(state, id);
-    if (def == nullptr) {
-        WarnMissingAudioIdOnce(state, id);
-        return false;
-    }
-
-    if (def->type != AudioType::Sound) {
-        TraceLog(LOG_WARNING, "Audio id '%s' is not a sound", id.c_str());
-        return false;
-    }
-
-    Sound* base = GetSoundResource(state, def->soundHandle);
-    if (base == nullptr) {
-        TraceLog(LOG_WARNING, "Sound resource missing for audio id '%s'", id.c_str());
-        return false;
-    }
-
-    Sound alias = LoadSoundAlias(*base);
-    if (alias.frameCount <= 0) {
-        TraceLog(LOG_ERROR, "Failed creating sound alias for audio id '%s'", id.c_str());
+    AudioDefinitionData* def = nullptr;
+    Sound alias{};
+    if (!LoadSoundAliasById(state, id, def, alias)) {
         return false;
     }
 
     const float volume = def->volume * state.settings.soundVolume;
     SetSoundVolume(alias, volume);
     PlaySound(alias);
-
-    ActiveSoundInstance inst;
-    inst.sound = alias;
-    inst.baseSoundHandle = def->soundHandle;
-    inst.scope = def->scope;
-    inst.loop = def->loop;
-    inst.active = true;
-    state.audio.activeSounds.push_back(inst);
+    TrackActiveSoundInstance(state, *def, alias, def->loop);
 
     return true;
 }
 
 bool PlaySoundById(GameState& state, const std::string& id, float pitch)
 {
-    AudioDefinitionData* def = FindAudioDef(state, id);
-    if (def == nullptr) {
-        WarnMissingAudioIdOnce(state, id);
-        return false;
-    }
-
-    if (def->type != AudioType::Sound) {
-        TraceLog(LOG_WARNING, "Audio id '%s' is not a sound", id.c_str());
-        return false;
-    }
-
-    Sound* base = GetSoundResource(state, def->soundHandle);
-    if (base == nullptr) {
-        TraceLog(LOG_WARNING, "Sound resource missing for audio id '%s'", id.c_str());
-        return false;
-    }
-
-    Sound alias = LoadSoundAlias(*base);
-    if (alias.frameCount <= 0) {
-        TraceLog(LOG_ERROR, "Failed creating sound alias for audio id '%s'", id.c_str());
+    AudioDefinitionData* def = nullptr;
+    Sound alias{};
+    if (!LoadSoundAliasById(state, id, def, alias)) {
         return false;
     }
 
@@ -502,15 +546,41 @@ bool PlaySoundById(GameState& state, const std::string& id, float pitch)
     SetSoundVolume(alias, volume);
     SetSoundPitch(alias, pitch);
     PlaySound(alias);
+    TrackActiveSoundInstance(state, *def, alias, def->loop);
 
-    ActiveSoundInstance inst;
-    inst.sound = alias;
-    inst.baseSoundHandle = def->soundHandle;
-    inst.scope = def->scope;
-    inst.loop = def->loop;
-    inst.active = true;
-    state.audio.activeSounds.push_back(inst);
+    return true;
+}
 
+bool AudioPlaySoundAtPosition(GameState& state, const std::string& soundId, Vector2 position, float radius)
+{
+    return AudioPlaySoundAtPosition(state, soundId, position, radius, 1.0f);
+}
+
+bool AudioPlaySoundAtPosition(GameState& state,
+                              const std::string& soundId,
+                              Vector2 position,
+                              float radius,
+                              float pitch)
+{
+    AudioDefinitionData* def = nullptr;
+    Sound alias{};
+    if (!LoadSoundAliasById(state, soundId, def, alias)) {
+        return false;
+    }
+
+    float finalVolume = 0.0f;
+    float pan = 0.5f;
+    if (!ComputePositionalPlaybackParams(state, position, radius, *def, finalVolume, pan)) {
+        UnloadSoundAlias(alias);
+        return true;
+    }
+
+    SetSoundVolume(alias, finalVolume);
+    SetSoundPan(alias, pan);
+    SetSoundPitch(alias, pitch);
+    PlaySound(alias);
+
+    TrackActiveSoundInstance(state, *def, alias, false);
     return true;
 }
 
