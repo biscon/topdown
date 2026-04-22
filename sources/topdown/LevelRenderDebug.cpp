@@ -1519,6 +1519,73 @@ static void DrawDoorDebug(const GameState& state)
     }
 }
 
+static void DrawSpawnAndSoundEmitterDebug(const GameState& state)
+{
+    for (const TopdownAuthoredSpawn& spawn : state.topdown.authored.spawns) {
+        const Vector2 spawnScreen = TopdownWorldToScreen(state, spawn.position);
+
+        DrawCircleV(spawnScreen, 8.0f, SKYBLUE);
+        DrawText(spawn.id.c_str(),
+                 static_cast<int>(spawnScreen.x) + 10,
+                 static_cast<int>(spawnScreen.y) - 10,
+                 18,
+                 SKYBLUE);
+
+        const float radians = spawn.orientationDegrees * DEG2RAD;
+        Vector2 tip{
+                spawnScreen.x + std::cos(radians) * 30.0f,
+                spawnScreen.y + std::sin(radians) * 30.0f
+        };
+        DrawLineEx(spawnScreen, tip, 2.0f, SKYBLUE);
+    }
+
+    for (const TopdownAuthoredSoundEmitter& emitter : state.topdown.authored.soundEmitters) {
+        const Vector2 emitterScreen = TopdownWorldToScreen(state, emitter.position);
+        const Color emitterColor = emitter.enabled ? Color{255, 190, 80, 255} : Color{160, 120, 80, 255};
+        const Color radiusFillColor = emitter.enabled ? Color{255, 190, 80, 45} : Color{160, 120, 80, 30};
+
+        if (emitter.radius > 0.0f) {
+            DrawCircleV(emitterScreen, emitter.radius, radiusFillColor);
+            DrawCircleLines(
+                    static_cast<int>(emitterScreen.x),
+                    static_cast<int>(emitterScreen.y),
+                    emitter.radius,
+                    emitterColor);
+        }
+
+        DrawCircleV(emitterScreen, 6.0f, emitterColor);
+
+        const int labelX = static_cast<int>(emitterScreen.x) + 10;
+        int labelY = static_cast<int>(emitterScreen.y) - 16;
+
+        DrawText(
+                TextFormat("emitter='%s' sound='%s'", emitter.id.c_str(), emitter.soundId.c_str()),
+                labelX,
+                labelY,
+                16,
+                emitterColor);
+
+        labelY += 16;
+        DrawText(
+                TextFormat("radius=%.1f volume=%.2f", emitter.radius, emitter.volume),
+                labelX,
+                labelY,
+                16,
+                emitterColor);
+
+        labelY += 16;
+        DrawText(
+                TextFormat("loop=%s pan=%s enabled=%s",
+                           emitter.loop ? "yes" : "no",
+                           emitter.pan ? "yes" : "no",
+                           emitter.enabled ? "yes" : "no"),
+                labelX,
+                labelY,
+                16,
+                emitterColor);
+    }
+}
+
 void TopdownRenderDebug(GameState& state)
 {
     if (!state.topdown.authored.loaded) {
@@ -1534,23 +1601,7 @@ void TopdownRenderDebug(GameState& state)
     }
 
     if (state.topdown.runtime.debug.showSpawnPoints) {
-        for (const TopdownAuthoredSpawn& spawn : state.topdown.authored.spawns) {
-            const Vector2 spawnScreen = TopdownWorldToScreen(state, spawn.position);
-
-            DrawCircleV(spawnScreen, 8.0f, SKYBLUE);
-            DrawText(spawn.id.c_str(),
-                     static_cast<int>(spawnScreen.x) + 10,
-                     static_cast<int>(spawnScreen.y) - 10,
-                     18,
-                     SKYBLUE);
-
-            const float radians = spawn.orientationDegrees * DEG2RAD;
-            Vector2 tip{
-                    spawnScreen.x + std::cos(radians) * 30.0f,
-                    spawnScreen.y + std::sin(radians) * 30.0f
-            };
-            DrawLineEx(spawnScreen, tip, 2.0f, SKYBLUE);
-        }
+        DrawSpawnAndSoundEmitterDebug(state);
     }
 
     if (state.topdown.runtime.debug.showEffects) {
