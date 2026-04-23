@@ -131,8 +131,8 @@ static void QueueTopdownLevelChange(const std::string& levelId, const std::strin
 
 static void startNewGame()
 {
-    QueueTopdownLevelChange("test_level");
-    TraceLog(LOG_DEBUG, "Menu queued new level: test_level");
+    QueueTopdownLevelChange("beach_house");
+    TraceLog(LOG_DEBUG, "Menu starting new game. Queued first level.");
 }
 
 static Rectangle GetMenuItemRect(const Menu& menu, float itemWidth, int index)
