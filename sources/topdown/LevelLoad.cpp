@@ -1408,9 +1408,24 @@ struct TopdownOcclusionHitPoint {
     Vector2 point{};
 };
 
+struct TopdownOcclusionSegmentGridCell {
+    std::vector<int> segmentIndices;
+};
+
+struct TopdownOcclusionSegmentGrid {
+    bool built = false;
+    Vector2 origin{};
+    float cellSize = 512.0f;
+    int width = 0;
+    int height = 0;
+    std::vector<TopdownOcclusionSegmentGridCell> cells;
+};
+
 struct TopdownOcclusionSegmentCache {
     std::vector<TopdownSegment> segments;
     std::vector<Rectangle> bounds;
+    int staticSegmentCount = 0;
+    TopdownOcclusionSegmentGrid grid;
 };
 
 static Rectangle BuildSegmentBounds(const TopdownSegment& seg)
@@ -1434,6 +1449,153 @@ static bool RectsOverlap(const Rectangle& a, const Rectangle& b)
              b.x + b.width < a.x ||
              a.y + a.height < b.y ||
              b.y + b.height < a.y);
+}
+
+static int FloorToInt(float v)
+{
+    return static_cast<int>(std::floor(v));
+}
+
+static int ClampInt(int v, int lo, int hi)
+{
+    return std::max(lo, std::min(v, hi));
+}
+
+static int GetOcclusionGridCellIndex(const TopdownOcclusionSegmentGrid& grid, int x, int y)
+{
+    return y * grid.width + x;
+}
+
+static void GetOcclusionGridRangeForBounds(
+        const TopdownOcclusionSegmentGrid& grid,
+        const Rectangle& bounds,
+        int& outMinX,
+        int& outMinY,
+        int& outMaxX,
+        int& outMaxY)
+{
+    const float relMinX = bounds.x - grid.origin.x;
+    const float relMinY = bounds.y - grid.origin.y;
+    const float relMaxX = bounds.x + bounds.width - grid.origin.x;
+    const float relMaxY = bounds.y + bounds.height - grid.origin.y;
+
+    outMinX = ClampInt(FloorToInt(relMinX / grid.cellSize), 0, grid.width - 1);
+    outMinY = ClampInt(FloorToInt(relMinY / grid.cellSize), 0, grid.height - 1);
+    outMaxX = ClampInt(FloorToInt(relMaxX / grid.cellSize), 0, grid.width - 1);
+    outMaxY = ClampInt(FloorToInt(relMaxY / grid.cellSize), 0, grid.height - 1);
+}
+
+static void BuildOcclusionSegmentGrid(TopdownOcclusionSegmentCache& cache)
+{
+    TopdownOcclusionSegmentGrid& grid = cache.grid;
+    grid = {};
+    grid.cellSize = 512.0f;
+
+    if (cache.staticSegmentCount <= 0) {
+        return;
+    }
+
+    Rectangle total = cache.bounds[0];
+    for (int i = 1; i < cache.staticSegmentCount; ++i) {
+        const Rectangle& b = cache.bounds[i];
+        const float minX = std::min(total.x, b.x);
+        const float minY = std::min(total.y, b.y);
+        const float maxX = std::max(total.x + total.width, b.x + b.width);
+        const float maxY = std::max(total.y + total.height, b.y + b.height);
+        total.x = minX;
+        total.y = minY;
+        total.width = maxX - minX;
+        total.height = maxY - minY;
+    }
+
+    static constexpr float kPad = 1.0f;
+    grid.origin = Vector2{total.x - kPad, total.y - kPad};
+    grid.width = std::max(1, static_cast<int>(std::ceil((total.width + kPad * 2.0f) / grid.cellSize)));
+    grid.height = std::max(1, static_cast<int>(std::ceil((total.height + kPad * 2.0f) / grid.cellSize)));
+
+    grid.cells.clear();
+    grid.cells.resize(static_cast<size_t>(grid.width * grid.height));
+
+    for (int segmentIndex = 0; segmentIndex < cache.staticSegmentCount; ++segmentIndex) {
+        int minX = 0;
+        int minY = 0;
+        int maxX = 0;
+        int maxY = 0;
+        GetOcclusionGridRangeForBounds(grid, cache.bounds[segmentIndex], minX, minY, maxX, maxY);
+
+        for (int y = minY; y <= maxY; ++y) {
+            for (int x = minX; x <= maxX; ++x) {
+                grid.cells[GetOcclusionGridCellIndex(grid, x, y)].segmentIndices.push_back(segmentIndex);
+            }
+        }
+    }
+
+    grid.built = true;
+}
+
+static void QueryOcclusionSegmentGrid(
+        const TopdownOcclusionSegmentCache& cache,
+        const Rectangle& interestBounds,
+        std::vector<int>& outCandidateSegmentIndices)
+{
+    static thread_local std::vector<int> seenGeneration;
+    static thread_local int generation = 1;
+
+    outCandidateSegmentIndices.clear();
+
+    const TopdownOcclusionSegmentGrid& grid = cache.grid;
+    if (!grid.built || cache.staticSegmentCount <= 0) {
+        for (int i = 0; i < cache.staticSegmentCount; ++i) {
+            if (RectsOverlap(interestBounds, cache.bounds[i])) {
+                outCandidateSegmentIndices.push_back(i);
+            }
+        }
+    } else {
+        if (seenGeneration.size() < static_cast<size_t>(cache.staticSegmentCount)) {
+            seenGeneration.assign(static_cast<size_t>(cache.staticSegmentCount), 0);
+            generation = 1;
+        }
+
+        ++generation;
+        if (generation == 0) {
+            std::fill(seenGeneration.begin(), seenGeneration.end(), 0);
+            generation = 1;
+        }
+
+        int minX = 0;
+        int minY = 0;
+        int maxX = 0;
+        int maxY = 0;
+        GetOcclusionGridRangeForBounds(grid, interestBounds, minX, minY, maxX, maxY);
+
+        for (int y = minY; y <= maxY; ++y) {
+            for (int x = minX; x <= maxX; ++x) {
+                const TopdownOcclusionSegmentGridCell& cell =
+                        grid.cells[GetOcclusionGridCellIndex(grid, x, y)];
+
+                for (int segmentIndex : cell.segmentIndices) {
+                    if (segmentIndex < 0 || segmentIndex >= cache.staticSegmentCount) {
+                        continue;
+                    }
+
+                    if (seenGeneration[segmentIndex] == generation) {
+                        continue;
+                    }
+
+                    seenGeneration[segmentIndex] = generation;
+                    if (RectsOverlap(interestBounds, cache.bounds[segmentIndex])) {
+                        outCandidateSegmentIndices.push_back(segmentIndex);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = cache.staticSegmentCount; i < static_cast<int>(cache.segments.size()); ++i) {
+        if (RectsOverlap(interestBounds, cache.bounds[i])) {
+            outCandidateSegmentIndices.push_back(i);
+        }
+    }
 }
 
 static Rectangle BuildOcclusionInterestBounds(
@@ -1468,6 +1630,8 @@ static void BuildWallOcclusionSegments(
 {
     outCache.segments.clear();
     outCache.bounds.clear();
+    outCache.staticSegmentCount = 0;
+    outCache.grid = {};
 
     const size_t targetCount =
             topdown.runtime.collision.visionSegments.size() +
@@ -1493,6 +1657,9 @@ static void BuildWallOcclusionSegments(
     for (const TopdownSegment& seg : topdown.runtime.collision.boundarySegments) {
         pushSegment(seg);
     }
+
+    outCache.staticSegmentCount = static_cast<int>(outCache.segments.size());
+    BuildOcclusionSegmentGrid(outCache);
 
     for (const TopdownRuntimeDoor& door : topdown.runtime.doors) {
         if (!door.visible) {
@@ -1538,12 +1705,7 @@ static bool BuildWallOcclusionPolygon(
         candidateSegmentIndices.reserve(segmentCount);
     }
 
-    for (size_t i = 0; i < segmentCount; ++i) {
-        if (!RectsOverlap(interestBounds, segmentCache.bounds[i])) {
-            continue;
-        }
-        candidateSegmentIndices.push_back(static_cast<int>(i));
-    }
+    QueryOcclusionSegmentGrid(segmentCache, interestBounds, candidateSegmentIndices);
 
     if (candidateSegmentIndices.empty()) {
         return false;
@@ -1568,6 +1730,16 @@ static bool BuildWallOcclusionPolygon(
             rayAngles.push_back(angle + kAngleEpsilon);
         }
     }
+
+    std::sort(rayAngles.begin(), rayAngles.end());
+    static constexpr float kRayAngleMergeEpsilon = 0.000001f;
+    const auto newEnd = std::unique(
+            rayAngles.begin(),
+            rayAngles.end(),
+            [](float a, float b) {
+                return std::fabs(a - b) <= kRayAngleMergeEpsilon;
+            });
+    rayAngles.erase(newEnd, rayAngles.end());
 
     hits.clear();
     if (hits.capacity() < rayAngles.size()) {
