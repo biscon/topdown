@@ -19,6 +19,7 @@
 #include "topdown/TopdownPlayerVignette.h"
 #include "topdown/TopdownRvo.h"
 #include "topdown/TopdownRenderTexture.h"
+#include "external/glfw/include/GLFW/glfw3.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
 {
@@ -204,6 +205,10 @@ int main()
 
     RenderTexture2D worldTarget = LoadTopdownRenderTextureWithStencil(INTERNAL_WIDTH, INTERNAL_HEIGHT);
     SetTextureFilter(worldTarget.texture, TEXTURE_FILTER_BILINEAR);
+
+    TraceLog(LOG_INFO,
+             "worldTarget stencil: %s",
+             TopdownRenderTextureHasStencil(worldTarget) ? "yes" : "no");
 
     RenderTexture2D worldSampleTempTarget = LoadTopdownRenderTextureWithStencil(INTERNAL_WIDTH, INTERNAL_HEIGHT);
     SetTextureFilter(worldSampleTempTarget.texture, TEXTURE_FILTER_BILINEAR);
