@@ -20,9 +20,6 @@ uniform int uUsePolygon;
 uniform int uPolygonVertexCount;
 uniform vec2 uPolygonPoints[32];
 
-uniform int uUseOcclusionPolygon;
-uniform int uOcclusionPolygonVertexCount;
-uniform vec2 uOcclusionPolygonPoints[256];
 
 out vec4 finalColor;
 

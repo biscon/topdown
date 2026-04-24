@@ -18,6 +18,7 @@
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/TopdownPlayerVignette.h"
 #include "topdown/TopdownRvo.h"
+#include "rlgl.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
 {
@@ -152,7 +153,7 @@ int main()
     GameState state;
     InitSettings(state.settings, "settings.json");
 
-    unsigned int flags = 0;
+    unsigned int flags = FLAG_WINDOW_RESIZABLE;
     if (state.settings.vsync) {
         flags |= FLAG_VSYNC_HINT;
     }
@@ -163,6 +164,10 @@ int main()
 
     InstallDebugConsoleTraceLogHook();
     InitWindow(1920, 1080, "Adventure");
+
+    int stencilBits = 0;
+    glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+    TraceLog(LOG_INFO, "Framebuffer stencil bits: %d", stencilBits);
 
     {
         const int screenW = GetScreenWidth();

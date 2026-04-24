@@ -105,41 +105,77 @@ static void SetShaderPolygonIfValid(
     SetShaderValueV(shader, polygonPointsLoc, points, SHADER_UNIFORM_VEC2, vertexCount);
 }
 
-static void SetShaderOcclusionPolygonIfValid(
-        const Shader& shader,
-        int useOcclusionPolygonLoc,
-        int occlusionPolygonVertexCountLoc,
-        int occlusionPolygonPointsLoc,
-        const TopdownRuntimeEffectRegion& runtime,
-        const Vector2& cam)
+static constexpr unsigned char kVisibilityStencilBit = 0x01;
+static constexpr unsigned char kAuthoredStencilBit = 0x02;
+
+static bool HasValidPolygon(const std::vector<Vector2>& polygon)
 {
-    const int usePolygon =
-            runtime.hasWallOcclusionPolygon &&
-            runtime.wallOcclusionPolygon.size() >= 3
-            ? 1
-            : 0;
+    return polygon.size() >= 3;
+}
 
-    SetShaderIntIfValid(shader, useOcclusionPolygonLoc, usePolygon);
-
-    if (!usePolygon) {
-        SetShaderIntIfValid(shader, occlusionPolygonVertexCountLoc, 0);
+static void DrawStencilPolygonFan(const std::vector<Vector2>& polygon, const Vector2& cameraPos)
+{
+    if (!HasValidPolygon(polygon)) {
         return;
     }
 
-    const int vertexCount = static_cast<int>(runtime.wallOcclusionPolygon.size());
-    SetShaderIntIfValid(shader, occlusionPolygonVertexCountLoc, vertexCount);
+    rlBegin(RL_TRIANGLES);
+    for (size_t i = 1; i + 1 < polygon.size(); ++i) {
+        rlVertex2f(polygon[0].x - cameraPos.x, polygon[0].y - cameraPos.y);
+        rlVertex2f(polygon[i].x - cameraPos.x, polygon[i].y - cameraPos.y);
+        rlVertex2f(polygon[i + 1].x - cameraPos.x, polygon[i + 1].y - cameraPos.y);
+    }
+    rlEnd();
+}
 
-    if (occlusionPolygonPointsLoc < 0 || vertexCount <= 0) {
+static bool BeginVisibilityStencilMask(const std::vector<Vector2>& polygon, const Vector2& cameraPos)
+{
+    if (!HasValidPolygon(polygon)) {
+        return false;
+    }
+
+    rlDrawRenderBatchActive();
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    glStencilFunc(GL_ALWAYS, kVisibilityStencilBit, kVisibilityStencilBit);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+    DrawStencilPolygonFan(polygon, cameraPos);
+    rlDrawRenderBatchActive();
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0x00);
+    glStencilFunc(GL_EQUAL, kVisibilityStencilBit, kVisibilityStencilBit);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    return true;
+}
+
+static void AddAuthoredStencilMask(
+        const TopdownAuthoredEffectRegion& authored,
+        const Vector2& cameraPos)
+{
+    if (!authored.usePolygon || !HasValidPolygon(authored.polygon)) {
         return;
     }
 
-    float points[256 * 2] = {};
-    for (int i = 0; i < vertexCount && i < 256; ++i) {
-        points[i * 2 + 0] = runtime.wallOcclusionPolygon[i].x - cam.x;
-        points[i * 2 + 1] = runtime.wallOcclusionPolygon[i].y - cam.y;
-    }
+    rlDrawRenderBatchActive();
+    glStencilMask(kAuthoredStencilBit);
+    glStencilFunc(GL_ALWAYS, kAuthoredStencilBit, kAuthoredStencilBit);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    DrawStencilPolygonFan(authored.polygon, cameraPos);
+    rlDrawRenderBatchActive();
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0x00);
+}
 
-    SetShaderValueV(shader, occlusionPolygonPointsLoc, points, SHADER_UNIFORM_VEC2, vertexCount);
+static void EndVisibilityStencilMask()
+{
+    rlDrawRenderBatchActive();
+    glStencilMask(0xFF);
+    glDisable(GL_STENCIL_TEST);
 }
 
 static int GetRaylibBlendMode(EffectBlendMode mode)
@@ -273,9 +309,6 @@ static void DrawImageLayer(const GameState& state, const TopdownRuntimeImageLaye
             SetShaderIntIfValid(shaderEntry->shader, shaderEntry->usePolygonLoc, 0);
             SetShaderIntIfValid(shaderEntry->shader, shaderEntry->polygonVertexCountLoc, 0);
 
-            SetShaderIntIfValid(shaderEntry->shader, shaderEntry->useOcclusionPolygonLoc, 0);
-            SetShaderIntIfValid(shaderEntry->shader, shaderEntry->occlusionPolygonVertexCountLoc, 0);
-
             if (shaderEntry->tintLoc >= 0) {
                 const float tint[3] = {
                         layer.shaderParams.tintR,
@@ -364,6 +397,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     BeginTextureMode(destTarget);
     ClearBackground(BLACK);
 
+    const bool usingVisibilityMask =
+            runtime.hasWallOcclusionPolygon &&
+            BeginVisibilityStencilMask(runtime.wallOcclusionPolygon, cam);
+
     BeginShaderMode(shaderEntry->shader);
 
     SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
@@ -400,14 +437,6 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             authored,
             cam);
 
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
-            runtime,
-            cam);
-
     DrawTexturePro(
             sourceTarget.texture,
             GetRenderTargetSourceRect(sourceTarget.texture),
@@ -417,6 +446,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             WHITE);
 
     EndShaderMode();
+
+    if (usingVisibilityMask) {
+        EndVisibilityStencilMask();
+    }
     EndTextureMode();
 
     return true;
@@ -476,6 +509,10 @@ static void DrawSelfTextureTopdownEffectRegion(
     EndBlendMode();
     BeginBlendMode(GetRaylibBlendMode(authored.blendMode));
 
+    const bool usingVisibilityMask =
+            runtime.hasWallOcclusionPolygon &&
+            BeginVisibilityStencilMask(runtime.wallOcclusionPolygon, cam);
+
     BeginShaderMode(shaderEntry->shader);
 
     SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
@@ -500,25 +537,33 @@ static void DrawSelfTextureTopdownEffectRegion(
         SetShaderValue(shaderEntry->shader, shaderEntry->tintLoc, tint, SHADER_UNIFORM_VEC3);
     }
 
-    SetShaderPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->usePolygonLoc,
-            shaderEntry->polygonVertexCountLoc,
-            shaderEntry->polygonPointsLoc,
-            authored,
-            cam);
+    if (runtime.shaderType == EffectShaderType::PolyClip) {
+        SetShaderIntIfValid(shaderEntry->shader, shaderEntry->usePolygonLoc, 0);
+        SetShaderIntIfValid(shaderEntry->shader, shaderEntry->polygonVertexCountLoc, 0);
 
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
-            runtime,
-            cam);
+        if (usingVisibilityMask && authored.usePolygon && HasValidPolygon(authored.polygon)) {
+            AddAuthoredStencilMask(authored, cam);
+            glStencilFunc(GL_EQUAL,
+                          kVisibilityStencilBit | kAuthoredStencilBit,
+                          kVisibilityStencilBit | kAuthoredStencilBit);
+        }
+    } else {
+        SetShaderPolygonIfValid(
+                shaderEntry->shader,
+                shaderEntry->usePolygonLoc,
+                shaderEntry->polygonVertexCountLoc,
+                shaderEntry->polygonPointsLoc,
+                authored,
+                cam);
+    }
 
     DrawTexturePro(texRes->texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, drawColor);
 
     EndShaderMode();
+
+    if (usingVisibilityMask) {
+        EndVisibilityStencilMask();
+    }
 
     EndBlendMode();
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);

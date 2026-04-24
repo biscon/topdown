@@ -27,35 +27,6 @@ bool pointInPolygon(vec2 p)
     return inside;
 }
 
-bool pointInOcclusionPolygon(vec2 p)
-{
-    if (uUseOcclusionPolygon == 0 || uOcclusionPolygonVertexCount < 3) {
-        return true;
-    }
-
-    bool inside = false;
-
-    for (int i = 0, j = uOcclusionPolygonVertexCount - 1; i < uOcclusionPolygonVertexCount; j = i, ++i) {
-        vec2 a = uOcclusionPolygonPoints[i];
-        vec2 b = uOcclusionPolygonPoints[j];
-
-        float denom = b.y - a.y;
-        if (abs(denom) < 0.00001) {
-            denom = (denom < 0.0) ? -0.00001 : 0.00001;
-        }
-
-        bool intersect =
-        ((a.y > p.y) != (b.y > p.y)) &&
-        (p.x < ((b.x - a.x) * (p.y - a.y) / denom) + a.x);
-
-        if (intersect) {
-            inside = !inside;
-        }
-    }
-
-    return inside;
-}
-
 float distanceToSegment(vec2 p, vec2 a, vec2 b)
 {
     vec2 ab = b - a;
@@ -119,16 +90,7 @@ float authoredRegionMask(vec2 pixelPos, vec2 local, float softness)
     return rectEdgeFade(local, softness);
 }
 
-float wallOcclusionMask(vec2 pixelPos)
-{
-    if (uUseOcclusionPolygon == 0 || uOcclusionPolygonVertexCount < 3) {
-        return 1.0;
-    }
-
-    return pointInOcclusionPolygon(pixelPos) ? 1.0 : 0.0;
-}
-
 float regionMask(vec2 pixelPos, vec2 local, float softness)
 {
-    return authoredRegionMask(pixelPos, local, softness) * wallOcclusionMask(pixelPos);
+    return authoredRegionMask(pixelPos, local, softness);
 }

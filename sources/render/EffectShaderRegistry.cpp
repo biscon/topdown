@@ -205,9 +205,6 @@ namespace
         entry.usePolygonLoc = GetShaderLocation(entry.shader, "uUsePolygon");
         entry.polygonVertexCountLoc = GetShaderLocation(entry.shader, "uPolygonVertexCount");
         entry.polygonPointsLoc = GetShaderLocation(entry.shader, "uPolygonPoints");
-        entry.useOcclusionPolygonLoc = GetShaderLocation(entry.shader, "uUseOcclusionPolygon");
-        entry.occlusionPolygonVertexCountLoc = GetShaderLocation(entry.shader, "uOcclusionPolygonVertexCount");
-        entry.occlusionPolygonPointsLoc = GetShaderLocation(entry.shader, "uOcclusionPolygonPoints");
     }
 }
 
@@ -320,9 +317,6 @@ void ShutdownEffectShaderRegistry()
         entry.usePolygonLoc = -1;
         entry.polygonVertexCountLoc = -1;
         entry.polygonPointsLoc = -1;
-        entry.useOcclusionPolygonLoc = -1;
-        entry.occlusionPolygonVertexCountLoc = -1;
-        entry.occlusionPolygonPointsLoc = -1;
     }
 }
 
