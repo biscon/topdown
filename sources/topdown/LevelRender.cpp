@@ -143,6 +143,65 @@ static void SetShaderOcclusionPolygonIfValid(
     SetShaderValueV(shader, occlusionPolygonPointsLoc, points, SHADER_UNIFORM_VEC2, vertexCount);
 }
 
+static void DisableShaderOcclusionPolygon(const Shader& shader, const EffectShaderEntry& shaderEntry)
+{
+    SetShaderIntIfValid(shader, shaderEntry.useOcclusionPolygonLoc, 0);
+    SetShaderIntIfValid(shader, shaderEntry.occlusionPolygonVertexCountLoc, 0);
+}
+
+static bool EffectRegionHasWallStencilMask(const TopdownRuntimeEffectRegion& runtime)
+{
+    return runtime.occludedByWalls &&
+           runtime.hasWallOcclusionPolygon &&
+           runtime.wallOcclusionPolygon.size() >= 3;
+}
+
+static void BeginWallOcclusionStencilMask(const GameState& state, const std::vector<Vector2>& worldPolygon)
+{
+    rlDrawRenderBatchActive();
+
+    glEnable(GL_STENCIL_TEST);
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilMask(0xFF);
+
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+    if (worldPolygon.size() >= 3) {
+        rlSetTexture(0);
+        rlBegin(RL_TRIANGLES);
+        rlColor4ub(255, 255, 255, 255);
+
+        const Vector2 origin = TopdownWorldToScreen(state, worldPolygon[0]);
+        for (size_t i = 1; i + 1 < worldPolygon.size(); ++i) {
+            const Vector2 b = TopdownWorldToScreen(state, worldPolygon[i]);
+            const Vector2 c = TopdownWorldToScreen(state, worldPolygon[i + 1]);
+            rlVertex2f(origin.x, origin.y);
+            rlVertex2f(b.x, b.y);
+            rlVertex2f(c.x, c.y);
+        }
+
+        rlEnd();
+    }
+
+    rlDrawRenderBatchActive();
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glStencilMask(0x00);
+}
+
+static void EndWallOcclusionStencilMask()
+{
+    rlDrawRenderBatchActive();
+    glStencilMask(0xFF);
+    glDisable(GL_STENCIL_TEST);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+}
+
 static int GetRaylibBlendMode(EffectBlendMode mode)
 {
     switch (mode) {
@@ -362,8 +421,23 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             static_cast<float>(sourceTarget.texture.height)
     };
 
+    const bool useWallStencil = EffectRegionHasWallStencilMask(runtime);
+
     BeginTextureMode(destTarget);
     ClearBackground(BLACK);
+    BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
+    DrawTexturePro(
+            sourceTarget.texture,
+            GetRenderTargetSourceRect(sourceTarget.texture),
+            GetRenderTargetDestRect(destTarget.texture),
+            Vector2{0.0f, 0.0f},
+            0.0f,
+            WHITE);
+    EndBlendMode();
+
+    if (useWallStencil) {
+        BeginWallOcclusionStencilMask(state, runtime.wallOcclusionPolygon);
+    }
 
     BeginShaderMode(shaderEntry->shader);
 
@@ -401,13 +475,7 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             authored,
             cam);
 
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
-            runtime,
-            cam);
+    DisableShaderOcclusionPolygon(shaderEntry->shader, *shaderEntry);
 
     DrawTexturePro(
             sourceTarget.texture,
@@ -418,6 +486,11 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             WHITE);
 
     EndShaderMode();
+
+    if (useWallStencil) {
+        EndWallOcclusionStencilMask();
+    }
+
     EndTextureMode();
 
     return true;
@@ -477,6 +550,11 @@ static void DrawSelfTextureTopdownEffectRegion(
     EndBlendMode();
     BeginBlendMode(GetRaylibBlendMode(authored.blendMode));
 
+    const bool useWallStencil = EffectRegionHasWallStencilMask(runtime);
+    if (useWallStencil) {
+        BeginWallOcclusionStencilMask(state, runtime.wallOcclusionPolygon);
+    }
+
     BeginShaderMode(shaderEntry->shader);
 
     SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
@@ -509,17 +587,15 @@ static void DrawSelfTextureTopdownEffectRegion(
             authored,
             cam);
 
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
-            runtime,
-            cam);
+    DisableShaderOcclusionPolygon(shaderEntry->shader, *shaderEntry);
 
     DrawTexturePro(texRes->texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, drawColor);
 
     EndShaderMode();
+
+    if (useWallStencil) {
+        EndWallOcclusionStencilMask();
+    }
 
     EndBlendMode();
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);

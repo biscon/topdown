@@ -121,11 +121,7 @@ float authoredRegionMask(vec2 pixelPos, vec2 local, float softness)
 
 float wallOcclusionMask(vec2 pixelPos)
 {
-    if (uUseOcclusionPolygon == 0 || uOcclusionPolygonVertexCount < 3) {
-        return 1.0;
-    }
-
-    return pointInOcclusionPolygon(pixelPos) ? 1.0 : 0.0;
+    return 1.0;
 }
 
 float regionMask(vec2 pixelPos, vec2 local, float softness)
