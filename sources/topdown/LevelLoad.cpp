@@ -1451,7 +1451,9 @@ static Rectangle BuildOcclusionInterestBounds(
     const float maxX = std::max(r.x + r.width, origin.x);
     const float maxY = std::max(r.y + r.height, origin.y);
 
-    static constexpr float kMargin = 96.0f;
+    const float effectMaxDim = std::max(r.width, r.height);
+    const float kMargin = std::max(768.0f, effectMaxDim * 1.5f);
+    //static constexpr float kMargin = 1200.0f;
     return Rectangle{
             minX - kMargin,
             minY - kMargin,

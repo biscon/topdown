@@ -5195,7 +5195,7 @@
                         {
                          "name":"occludedByWalls",
                          "type":"bool",
-                         "value":false
+                         "value":true
                         }, 
                         {
                          "name":"placement",
@@ -5970,7 +5970,7 @@
                         {
                          "name":"occludedByWalls",
                          "type":"bool",
-                         "value":false
+                         "value":true
                         }, 
                         {
                          "name":"placement",
