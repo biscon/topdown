@@ -436,9 +436,15 @@ static PlayerRangedAttackContext BuildPlayerRangedAttackContext(
 
     Vector2 mouseWorld = GetMouseWorldPosition(state);
     mouseWorld = ClampMouseWorldToPlayerShootingDeadzone(state, mouseWorld, ctx.muzzleWorld);
-    (void)mouseWorld;
 
-    ctx.baseDir = BuildPlayerAttackAimDirection(state);
+    Vector2 baseDir = TopdownSub(mouseWorld, ctx.muzzleWorld);
+    baseDir = TopdownNormalizeOrZero(baseDir);
+
+    if (TopdownLengthSqr(baseDir) <= 0.000001f) {
+        baseDir = BuildPlayerAttackAimDirection(state);
+    }
+
+    ctx.baseDir = baseDir;
     return ctx;
 }
 
