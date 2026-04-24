@@ -18,6 +18,7 @@
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/TopdownPlayerVignette.h"
 #include "topdown/TopdownRvo.h"
+#include "topdown/TopdownRenderTexture.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
 {
@@ -201,10 +202,10 @@ int main()
 
     TopdownRvoInit(state);
 
-    RenderTexture2D worldTarget = LoadRenderTexture(INTERNAL_WIDTH, INTERNAL_HEIGHT);
+    RenderTexture2D worldTarget = LoadTopdownRenderTextureWithStencil(INTERNAL_WIDTH, INTERNAL_HEIGHT);
     SetTextureFilter(worldTarget.texture, TEXTURE_FILTER_BILINEAR);
 
-    RenderTexture2D worldSampleTempTarget = LoadRenderTexture(INTERNAL_WIDTH, INTERNAL_HEIGHT);
+    RenderTexture2D worldSampleTempTarget = LoadTopdownRenderTextureWithStencil(INTERNAL_WIDTH, INTERNAL_HEIGHT);
     SetTextureFilter(worldSampleTempTarget.texture, TEXTURE_FILTER_BILINEAR);
 
     RenderTexture2D uiTarget = LoadRenderTexture(INTERNAL_WIDTH, INTERNAL_HEIGHT);

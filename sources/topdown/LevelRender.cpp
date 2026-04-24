@@ -39,6 +39,36 @@ static Rectangle GetRenderTargetDestRect(const Texture2D& tex)
     };
 }
 
+static void DebugDrawStencilRenderTextureTest()
+{
+    rlDrawRenderBatchActive();
+
+    glEnable(GL_STENCIL_TEST);
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glStencilMask(0xFF);
+
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+    DrawRectangle(200, 200, 400, 300, WHITE);
+
+    rlDrawRenderBatchActive();
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    DrawRectangle(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT, Color{255, 0, 0, 220});
+
+    rlDrawRenderBatchActive();
+
+    glStencilMask(0xFF);
+    glDisable(GL_STENCIL_TEST);
+}
+
 static unsigned char MultiplyU8(unsigned char a, unsigned char b)
 {
     const int value = static_cast<int>(a) * static_cast<int>(b);
@@ -1231,6 +1261,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
+    DebugDrawStencilRenderTextureTest();
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
