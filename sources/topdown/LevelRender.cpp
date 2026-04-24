@@ -1,7 +1,9 @@
 #include "topdown/LevelRender.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "data/GameState.h"
@@ -18,6 +20,7 @@
 #include "input/Input.h"
 #include "LevelWindows.h"
 #include "ui/NarrationPopups.h"
+#include "utils/earcut.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -170,20 +173,55 @@ static void BeginWallOcclusionStencilMask(const GameState& state, const std::vec
     glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
     if (worldPolygon.size() >= 3) {
-        rlSetTexture(0);
-        rlBegin(RL_TRIANGLES);
-        rlColor4ub(255, 255, 255, 255);
+        using Point = std::array<double, 2>;
+        std::vector<std::vector<Point>> polygon;
+        polygon.emplace_back();
+        polygon[0].reserve(worldPolygon.size());
 
-        const Vector2 origin = TopdownWorldToScreen(state, worldPolygon[0]);
-        for (size_t i = 1; i + 1 < worldPolygon.size(); ++i) {
-            const Vector2 b = TopdownWorldToScreen(state, worldPolygon[i]);
-            const Vector2 c = TopdownWorldToScreen(state, worldPolygon[i + 1]);
-            rlVertex2f(origin.x, origin.y);
-            rlVertex2f(b.x, b.y);
-            rlVertex2f(c.x, c.y);
+        for (const Vector2& worldPoint : worldPolygon) {
+            const Vector2 screenPoint = TopdownWorldToScreen(state, worldPoint);
+            polygon[0].push_back(Point{
+                    static_cast<double>(screenPoint.x),
+                    static_cast<double>(screenPoint.y)
+            });
         }
 
-        rlEnd();
+        const std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
+
+        if (indices.size() >= 3) {
+            rlDisableBackfaceCulling();
+
+            const std::vector<Point>& verts = polygon[0];
+
+            for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+                const uint32_t ia = indices[i + 0];
+                const uint32_t ib = indices[i + 1];
+                const uint32_t ic = indices[i + 2];
+
+                if (ia >= verts.size() || ib >= verts.size() || ic >= verts.size()) {
+                    continue;
+                }
+
+                const Vector2 a{
+                        static_cast<float>(verts[ia][0]),
+                        static_cast<float>(verts[ia][1])
+                };
+
+                const Vector2 b{
+                        static_cast<float>(verts[ib][0]),
+                        static_cast<float>(verts[ib][1])
+                };
+
+                const Vector2 c{
+                        static_cast<float>(verts[ic][0]),
+                        static_cast<float>(verts[ic][1])
+                };
+
+                DrawTriangle(a, b, c, WHITE);
+            }
+
+            rlEnableBackfaceCulling();
+        }
     }
 
     rlDrawRenderBatchActive();
