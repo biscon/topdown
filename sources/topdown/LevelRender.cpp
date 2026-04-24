@@ -19,6 +19,8 @@
 #include "LevelWindows.h"
 #include "ui/NarrationPopups.h"
 
+#include "external/glfw/include/GLFW/glfw3.h"
+
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
     return Rectangle{
@@ -38,6 +40,7 @@ static Rectangle GetRenderTargetDestRect(const Texture2D& tex)
             static_cast<float>(tex.height)
     };
 }
+
 
 static unsigned char MultiplyU8(unsigned char a, unsigned char b)
 {
