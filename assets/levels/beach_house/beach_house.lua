@@ -24,7 +24,7 @@ function Level_onEnter()
         }
     )
     --]]
-    startScript("IntroNarration")
+    --startScript("IntroNarration")
 end
 
 function IntroNarration()
