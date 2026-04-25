@@ -24,6 +24,10 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+static constexpr float kPointMergeDistanceSqr = 16.0f;
+static constexpr float kAngleEpsilon = 0.0004f;
+static constexpr float kMargin = 400.0f;
+
 static std::string NormalizePath(const fs::path& p)
 {
     return p.lexically_normal().string();
@@ -1613,9 +1617,9 @@ static Rectangle BuildOcclusionInterestBounds(
     const float maxX = std::max(r.x + r.width, origin.x);
     const float maxY = std::max(r.y + r.height, origin.y);
 
-    const float effectMaxDim = std::max(r.width, r.height);
-    const float kMargin = std::max(768.0f, effectMaxDim * 1.5f);
-    //static constexpr float kMargin = 1200.0f;
+    //const float effectMaxDim = std::max(r.width, r.height);
+    //const float kMargin = std::max(768.0f, effectMaxDim * 1.5f);
+
     return Rectangle{
             minX - kMargin,
             minY - kMargin,
@@ -1717,7 +1721,6 @@ static bool BuildWallOcclusionPolygon(
         rayAngles.reserve(targetAngleCount);
     }
 
-    static constexpr float kAngleEpsilon = 0.0002f;
 
     for (int candidateIndex : candidateSegmentIndices) {
         const TopdownSegment& seg = segmentCache.segments[candidateIndex];
@@ -1793,7 +1796,6 @@ static bool BuildWallOcclusionPolygon(
 
     outPolygon.reserve(hits.size());
 
-    static constexpr float kPointMergeDistanceSqr = 1.0f;
 
     for (const TopdownOcclusionHitPoint& hit : hits) {
         if (!outPolygon.empty() &&
