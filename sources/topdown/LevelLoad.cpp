@@ -24,8 +24,8 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-static constexpr float kPointMergeDistanceSqr = 16.0f;
-static constexpr float kAngleEpsilon = 0.0004f;
+static constexpr float kPointMergeDistanceSqr = 25.0f;
+static constexpr float kAngleEpsilon = 0.0008f;
 static constexpr float kMargin = 400.0f;
 
 static std::string NormalizePath(const fs::path& p)
