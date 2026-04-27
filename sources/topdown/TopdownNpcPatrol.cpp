@@ -10,6 +10,14 @@
 
 namespace {
     constexpr float kPatrolArriveRadius = 14.0f;
+    static constexpr float kPatrolStuckCheckIntervalMs = 500.0f;
+    static constexpr float kPatrolStuckMinProgressSqr = 12.0f * 12.0f;
+
+    static constexpr float kPatrolYieldMinMs = 300.0f;
+    static constexpr float kPatrolYieldMaxMs = 900.0f;
+
+    static constexpr int kPatrolBacktrackAfterStuckCount = 3;
+    static constexpr float kPatrolBacktrackChance = 0.5f;
 
     const TopdownAuthoredSpawn* FindSpawnById(GameState& state, const std::string& spawnId)
     {
@@ -101,6 +109,69 @@ namespace {
             return;
         }
 
+        TopdownStopNpcMovement(npc);
+    }
+
+    void ResetPatrolDeadlockWatchdog(TopdownNpcRuntime& npc)
+    {
+        npc.patrolLastProgressPosition = npc.position;
+        npc.patrolStuckTimerMs = 0.0f;
+        npc.patrolYieldTimerMs = 0.0f;
+        npc.patrolStuckCount = 0;
+        npc.patrolIsYielding = false;
+    }
+
+    void BeginPatrolProgressTracking(TopdownNpcRuntime& npc)
+    {
+        npc.patrolLastProgressPosition = npc.position;
+        npc.patrolStuckTimerMs = 0.0f;
+    }
+
+    void PatrolGoToPreviousWaypoint(TopdownNpcRuntime& npc)
+    {
+        TopdownNpcPatrolState& patrol = npc.scriptBehavior.patrol;
+        if (patrol.spawnIds.empty()) {
+            patrol.currentPointIndex = 0;
+            return;
+        }
+
+        if (patrol.currentPointIndex <= 0) {
+            patrol.currentPointIndex =
+                    patrol.loop
+                            ? static_cast<int>(patrol.spawnIds.size()) - 1
+                            : 0;
+            return;
+        }
+
+        patrol.currentPointIndex -= 1;
+    }
+
+    void PatrolReissueMoveToCurrentWaypoint(
+            GameState& state,
+            TopdownNpcRuntime& npc,
+            Vector2 patrolTarget,
+            const TopdownNpcPatrolState& patrol)
+    {
+        TopdownBuildNpcPathToTarget(
+                state,
+                npc,
+                patrolTarget,
+                TopdownNpcMoveOwner::Patrol);
+
+        if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Patrol) {
+            npc.move.running = patrol.running;
+            npc.running = patrol.running;
+            BeginPatrolProgressTracking(npc);
+        }
+    }
+
+    void EnterPatrolYield(TopdownNpcRuntime& npc)
+    {
+        npc.patrolIsYielding = true;
+        npc.patrolYieldTimerMs = RandomRangeFloat(kPatrolYieldMinMs, kPatrolYieldMaxMs);
+
+        npc.move.hasTarget = false;
+        npc.currentVelocity = Vector2{};
         TopdownStopNpcMovement(npc);
     }
 
@@ -419,6 +490,7 @@ bool TopdownAssignNpcPatrolRoute(
     behavior.patrol.currentPointIndex = 0;
     behavior.patrol.interrupted = false;
 
+    ResetPatrolDeadlockWatchdog(npc);
     StopPatrolScriptMove(npc);
     return true;
 }
@@ -427,6 +499,7 @@ void TopdownClearNpcPatrol(GameState& state, TopdownNpcRuntime& npc)
 {
     ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
     StopPatrolScriptMove(npc);
+    ResetPatrolDeadlockWatchdog(npc);
     npc.scriptBehavior = {};
 }
 
@@ -440,6 +513,7 @@ bool TopdownPauseNpcPatrol(GameState& state, TopdownNpcRuntime& npc)
     ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
     npc.scriptBehavior.patrol.paused = true;
     StopPatrolScriptMove(npc);
+    ResetPatrolDeadlockWatchdog(npc);
     return true;
 }
 
@@ -455,6 +529,7 @@ bool TopdownInterruptNpcPatrol(GameState& state, TopdownNpcRuntime& npc)
     patrol.waitTimerMs = 0.0f;
     ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
     StopPatrolScriptMove(npc);
+    ResetPatrolDeadlockWatchdog(npc);
     return true;
 }
 
@@ -467,6 +542,7 @@ bool TopdownResumeNpcPatrol(TopdownNpcRuntime& npc)
 
     npc.scriptBehavior.patrol.paused = false;
     npc.scriptBehavior.patrol.interrupted = false;
+    ResetPatrolDeadlockWatchdog(npc);
     return true;
 }
 
@@ -526,6 +602,7 @@ void TopdownUpdateNpcPatrol(
         patrol.waitTimerMs -= dt * 1000.0f;
         if (patrol.waitTimerMs <= 0.0f) {
             AdvancePatrolPoint(state, npc);
+            BeginPatrolProgressTracking(npc);
         }
         return;
     }
@@ -533,6 +610,33 @@ void TopdownUpdateNpcPatrol(
     const bool hasActivePatrolMove =
             npc.move.active &&
             npc.move.owner == TopdownNpcMoveOwner::Patrol;
+
+    const float dtMs = dt * 1000.0f;
+    if (npc.patrolIsYielding) {
+        npc.patrolYieldTimerMs -= dtMs;
+        if (npc.patrolYieldTimerMs > 0.0f) {
+            return;
+        }
+
+        npc.patrolIsYielding = false;
+        npc.patrolYieldTimerMs = 0.0f;
+
+        if (npc.patrolStuckCount >= kPatrolBacktrackAfterStuckCount) {
+            const float backtrackRoll =
+                    static_cast<float>(GetRandomValue(0, 10000)) / 10000.0f;
+            if (backtrackRoll < kPatrolBacktrackChance) {
+                PatrolGoToPreviousWaypoint(npc);
+                npc.patrolStuckCount = 0;
+                patrol.waitTimerMs = 0.0f;
+                ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
+                BeginPatrolProgressTracking(npc);
+                return;
+            }
+        }
+
+        PatrolReissueMoveToCurrentWaypoint(state, npc, patrolTarget, patrol);
+        return;
+    }
 
     if (hasActivePatrolMove) {
         const bool patrolMoveMatchesTarget =
@@ -542,32 +646,41 @@ void TopdownUpdateNpcPatrol(
         if (patrolMoveMatchesTarget) {
             npc.move.running = patrol.running;
             npc.running = patrol.running;
+
+            npc.patrolStuckTimerMs += dtMs;
+            if (npc.patrolStuckTimerMs >= kPatrolStuckCheckIntervalMs) {
+                const float distSqr =
+                        TopdownLengthSqr(TopdownSub(npc.position, npc.patrolLastProgressPosition));
+                if (distSqr < kPatrolStuckMinProgressSqr) {
+                    npc.patrolStuckCount++;
+                    EnterPatrolYield(npc);
+                } else {
+                    npc.patrolStuckCount = 0;
+                }
+
+                npc.patrolLastProgressPosition = npc.position;
+                npc.patrolStuckTimerMs = 0.0f;
+            }
             return;
         }
 
         TopdownStopNpcMovement(npc);
+        BeginPatrolProgressTracking(npc);
     }
 
     if (TopdownHasNpcReachedPoint(npc, patrolTarget, kPatrolArriveRadius)) {
         if (patrol.waitDurationMs > 0.0f) {
             patrol.waitTimerMs = patrol.waitDurationMs;
+            BeginPatrolProgressTracking(npc);
             return;
         }
 
         AdvancePatrolPoint(state, npc);
+        BeginPatrolProgressTracking(npc);
         return;
     }
 
-    TopdownBuildNpcPathToTarget(
-            state,
-            npc,
-            patrolTarget,
-            TopdownNpcMoveOwner::Patrol);
-
-    if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Patrol) {
-        npc.move.running = patrol.running;
-        npc.running = patrol.running;
-    }
+    PatrolReissueMoveToCurrentWaypoint(state, npc, patrolTarget, patrol);
 }
 
 void TopdownPruneNpcPatrolContexts(GameState& state)
