@@ -1194,6 +1194,8 @@ struct TopdownNpcRuntime {
     Vector2 investigationPosition{};
 
     float repathTimerMs = 0.0f;
+    int strafeDir = 1;
+    float strafeTimerMs = 0.0f;
 
     bool attackHitPending = false;
     bool attackHitApplied = false;

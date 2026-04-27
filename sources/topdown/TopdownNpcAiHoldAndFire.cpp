@@ -365,6 +365,12 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
     }
 
     const float dtMs = dt * 1000.0f;
+    npc.strafeTimerMs -= dtMs;
+
+    if (npc.strafeTimerMs <= 0.0f) {
+        npc.strafeDir *= -1;
+        npc.strafeTimerMs = RandomRangeFloat(400.0f, 1200.0f);
+    }
 
     UpdateNpcAttackCooldown(npc, dtMs);
     UpdateNpcRepathTimer(npc, dtMs);
@@ -444,6 +450,34 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
 
     if (perception.seesPlayer) {
         const Vector2 toPlayer = TopdownSub(player.position, npc.position);
+        const Vector2 forward = TopdownNormalizeOrZero(toPlayer);
+        const Vector2 strafeLeft = Vector2{-forward.y, forward.x};
+        const Vector2 strafeRight = Vector2{forward.y, -forward.x};
+        Vector2 strafeDirVec =
+                (npc.strafeDir > 0) ? strafeRight : strafeLeft;
+
+        bool blocked = false;
+        Vector2 hitPoint{};
+        Vector2 hitNormal{};
+        float hitDistance = 120.0f;
+
+        if (RaycastClosestSegmentWithNormal(
+                npc.position,
+                strafeDirVec,
+                state.topdown.runtime.collision.visionSegments,
+                120.0f,
+                hitPoint,
+                hitNormal,
+                hitDistance)) {
+            blocked = true;
+        }
+
+        if (blocked) {
+            npc.strafeDir *= -1;
+            strafeDirVec =
+                    (npc.strafeDir > 0) ? strafeRight : strafeLeft;
+        }
+
         const float centerDist = TopdownLength(toPlayer);
         const float edgeDist = centerDist - player.radius - npc.collisionRadius;
 
@@ -460,7 +494,20 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
             chaseTarget = TopdownAdd(npc.position, TopdownMul(awayDir, 100.0f));
             hasChaseTarget = true;
         } else {
-            TopdownStopNpcMovement(npc);
+            Vector2 strafeTarget =
+                    TopdownAdd(npc.position, TopdownMul(strafeDirVec, 120.0f));
+
+            TopdownBuildNpcPathToTarget(
+                    state,
+                    npc,
+                    strafeTarget,
+                    TopdownNpcMoveOwner::Ai);
+
+            if (npc.move.active && npc.move.owner == TopdownNpcMoveOwner::Ai) {
+                npc.move.running = false;
+                npc.running = false;
+            }
+
             TopdownResetNpcChaseStuckWatchdog(npc);
             hasChaseTarget = false;
         }
