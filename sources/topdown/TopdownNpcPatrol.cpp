@@ -15,6 +15,8 @@ namespace {
 
     static constexpr float kPatrolYieldMinMs = 300.0f;
     static constexpr float kPatrolYieldMaxMs = 900.0f;
+    static constexpr float kPatrolRetryDelayMinMs = 50.0f;
+    static constexpr float kPatrolRetryDelayMaxMs = 150.0f;
 
     static constexpr int kPatrolBacktrackAfterStuckCount = 3;
     static constexpr float kPatrolBacktrackChance = 0.5f;
@@ -117,8 +119,10 @@ namespace {
         npc.patrolLastProgressPosition = npc.position;
         npc.patrolStuckTimerMs = 0.0f;
         npc.patrolYieldTimerMs = 0.0f;
+        npc.patrolRetryDelayMs = 0.0f;
         npc.patrolStuckCount = 0;
         npc.patrolIsYielding = false;
+        npc.patrolIsRetryDelay = false;
     }
 
     void BeginPatrolProgressTracking(TopdownNpcRuntime& npc)
@@ -168,10 +172,8 @@ namespace {
     void EnterPatrolYield(TopdownNpcRuntime& npc)
     {
         npc.patrolIsYielding = true;
+        npc.patrolIsRetryDelay = false;
         npc.patrolYieldTimerMs = RandomRangeFloat(kPatrolYieldMinMs, kPatrolYieldMaxMs);
-
-        npc.move.hasTarget = false;
-        npc.currentVelocity = Vector2{};
         TopdownStopNpcMovement(npc);
     }
 
@@ -620,20 +622,55 @@ void TopdownUpdateNpcPatrol(
 
         npc.patrolIsYielding = false;
         npc.patrolYieldTimerMs = 0.0f;
+        npc.patrolIsRetryDelay = true;
+        npc.patrolRetryDelayMs =
+                RandomRangeFloat(kPatrolRetryDelayMinMs, kPatrolRetryDelayMaxMs);
+        return;
+    }
+
+    if (npc.patrolIsRetryDelay) {
+        npc.patrolRetryDelayMs -= dtMs;
+        if (npc.patrolRetryDelayMs > 0.0f) {
+            return;
+        }
 
         if (npc.patrolStuckCount >= kPatrolBacktrackAfterStuckCount) {
-            const float backtrackRoll =
-                    static_cast<float>(GetRandomValue(0, 10000)) / 10000.0f;
+            const float backtrackRoll = RandomRangeFloat(0.0f, 1.0f);
             if (backtrackRoll < kPatrolBacktrackChance) {
                 PatrolGoToPreviousWaypoint(npc);
                 npc.patrolStuckCount = 0;
                 patrol.waitTimerMs = 0.0f;
                 ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
-                BeginPatrolProgressTracking(npc);
+                if (patrol.currentPointIndex < 0 ||
+                    patrol.currentPointIndex >= static_cast<int>(patrol.spawnIds.size())) {
+                    TopdownClearNpcPatrol(state, npc);
+                    return;
+                }
+
+                const TopdownAuthoredSpawn* backtrackSpawn =
+                        FindSpawnById(state, patrol.spawnIds[patrol.currentPointIndex]);
+                if (backtrackSpawn == nullptr) {
+                    TopdownClearNpcPatrol(state, npc);
+                    return;
+                }
+
+                Vector2 backtrackTarget = backtrackSpawn->position;
+                if (EnsurePatrolSlotForWaypoint(state, npc, *backtrackSpawn)) {
+                    Vector2 slotTarget{};
+                    if (TryGetPatrolTargetPoint(state.topdown.runtime, npc, slotTarget)) {
+                        backtrackTarget = slotTarget;
+                    }
+                }
+
+                npc.patrolIsRetryDelay = false;
+                npc.patrolRetryDelayMs = 0.0f;
+                PatrolReissueMoveToCurrentWaypoint(state, npc, backtrackTarget, patrol);
                 return;
             }
         }
 
+        npc.patrolIsRetryDelay = false;
+        npc.patrolRetryDelayMs = 0.0f;
         PatrolReissueMoveToCurrentWaypoint(state, npc, patrolTarget, patrol);
         return;
     }
