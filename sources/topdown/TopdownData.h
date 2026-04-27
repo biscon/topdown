@@ -863,10 +863,25 @@ struct TopdownCameraData {
     float smoothing = 10.0f;
 };
 
+enum class TopdownCameraMode {
+    Player,
+    Scripted,
+    Manual
+};
+
 struct TopdownCameraRuntime {
     Vector2 position{};
     Vector2 targetPosition{};
     Vector2 aimOffset{};
+
+    TopdownCameraMode mode = TopdownCameraMode::Player;
+
+    Vector2 scriptedTarget{};
+    Vector2 panStart{};
+    Vector2 panEnd{};
+    float panTimerMs = 0.0f;
+    float panDurationMs = 0.0f;
+    bool isPanning = false;
 };
 
 enum class TopdownLocomotionType {

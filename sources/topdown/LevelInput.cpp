@@ -1,13 +1,23 @@
 #include "topdown/LevelInput.h"
 #include "input/Input.h"
 #include "topdown/PlayerRegistry.h"
+#include "LevelCamera.h"
 
 void TopdownHandleInput(GameState& state)
 {
     for (auto& ev : FilterEvents(state.input, true, InputEventType::KeyPressed)) {
         switch (ev.key.key) {
             case KEY_F1:
-                state.topdown.runtime.debug.showBlockers = !state.topdown.runtime.debug.showBlockers;
+                if (IsKeyDown(KEY_LEFT_SHIFT)) {
+                    TopdownCameraRuntime& cameraRuntime = state.topdown.runtime.camera;
+                    if (cameraRuntime.mode == TopdownCameraMode::Manual) {
+                        TopdownInitCamera(state);
+                    } else {
+                        cameraRuntime.mode = TopdownCameraMode::Manual;
+                    }
+                } else {
+                    state.topdown.runtime.debug.showBlockers = !state.topdown.runtime.debug.showBlockers;
+                }
                 ConsumeEvent(ev);
                 break;
 

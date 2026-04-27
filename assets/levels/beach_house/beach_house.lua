@@ -8,7 +8,7 @@ function Level_onEnter()
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
     startScript("BeachHouseAudioLoop")
-    --SpawnThugPatrol()
+    SpawnGuardPatrol()
     --[[
     spawnPatrol(
         "guard_",
@@ -63,30 +63,37 @@ function WalkAround()
     enableControls()
 end
 
-function SpawnThugPatrol()
-    spawnNpcSmart("guard_a", "zombie", "patrol_start", false)
-    spawnNpcSmart("guard_b", "zombie", "patrol_start", false)
-    spawnNpcSmart("guard_c", "zombie", "patrol_start", false)
-    spawnNpcSmart("guard_d", "zombie", "patrol_start", false)
+function SpawnGuardPatrol()
+    spawnNpcSmart("guard_a", "knifethug", "patrol_start", false)
+    spawnNpcSmart("guard_b", "knifethug", "patrol_start", false)
+    spawnNpcSmart("guard_c", "knifethug", "patrol_start", false)
+    spawnNpcSmart("guard_d", "knifethug", "patrol_start", false)
     assignNpcPatrolRoute("guard_a", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
-        waitMs = 0
+        waitMs = 3000
     })
     assignNpcPatrolRoute("guard_b", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
-        waitMs = 0
+        waitMs = 2000
     })
     assignNpcPatrolRoute("guard_c", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
-        waitMs = 0
+        waitMs = 3000
     })
     assignNpcPatrolRoute("guard_d", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
-        waitMs = 0
+        waitMs = 2000
+    })
+
+    spawnNpcSmart("patrol_2_guard_1", "knifethug", "patrol_2_1", false)
+    assignNpcPatrolRoute("patrol_2_guard_1", {"patrol_2_2", "patrol_2_3", "patrol_2_1"}, {
+        loop = true,
+        running = false,
+        waitMs = 5000
     })
 end
 

@@ -195,6 +195,61 @@ bool TopdownScriptShowNarration(
     return TopdownQueueNarrationPopup(state, title, body, durationSeconds);
 }
 
+bool TopdownScriptEnableScriptCamera(GameState& state)
+{
+    TopdownCameraRuntime& cameraRuntime = state.topdown.runtime.camera;
+    const TopdownCameraData& camera = state.topdown.camera;
+
+    cameraRuntime.mode = TopdownCameraMode::Scripted;
+    cameraRuntime.scriptedTarget = Vector2{
+            cameraRuntime.position.x + camera.viewportWidth * 0.5f,
+            cameraRuntime.position.y + camera.viewportHeight * 0.5f
+    };
+    cameraRuntime.isPanning = false;
+    return true;
+}
+
+bool TopdownScriptDisableScriptCamera(GameState& state)
+{
+    state.topdown.runtime.camera.mode = TopdownCameraMode::Player;
+    state.topdown.runtime.camera.isPanning = false;
+    state.topdown.runtime.camera.aimOffset = Vector2{};
+    return true;
+}
+
+bool TopdownScriptSetCameraTarget(GameState& state, const std::string& spawnId)
+{
+    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    if (spawn == nullptr) {
+        return false;
+    }
+
+    TopdownCameraRuntime& camera = state.topdown.runtime.camera;
+    camera.scriptedTarget = spawn->position;
+    camera.isPanning = false;
+    return true;
+}
+
+bool TopdownScriptPanCameraTarget(GameState& state, const std::string& spawnId, float durationMs)
+{
+    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    if (spawn == nullptr) {
+        return false;
+    }
+
+    TopdownCameraRuntime& cameraRuntime = state.topdown.runtime.camera;
+    const TopdownCameraData& camera = state.topdown.camera;
+
+    cameraRuntime.panStart = Vector2{
+            cameraRuntime.position.x + camera.viewportWidth * 0.5f,
+            cameraRuntime.position.y + camera.viewportHeight * 0.5f};
+    cameraRuntime.panEnd = spawn->position;
+    cameraRuntime.panDurationMs = durationMs;
+    cameraRuntime.panTimerMs = 0.0f;
+    cameraRuntime.isPanning = true;
+    return true;
+}
+
 // --------------------------------------------------
 // Scripted player movement
 // --------------------------------------------------
