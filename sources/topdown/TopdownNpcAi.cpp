@@ -7,6 +7,8 @@
 #include "TopdownNpcPatrol.h"
 #include "NpcRegistry.h"
 
+static constexpr float kEngagedLostTargetGraceMs = 700.0f;
+
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
 {
     if (!npc.active) {
@@ -23,6 +25,7 @@ static void FreezeNpcAiState(TopdownNpcRuntime& npc)
     npc.attackStateTimeMs = 0.0f;
     npc.attackAnimationDurationMs = 0.0f;
     npc.currentVelocity = Vector2{};
+    npc.engagedLostTargetTimerMs = 0.0f;
 }
 
 static void DispatchNpcInvestigatingExecution(GameState& state, TopdownNpcRuntime& npc,
@@ -91,6 +94,7 @@ static void UpdateNpcEngagementState(
         float dt)
 {
     const float dtMs = dt * 1000.0f;
+
     npc.investigationRetargetCooldownMs -= dtMs;
     if (npc.investigationRetargetCooldownMs < 0.0f) {
         npc.investigationRetargetCooldownMs = 0.0f;
@@ -105,6 +109,8 @@ static void UpdateNpcEngagementState(
             : 0.0f;
 
     if (perception.detectsPlayer) {
+        npc.engagedLostTargetTimerMs = 0.0f;
+
         const bool newlyDetectedPlayer =
                 !npc.hasPlayerTarget;
 
@@ -124,6 +130,7 @@ static void UpdateNpcEngagementState(
                 npc.reactionTimerMs = reactionTimeMs;
                 npc.hasReactedToPlayer = true;
                 npc.engagementState = TopdownNpcEngagementState::Engaged;
+
                 const float nearbyAlertRadius =
                         std::max(180.0f, npc.hearingRange);
 
@@ -139,14 +146,24 @@ static void UpdateNpcEngagementState(
         return;
     }
 
-    // Lost current direct detection: clear reaction gate so reacquiring the player
-    // later will require a new reaction delay.
+    if (npc.engagementState == TopdownNpcEngagementState::Engaged &&
+        npc.hasPlayerTarget &&
+        !npc.persistentChase) {
+        npc.engagedLostTargetTimerMs += dtMs;
+
+        if (npc.engagedLostTargetTimerMs < kEngagedLostTargetGraceMs) {
+            npc.engagementState = TopdownNpcEngagementState::Engaged;
+            return;
+        }
+
+        npc.engagedLostTargetTimerMs = 0.0f;
+    }
+
     npc.reactionTimerMs = 0.0f;
     npc.hasReactedToPlayer = false;
 
     if (perception.heardGunshot &&
         npc.engagementState != TopdownNpcEngagementState::Engaged) {
-
         const float distToCurrentInvestigation =
                 TopdownLength(TopdownSub(
                         perception.heardGunshotPosition,
@@ -172,6 +189,7 @@ static void UpdateNpcEngagementState(
     if (npc.hasPlayerTarget) {
         if (npc.persistentChase) {
             npc.engagementState = TopdownNpcEngagementState::Engaged;
+            npc.engagedLostTargetTimerMs = 0.0f;
             return;
         }
 
@@ -181,6 +199,7 @@ static void UpdateNpcEngagementState(
                 npc.combatState = TopdownNpcCombatState::None;
                 npc.engagementState = TopdownNpcEngagementState::Investigating;
                 TopdownStopNpcMovement(npc);
+                npc.engagedLostTargetTimerMs = 0.0f;
                 return;
 
             case TopdownNpcEngagementState::Investigating:
@@ -199,6 +218,7 @@ static void UpdateNpcEngagementState(
 
     npc.combatState = TopdownNpcCombatState::None;
     npc.engagementState = TopdownNpcEngagementState::Unaware;
+    npc.engagedLostTargetTimerMs = 0.0f;
 }
 
 void TopdownUpdateNpcAi(GameState& state, float dt)

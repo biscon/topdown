@@ -24,10 +24,11 @@ function Level_onEnter()
     )
     --]]
 
+    SpawnGuardPatrol()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
-        SpawnGuardPatrol()
-        startScript("IntroNarration")
+
+        --startScript("IntroNarration")
     end
 end
 
@@ -80,10 +81,10 @@ function WalkAround()
 end
 
 function SpawnGuardPatrol()
-    spawnNpcSmart("guard_a", "knifethug", "patrol_start", false)
-    spawnNpcSmart("guard_b", "knifethug", "patrol_start", false)
-    spawnNpcSmart("guard_c", "knifethug", "patrol_start", false)
-    spawnNpcSmart("guard_d", "knifethug", "patrol_start", false)
+    spawnNpcSmart("guard_a", "pistolthug", "patrol_start", false)
+    spawnNpcSmart("guard_b", "pistolthug", "patrol_start", false)
+    spawnNpcSmart("guard_c", "pistolthug", "patrol_start", false)
+    spawnNpcSmart("guard_d", "pistolthug", "patrol_start", false)
     assignNpcPatrolRoute("guard_a", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,

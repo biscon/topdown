@@ -1266,6 +1266,10 @@ struct TopdownNpcRuntime {
 
     float reactionTimerMs = 0.0f;
     bool hasReactedToPlayer = false;
+
+    int strafeDir = 1;
+    float strafeTimerMs = 0.0f;
+    float engagedLostTargetTimerMs = 0.0f;
 };
 
 struct TopdownNpcInvestigationSlot {
