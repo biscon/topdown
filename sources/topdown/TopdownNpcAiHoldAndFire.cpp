@@ -294,10 +294,21 @@ void TopdownNpcAiHoldAndFire_UpdateInvestigating(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
+    TraceLog(
+            LOG_INFO,
+            "HoldAndFire investigating tick: combatState=%d engagementState=%d",
+            static_cast<int>(npc.combatState),
+            static_cast<int>(npc.engagementState));
+
     if (npc.combatState != TopdownNpcCombatState::Investigation &&
         npc.combatState != TopdownNpcCombatState::Search) {
-        if (!TopdownBeginNpcInvestigationState(state, npc)) {
-            TopdownBeginNpcSearchState(npc);
+        if (TopdownBeginNpcInvestigationState(state, npc)) {
+            TraceLog(
+                    LOG_INFO,
+                    "HoldAndFire began investigation successfully (combatState=%d)",
+                    static_cast<int>(npc.combatState));
+        } else {
+            TraceLog(LOG_WARNING, "HoldAndFire failed to begin investigation");
         }
         return;
     }
@@ -351,6 +362,11 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
 
     if (!TopdownIsPlayerAlive(state)) {
         StopNpcEngagedExecution(npc);
+        return;
+    }
+
+    if (npc.combatState == TopdownNpcCombatState::Investigation ||
+        npc.engagementState == TopdownNpcEngagementState::Investigating) {
         return;
     }
 
