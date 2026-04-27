@@ -190,6 +190,9 @@ static void UpdateScriptedCamera(GameState& state, float dt)
         runtime.position.y = runtime.scriptedTarget.y - camera.viewportHeight * 0.5f;
     }
 
+    runtime.position.x = std::round(runtime.position.x);
+    runtime.position.y = std::round(runtime.position.y);
+
     ClampCameraPositionToLevel(state, runtime.position);
 }
 

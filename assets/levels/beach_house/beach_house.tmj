@@ -6684,7 +6684,7 @@
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":90
+                         "value":45
                         }, 
                         {
                          "name":"persistentChase",
@@ -6695,8 +6695,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":710.333333333333,
-                 "y":328.333333333333
+                 "x":709.666666666666,
+                 "y":317.666666666666
                 }, 
                 {
                  "height":0,
@@ -7998,8 +7998,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":434,
-                 "y":-545.333333333333
+                 "x":436,
+                 "y":-551.333333333333
                 }, 
                 {
                  "height":0,
@@ -8043,8 +8043,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":849.333333333333,
-                 "y":-522
+                 "x":959.333333333333,
+                 "y":-643.333333333333
                 }, 
                 {
                  "height":0,
@@ -8071,6 +8071,45 @@
                  "width":0,
                  "x":860.666666666667,
                  "y":-308.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":186,
+                 "name":"intro_camera_1",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":873.333333333333,
+                 "y":-524
+                }, 
+                {
+                 "height":0,
+                 "id":187,
+                 "name":"intro_camera_2",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":192.666666666667,
+                 "y":-546.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":188,
+                 "name":"intro_camera_3",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":200,
+                 "y":-160
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -8081,7 +8120,7 @@
          "y":0
         }],
  "nextlayerid":87,
- "nextobjectid":186,
+ "nextobjectid":189,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

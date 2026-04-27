@@ -8,7 +8,6 @@ function Level_onEnter()
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
     startScript("BeachHouseAudioLoop")
-    -- SpawnGuardPatrol()
     --[[
     spawnPatrol(
         "guard_",
@@ -24,17 +23,34 @@ function Level_onEnter()
         }
     )
     --]]
-    --startScript("IntroNarration")
+
+    if not flag("beach_house_init") then
+        setFlag("beach_house_init", true)
+        SpawnGuardPatrol()
+        startScript("IntroNarration")
+    end
 end
 
 function IntroNarration()
+    disableControls()
+    enableScriptCamera()
     playMusic("pistolero", 3000)
+    --playSound("drama")
     delay(3000)
+    panCameraTarget("intro_camera_1", 7000)
     showNarration("Coming Home", "Upon returning to my idyllic beach house, I noticed something was off.", 5)
     delay(7000)
+    panCameraTarget("intro_camera_2", 7000)
     showNarration("Coming Home", "At first, it was the cars - too many of them, all lined up along the pavement like they belonged to the same man.", 5)
     delay(7000)
+    panCameraTarget("intro_camera_3", 5000)
     showNarration("Coming Home", "Then there was the silence. Not the peaceful kind you pay good money for out here, but the kind that settles in when something's already gone wrong. I proceeded with caution.", 10)
+    delay(5000)
+    panCameraTarget("default", 5000)
+    delay(5000)
+    disableScriptCamera()
+    enableControls()
+    stopMusic(20000)
 end
 
 local count = 1

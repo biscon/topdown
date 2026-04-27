@@ -46,6 +46,7 @@ bool ShouldRenderAimCursor(const GameState& state)
 {
     return state.mode == GameMode::TopDown &&
            state.topdown.runtime.levelActive &&
+           state.topdown.runtime.controlsEnabled &&
            state.cursor.type == CursorType::Aim;
 }
 
@@ -259,6 +260,8 @@ void RenderCursor(const GameState& state, float scale)
         RenderAimCursor(state, scale);
         return;
     }
-
+    if(state.mode != GameMode::Menu && !state.topdown.runtime.controlsEnabled && !state.topdown.runtime.gameOverActive) {
+        return;
+    }
     RenderBitmapCursor(state, scale);
 }

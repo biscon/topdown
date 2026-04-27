@@ -131,6 +131,7 @@ static void QueueTopdownLevelChange(const std::string& levelId, const std::strin
 
 static void startNewGame()
 {
+    game->script.flags = {};
     QueueTopdownLevelChange("beach_house");
     TraceLog(LOG_DEBUG, "Menu starting new game. Queued first level.");
 }
