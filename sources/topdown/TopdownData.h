@@ -1196,6 +1196,8 @@ struct TopdownNpcRuntime {
     float repathTimerMs = 0.0f;
     int strafeDir = 1;
     float strafeTimerMs = 0.0f;
+    float strafeDecisionTimerMs = 0.0f;
+    bool isStrafing = false;
 
     bool attackHitPending = false;
     bool attackHitApplied = false;

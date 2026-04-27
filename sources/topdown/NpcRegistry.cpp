@@ -1156,6 +1156,8 @@ bool TopdownSpawnNpcRuntime(
     npc.repathTimerMs = 0.0f;
     npc.strafeDir = (GetRandomValue(0, 1) == 0) ? -1 : 1;
     npc.strafeTimerMs = RandomRangeFloat(400.0f, 1200.0f);
+    npc.strafeDecisionTimerMs = RandomRangeFloat(200.0f, 600.0f);
+    npc.isStrafing = false;
 
     npc.attackHitPending = false;
     npc.attackHitApplied = false;
