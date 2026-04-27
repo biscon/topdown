@@ -1180,6 +1180,7 @@ struct TopdownNpcRuntime {
     float visionHalfAngleDegrees = 65.0f;
 
     float attackRange = 95.0f;
+    float preferredAttackRangeFactor = 0.9f;
     float attackCooldownMs = 900.0f;
     float attackCooldownRemainingMs = 0.0f;
     float attackDamage = 25.0f;

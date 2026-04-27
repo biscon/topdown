@@ -1134,6 +1134,7 @@ bool TopdownSpawnNpcRuntime(
     npc.visionHalfAngleDegrees = asset->visionHalfAngleDegrees;
 
     npc.attackRange = asset->attackRange;
+    npc.preferredAttackRangeFactor = RandomRangeFloat(0.8f, 1.0f);
     npc.attackCooldownMs = asset->attackCooldownMs;
     npc.attackCooldownRemainingMs = 0.0f;
     npc.attackDamage = asset->attackDamage;
