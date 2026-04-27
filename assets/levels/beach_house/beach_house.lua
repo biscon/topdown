@@ -78,22 +78,28 @@ function SpawnGuardPatrol()
         running = false,
         waitMs = 2000
     })
-    assignNpcPatrolRoute("guard_c", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+    assignNpcPatrolRoute("guard_c", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
         loop = true,
         running = false,
-        waitMs = 3000
+        waitMs = 4000
     })
-    assignNpcPatrolRoute("guard_d", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
+    assignNpcPatrolRoute("guard_d", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
         loop = true,
         running = false,
         waitMs = 2000
     })
 
-    spawnNpcSmart("patrol_2_guard_1", "knifethug", "patrol_2_1", false)
+    spawnNpcSmart("patrol_2_guard_1", "pistolthug", "patrol_2_1", false)
     assignNpcPatrolRoute("patrol_2_guard_1", {"patrol_2_2", "patrol_2_3", "patrol_2_1"}, {
         loop = true,
         running = false,
         waitMs = 5000
+    })
+    spawnNpcSmart("patrol_2_guard_2", "pistolthug", "patrol_2_3", false)
+    assignNpcPatrolRoute("patrol_2_guard_2", {"patrol_2_2", "patrol_2_1", "patrol_2_3"}, {
+        loop = true,
+        running = false,
+        waitMs = 8000
     })
 end
 

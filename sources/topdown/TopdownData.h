@@ -1249,6 +1249,14 @@ struct TopdownNpcRuntime {
     float chaseStuckTimerMs = 0.0f;
     Vector2 chaseStuckLastPosition{};
 
+    Vector2 patrolLastProgressPosition{};
+    float patrolStuckTimerMs = 0.0f;
+    float patrolYieldTimerMs = 0.0f;
+    float patrolRetryDelayMs = 0.0f;
+    int patrolStuckCount = 0;
+    bool patrolIsYielding = false;
+    bool patrolIsRetryDelay = false;
+
     int investigationContextHandle = -1;
     int investigationSlotIndex = -1;
     float investigationProgressTimerMs = 0.0f;
