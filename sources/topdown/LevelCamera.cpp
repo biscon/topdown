@@ -56,22 +56,7 @@ static void ClampCameraPositionToLevel(const GameState& state, Vector2& pos)
     }
 }
 
-void TopdownInitCamera(GameState& state)
-{
-    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
-    const TopdownCameraData& camera = state.topdown.camera;
-    TopdownCameraRuntime& runtime = state.topdown.runtime.camera;
-
-    runtime.position.x = player.position.x - camera.viewportWidth * 0.5f;
-    runtime.position.y = player.position.y - camera.viewportHeight * 0.5f;
-    runtime.targetPosition = runtime.position;
-
-    ClampCameraPositionToLevel(state, runtime.targetPosition);
-    ClampCameraPositionToLevel(state, runtime.position);
-    runtime.aimOffset = Vector2{0.0f, 0.0f};
-}
-
-void TopdownUpdateCamera(GameState& state, float dt)
+static void UpdatePlayerCamera(GameState& state, float dt)
 {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const TopdownCameraData& camera = state.topdown.camera;
@@ -176,6 +161,97 @@ void TopdownUpdateCamera(GameState& state, float dt)
     runtime.position.y = std::round(runtime.position.y);
 
     ClampCameraPositionToLevel(state, runtime.position);
+}
+
+static void UpdateScriptedCamera(GameState& state, float dt)
+{
+    auto& runtime = state.topdown.runtime.camera;
+    const auto& camera = state.topdown.camera;
+
+    if (runtime.isPanning) {
+        runtime.panTimerMs += dt * 1000.0f;
+
+        const float durationMs = std::max(runtime.panDurationMs, 0.0001f);
+        float t = runtime.panTimerMs / durationMs;
+        t = Clamp(t, 0.0f, 1.0f);
+        t = t * t * (3.0f - 2.0f * t);
+
+        Vector2 pos = Vector2Lerp(runtime.panStart, runtime.panEnd, t);
+
+        runtime.position.x = pos.x - camera.viewportWidth * 0.5f;
+        runtime.position.y = pos.y - camera.viewportHeight * 0.5f;
+
+        if (t >= 1.0f) {
+            runtime.isPanning = false;
+            runtime.scriptedTarget = runtime.panEnd;
+        }
+    } else {
+        runtime.position.x = runtime.scriptedTarget.x - camera.viewportWidth * 0.5f;
+        runtime.position.y = runtime.scriptedTarget.y - camera.viewportHeight * 0.5f;
+    }
+
+    ClampCameraPositionToLevel(state, runtime.position);
+}
+
+static void UpdateManualCamera(GameState& state, float dt)
+{
+    auto& runtime = state.topdown.runtime.camera;
+
+    const float speed = 800.0f;
+
+    Vector2 move{};
+
+    if (IsKeyDown(KEY_W)) move.y -= 1.0f;
+    if (IsKeyDown(KEY_S)) move.y += 1.0f;
+    if (IsKeyDown(KEY_A)) move.x -= 1.0f;
+    if (IsKeyDown(KEY_D)) move.x += 1.0f;
+
+    if (TopdownLengthSqr(move) > 0.0f) {
+        move = TopdownNormalize(move);
+        runtime.position = TopdownAdd(runtime.position, TopdownMul(move, speed * dt));
+    }
+
+    ClampCameraPositionToLevel(state, runtime.position);
+}
+
+void TopdownInitCamera(GameState& state)
+{
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownCameraData& camera = state.topdown.camera;
+    TopdownCameraRuntime& runtime = state.topdown.runtime.camera;
+
+    runtime.position.x = player.position.x - camera.viewportWidth * 0.5f;
+    runtime.position.y = player.position.y - camera.viewportHeight * 0.5f;
+    runtime.targetPosition = runtime.position;
+
+    ClampCameraPositionToLevel(state, runtime.targetPosition);
+    ClampCameraPositionToLevel(state, runtime.position);
+    runtime.aimOffset = Vector2{0.0f, 0.0f};
+    runtime.mode = TopdownCameraMode::Player;
+    runtime.scriptedTarget = player.position;
+    runtime.panStart = runtime.scriptedTarget;
+    runtime.panEnd = runtime.scriptedTarget;
+    runtime.panTimerMs = 0.0f;
+    runtime.panDurationMs = 0.0f;
+    runtime.isPanning = false;
+}
+
+void TopdownUpdateCamera(GameState& state, float dt)
+{
+    TopdownCameraRuntime& runtime = state.topdown.runtime.camera;
+    switch (runtime.mode) {
+        case TopdownCameraMode::Player:
+            UpdatePlayerCamera(state, dt);
+            break;
+
+        case TopdownCameraMode::Scripted:
+            UpdateScriptedCamera(state, dt);
+            break;
+
+        case TopdownCameraMode::Manual:
+            UpdateManualCamera(state, dt);
+            break;
+    }
 }
 
 void TopdownUpdateCameraOLD(GameState& state, float dt)

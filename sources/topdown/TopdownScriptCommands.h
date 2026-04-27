@@ -11,6 +11,10 @@ bool TopdownScriptShowNarration(
         const std::string& title,
         const std::string& body,
         float durationSeconds = 0.0f);
+bool TopdownScriptEnableScriptCamera(GameState& state);
+bool TopdownScriptDisableScriptCamera(GameState& state);
+bool TopdownScriptSetCameraTarget(GameState& state, const std::string& spawnId);
+bool TopdownScriptPanCameraTarget(GameState& state, const std::string& spawnId, float durationMs);
 
 // Scripted player movement
 bool TopdownScriptStartWalkTo(GameState& state, Vector2 target);

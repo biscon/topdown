@@ -460,6 +460,59 @@ static int Lua_enableControls(lua_State* L)
     return 1;
 }
 
+static int Lua_enableScriptCamera(lua_State* L)
+{
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptEnableScriptCamera(*gameState);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_disableScriptCamera(lua_State* L)
+{
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptDisableScriptCamera(*gameState);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setCameraTarget(lua_State* L)
+{
+    const char* spawnId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || spawnId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetCameraTarget(*gameState, std::string(spawnId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_panCameraTarget(lua_State* L)
+{
+    const char* spawnId = luaL_checkstring(L, 1);
+    const float durationMs = static_cast<float>(luaL_checknumber(L, 2));
+
+    if (gameState == nullptr || spawnId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptPanCameraTarget(*gameState, std::string(spawnId), durationMs);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_startScript(lua_State* L)
 {
     const char* functionName = luaL_checkstring(L, 1);
@@ -1205,6 +1258,10 @@ void RegisterLuaAPI(lua_State* L)
 
     lua_register(L, "disableControls", Lua_disableControls);
     lua_register(L, "enableControls", Lua_enableControls);
+    lua_register(L, "enableScriptCamera", Lua_enableScriptCamera);
+    lua_register(L, "disableScriptCamera", Lua_disableScriptCamera);
+    lua_register(L, "setCameraTarget", Lua_setCameraTarget);
+    lua_register(L, "panCameraTarget", Lua_panCameraTarget);
 
     lua_register(L, "startScript", Lua_startScript);
     lua_register(L, "stopScript", Lua_stopScript);

@@ -238,7 +238,9 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
 
     static constexpr float kFeetTurnSpeedRadians = 14.0f;
 
-    if (IsScriptedMoveActive(state)) {
+    if (state.topdown.runtime.camera.mode == TopdownCameraMode::Manual) {
+        runtime.aimFrozen = true;
+    } else if (IsScriptedMoveActive(state)) {
         if (TopdownLengthSqr(player.facing) > 0.0001f) {
             const float scriptedAngle = std::atan2(player.facing.y, player.facing.x);
 
@@ -475,6 +477,14 @@ static void UpdateScriptedPlayerMovement(GameState& state, float dt)
 static void UpdatePlayerMovementIntent(GameState& state)
 {
     TopdownPlayerRuntime& player = state.topdown.runtime.player;
+
+    if (state.topdown.runtime.camera.mode == TopdownCameraMode::Manual) {
+        player.moveInputForward = 0.0f;
+        player.moveInputRight = 0.0f;
+        player.wantsRun = false;
+        player.desiredVelocity = Vector2{};
+        return;
+    }
 
     float inputForward = 0.0f;
     float inputRight = 0.0f;
