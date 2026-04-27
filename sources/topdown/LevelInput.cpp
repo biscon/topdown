@@ -1,6 +1,7 @@
 #include "topdown/LevelInput.h"
 #include "input/Input.h"
 #include "topdown/PlayerRegistry.h"
+#include "LevelCamera.h"
 
 void TopdownHandleInput(GameState& state)
 {

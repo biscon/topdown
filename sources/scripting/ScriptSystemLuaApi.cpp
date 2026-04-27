@@ -1250,7 +1250,6 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "setNpcAnimation", Lua_setNpcAnimation);
     lua_register(L, "clearNpcAnimation", Lua_clearNpcAnimation);
     lua_register(L, "playNpcAnimation", Lua_playNpcAnimation);
-    lua_register(L, "playNpcAnimation", Lua_playNpcAnimation);
     lua_register(L, "assignNpcPatrolRoute", Lua_assignNpcPatrolRoute);
     lua_register(L, "clearNpcPatrol", Lua_clearNpcPatrol);
     lua_register(L, "pauseNpcPatrol", Lua_pauseNpcPatrol);

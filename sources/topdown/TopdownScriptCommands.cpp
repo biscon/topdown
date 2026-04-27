@@ -197,13 +197,23 @@ bool TopdownScriptShowNarration(
 
 bool TopdownScriptEnableScriptCamera(GameState& state)
 {
-    state.topdown.runtime.camera.mode = TopdownCameraMode::Scripted;
+    TopdownCameraRuntime& cameraRuntime = state.topdown.runtime.camera;
+    const TopdownCameraData& camera = state.topdown.camera;
+
+    cameraRuntime.mode = TopdownCameraMode::Scripted;
+    cameraRuntime.scriptedTarget = Vector2{
+            cameraRuntime.position.x + camera.viewportWidth * 0.5f,
+            cameraRuntime.position.y + camera.viewportHeight * 0.5f
+    };
+    cameraRuntime.isPanning = false;
     return true;
 }
 
 bool TopdownScriptDisableScriptCamera(GameState& state)
 {
     state.topdown.runtime.camera.mode = TopdownCameraMode::Player;
+    state.topdown.runtime.camera.isPanning = false;
+    state.topdown.runtime.camera.aimOffset = Vector2{};
     return true;
 }
 
