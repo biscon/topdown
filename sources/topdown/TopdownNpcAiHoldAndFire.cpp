@@ -447,10 +447,17 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         const float centerDist = TopdownLength(toPlayer);
         const float edgeDist = centerDist - player.radius - npc.collisionRadius;
 
-        const float desiredDistance = npc.attackRange * 0.8f;
+        const float desiredDistance =
+                npc.attackRange * npc.preferredAttackRangeFactor;
+        const float tolerance = 20.0f; // small dead zone to prevent jitter
 
-        if (edgeDist > desiredDistance || !clearShot) {
+        if (edgeDist > desiredDistance + tolerance || !clearShot) {
             chaseTarget = player.position;
+            hasChaseTarget = true;
+        } else if (edgeDist < desiredDistance - tolerance) {
+            Vector2 awayDir =
+                    TopdownNormalizeOrZero(TopdownSub(npc.position, player.position));
+            chaseTarget = TopdownAdd(npc.position, TopdownMul(awayDir, 100.0f));
             hasChaseTarget = true;
         } else {
             TopdownStopNpcMovement(npc);
