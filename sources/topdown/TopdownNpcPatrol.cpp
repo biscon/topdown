@@ -638,6 +638,8 @@ void TopdownUpdateNpcPatrol(
             const float backtrackRoll = RandomRangeFloat(0.0f, 1.0f);
             if (backtrackRoll < kPatrolBacktrackChance) {
                 PatrolGoToPreviousWaypoint(npc);
+                ResetPatrolDeadlockWatchdog(npc);
+                BeginPatrolProgressTracking(npc);
                 npc.patrolStuckCount = 0;
                 patrol.waitTimerMs = 0.0f;
                 ReleaseNpcPatrolSlot(state.topdown.runtime, npc);
@@ -664,14 +666,31 @@ void TopdownUpdateNpcPatrol(
 
                 npc.patrolIsRetryDelay = false;
                 npc.patrolRetryDelayMs = 0.0f;
+                BeginPatrolProgressTracking(npc);
                 PatrolReissueMoveToCurrentWaypoint(state, npc, backtrackTarget, patrol);
                 return;
             }
         }
 
+        const TopdownAuthoredSpawn* retrySpawn =
+                FindSpawnById(state, patrol.spawnIds[patrol.currentPointIndex]);
+        if (retrySpawn == nullptr) {
+            TopdownClearNpcPatrol(state, npc);
+            return;
+        }
+
+        Vector2 retryTarget = retrySpawn->position;
+        if (EnsurePatrolSlotForWaypoint(state, npc, *retrySpawn)) {
+            Vector2 slotTarget{};
+            if (TryGetPatrolTargetPoint(state.topdown.runtime, npc, slotTarget)) {
+                retryTarget = slotTarget;
+            }
+        }
+
         npc.patrolIsRetryDelay = false;
         npc.patrolRetryDelayMs = 0.0f;
-        PatrolReissueMoveToCurrentWaypoint(state, npc, patrolTarget, patrol);
+        BeginPatrolProgressTracking(npc);
+        PatrolReissueMoveToCurrentWaypoint(state, npc, retryTarget, patrol);
         return;
     }
 
