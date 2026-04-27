@@ -8,7 +8,7 @@ function Level_onEnter()
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
     startScript("BeachHouseAudioLoop")
-    SpawnGuardPatrol()
+    -- SpawnGuardPatrol()
     --[[
     spawnPatrol(
         "guard_",

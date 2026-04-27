@@ -294,12 +294,6 @@ void TopdownNpcAiHoldAndFire_UpdateInvestigating(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
-    TraceLog(
-            LOG_INFO,
-            "HoldAndFire investigating tick: combatState=%d engagementState=%d",
-            static_cast<int>(npc.combatState),
-            static_cast<int>(npc.engagementState));
-
     if (npc.combatState != TopdownNpcCombatState::Investigation &&
         npc.combatState != TopdownNpcCombatState::Search) {
         if (TopdownBeginNpcInvestigationState(state, npc)) {

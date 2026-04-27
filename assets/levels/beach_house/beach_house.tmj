@@ -6672,7 +6672,7 @@
                 {
                  "height":0,
                  "id":90,
-                 "name":"knife_thug_1",
+                 "name":"pistol_thug_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -6695,8 +6695,37 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":801,
-                 "y":-497.666666666667
+                 "x":710.333333333333,
+                 "y":328.333333333333
+                }, 
+                {
+                 "height":0,
+                 "id":185,
+                 "name":"knife_thug_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":90
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":false
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":442,
+                 "y":242.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -8052,7 +8081,7 @@
          "y":0
         }],
  "nextlayerid":87,
- "nextobjectid":185,
+ "nextobjectid":186,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
