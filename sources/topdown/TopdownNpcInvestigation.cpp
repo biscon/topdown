@@ -9,7 +9,7 @@ namespace {
     constexpr float kInvestigationJoinRadius = 600.0f;
     constexpr float kInvestigationArriveRadius = 44.0f;
     constexpr float kInvestigationProbePeriodMs = 800.0f;
-    constexpr float kInvestigationMinProgressPerProbe = 10.0f;
+    constexpr float kInvestigationMinProgressPerProbe = 5.0f;
 
     TopdownNpcInvestigationContext* FindInvestigationContextByHandle(
             TopdownRuntimeData& runtime,
@@ -373,8 +373,7 @@ namespace {
 
         return movedTooLittle;
     }
-
-} // namespace
+}
 
 void TopdownResetNpcInvestigationState(TopdownNpcRuntime& npc)
 {
@@ -491,6 +490,7 @@ TopdownNpcInvestigationUpdateResult TopdownUpdateNpcInvestigationState(
                 npc,
                 slot.position,
                 TopdownNpcMoveOwner::Ai);
+        npc.investigationProgressTimerMs = 0.0f; // reset watchdog
 
         if (!npc.move.active || !npc.move.hasFinalTarget) {
             TopdownLeaveNpcInvestigationState(state, npc);
