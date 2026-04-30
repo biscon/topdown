@@ -8178,6 +8178,11 @@
                          "value":"pistolthug"
                         }, 
                         {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"orientation",
                          "type":"float",
                          "value":45
@@ -8207,6 +8212,11 @@
                          "value":"knifethug"
                         }, 
                         {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"orientation",
                          "type":"float",
                          "value":90
@@ -8234,6 +8244,11 @@
                          "name":"assetId",
                          "type":"string",
                          "value":"pistolthug"
+                        }, 
+                        {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"orientation",
@@ -8323,6 +8338,11 @@
                          "value":"pistolthug"
                         }, 
                         {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"orientation",
                          "type":"float",
                          "value":0
@@ -8350,6 +8370,11 @@
                          "name":"assetId",
                          "type":"string",
                          "value":"pistolthug"
+                        }, 
+                        {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
                          "name":"orientation",
@@ -9870,21 +9895,21 @@
                 {
                  "height":0,
                  "id":123,
-                 "name":"test_spawn",
+                 "name":"living_room_window1",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":180
+                         "value":90
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":430,
-                 "y":-758.666666666667
+                 "x":515.5,
+                 "y":-695.166666666667
                 }, 
                 {
                  "height":0,
@@ -9976,6 +10001,44 @@
                  "width":0,
                  "x":200,
                  "y":-160
+                }, 
+                {
+                 "height":0,
+                 "id":232,
+                 "name":"living_room_window2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":180
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":237.5,
+                 "y":-980
+                }, 
+                {
+                 "height":0,
+                 "id":233,
+                 "name":"living_room_kitchen",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":0
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":509,
+                 "y":-983
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -9986,7 +10049,7 @@
          "y":0
         }],
  "nextlayerid":87,
- "nextobjectid":232,
+ "nextobjectid":234,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

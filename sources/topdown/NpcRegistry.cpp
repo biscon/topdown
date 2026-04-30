@@ -1074,6 +1074,7 @@ bool TopdownSpawnNpcRuntime(
         float orientationDegrees,
         bool visible,
         bool persistentChase,
+        bool guard,
         bool smartPlacement)
 {
     if (npcId.empty() || assetId.empty()) {
@@ -1124,8 +1125,11 @@ bool TopdownSpawnNpcRuntime(
 
     npc.hostile = asset->hostile;
     npc.persistentChase = persistentChase;
+    npc.guard = guard;
     npc.aiMode = asset->aiMode;
-    npc.engagementState = TopdownNpcEngagementState::Unaware;
+    npc.engagementState = guard
+            ? TopdownNpcEngagementState::Guarding
+            : TopdownNpcEngagementState::Unaware;
     npc.combatState = TopdownNpcCombatState::None;
 
     npc.visionRange = asset->visionRange;
@@ -1172,6 +1176,10 @@ bool TopdownSpawnNpcRuntime(
     npc.facing.x = std::cos(radians);
     npc.facing.y = std::sin(radians);
     npc.rotationRadians = radians;
+    npc.guardHomePosition = position;
+    npc.hasGuardHomePosition = true;
+    npc.guardLookAtSoundTimerMs = 0.0f;
+    npc.guardLookAtSoundRadians = npc.rotationRadians;
 
     npc.oneShotActive = false;
     npc.oneShotClip = {};

@@ -58,4 +58,5 @@ bool TopdownSpawnNpcRuntime(
         float orientationDegrees,
         bool visible,
         bool persistentChase = false,
+        bool guard = false,
         bool smartPlacement = false);
