@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "resources/TextureAsset.h"
+#include "resources/AsepriteAsset.h"
 #include "topdown/TopdownHelpers.h"
 #include "utils/json.hpp"
 #include "resources/Resources.h"
@@ -1040,6 +1041,75 @@ static void ImportPropLayer(
 
         state.topdown.authored.props.push_back(prop);
     }
+}
+
+static void LoadPropAssets(GameState& state)
+{
+    std::vector<TopdownAuthoredProp> validProps;
+    validProps.reserve(state.topdown.authored.props.size());
+
+    for (TopdownAuthoredProp& prop : state.topdown.authored.props) {
+        bool valid = false;
+
+        if (prop.type == TopdownPropType::Image) {
+            TextureLoadSettings settings{};
+            settings.premultiplyAlpha = true;
+            settings.filter = TextureFilterMode::Point;
+            settings.wrap = TextureWrapMode::Clamp;
+
+            prop.textureHandle = LoadTextureAsset(
+                    state.resources,
+                    prop.assetPath.c_str(),
+                    settings,
+                    ResourceScope::Scene);
+
+            if (prop.textureHandle < 0) {
+                TraceLog(LOG_WARNING,
+                         "Failed loading image prop texture '%s' for prop '%s'; skipping",
+                         prop.assetPath.c_str(),
+                         prop.id.c_str());
+            } else {
+                valid = true;
+            }
+        } else if (prop.type == TopdownPropType::Sprite) {
+            const float baseDrawScale =
+                    static_cast<float>(state.topdown.authored.baseAssetScale);
+
+            if (prop.hasOriginOverride) {
+                prop.spriteHandle = LoadSpriteAssetFromAsepriteJsonWithOrigin(
+                        state.resources,
+                        prop.assetPath.c_str(),
+                        baseDrawScale,
+                        prop.originOverride,
+                        ResourceScope::Scene);
+            } else {
+                prop.spriteHandle = LoadSpriteAssetFromAsepriteJson(
+                        state.resources,
+                        prop.assetPath.c_str(),
+                        baseDrawScale,
+                        ResourceScope::Scene);
+            }
+
+            if (prop.spriteHandle < 0) {
+                TraceLog(LOG_WARNING,
+                         "Failed loading sprite prop asset '%s' for prop '%s'; skipping",
+                         prop.assetPath.c_str(),
+                         prop.id.c_str());
+            } else {
+                valid = true;
+            }
+        } else {
+            TraceLog(LOG_WARNING,
+                     "Unknown prop type on '%s'; skipping",
+                     prop.id.c_str());
+        }
+
+        if (valid) {
+            validProps.push_back(prop);
+        }
+    }
+
+    state.topdown.authored.props.swap(validProps);
 }
 
 static void ImportEffectRegionLayer(
@@ -2113,6 +2183,7 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
     topdown.runtime.nav.valid = false;
 
     topdown.runtime.nav.navMesh = {};
+    topdown.runtime.props.clear();
     topdown.runtime.nav.navMesh.sourcePolygons.clear();
     topdown.runtime.nav.navMesh.blockerPolygons.clear();
 
@@ -2166,6 +2237,33 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
 
     for (const TopdownAuthoredDoor& authored : topdown.authored.doors) {
         topdown.runtime.doors.push_back(BuildRuntimeDoorFromAuthored(authored));
+    }
+
+    for (int i = 0; i < static_cast<int>(topdown.authored.props.size()); ++i) {
+        const TopdownAuthoredProp& authored = topdown.authored.props[i];
+        if (authored.type == TopdownPropType::Image && authored.textureHandle < 0) {
+            continue;
+        }
+        if (authored.type == TopdownPropType::Sprite && authored.spriteHandle < 0) {
+            continue;
+        }
+
+        TopdownRuntimeProp runtime{};
+        runtime.active = true;
+        runtime.authoredIndex = i;
+        runtime.id = authored.id;
+        runtime.position = authored.position;
+        runtime.visible = authored.visible;
+        runtime.type = authored.type;
+        runtime.flipX = authored.flipX;
+        runtime.opacity = authored.opacity;
+        runtime.baseAnimation = authored.animation;
+        runtime.loop = authored.loop;
+        runtime.hasOriginOverride = authored.hasOriginOverride;
+        runtime.originOverride = authored.originOverride;
+        runtime.textureHandle = authored.textureHandle;
+        runtime.spriteHandle = authored.spriteHandle;
+        topdown.runtime.props.push_back(runtime);
     }
 
     for (const TopdownAuthoredWindow& authored : topdown.authored.windows) {
@@ -2462,6 +2560,8 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         TopdownUnloadLevel(state);
         return false;
     }
+
+    LoadPropAssets(state);
 
     state.topdown.authored.loaded = true;
 
