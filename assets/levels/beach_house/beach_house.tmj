@@ -10063,7 +10063,7 @@
                         {
                          "name":"asset",
                          "type":"file",
-                         "value":"..\/..\/props\/furnace_fire.png"
+                         "value":"..\/..\/props\/store_desk.png"
                         }, 
                         {
                          "name":"flipX",
@@ -10091,6 +10091,55 @@
                  "width":0,
                  "x":580,
                  "y":822.5
+                }, 
+                {
+                 "height":0,
+                 "id":235,
+                 "name":"test_prop2",
+                 "opacity":0.77,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"animation",
+                         "type":"string",
+                         "value":"idle"
+                        }, 
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/props\/furnace_fire.json"
+                        }, 
+                        {
+                         "name":"flipX",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"after_bottom"
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"sprite"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":381.5,
+                 "y":809
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10099,7 +10148,7 @@
          "y":0
         }],
  "nextlayerid":88,
- "nextobjectid":235,
+ "nextobjectid":236,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

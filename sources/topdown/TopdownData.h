@@ -427,6 +427,11 @@ struct TopdownRuntimeProp {
     float opacity = 1.0f;
 
     std::string baseAnimation;
+    std::string currentAnimation;
+    bool oneShotActive = false;
+    std::string oneShotAnimation;
+    float animationTimeMs = 0.0f;
+    float oneShotDurationMs = 0.0f;
     bool loop = false;
 
     bool hasOriginOverride = false;

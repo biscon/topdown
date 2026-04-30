@@ -2299,6 +2299,11 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.flipX = authored.flipX;
         runtime.opacity = authored.opacity;
         runtime.baseAnimation = authored.animation;
+        runtime.currentAnimation = authored.animation;
+        runtime.oneShotActive = false;
+        runtime.oneShotAnimation.clear();
+        runtime.animationTimeMs = 0.0f;
+        runtime.oneShotDurationMs = 0.0f;
         runtime.loop = authored.loop;
         runtime.hasOriginOverride = authored.hasOriginOverride;
         runtime.originOverride = authored.originOverride;
