@@ -10047,9 +10047,59 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":87,
+         "name":"Props",
+         "objects":[
+                {
+                 "height":0,
+                 "id":234,
+                 "name":"test_prop",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"asset",
+                         "type":"file",
+                         "value":"..\/..\/props\/furnace_fire.png"
+                        }, 
+                        {
+                         "name":"flipX",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"placement",
+                         "type":"string",
+                         "value":"after_bottom"
+                        }, 
+                        {
+                         "name":"sortIndex",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"image"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":580,
+                 "y":822.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":87,
- "nextobjectid":234,
+ "nextlayerid":88,
+ "nextobjectid":235,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

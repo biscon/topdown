@@ -431,6 +431,9 @@ struct TopdownRuntimeProp {
 
     bool hasOriginOverride = false;
     Vector2 originOverride{};
+
+    TopdownEffectPlacement placement = TopdownEffectPlacement::AfterBottom;
+    float sortIndex = 0.0f;
 };
 
 struct TopdownRuntimeDoor {

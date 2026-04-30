@@ -987,6 +987,7 @@ static void ImportPropLayer(
         prop.visible = obj.value("visible", true);
         prop.position.x = obj.value("x", 0.0f) * scale;
         prop.position.y = obj.value("y", 0.0f) * scale;
+        prop.opacity = obj.value("opacity", 1.0f);
 
         const std::string assetRel = GetObjectPropertyString(obj, "asset", "");
         if (assetRel.empty()) {
@@ -1018,7 +1019,6 @@ static void ImportPropLayer(
         }
 
         prop.sortIndex = GetObjectPropertyFloat(obj, "sortIndex", 0.0f);
-        prop.opacity = GetObjectPropertyFloat(obj, "opacity", 1.0f);
         prop.opacity = std::clamp(prop.opacity, 0.0f, 1.0f);
 
         const bool hasOriginOverrideX = FindObjectProperty(obj, "originOverrideX") != nullptr;
@@ -2304,6 +2304,8 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.originOverride = authored.originOverride;
         runtime.textureHandle = authored.textureHandle;
         runtime.spriteHandle = authored.spriteHandle;
+        runtime.placement = authored.placement;
+        runtime.sortIndex = authored.sortIndex;
         topdown.runtime.props.push_back(runtime);
     }
 

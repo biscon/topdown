@@ -1233,6 +1233,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1242,7 +1243,6 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             currentDest);
 
     BeginWorldTarget(*currentSource);
-    TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
     DrawTopdownBloodRenderTargetToWorld(state);
     TopdownRenderNpcs(state);
     TopdownRenderPlayerCharacter(state);
@@ -1253,6 +1253,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     DrawBloodImpactParticles(state);
     DrawMuzzleSmokeParticles(state);
     DrawTracerEffects(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterCharacters);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1262,9 +1263,9 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             currentDest);
 
     BeginWorldTarget(*currentSource);
-    TopdownRenderProps(state, TopdownEffectPlacement::AfterCharacters);
     DrawMuzzleFlashEffects(state);
     DrawTopLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::Final);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1274,7 +1275,6 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             currentDest);
 
     BeginWorldTarget(*currentSource);
-    TopdownRenderProps(state, TopdownEffectPlacement::Final);
     EndWorldTarget();
 
     if (ApplyTopdownPlayerVignette(state, *currentSource, *currentDest)) {
