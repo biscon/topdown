@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "resources/TextureAsset.h"
+#include "resources/AsepriteAsset.h"
 #include "topdown/TopdownHelpers.h"
 #include "utils/json.hpp"
 #include "resources/Resources.h"
@@ -1224,6 +1225,79 @@ static void ImportTriggerLayer(
     }
 }
 
+static void ImportPropLayer(
+        GameState& state,
+        const json& layer,
+        const fs::path& levelDir,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object() || !obj.value("point", false)) {
+            continue;
+        }
+
+        TopdownAuthoredProp prop{};
+        prop.tiledObjectId = obj.value("id", -1);
+        prop.id = obj.value("name", std::string());
+        prop.visible = obj.value("visible", true);
+        prop.position = Vector2{obj.value("x", 0.0f) * scale, obj.value("y", 0.0f) * scale};
+        prop.flipX = GetObjectPropertyBool(obj, "flipX", false);
+        prop.animation = GetObjectPropertyString(obj, "animation", "");
+        prop.loop = GetObjectPropertyBool(obj, "loop", false);
+        prop.opacity = Clamp(GetObjectPropertyFloat(obj, "opacity", 1.0f), 0.0f, 1.0f);
+        prop.sortIndex = GetObjectPropertyFloat(obj, "sortIndex", 0.0f);
+        prop.assetPath = GetObjectPropertyString(obj, "asset", "");
+
+        if (const std::string placementStr = GetObjectPropertyString(obj, "placement", "after_bottom");
+                !ParseTopdownEffectPlacement(placementStr, prop.placement)) {
+            prop.placement = TopdownEffectPlacement::AfterBottom;
+        }
+
+        const bool hasX = FindObjectProperty(obj, "originOverrideX") != nullptr;
+        const bool hasY = FindObjectProperty(obj, "originOverrideY") != nullptr;
+        if (hasX && hasY) {
+            prop.hasOriginOverride = true;
+            prop.originOverride = Vector2{
+                    GetObjectPropertyFloat(obj, "originOverrideX", 0.0f) * scale,
+                    GetObjectPropertyFloat(obj, "originOverrideY", 0.0f) * scale};
+        }
+
+        const std::string typeStr = GetObjectPropertyString(obj, "type", "image");
+        prop.type = (typeStr == "sprite") ? TopdownPropType::Sprite : TopdownPropType::Image;
+
+        if (prop.id.empty() || prop.assetPath.empty()) {
+            TraceLog(LOG_WARNING, "Skipping invalid prop (missing id/asset)");
+            continue;
+        }
+
+        const std::string resolvedPath = NormalizePath((levelDir / prop.assetPath).lexically_normal());
+        prop.assetPath = resolvedPath;
+
+        if (prop.type == TopdownPropType::Image) {
+            TextureLoadSettings settings{};
+            settings.premultiplyAlpha = true;
+            settings.filter = TextureFilterMode::Point;
+            settings.wrap = TextureWrapMode::Clamp;
+            prop.textureHandle = LoadTextureAsset(state.resources, resolvedPath.c_str(), settings, ResourceScope::Scene);
+        } else {
+            if (prop.hasOriginOverride) {
+                prop.spriteHandle = LoadSpriteAssetFromAsepriteJsonWithOrigin(
+                        state.resources, resolvedPath.c_str(), prop.originOverride, scale, ResourceScope::Scene);
+            } else {
+                prop.spriteHandle = LoadSpriteAssetFromAsepriteJson(
+                        state.resources, resolvedPath.c_str(), scale, ResourceScope::Scene);
+            }
+        }
+
+        state.topdown.authored.props.push_back(prop);
+    }
+}
+
 static void ImportImageGroup(
         GameState& state,
         const json& groupLayer,
@@ -1372,6 +1446,9 @@ static void BuildSortedEffectRegionBuckets(TopdownData& topdown)
     topdown.runtime.render.afterBottomEffectRegionIndices.clear();
     topdown.runtime.render.afterCharactersEffectRegionIndices.clear();
     topdown.runtime.render.finalEffectRegionIndices.clear();
+    topdown.runtime.render.afterBottomPropIndices.clear();
+    topdown.runtime.render.afterCharactersPropIndices.clear();
+    topdown.runtime.render.finalPropIndices.clear();
 
     const int count = static_cast<int>(topdown.authored.effectRegions.size());
 
@@ -1407,6 +1484,19 @@ static void BuildSortedEffectRegionBuckets(TopdownData& topdown)
     stableSortBucket(topdown.runtime.render.afterBottomEffectRegionIndices);
     stableSortBucket(topdown.runtime.render.afterCharactersEffectRegionIndices);
     stableSortBucket(topdown.runtime.render.finalEffectRegionIndices);
+
+    for (int i = 0; i < static_cast<int>(topdown.authored.props.size()); ++i) {
+        const TopdownAuthoredProp& p = topdown.authored.props[i];
+        if (p.placement == TopdownEffectPlacement::AfterCharacters) topdown.runtime.render.afterCharactersPropIndices.push_back(i);
+        else if (p.placement == TopdownEffectPlacement::Final) topdown.runtime.render.finalPropIndices.push_back(i);
+        else topdown.runtime.render.afterBottomPropIndices.push_back(i);
+    }
+    auto sortProps = [&](std::vector<int>& bucket){
+        std::stable_sort(bucket.begin(), bucket.end(), [&](int a,int b){return topdown.authored.props[a].sortIndex < topdown.authored.props[b].sortIndex;});
+    };
+    sortProps(topdown.runtime.render.afterBottomPropIndices);
+    sortProps(topdown.runtime.render.afterCharactersPropIndices);
+    sortProps(topdown.runtime.render.finalPropIndices);
 }
 
 struct TopdownOcclusionHitPoint {
@@ -2168,6 +2258,29 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         topdown.runtime.triggers.push_back(runtime);
     }
 
+    for (int i = 0; i < static_cast<int>(topdown.authored.props.size()); ++i) {
+        const TopdownAuthoredProp& authored = topdown.authored.props[i];
+        TopdownRuntimeProp runtime{};
+        runtime.active = true;
+        runtime.authoredIndex = i;
+        runtime.id = authored.id;
+        runtime.type = authored.type;
+        runtime.position = authored.position;
+        runtime.visible = authored.visible;
+        runtime.flipX = authored.flipX;
+        runtime.placement = authored.placement;
+        runtime.sortIndex = authored.sortIndex;
+        runtime.opacity = authored.opacity;
+        runtime.textureHandle = authored.textureHandle;
+        runtime.spriteHandle = authored.spriteHandle;
+        runtime.hasOriginOverride = authored.hasOriginOverride;
+        runtime.originOverride = authored.originOverride;
+        runtime.baseAnimation = authored.animation;
+        runtime.currentAnimation = authored.animation;
+        runtime.loop = authored.loop;
+        topdown.runtime.props.push_back(runtime);
+    }
+
     TopdownRebuildWallOcclusionPolygons(topdown, true);
 
     BuildSortedEffectRegionBuckets(topdown);
@@ -2322,6 +2435,10 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
         if (layerName == "Triggers" && layerType == "objectgroup") {
             ImportTriggerLayer(state.topdown, layer, state.topdown.authored.baseAssetScale);
+            continue;
+        }
+        if (layerName == "Props" && layerType == "objectgroup") {
+            ImportPropLayer(state, layer, levelDir, state.topdown.authored.baseAssetScale);
             continue;
         }
 

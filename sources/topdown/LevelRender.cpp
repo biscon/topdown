@@ -18,6 +18,7 @@
 #include "input/Input.h"
 #include "LevelWindows.h"
 #include "ui/NarrationPopups.h"
+#include "LevelProps.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -1232,6 +1233,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1246,6 +1248,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     TopdownRenderPlayerCharacter(state);
     TopdownRenderWindows(state);
     TopdownRenderDoors(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterCharacters);
     TopdownRenderWindowGlassParticles(state);
     DrawWallImpactParticles(state);
     DrawBloodImpactParticles(state);
@@ -1262,6 +1265,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     DrawMuzzleFlashEffects(state);
     DrawTopLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::Final);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(

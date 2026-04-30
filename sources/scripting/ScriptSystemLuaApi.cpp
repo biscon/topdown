@@ -1213,6 +1213,14 @@ static int Lua_resumeNpcPatrol(lua_State* L)
     return 1;
 }
 
+static int Lua_setPropAnimation(lua_State* L){const char* id=luaL_checkstring(L,1); const char* a=luaL_checkstring(L,2); if(!gameState||!id||!a){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptSetPropAnimation(*gameState,id,a)?1:0); return 1;}
+static int Lua_playPropAnimation(lua_State* L){const char* id=luaL_checkstring(L,1); const char* a=luaL_checkstring(L,2); if(!gameState||!id||!a){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptPlayPropAnimation(*gameState,id,a)?1:0); return 1;}
+static int Lua_setPropPosition(lua_State* L){const char* id=luaL_checkstring(L,1); float x=(float)luaL_checknumber(L,2); float y=(float)luaL_checknumber(L,3); if(!gameState||!id){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptSetPropPosition(*gameState,id,Vector2{x,y})?1:0); return 1;}
+static int Lua_movePropPosition(lua_State* L){const char* id=luaL_checkstring(L,1); float x=(float)luaL_checknumber(L,2); float y=(float)luaL_checknumber(L,3); float d=(float)luaL_checknumber(L,4); const char* i=luaL_checkstring(L,5); if(!gameState||!id||!i){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptMovePropPosition(*gameState,id,Vector2{x,y},d,i)?1:0); return 1;}
+static int Lua_movePropPositionRelative(lua_State* L){const char* id=luaL_checkstring(L,1); float x=(float)luaL_checknumber(L,2); float y=(float)luaL_checknumber(L,3); float d=(float)luaL_checknumber(L,4); const char* i=luaL_checkstring(L,5); if(!gameState||!id||!i){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptMovePropPositionRelative(*gameState,id,Vector2{x,y},d,i)?1:0); return 1;}
+static int Lua_setPropVisible(lua_State* L){const char* id=luaL_checkstring(L,1); bool v=lua_toboolean(L,2)!=0; if(!gameState||!id){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptSetPropVisible(*gameState,id,v)?1:0); return 1;}
+static int Lua_setPropOpacity(lua_State* L){const char* id=luaL_checkstring(L,1); float o=(float)luaL_checknumber(L,2); if(!gameState||!id){lua_pushboolean(L,0);return 1;} lua_pushboolean(L,TopdownScriptSetPropOpacity(*gameState,id,o)?1:0); return 1;}
+
 void RegisterLuaAPI(lua_State* L)
 {
     lua_register(L, "setFlag", Lua_setFlag);
@@ -1291,6 +1299,13 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "layerOpacity", Lua_layerOpacity);
 
     lua_register(L, "shakeScreen", Lua_shakeScreen);
+    lua_register(L, "setPropAnimation", Lua_setPropAnimation);
+    lua_register(L, "playPropAnimation", Lua_playPropAnimation);
+    lua_register(L, "setPropPosition", Lua_setPropPosition);
+    lua_register(L, "movePropPosition", Lua_movePropPosition);
+    lua_register(L, "movePropPositionRelative", Lua_movePropPositionRelative);
+    lua_register(L, "setPropVisible", Lua_setPropVisible);
+    lua_register(L, "setPropOpacity", Lua_setPropOpacity);
 
     lua_register(L, "print", Lua_consolePrint);
     lua_register(L, "log", Lua_log);

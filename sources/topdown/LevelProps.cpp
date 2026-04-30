@@ -1,10 +1,48 @@
 #include "topdown/LevelProps.h"
 
 #include <algorithm>
+
 #include "raymath.h"
-#include "resources/TextureAsset.h"
 #include "resources/AsepriteAsset.h"
+#include "resources/TextureAsset.h"
 #include "topdown/TopdownHelpers.h"
+
+TopdownRuntimeProp* FindProp(GameState& state, const std::string& id)
+{
+    for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+        if (prop.active && prop.id == id) {
+            return &prop;
+        }
+    }
+
+    return nullptr;
+}
+
+const TopdownRuntimeProp* FindProp(const GameState& state, const std::string& id)
+{
+    for (const TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+        if (prop.active && prop.id == id) {
+            return &prop;
+        }
+    }
+
+    return nullptr;
+}
+
+static int FindPropClipIndexByAnimationName(const SpriteAssetResource& sprite, const std::string& animation)
+{
+    if (animation.empty()) {
+        return -1;
+    }
+
+    for (int i = 0; i < static_cast<int>(sprite.clips.size()); ++i) {
+        if (sprite.clips[i].name == animation) {
+            return i;
+        }
+    }
+
+    return -1;
+}
 
 static std::vector<int>& GetPropBucket(GameState& state, TopdownEffectPlacement placement)
 {
@@ -17,10 +55,15 @@ void TopdownUpdateProps(GameState& state, float dt)
 {
     const float dtMs = dt * 1000.0f;
     for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
-        if (!prop.active) continue;
+        if (!prop.active) {
+            continue;
+        }
+
         prop.animationTimeMs += dtMs;
 
-        if (prop.oneShotActive && prop.oneShotDurationMs > 0.0f && prop.animationTimeMs >= prop.oneShotDurationMs) {
+        if (prop.oneShotActive &&
+            prop.oneShotDurationMs > 0.0f &&
+            prop.animationTimeMs >= prop.oneShotDurationMs) {
             prop.oneShotActive = false;
             prop.currentAnimation = prop.baseAnimation;
             prop.animationTimeMs = 0.0f;
@@ -28,10 +71,13 @@ void TopdownUpdateProps(GameState& state, float dt)
 
         if (prop.moving) {
             prop.moveTimerMs += dtMs;
-            const float duration = std::max(prop.moveDurationMs, 0.0001f);
-            float t = Clamp(prop.moveTimerMs / duration, 0.0f, 1.0f);
+
+            const float durationMs = std::max(prop.moveDurationMs, 0.0001f);
+            float t = Clamp(prop.moveTimerMs / durationMs, 0.0f, 1.0f);
             t = ApplyInterpolation(prop.moveInterpolation, t);
+
             prop.position = Vector2Lerp(prop.moveStart, prop.moveEnd, t);
+
             if (prop.moveTimerMs >= prop.moveDurationMs) {
                 prop.position = prop.moveEnd;
                 prop.moving = false;
@@ -43,36 +89,104 @@ void TopdownUpdateProps(GameState& state, float dt)
 void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
 {
     std::vector<int>& bucket = GetPropBucket(state, placement);
+
     for (int index : bucket) {
-        if (index < 0 || index >= (int)state.topdown.runtime.props.size()) continue;
+        if (index < 0 || index >= static_cast<int>(state.topdown.runtime.props.size())) {
+            continue;
+        }
+
         const TopdownRuntimeProp& prop = state.topdown.runtime.props[index];
-        if (!prop.active || !prop.visible) continue;
+        if (!prop.active || !prop.visible) {
+            continue;
+        }
 
         const Vector2 screen = TopdownWorldToScreen(state, prop.position);
-        const Color tint{255,255,255,(unsigned char)std::round(255.0f * Clamp(prop.opacity, 0.0f, 1.0f))};
+
+        Color tint = WHITE;
+        tint.a = static_cast<unsigned char>(std::round(255.0f * Clamp(prop.opacity, 0.0f, 1.0f)));
 
         if (prop.type == TopdownPropType::Image) {
-            const TextureResource* tex = FindTextureResource(state.resources, prop.textureHandle);
-            if (tex == nullptr || !tex->loaded || tex->texture.id == 0) continue;
-            Rectangle src{0,0,(float)tex->texture.width,(float)tex->texture.height};
-            if (prop.flipX) src.width = -src.width;
-            Vector2 origin = prop.hasOriginOverride ? prop.originOverride : Vector2{(float)tex->texture.width*0.5f,(float)tex->texture.height*0.5f};
-            DrawTexturePro(tex->texture, src, Rectangle{std::round(screen.x), std::round(screen.y), (float)tex->texture.width, (float)tex->texture.height}, origin, 0.0f, tint);
+            const TextureResource* texture = FindTextureResource(state.resources, prop.textureHandle);
+            if (texture == nullptr || !texture->loaded || texture->texture.id == 0) {
+                continue;
+            }
+
+            Rectangle src{
+                    0.0f,
+                    0.0f,
+                    static_cast<float>(texture->texture.width),
+                    static_cast<float>(texture->texture.height)
+            };
+
+            if (prop.flipX) {
+                src.width = -src.width;
+            }
+
+            const Vector2 origin = prop.hasOriginOverride
+                    ? prop.originOverride
+                    : Vector2{src.width * 0.5f, src.height * 0.5f};
+
+            Rectangle dst{
+                    std::round(screen.x),
+                    std::round(screen.y),
+                    std::fabs(src.width),
+                    std::fabs(src.height)
+            };
+
+            DrawTexturePro(texture->texture, src, dst, origin, 0.0f, tint);
             continue;
         }
 
         const SpriteAssetResource* sprite = FindSpriteAssetResource(state.resources, prop.spriteHandle);
-        if (sprite == nullptr || !sprite->loaded || sprite->frames.empty()) continue;
-        const std::string& anim = prop.oneShotActive ? prop.oneShotAnimation : prop.currentAnimation;
-        const int clipIndex = FindClipIndex(*sprite, "", anim);
-        if (clipIndex < 0 || clipIndex >= (int)sprite->clips.size()) continue;
+        if (sprite == nullptr || !sprite->loaded || sprite->frames.empty()) {
+            continue;
+        }
+
+        const TextureResource* spriteTexture = FindTextureResource(state.resources, sprite->textureHandle);
+        if (spriteTexture == nullptr || !spriteTexture->loaded || spriteTexture->texture.id == 0) {
+            continue;
+        }
+
+        const std::string animationName = prop.oneShotActive ? prop.oneShotAnimation : prop.currentAnimation;
+        const int clipIndex = FindPropClipIndexByAnimationName(*sprite, animationName);
+        if (clipIndex < 0 || clipIndex >= static_cast<int>(sprite->clips.size())) {
+            continue;
+        }
+
         const SpriteClip& clip = sprite->clips[clipIndex];
-        int frameIndex = prop.oneShotActive ? GetOneShotFrameIndex(*sprite, clip, prop.animationTimeMs) : GetLoopingFrameIndex(*sprite, clip, prop.animationTimeMs);
-        if (frameIndex < 0 || frameIndex >= (int)sprite->frames.size()) continue;
+        const int frameIndex = prop.oneShotActive
+                ? GetOneShotFrameIndex(*sprite, clip, prop.animationTimeMs)
+                : GetLoopingFrameIndex(*sprite, clip, prop.animationTimeMs);
+
+        if (frameIndex < 0 || frameIndex >= static_cast<int>(sprite->frames.size())) {
+            continue;
+        }
+
         const SpriteFrame& frame = sprite->frames[frameIndex];
-        Rectangle src{(float)frame.sourceRect.x,(float)frame.sourceRect.y,(float)frame.sourceRect.width,(float)frame.sourceRect.height};
-        if (prop.flipX) src.width = -src.width;
-        Vector2 origin = prop.hasOriginOverride ? prop.originOverride : Vector2{(float)frame.sourceRect.width*0.5f,(float)frame.sourceRect.height*0.5f};
-        DrawTexturePro(sprite->atlasTexture, src, Rectangle{std::round(screen.x), std::round(screen.y), (float)frame.sourceRect.width, (float)frame.sourceRect.height}, origin, 0.0f, tint);
+
+        Rectangle src{
+                static_cast<float>(frame.sourceRect.x),
+                static_cast<float>(frame.sourceRect.y),
+                static_cast<float>(frame.sourceRect.width),
+                static_cast<float>(frame.sourceRect.height)
+        };
+
+        if (prop.flipX) {
+            src.width = -src.width;
+        }
+
+        const Vector2 origin = prop.hasOriginOverride
+                ? prop.originOverride
+                : Vector2{static_cast<float>(frame.sourceRect.width) * 0.5f,
+                          static_cast<float>(frame.sourceRect.height) * 0.5f};
+
+        Rectangle dst{
+                std::round(screen.x),
+                std::round(screen.y),
+                std::fabs(static_cast<float>(frame.sourceRect.width)),
+                std::fabs(static_cast<float>(frame.sourceRect.height))
+        };
+
+        DrawTexturePro(spriteTexture->texture, src, dst, origin, 0.0f, tint);
     }
 }

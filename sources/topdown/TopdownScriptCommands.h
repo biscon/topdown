@@ -73,6 +73,13 @@ bool TopdownScriptIsEffectRegionVisible(GameState& state, const std::string& id,
 
 bool TopdownScriptSetEffectRegionOpacity(GameState& state, const std::string& id, float opacity);
 bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id, float& outOpacity);
+bool TopdownScriptSetPropAnimation(GameState& state, const std::string& id, const std::string& animation);
+bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, const std::string& animation);
+bool TopdownScriptSetPropPosition(GameState& state, const std::string& id, Vector2 position);
+bool TopdownScriptMovePropPosition(GameState& state, const std::string& id, Vector2 target, float durationMs, const std::string& interpolation);
+bool TopdownScriptMovePropPositionRelative(GameState& state, const std::string& id, Vector2 delta, float durationMs, const std::string& interpolation);
+bool TopdownScriptSetPropVisible(GameState& state, const std::string& id, bool visible);
+bool TopdownScriptSetPropOpacity(GameState& state, const std::string& id, float opacity);
 
 // Triggers
 bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled);
