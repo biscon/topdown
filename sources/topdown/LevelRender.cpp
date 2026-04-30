@@ -17,6 +17,7 @@
 #include "audio/Audio.h"
 #include "input/Input.h"
 #include "LevelWindows.h"
+#include "topdown/LevelProps.h"
 #include "ui/NarrationPopups.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
@@ -1241,6 +1242,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             currentDest);
 
     BeginWorldTarget(*currentSource);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
     DrawTopdownBloodRenderTargetToWorld(state);
     TopdownRenderNpcs(state);
     TopdownRenderPlayerCharacter(state);
@@ -1260,6 +1262,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             currentDest);
 
     BeginWorldTarget(*currentSource);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterCharacters);
     DrawMuzzleFlashEffects(state);
     DrawTopLayers(state);
     EndWorldTarget();
@@ -1269,6 +1272,10 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             state.topdown.runtime.render.finalEffectRegionIndices,
             currentSource,
             currentDest);
+
+    BeginWorldTarget(*currentSource);
+    TopdownRenderProps(state, TopdownEffectPlacement::Final);
+    EndWorldTarget();
 
     if (ApplyTopdownPlayerVignette(state, *currentSource, *currentDest)) {
         std::swap(currentSource, currentDest);

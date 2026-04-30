@@ -866,6 +866,10 @@ struct TopdownRenderWorld {
     std::vector<int> afterCharactersEffectRegionIndices;
     std::vector<int> finalEffectRegionIndices;
 
+    std::vector<int> afterBottomPropIndices;
+    std::vector<int> afterCharactersPropIndices;
+    std::vector<int> finalPropIndices;
+
     int nextImageLayerHandle = 1;
     int nextEffectRegionHandle = 1;
 
