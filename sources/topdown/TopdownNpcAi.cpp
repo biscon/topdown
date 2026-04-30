@@ -61,7 +61,6 @@ static void ReturnGuardToPostOrPatrol(TopdownNpcRuntime& npc)
     }
 
     npc.engagementState = TopdownNpcEngagementState::ReturningToGuardPost;
-    TopdownStopNpcMovement(npc);
 }
 
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
@@ -316,7 +315,9 @@ static void UpdateNpcEngagementState(
         }
     }
 
-    if (npc.engagementState == TopdownNpcEngagementState::Investigating) {
+    if (npc.engagementState == TopdownNpcEngagementState::Investigating ||
+        npc.engagementState == TopdownNpcEngagementState::ReturningToGuardPost ||
+        npc.engagementState == TopdownNpcEngagementState::Guarding) {
         return;
     }
 

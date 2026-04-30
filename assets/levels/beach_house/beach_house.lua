@@ -26,8 +26,12 @@ function Level_onEnter()
         }
     )
     --]]
-
-    SpawnGuardPatrol()
+    assignNpcPatrolRoute("knife_thug_1", {"living_room_window1", "living_room_window2", "living_room_kitchen"}, {
+        loop = true,
+        running = false,
+        waitMs = 3000
+    })
+    --SpawnGuardPatrol()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
 
