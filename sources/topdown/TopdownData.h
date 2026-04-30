@@ -218,6 +218,8 @@ struct TopdownAuthoredProp {
 
     std::string assetPath;
     TopdownPropType type = TopdownPropType::Image;
+    TextureHandle textureHandle = -1;
+    SpriteAssetHandle spriteHandle = -1;
 
     bool flipX = false;
 
@@ -417,6 +419,8 @@ struct TopdownRuntimeProp {
     bool visible = true;
 
     TopdownPropType type = TopdownPropType::Image;
+    TextureHandle textureHandle = -1;
+    SpriteAssetHandle spriteHandle = -1;
 
     bool flipX = false;
 
