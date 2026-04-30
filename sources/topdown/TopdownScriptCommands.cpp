@@ -10,6 +10,7 @@
 #include "resources/AsepriteAsset.h"
 #include "ui/NarrationPopups.h"
 #include "utils/Interpolation.h"
+#include "TopdownHelpers.h"
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
@@ -689,7 +690,7 @@ bool TopdownScriptMovePropPositionRelative(
     return TopdownScriptMovePropPosition(
             state,
             id,
-            Vector2Add(prop->position, delta),
+            TopdownAdd(prop->position, delta),
             durationMs,
             interpolation);
 }

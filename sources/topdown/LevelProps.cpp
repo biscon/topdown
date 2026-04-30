@@ -53,8 +53,9 @@ void TopdownUpdateProps(GameState& state, float dt)
                 prop.moveTimerMs = 0.0f;
                 prop.moveDurationMs = 0.0f;
             } else {
-                const float t = Clamp(prop.moveTimerMs / prop.moveDurationMs, 0.0f, 1.0f);
-                prop.position = ApplyInterpolation(prop.moveStart, prop.moveEnd, t, prop.moveInterpolation);
+                const float rawT = Clamp(prop.moveTimerMs / prop.moveDurationMs, 0.0f, 1.0f);
+                const float easedT = ApplyInterpolation(prop.moveInterpolation, rawT);
+                prop.position = Vector2Lerp(prop.moveStart, prop.moveEnd, easedT);
             }
         }
 

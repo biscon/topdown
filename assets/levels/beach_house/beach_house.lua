@@ -37,6 +37,16 @@ function Level_onEnter()
 
         --startScript("IntroNarration")
     end
+    delay(1000)
+    movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
+    startScript("test")
+end
+
+function test()
+    while true do
+        delay(5000)
+        playPropAnimation("test_prop2", "MeleeAttack")
+    end
 end
 
 function IntroNarration()
