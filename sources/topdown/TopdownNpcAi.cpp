@@ -61,6 +61,7 @@ static void ReturnGuardToPostOrPatrol(TopdownNpcRuntime& npc)
     }
 
     npc.engagementState = TopdownNpcEngagementState::ReturningToGuardPost;
+    TopdownStopNpcMovement(npc);
 }
 
 static void FreezeNpcAiState(TopdownNpcRuntime& npc)
@@ -320,7 +321,9 @@ static void UpdateNpcEngagementState(
     }
 
     npc.combatState = TopdownNpcCombatState::None;
-    npc.engagementState = TopdownNpcEngagementState::Unaware;
+    npc.engagementState = npc.guard
+            ? TopdownNpcEngagementState::Guarding
+            : TopdownNpcEngagementState::Unaware;
     npc.engagedLostTargetTimerMs = 0.0f;
 }
 
@@ -350,6 +353,10 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
 
         TopdownNpcPerceptionResult perception = EvaluateNpcPerception(state, npc);
         UpdateNpcEngagementState(state, npc, perception, dt);
+        if (npc.guard &&
+            npc.engagementState == TopdownNpcEngagementState::Unaware) {
+            ReturnGuardToPostOrPatrol(npc);
+        }
 
         if (npc.engagementState == TopdownNpcEngagementState::Reacting ||
             npc.engagementState == TopdownNpcEngagementState::Investigating ||
