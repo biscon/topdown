@@ -17,6 +17,7 @@
 #include "audio/Audio.h"
 #include "input/Input.h"
 #include "LevelWindows.h"
+#include "topdown/LevelProps.h"
 #include "ui/NarrationPopups.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
@@ -1232,6 +1233,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1251,6 +1253,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     DrawBloodImpactParticles(state);
     DrawMuzzleSmokeParticles(state);
     DrawTracerEffects(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::AfterCharacters);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1262,6 +1265,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     BeginWorldTarget(*currentSource);
     DrawMuzzleFlashEffects(state);
     DrawTopLayers(state);
+    TopdownRenderProps(state, TopdownEffectPlacement::Final);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1269,6 +1273,9 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
             state.topdown.runtime.render.finalEffectRegionIndices,
             currentSource,
             currentDest);
+
+    BeginWorldTarget(*currentSource);
+    EndWorldTarget();
 
     if (ApplyTopdownPlayerVignette(state, *currentSource, *currentDest)) {
         std::swap(currentSource, currentDest);

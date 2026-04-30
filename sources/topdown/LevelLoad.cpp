@@ -987,6 +987,7 @@ static void ImportPropLayer(
         prop.visible = obj.value("visible", true);
         prop.position.x = obj.value("x", 0.0f) * scale;
         prop.position.y = obj.value("y", 0.0f) * scale;
+        prop.opacity = obj.value("opacity", 1.0f);
 
         const std::string assetRel = GetObjectPropertyString(obj, "asset", "");
         if (assetRel.empty()) {
@@ -1018,7 +1019,6 @@ static void ImportPropLayer(
         }
 
         prop.sortIndex = GetObjectPropertyFloat(obj, "sortIndex", 0.0f);
-        prop.opacity = GetObjectPropertyFloat(obj, "opacity", 1.0f);
         prop.opacity = std::clamp(prop.opacity, 0.0f, 1.0f);
 
         const bool hasOriginOverrideX = FindObjectProperty(obj, "originOverrideX") != nullptr;
@@ -1577,6 +1577,47 @@ static void BuildSortedEffectRegionBuckets(TopdownData& topdown)
     stableSortBucket(topdown.runtime.render.afterBottomEffectRegionIndices);
     stableSortBucket(topdown.runtime.render.afterCharactersEffectRegionIndices);
     stableSortBucket(topdown.runtime.render.finalEffectRegionIndices);
+
+    topdown.runtime.render.afterBottomPropIndices.clear();
+    topdown.runtime.render.afterCharactersPropIndices.clear();
+    topdown.runtime.render.finalPropIndices.clear();
+
+    const int propCount = static_cast<int>(topdown.runtime.props.size());
+    for (int i = 0; i < propCount; ++i) {
+        const TopdownRuntimeProp& prop = topdown.runtime.props[i];
+        if (!prop.active) {
+            continue;
+        }
+
+        switch (prop.placement) {
+            case TopdownEffectPlacement::AfterBottom:
+                topdown.runtime.render.afterBottomPropIndices.push_back(i);
+                break;
+
+            case TopdownEffectPlacement::AfterCharacters:
+                topdown.runtime.render.afterCharactersPropIndices.push_back(i);
+                break;
+
+            case TopdownEffectPlacement::Final:
+                topdown.runtime.render.finalPropIndices.push_back(i);
+                break;
+        }
+    }
+
+    auto stableSortPropBucket = [&](std::vector<int>& bucket) {
+        std::stable_sort(
+                bucket.begin(),
+                bucket.end(),
+                [&](int a, int b) {
+                    const TopdownRuntimeProp& pa = topdown.runtime.props[a];
+                    const TopdownRuntimeProp& pb = topdown.runtime.props[b];
+                    return pa.sortIndex < pb.sortIndex;
+                });
+    };
+
+    stableSortPropBucket(topdown.runtime.render.afterBottomPropIndices);
+    stableSortPropBucket(topdown.runtime.render.afterCharactersPropIndices);
+    stableSortPropBucket(topdown.runtime.render.finalPropIndices);
 }
 
 struct TopdownOcclusionHitPoint {
@@ -2263,6 +2304,8 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.originOverride = authored.originOverride;
         runtime.textureHandle = authored.textureHandle;
         runtime.spriteHandle = authored.spriteHandle;
+        runtime.placement = authored.placement;
+        runtime.sortIndex = authored.sortIndex;
         topdown.runtime.props.push_back(runtime);
     }
 
