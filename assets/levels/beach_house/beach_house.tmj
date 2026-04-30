@@ -10102,17 +10102,17 @@
                         {
                          "name":"animation",
                          "type":"string",
-                         "value":"idle"
+                         "value":"Walk"
                         }, 
                         {
                          "name":"asset",
                          "type":"file",
-                         "value":"..\/..\/props\/furnace_fire.json"
+                         "value":"..\/..\/characters\/npcs\/knifethug\/knifethug.json"
                         }, 
                         {
                          "name":"flipX",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"loop",

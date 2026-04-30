@@ -7,6 +7,7 @@
 #include "resources/AsepriteAsset.h"
 #include "resources/TextureAsset.h"
 #include "topdown/TopdownHelpers.h"
+#include "utils/Interpolation.h"
 
 static const std::vector<int>* GetPropBucket(const TopdownRenderWorld& render, TopdownEffectPlacement placement)
 {
@@ -40,7 +41,25 @@ void TopdownUpdateProps(GameState& state, float dt)
     const float dtMs = dt * 1000.0f;
 
     for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
-        if (!prop.active || prop.type != TopdownPropType::Sprite) {
+        if (!prop.active) {
+            continue;
+        }
+
+        if (prop.moving) {
+            prop.moveTimerMs += dtMs;
+            if (prop.moveDurationMs <= 0.0f || prop.moveTimerMs >= prop.moveDurationMs) {
+                prop.position = prop.moveEnd;
+                prop.moving = false;
+                prop.moveTimerMs = 0.0f;
+                prop.moveDurationMs = 0.0f;
+            } else {
+                const float rawT = Clamp(prop.moveTimerMs / prop.moveDurationMs, 0.0f, 1.0f);
+                const float easedT = ApplyInterpolation(prop.moveInterpolation, rawT);
+                prop.position = Vector2Lerp(prop.moveStart, prop.moveEnd, easedT);
+            }
+        }
+
+        if (prop.type != TopdownPropType::Sprite) {
             continue;
         }
 
