@@ -9456,7 +9456,7 @@
                         {
                          "name":"displayName",
                          "type":"string",
-                         "value":"Phone"
+                         "value":"Answer Call"
                         }, 
                         {
                          "name":"interact",
@@ -9466,7 +9466,7 @@
                         {
                          "name":"repeat",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"script",

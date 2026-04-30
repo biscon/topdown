@@ -120,7 +120,7 @@ static bool TryHandleInteractiveTriggers(GameState& state)
         }
 
         if (!runtimeTrigger.repeat && runtimeTrigger.fired) {
-            return true;
+            continue;
         }
 
         if (!authored.script.empty()) {

@@ -137,6 +137,11 @@ static bool LoadFonts(GameState& state) {
         TraceLog(LOG_ERROR, "Could not load narration body font from %s", regularFontPath.c_str());
         return false;
     }
+    state.interactivePromptFont = LoadFontEx(boldFontPath.c_str(), 62, nullptr, 0);
+    if(state.interactivePromptFont.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Could not load narration title font from %s", boldFontPath.c_str());
+        return false;
+    }
     return true;
 }
 

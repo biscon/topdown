@@ -42,6 +42,8 @@ end
 
 function Level_phoneTrigger()
     log("phone triggered")
+    setSoundEmitterEnabled("phone_emitter", false)
+    setPropAnimation("phone", "Idle")
 end
 
 function Level_bedroomTrigger()
