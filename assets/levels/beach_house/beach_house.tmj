@@ -9411,8 +9411,41 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":844,
-                 "y":746.666666666667
+                 "x":907.75,
+                 "y":667.416666666667
+                }, 
+                {
+                 "height":62.5454545454546,
+                 "id":237,
+                 "name":"bedroom_trigger",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"affects",
+                         "type":"string",
+                         "value":"player"
+                        }, 
+                        {
+                         "name":"delayMs",
+                         "type":"float",
+                         "value":2000
+                        }, 
+                        {
+                         "name":"repeat",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Level_bedroomTrigger"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":39.2727272727273,
+                 "x":508.545454545455,
+                 "y":-468.363636363636
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -9790,6 +9823,45 @@
                  "width":0,
                  "x":853.333333333333,
                  "y":-342.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":236,
+                 "name":"phone_emitter",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"loop",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"pan",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"radius",
+                         "type":"float",
+                         "value":1500
+                        }, 
+                        {
+                         "name":"sound",
+                         "type":"string",
+                         "value":"phone_call"
+                        }, 
+                        {
+                         "name":"volume",
+                         "type":"float",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":false,
+                 "width":0,
+                 "x":165.5,
+                 "y":-532.75
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10055,59 +10127,20 @@
          "objects":[
                 {
                  "height":0,
-                 "id":234,
-                 "name":"test_prop",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"asset",
-                         "type":"file",
-                         "value":"..\/..\/props\/store_desk.png"
-                        }, 
-                        {
-                         "name":"flipX",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"placement",
-                         "type":"string",
-                         "value":"after_bottom"
-                        }, 
-                        {
-                         "name":"sortIndex",
-                         "type":"int",
-                         "value":1
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"image"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":580,
-                 "y":822.5
-                }, 
-                {
-                 "height":0,
                  "id":235,
-                 "name":"test_prop2",
+                 "name":"phone",
                  "opacity":0.77,
                  "point":true,
                  "properties":[
                         {
                          "name":"animation",
                          "type":"string",
-                         "value":"Walk"
+                         "value":"Idle"
                         }, 
                         {
                          "name":"asset",
                          "type":"file",
-                         "value":"..\/..\/characters\/npcs\/knifethug\/knifethug.json"
+                         "value":"..\/..\/props\/phone.json"
                         }, 
                         {
                          "name":"flipX",
@@ -10138,8 +10171,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":381.5,
-                 "y":809
+                 "x":164,
+                 "y":-537
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10148,7 +10181,7 @@
          "y":0
         }],
  "nextlayerid":88,
- "nextobjectid":236,
+ "nextobjectid":238,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

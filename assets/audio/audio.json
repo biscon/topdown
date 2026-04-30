@@ -235,7 +235,12 @@
             "type": "sound",
             "volume": 1.0,
             "loop": false
+        },
+        {
+            "id": "phone_call",
+            "file": "sfx/phone_call.wav",
+            "type": "sound",
+            "volume": 1.0
         }
-
     ]
 }

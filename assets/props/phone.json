@@ -1,0 +1,68 @@
+{ "frames": {
+   "phone (base) #Idle 0": {
+    "frame": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 500
+   },
+   "phone (base) #Idle 1": {
+    "frame": { "x": 13, "y": 0, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 1000
+   },
+   "phone (base) #Ring 0": {
+    "frame": { "x": 13, "y": 0, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 250
+   },
+   "phone (base) #Ring 1": {
+    "frame": { "x": 0, "y": 11, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 100
+   },
+   "phone (base) #Ring 2": {
+    "frame": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 100
+   },
+   "phone (base) #Ring 3": {
+    "frame": { "x": 13, "y": 11, "w": 13, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 11 },
+    "sourceSize": { "w": 13, "h": 11 },
+    "duration": 250
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-x64",
+  "image": "phone.png",
+  "format": "RGBA8888",
+  "size": { "w": 26, "h": 22 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Idle", "from": 0, "to": 1, "direction": "forward", "color": "#000000ff" },
+   { "name": "Ring", "from": 2, "to": 5, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "base", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

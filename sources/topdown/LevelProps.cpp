@@ -94,6 +94,9 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
         const Vector2 screen = TopdownWorldToScreen(state, prop.position);
         const float scale = static_cast<float>(state.topdown.currentLevelBaseAssetScale);
 
+        // ------------------------
+        // IMAGE PROPS
+        // ------------------------
         if (prop.type == TopdownPropType::Image) {
             const TextureResource* tex = FindTextureResource(state.resources, prop.textureHandle);
             if (tex == nullptr || !tex->loaded || tex->texture.id == 0) {
@@ -111,22 +114,26 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
                 src.width = -src.width;
             }
 
-            Rectangle dst = {
-                    roundf(screen.x),
-                    roundf(screen.y),
-                    fabsf(src.width) * scale,
-                    fabsf(src.height) * scale
-            };
+            const float dstW = fabsf(src.width) * scale;
+            const float dstH = fabsf(src.height) * scale;
 
             Vector2 origin{};
             if (prop.hasOriginOverride) {
                 origin = prop.originOverride;
             } else {
-                origin = {
-                        fabsf(src.width) * 0.5f * scale,
-                        fabsf(src.height) * 0.5f * scale
-                };
+                origin = { dstW * 0.5f, dstH * 0.5f };
             }
+
+            // snap top-left instead of pivot
+            const float left = roundf(screen.x - origin.x);
+            const float top  = roundf(screen.y - origin.y);
+
+            Rectangle dst = {
+                    left + origin.x,
+                    top + origin.y,
+                    dstW,
+                    dstH
+            };
 
             Color tint = WHITE;
             tint.a = static_cast<unsigned char>(Clamp(prop.opacity, 0.0f, 1.0f) * 255.0f);
@@ -135,6 +142,9 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
             continue;
         }
 
+        // ------------------------
+        // SPRITE PROPS
+        // ------------------------
         if (prop.type != TopdownPropType::Sprite) {
             continue;
         }
@@ -149,7 +159,9 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
             continue;
         }
 
-        const std::string& animationName = prop.oneShotActive ? prop.oneShotAnimation : prop.currentAnimation;
+        const std::string& animationName =
+                prop.oneShotActive ? prop.oneShotAnimation : prop.currentAnimation;
+
         if (animationName.empty()) {
             continue;
         }
@@ -173,27 +185,32 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
         }
 
         const SpriteFrame& frame = sprite->frames[frameIndex];
+
         Rectangle src = frame.sourceRect;
         if (prop.flipX) {
             src.width = -src.width;
         }
 
-        Rectangle dst = {
-                roundf(screen.x),
-                roundf(screen.y),
-                fabsf(src.width) * scale,
-                fabsf(src.height) * scale
-        };
+        const float dstW = fabsf(src.width) * scale;
+        const float dstH = fabsf(src.height) * scale;
 
         Vector2 origin{};
         if (prop.hasOriginOverride) {
             origin = prop.originOverride;
         } else {
-            origin = {
-                    fabsf(src.width) * 0.5f * scale,
-                    fabsf(src.height) * 0.5f * scale
-            };
+            origin = { dstW * 0.5f, dstH * 0.5f };
         }
+
+        // snap top-left instead of pivot
+        const float left = roundf(screen.x - origin.x);
+        const float top  = roundf(screen.y - origin.y);
+
+        Rectangle dst = {
+                left + origin.x,
+                top + origin.y,
+                dstW,
+                dstH
+        };
 
         Color tint = WHITE;
         tint.a = static_cast<unsigned char>(Clamp(prop.opacity, 0.0f, 1.0f) * 255.0f);
