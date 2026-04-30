@@ -7,6 +7,9 @@ function Level_onEnter()
     --spawnNpc("knifethug_1", "knifethug", "patrol_1")
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
+    startScript("StudyCeilingLampGlowLoop")
+    startScript("StudyLampGlowLoop")
+    startScript("BathroomLampGlowLoop")
     startScript("BeachHouseAudioLoop")
     --[[
     spawnPatrol(
@@ -81,30 +84,34 @@ function WalkAround()
 end
 
 function SpawnGuardPatrol()
-    spawnNpcSmart("guard_a", "pistolthug", "patrol_start", false)
-    spawnNpcSmart("guard_b", "pistolthug", "patrol_start", false)
-    spawnNpcSmart("guard_c", "pistolthug", "patrol_start", false)
-    spawnNpcSmart("guard_d", "pistolthug", "patrol_start", false)
+    spawnNpcSmart("guard_a", "knifethug", "patrol_start", false)
+    --spawnNpcSmart("guard_b", "knifethug", "patrol_start", false)
+    spawnNpcSmart("guard_c", "knifethug", "patrol_start", false)
+    --spawnNpcSmart("guard_d", "knifethug", "patrol_start", false)
     assignNpcPatrolRoute("guard_a", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
         waitMs = 3000
     })
+    --[[
     assignNpcPatrolRoute("guard_b", {"patrol_1", "patrol_2", "patrol_3", "patrol_4"}, {
         loop = true,
         running = false,
         waitMs = 2000
     })
+    -]]
     assignNpcPatrolRoute("guard_c", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
         loop = true,
         running = false,
         waitMs = 4000
     })
+    --[[
     assignNpcPatrolRoute("guard_d", {"patrol_4", "patrol_3", "patrol_2", "patrol_1"}, {
         loop = true,
         running = false,
         waitMs = 2000
     })
+    -]]
 
     spawnNpcSmart("patrol_2_guard_1", "pistolthug", "patrol_2_1", false)
     assignNpcPatrolRoute("patrol_2_guard_1", {"patrol_2_2", "patrol_2_3", "patrol_2_1"}, {
@@ -161,9 +168,33 @@ function TableLampGlowLoop()
     )
 end
 
+function StudyLampGlowLoop()
+    Glow.runElectric(
+        { "study_lamp_glow1", "study_lamp_glow2" },
+        0.65,
+        0.45
+    )
+end
+
+function StudyCeilingLampGlowLoop()
+    Glow.runElectric(
+        { "unused", "study_ceiling_lamp_glow" },
+        0.00,
+        0.45
+    )
+end
+
 function CeilingLampGlowLoop()
     Glow.runElectric(
         { "unused", "ceiling_lamp_glow" },
+        0.00,
+        0.45
+    )
+end
+
+function BathroomLampGlowLoop()
+    Glow.runElectric(
+        { "unused", "bathroom_lamp_glow" },
         0.00,
         0.45
     )
