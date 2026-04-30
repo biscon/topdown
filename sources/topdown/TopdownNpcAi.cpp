@@ -353,11 +353,6 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
 
         TopdownNpcPerceptionResult perception = EvaluateNpcPerception(state, npc);
         UpdateNpcEngagementState(state, npc, perception, dt);
-        if (npc.guard &&
-            npc.engagementState == TopdownNpcEngagementState::Unaware) {
-            ReturnGuardToPostOrPatrol(npc);
-        }
-
         if (npc.engagementState == TopdownNpcEngagementState::Reacting ||
             npc.engagementState == TopdownNpcEngagementState::Investigating ||
             npc.engagementState == TopdownNpcEngagementState::Engaged ||
@@ -383,12 +378,16 @@ void TopdownUpdateNpcAi(GameState& state, float dt)
                 break;
 
             case TopdownNpcEngagementState::Investigating:
+            {
                 DispatchNpcInvestigatingExecution(state, npc, perception, dt);
                 if (npc.guard &&
-                    npc.engagementState == TopdownNpcEngagementState::Unaware) {
+                    !npc.hasPlayerTarget &&
+                    (npc.engagementState == TopdownNpcEngagementState::Unaware ||
+                     npc.engagementState == TopdownNpcEngagementState::Guarding)) {
                     ReturnGuardToPostOrPatrol(npc);
                 }
                 break;
+            }
 
             case TopdownNpcEngagementState::Engaged:
                 DispatchNpcEngagedExecution(state, npc, perception, dt);
