@@ -82,10 +82,12 @@ enum class TopdownNpcAiMode {
 };
 
 enum class TopdownNpcEngagementState {
-    Unaware,       // no target, passive
-    Reacting,      // directly detected player, but not yet allowed to execute combat behavior
-    Investigating, // has stimulus / last known position, moving/searching
-    Engaged        // has target, full combat allowed
+    Unaware,                // no target, passive
+    Guarding,
+    Reacting,               // directly detected player, but not yet allowed to execute combat behavior
+    Investigating,          // has stimulus / last known position, moving/searching
+    Engaged,                // has target, full combat allowed
+    ReturningToGuardPost
 };
 
 struct TopdownNpcPerceptionResult {
@@ -165,6 +167,7 @@ struct TopdownAuthoredNpc {
     Vector2 position{};
     float orientationDegrees = 0.0f;
     bool persistentChase = false;
+    bool guard = false;
     bool visible = true;
 };
 
@@ -1164,6 +1167,7 @@ struct TopdownNpcRuntime {
     bool corpse = false;
     bool hostile = true;
     bool persistentChase = false;
+    bool guard = false;
 
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
 
@@ -1270,6 +1274,11 @@ struct TopdownNpcRuntime {
     int strafeDir = 1;
     float strafeTimerMs = 0.0f;
     float engagedLostTargetTimerMs = 0.0f;
+
+    Vector2 guardHomePosition{};
+    bool hasGuardHomePosition = false;
+    float guardLookAtSoundTimerMs = 0.0f;
+    float guardLookAtSoundRadians = 0.0f;
 };
 
 struct TopdownNpcInvestigationSlot {

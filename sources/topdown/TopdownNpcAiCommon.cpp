@@ -17,9 +17,11 @@ const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state)
 {
     switch (state) {
         case TopdownNpcEngagementState::Unaware:        return "Unaware";
+        case TopdownNpcEngagementState::Guarding:       return "Guarding";
         case TopdownNpcEngagementState::Reacting:       return "Reacting";
         case TopdownNpcEngagementState::Investigating:  return "Investigating";
         case TopdownNpcEngagementState::Engaged:        return "Engaged";
+        case TopdownNpcEngagementState::ReturningToGuardPost: return "ReturningToGuardPost";
         default:                                        return "Unknown";
     }
 }
