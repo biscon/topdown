@@ -8,6 +8,7 @@
 #include "nav/NavMeshData.h"
 #include "rvo2/RVOSimulator.h"
 #include "ui/NarrationPopupsData.h"
+#include "utils/Interpolation.h"
 
 using TopdownObstacleHandle = int;
 using TopdownImageLayerHandle = int;
@@ -27,6 +28,11 @@ enum class TopdownEffectPlacement {
     AfterBottom,
     AfterCharacters,
     Final
+};
+
+enum class TopdownPropType {
+    Image,
+    Sprite
 };
 
 enum class TopdownTriggerAffects {
@@ -233,6 +239,31 @@ struct TopdownAuthoredEffectRegion {
     TextureHandle textureHandle = -1;
 };
 
+
+struct TopdownAuthoredProp {
+    int tiledObjectId = -1;
+    std::string id;
+    Vector2 position{};
+    bool visible = true;
+
+    std::string assetPath;
+    TopdownPropType type = TopdownPropType::Image;
+
+    bool flipX = false;
+    std::string animation;
+    bool loop = false;
+
+    TopdownEffectPlacement placement = TopdownEffectPlacement::AfterBottom;
+    float sortIndex = 0.0f;
+    float opacity = 1.0f;
+
+    bool hasOriginOverride = false;
+    Vector2 originOverride{};
+
+    TextureHandle textureHandle = -1;
+    SpriteAssetHandle spriteHandle = -1;
+};
+
 struct TopdownAuthoredTrigger {
     int tiledObjectId = -1;
     std::string id;
@@ -358,6 +389,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredImageLayer> imageLayers;
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
+    std::vector<TopdownAuthoredProp> props;
     std::vector<TopdownAuthoredTrigger> triggers;
     std::vector<TopdownAuthoredNpc> npcs;
     std::vector<TopdownAuthoredDoor> doors;
@@ -449,6 +481,44 @@ struct TopdownRuntimeEffectRegion {
 };
 
 using TopdownTriggerHandle = int;
+
+
+struct TopdownRuntimeProp {
+    bool active = false;
+    int authoredIndex = -1;
+    std::string id;
+
+    TopdownPropType type = TopdownPropType::Image;
+    Vector2 position{};
+    bool visible = true;
+    bool flipX = false;
+
+    TopdownEffectPlacement placement = TopdownEffectPlacement::AfterBottom;
+    float sortIndex = 0.0f;
+    float opacity = 1.0f;
+
+    TextureHandle textureHandle = -1;
+    SpriteAssetHandle spriteHandle = -1;
+
+    bool hasOriginOverride = false;
+    Vector2 originOverride{};
+
+    std::string baseAnimation;
+    std::string currentAnimation;
+
+    bool loop = false;
+    bool oneShotActive = false;
+    std::string oneShotAnimation;
+    float animationTimeMs = 0.0f;
+    float oneShotDurationMs = 0.0f;
+
+    bool moving = false;
+    Vector2 moveStart{};
+    Vector2 moveEnd{};
+    float moveTimerMs = 0.0f;
+    float moveDurationMs = 0.0f;
+    MoveInterpolation moveInterpolation = MoveInterpolation::Linear;
+};
 
 struct TopdownRuntimeTriggerPendingCall {
     bool active = false;
@@ -810,6 +880,10 @@ struct TopdownRenderWorld {
     std::vector<int> afterBottomEffectRegionIndices;
     std::vector<int> afterCharactersEffectRegionIndices;
     std::vector<int> finalEffectRegionIndices;
+
+    std::vector<int> afterBottomPropIndices;
+    std::vector<int> afterCharactersPropIndices;
+    std::vector<int> finalPropIndices;
 
     int nextImageLayerHandle = 1;
     int nextEffectRegionHandle = 1;
@@ -1456,6 +1530,7 @@ struct TopdownRuntimeData {
     std::vector<TopdownNpcPatrolContext> npcPatrolContexts;
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
+    std::vector<TopdownRuntimeProp> props;
     std::vector<TopdownRuntimeDoor> doors;
     std::vector<TopdownRuntimeWindow> windows;
 
