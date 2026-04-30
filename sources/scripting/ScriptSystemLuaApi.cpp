@@ -720,6 +720,115 @@ static int Lua_setLayerVisible(lua_State* L)
     return 1;
 }
 
+static int Lua_setPropAnimation(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const char* animation = luaL_checkstring(L, 2);
+    if (!gameState || !id || !animation) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetPropAnimation(*gameState, id, animation) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_playPropAnimation(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const char* animation = luaL_checkstring(L, 2);
+    if (!gameState || !id || !animation) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptPlayPropAnimation(*gameState, id, animation) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setPropPosition(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const float x = static_cast<float>(luaL_checknumber(L, 2));
+    const float y = static_cast<float>(luaL_checknumber(L, 3));
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetPropPosition(*gameState, id, Vector2{x, y}) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_movePropPosition(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const float x = static_cast<float>(luaL_checknumber(L, 2));
+    const float y = static_cast<float>(luaL_checknumber(L, 3));
+    const float durationMs = static_cast<float>(luaL_checknumber(L, 4));
+    const char* interpolation = luaL_checkstring(L, 5);
+    if (!gameState || !id || !interpolation) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(
+            L,
+            TopdownScriptMovePropPosition(*gameState, id, Vector2{x, y}, durationMs, interpolation) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_movePropPositionRelative(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const float x = static_cast<float>(luaL_checknumber(L, 2));
+    const float y = static_cast<float>(luaL_checknumber(L, 3));
+    const float durationMs = static_cast<float>(luaL_checknumber(L, 4));
+    const char* interpolation = luaL_checkstring(L, 5);
+    if (!gameState || !id || !interpolation) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(
+            L,
+            TopdownScriptMovePropPositionRelative(
+                    *gameState,
+                    id,
+                    Vector2{x, y},
+                    durationMs,
+                    interpolation)
+                    ? 1
+                    : 0);
+    return 1;
+}
+
+static int Lua_setPropVisible(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const bool visible = lua_toboolean(L, 2) != 0;
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetPropVisible(*gameState, id, visible) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setPropOpacity(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+    const float opacity = static_cast<float>(luaL_checknumber(L, 2));
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetPropOpacity(*gameState, id, opacity) ? 1 : 0);
+    return 1;
+}
+
 static int Lua_layerVisible(lua_State* L)
 {
     const char* name = luaL_checkstring(L, 1);
@@ -1289,6 +1398,13 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "layerVisible", Lua_layerVisible);
     lua_register(L, "setLayerOpacity", Lua_setLayerOpacity);
     lua_register(L, "layerOpacity", Lua_layerOpacity);
+    lua_register(L, "setPropAnimation", Lua_setPropAnimation);
+    lua_register(L, "playPropAnimation", Lua_playPropAnimation);
+    lua_register(L, "setPropPosition", Lua_setPropPosition);
+    lua_register(L, "movePropPosition", Lua_movePropPosition);
+    lua_register(L, "movePropPositionRelative", Lua_movePropPositionRelative);
+    lua_register(L, "setPropVisible", Lua_setPropVisible);
+    lua_register(L, "setPropOpacity", Lua_setPropOpacity);
 
     lua_register(L, "shakeScreen", Lua_shakeScreen);
 

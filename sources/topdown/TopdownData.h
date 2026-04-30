@@ -8,6 +8,7 @@
 #include "nav/NavMeshData.h"
 #include "rvo2/RVOSimulator.h"
 #include "ui/NarrationPopupsData.h"
+#include "utils/Interpolation.h"
 
 using TopdownObstacleHandle = int;
 using TopdownImageLayerHandle = int;
@@ -433,6 +434,12 @@ struct TopdownRuntimeProp {
     float animationTimeMs = 0.0f;
     float oneShotDurationMs = 0.0f;
     bool loop = false;
+    bool moving = false;
+    Vector2 moveStart{};
+    Vector2 moveEnd{};
+    float moveTimerMs = 0.0f;
+    float moveDurationMs = 0.0f;
+    MoveInterpolation moveInterpolation = MoveInterpolation::Linear;
 
     bool hasOriginOverride = false;
     Vector2 originOverride{};

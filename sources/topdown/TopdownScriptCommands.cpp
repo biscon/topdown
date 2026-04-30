@@ -7,7 +7,9 @@
 #include "topdown/NpcRegistry.h"
 #include "topdown/TopdownNpcPatrol.h"
 #include "audio/Audio.h"
+#include "resources/AsepriteAsset.h"
 #include "ui/NarrationPopups.h"
+#include "utils/Interpolation.h"
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
@@ -49,6 +51,26 @@ static TopdownNpcRuntime* FindNpc(GameState& state, const std::string& npcId)
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
         if (npc.active && npc.id == npcId) {
             return &npc;
+        }
+    }
+    return nullptr;
+}
+
+static TopdownRuntimeProp* FindProp(GameState& state, const std::string& propId)
+{
+    for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+        if (prop.active && prop.id == propId) {
+            return &prop;
+        }
+    }
+    return nullptr;
+}
+
+static const SpriteClip* FindSpriteClipByName(const SpriteAssetResource& sprite, const std::string& clipName)
+{
+    for (const SpriteClip& clip : sprite.clips) {
+        if (clip.name == clipName) {
+            return &clip;
         }
     }
     return nullptr;
@@ -547,6 +569,150 @@ bool TopdownScriptPlayNpcAnimation(GameState& state, const std::string& npcId, c
     }
 
     TopdownPlayNpcOneShotAnimation(*npc, clipRef);
+    return true;
+}
+
+// --------------------------------------------------
+// Props
+// --------------------------------------------------
+
+bool TopdownScriptSetPropAnimation(GameState& state, const std::string& id, const std::string& animation)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr || prop->type != TopdownPropType::Sprite) {
+        return false;
+    }
+
+    const SpriteAssetResource* sprite = FindSpriteAssetResource(state.resources, prop->spriteHandle);
+    if (sprite == nullptr || !sprite->loaded || FindSpriteClipByName(*sprite, animation) == nullptr) {
+        return false;
+    }
+
+    prop->baseAnimation = animation;
+    prop->currentAnimation = animation;
+    prop->oneShotActive = false;
+    prop->oneShotAnimation.clear();
+    prop->animationTimeMs = 0.0f;
+    prop->oneShotDurationMs = 0.0f;
+    return true;
+}
+
+bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, const std::string& animation)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr || prop->type != TopdownPropType::Sprite) {
+        return false;
+    }
+
+    const SpriteAssetResource* sprite = FindSpriteAssetResource(state.resources, prop->spriteHandle);
+    if (sprite == nullptr || !sprite->loaded) {
+        return false;
+    }
+
+    const SpriteClip* clip = FindSpriteClipByName(*sprite, animation);
+    if (clip == nullptr) {
+        return false;
+    }
+
+    const float durationMs = GetOneShotClipDurationMs(*sprite, *clip);
+    if (durationMs <= 0.0f) {
+        return false;
+    }
+
+    prop->oneShotActive = true;
+    prop->oneShotAnimation = animation;
+    prop->animationTimeMs = 0.0f;
+    prop->oneShotDurationMs = durationMs;
+    return true;
+}
+
+bool TopdownScriptSetPropPosition(GameState& state, const std::string& id, Vector2 position)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr) {
+        return false;
+    }
+
+    prop->position = position;
+    prop->moving = false;
+    prop->moveTimerMs = 0.0f;
+    prop->moveDurationMs = 0.0f;
+    return true;
+}
+
+bool TopdownScriptMovePropPosition(
+        GameState& state,
+        const std::string& id,
+        Vector2 target,
+        float durationMs,
+        const std::string& interpolation)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr) {
+        return false;
+    }
+
+    MoveInterpolation mode = MoveInterpolation::Linear;
+    if (!ParseInterpolation(interpolation, mode)) {
+        return false;
+    }
+
+    if (durationMs <= 0.0f) {
+        prop->position = target;
+        prop->moving = false;
+        prop->moveTimerMs = 0.0f;
+        prop->moveDurationMs = 0.0f;
+        return true;
+    }
+
+    prop->moving = true;
+    prop->moveStart = prop->position;
+    prop->moveEnd = target;
+    prop->moveTimerMs = 0.0f;
+    prop->moveDurationMs = durationMs;
+    prop->moveInterpolation = mode;
+    return true;
+}
+
+bool TopdownScriptMovePropPositionRelative(
+        GameState& state,
+        const std::string& id,
+        Vector2 delta,
+        float durationMs,
+        const std::string& interpolation)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr) {
+        return false;
+    }
+
+    return TopdownScriptMovePropPosition(
+            state,
+            id,
+            Vector2Add(prop->position, delta),
+            durationMs,
+            interpolation);
+}
+
+bool TopdownScriptSetPropVisible(GameState& state, const std::string& id, bool visible)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr) {
+        return false;
+    }
+
+    prop->visible = visible;
+    return true;
+}
+
+bool TopdownScriptSetPropOpacity(GameState& state, const std::string& id, float opacity)
+{
+    TopdownRuntimeProp* prop = FindProp(state, id);
+    if (prop == nullptr) {
+        return false;
+    }
+
+    prop->opacity = Clamp(opacity, 0.0f, 1.0f);
     return true;
 }
 

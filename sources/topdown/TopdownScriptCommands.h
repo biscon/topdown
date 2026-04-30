@@ -60,6 +60,25 @@ bool TopdownScriptSetNpcAnimation(GameState& state, const std::string& npcId, co
 bool TopdownScriptClearNpcAnimation(GameState& state, const std::string& npcId);
 bool TopdownScriptPlayNpcAnimation(GameState& state, const std::string& npcId, const std::string& animationName);
 
+// Props
+bool TopdownScriptSetPropAnimation(GameState& state, const std::string& id, const std::string& animation);
+bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, const std::string& animation);
+bool TopdownScriptSetPropPosition(GameState& state, const std::string& id, Vector2 position);
+bool TopdownScriptMovePropPosition(
+        GameState& state,
+        const std::string& id,
+        Vector2 target,
+        float durationMs,
+        const std::string& interpolation);
+bool TopdownScriptMovePropPositionRelative(
+        GameState& state,
+        const std::string& id,
+        Vector2 delta,
+        float durationMs,
+        const std::string& interpolation);
+bool TopdownScriptSetPropVisible(GameState& state, const std::string& id, bool visible);
+bool TopdownScriptSetPropOpacity(GameState& state, const std::string& id, float opacity);
+
 // Image layers
 bool TopdownScriptSetImageLayerVisible(GameState& state, const std::string& name, bool visible);
 bool TopdownScriptIsImageLayerVisible(GameState& state, const std::string& name, bool& outVisible);
