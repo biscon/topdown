@@ -9446,6 +9446,39 @@
                  "width":39.2727272727273,
                  "x":508.545454545455,
                  "y":-468.363636363636
+                }, 
+                {
+                 "height":34.1818636363636,
+                 "id":238,
+                 "name":"phone_trigger",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"displayName",
+                         "type":"string",
+                         "value":"Phone"
+                        }, 
+                        {
+                         "name":"interact",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"repeat",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Level_phoneTrigger"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":39.2727,
+                 "x":182.36365,
+                 "y":-552.909113636364
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10181,7 +10214,7 @@
          "y":0
         }],
  "nextlayerid":88,
- "nextobjectid":238,
+ "nextobjectid":239,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

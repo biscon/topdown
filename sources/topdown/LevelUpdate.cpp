@@ -120,7 +120,6 @@ static bool TryHandleInteractiveTriggers(GameState& state)
         }
 
         if (!runtimeTrigger.repeat && runtimeTrigger.fired) {
-            ConsumeEvent(*interactEvent);
             return true;
         }
 
