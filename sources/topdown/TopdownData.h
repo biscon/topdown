@@ -23,6 +23,11 @@ enum class TopdownImageLayerKind {
     Top
 };
 
+enum class TopdownPropType {
+    Image,
+    Sprite
+};
+
 enum class TopdownEffectPlacement {
     AfterBottom,
     AfterCharacters,
@@ -204,6 +209,30 @@ struct TopdownAuthoredDoor {
     Color outlineColor = BLACK;
 };
 
+struct TopdownAuthoredProp {
+    int tiledObjectId = -1;
+    std::string id;
+
+    Vector2 position{};
+    bool visible = true;
+
+    std::string assetPath;
+    TopdownPropType type = TopdownPropType::Image;
+
+    bool flipX = false;
+
+    std::string animation;
+    bool loop = false;
+
+    TopdownEffectPlacement placement = TopdownEffectPlacement::AfterBottom;
+    float sortIndex = 0.0f;
+
+    float opacity = 1.0f;
+
+    bool hasOriginOverride = false;
+    Vector2 originOverride{};
+};
+
 struct TopdownAuthoredEffectRegion {
     int tiledObjectId = -1;
     std::string id;
@@ -356,6 +385,7 @@ struct TopdownAuthoredLevelData {
     std::vector<Vector2> levelBoundary;
     std::vector<TopdownAuthoredPolygon> obstacles;
     std::vector<TopdownAuthoredImageLayer> imageLayers;
+    std::vector<TopdownAuthoredProp> props;
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
     std::vector<TopdownAuthoredTrigger> triggers;
@@ -376,6 +406,27 @@ struct TopdownRuntimeObstacle {
 
     Rectangle bounds{};
     bool visible = true;
+};
+
+struct TopdownRuntimeProp {
+    bool active = false;
+    int authoredIndex = -1;
+    std::string id;
+
+    Vector2 position{};
+    bool visible = true;
+
+    TopdownPropType type = TopdownPropType::Image;
+
+    bool flipX = false;
+
+    float opacity = 1.0f;
+
+    std::string baseAnimation;
+    bool loop = false;
+
+    bool hasOriginOverride = false;
+    Vector2 originOverride{};
 };
 
 struct TopdownRuntimeDoor {
@@ -1454,6 +1505,8 @@ struct TopdownRuntimeData {
     std::vector<TopdownNpcInvestigationContext> npcInvestigations;
     int nextNpcPatrolContextHandle = 1;
     std::vector<TopdownNpcPatrolContext> npcPatrolContexts;
+    std::vector<TopdownRuntimeProp> props;
+
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
     std::vector<TopdownRuntimeDoor> doors;

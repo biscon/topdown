@@ -55,6 +55,23 @@ static bool ParseTopdownEffectPlacement(
     return false;
 }
 
+static bool ParseTopdownPropType(
+        const std::string& s,
+        TopdownPropType& outType)
+{
+    if (s.empty() || s == "image") {
+        outType = TopdownPropType::Image;
+        return true;
+    }
+
+    if (s == "sprite") {
+        outType = TopdownPropType::Sprite;
+        return true;
+    }
+
+    return false;
+}
+
 static bool ParseEffectBlendModeString(
         const std::string& s,
         EffectBlendMode& outMode)
@@ -939,6 +956,89 @@ static void ImportWindowLayer(
         }
 
         topdown.authored.windows.push_back(window);
+    }
+}
+
+static void ImportPropLayer(
+        GameState& state,
+        const json& layer,
+        const std::filesystem::path& levelDir,
+        int baseAssetScale)
+{
+    if (!layer.contains("objects") || !layer["objects"].is_array()) {
+        return;
+    }
+
+    const float scale = static_cast<float>(baseAssetScale);
+
+    for (const auto& obj : layer["objects"]) {
+        if (!obj.is_object()) {
+            continue;
+        }
+
+        if (!obj.value("point", false)) {
+            continue;
+        }
+
+        TopdownAuthoredProp prop;
+        prop.id = obj.value("name", std::string());
+        prop.tiledObjectId = obj.value("id", -1);
+        prop.visible = obj.value("visible", true);
+        prop.position.x = obj.value("x", 0.0f) * scale;
+        prop.position.y = obj.value("y", 0.0f) * scale;
+
+        const std::string assetRel = GetObjectPropertyString(obj, "asset", "");
+        if (assetRel.empty()) {
+            TraceLog(LOG_WARNING, "Topdown prop '%s' missing required asset; skipping", prop.id.c_str());
+            continue;
+        }
+
+        const std::string typeStr = GetObjectPropertyString(obj, "type", "image");
+        if (!ParseTopdownPropType(typeStr, prop.type)) {
+            TraceLog(LOG_WARNING,
+                     "Invalid topdown prop type '%s' on '%s', defaulting to image",
+                     typeStr.c_str(),
+                     prop.id.c_str());
+            prop.type = TopdownPropType::Image;
+        }
+
+        prop.flipX = GetObjectPropertyBool(obj, "flipX", false);
+        prop.animation = GetObjectPropertyString(obj, "animation", "");
+        prop.loop = GetObjectPropertyBool(obj, "loop", false);
+
+        const std::string placementStr =
+                GetObjectPropertyString(obj, "placement", "after_bottom");
+        if (!ParseTopdownEffectPlacement(placementStr, prop.placement)) {
+            TraceLog(LOG_WARNING,
+                     "Invalid topdown prop placement '%s' on '%s', defaulting to after_bottom",
+                     placementStr.c_str(),
+                     prop.id.c_str());
+            prop.placement = TopdownEffectPlacement::AfterBottom;
+        }
+
+        prop.sortIndex = GetObjectPropertyFloat(obj, "sortIndex", 0.0f);
+        prop.opacity = GetObjectPropertyFloat(obj, "opacity", 1.0f);
+        prop.opacity = std::clamp(prop.opacity, 0.0f, 1.0f);
+
+        const bool hasOriginOverrideX = FindObjectProperty(obj, "originOverrideX") != nullptr;
+        const bool hasOriginOverrideY = FindObjectProperty(obj, "originOverrideY") != nullptr;
+        if (hasOriginOverrideX && hasOriginOverrideY) {
+            prop.hasOriginOverride = true;
+            prop.originOverride.x = GetObjectPropertyFloat(obj, "originOverrideX", 0.0f) * scale;
+            prop.originOverride.y = GetObjectPropertyFloat(obj, "originOverrideY", 0.0f) * scale;
+        }
+
+        const fs::path resolved = (levelDir / assetRel).lexically_normal();
+        prop.assetPath = NormalizePath(resolved);
+
+        if (prop.id.empty() || prop.assetPath.empty()) {
+            TraceLog(LOG_WARNING,
+                     "Topdown prop invalid (id or assetPath empty), objectId=%d; skipping",
+                     prop.tiledObjectId);
+            continue;
+        }
+
+        state.topdown.authored.props.push_back(prop);
     }
 }
 
@@ -2312,6 +2412,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
         if (layerName == "Top" && layerType == "group") {
             ImportImageGroup(state, layer, levelDir, state.topdown.authored.baseAssetScale, TopdownImageLayerKind::Top);
+            continue;
+        }
+
+        if (layerName == "Props" && layerType == "objectgroup") {
+            ImportPropLayer(state, layer, levelDir, state.topdown.authored.baseAssetScale);
             continue;
         }
 
