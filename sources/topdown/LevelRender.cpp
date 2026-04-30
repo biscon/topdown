@@ -1346,6 +1346,71 @@ static void DrawHealthBar(GameState& state) {
             WHITE);
 }
 
+
+static const TopdownAuthoredTrigger* FindActiveInteractPromptTrigger(const GameState& state)
+{
+    for (const TopdownRuntimeTrigger& runtimeTrigger : state.topdown.runtime.triggers) {
+        if (runtimeTrigger.authoredIndex < 0 ||
+            runtimeTrigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        const TopdownAuthoredTrigger& authored =
+                state.topdown.authored.triggers[runtimeTrigger.authoredIndex];
+
+        if (!authored.interact || !runtimeTrigger.enabled || !runtimeTrigger.playerInside) {
+            continue;
+        }
+
+        if (!runtimeTrigger.repeat && runtimeTrigger.fired) {
+            continue;
+        }
+
+        return &authored;
+    }
+
+    return nullptr;
+}
+
+static void DrawInteractPrompt(GameState& state)
+{
+    const TopdownAuthoredTrigger* authored = FindActiveInteractPromptTrigger(state);
+    if (!authored) {
+        return;
+    }
+
+    const std::string label = authored->displayName.empty() ? authored->id : authored->displayName;
+    const std::string prompt = "[E] " + label;
+
+    constexpr float fontSize = 42.0f;
+    constexpr float spacing = 1.0f;
+
+    const Vector2 textSize = MeasureTextEx(
+            state.narrationTitleFont,
+            prompt.c_str(),
+            fontSize,
+            spacing);
+
+    const float x = std::round((INTERNAL_WIDTH - textSize.x) * 0.5f);
+    const float y = std::round(INTERNAL_HEIGHT - 120.0f);
+
+    DrawTextEx(
+            state.narrationTitleFont,
+            prompt.c_str(),
+            Vector2{x + 2.0f, y + 2.0f},
+            fontSize,
+            spacing,
+            BLACK);
+
+    DrawTextEx(
+            state.narrationTitleFont,
+            prompt.c_str(),
+            Vector2{x, y},
+            fontSize,
+            spacing,
+            WHITE);
+}
+
 static void DrawGameOver(GameState& state)
 {
     TopdownRuntimeData& runtime = state.topdown.runtime;
@@ -1451,5 +1516,6 @@ void TopdownRenderUi(GameState& state)
 
     DrawHealthBar(state);
     TopdownRenderNarrationPopups(state);
+    DrawInteractPrompt(state);
     DrawGameOver(state);
 }
