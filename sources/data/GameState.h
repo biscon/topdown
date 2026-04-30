@@ -38,6 +38,7 @@ struct GameState {
     Font hoverLabelFont;
     Font narrationTitleFont;
     Font narrationBodyFont;
+    Font interactivePromptFont;
 
     TopdownData topdown;
 };

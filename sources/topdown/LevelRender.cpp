@@ -1382,7 +1382,7 @@ static void DrawInteractPrompt(GameState& state)
     const std::string label = authored->displayName.empty() ? authored->id : authored->displayName;
     const std::string prompt = "[E] " + label;
 
-    constexpr float fontSize = 42.0f;
+    constexpr float fontSize = 62.0f;
     constexpr float spacing = 1.0f;
 
     const Vector2 textSize = MeasureTextEx(
@@ -1392,10 +1392,10 @@ static void DrawInteractPrompt(GameState& state)
             spacing);
 
     const float x = std::round((INTERNAL_WIDTH - textSize.x) * 0.5f);
-    const float y = std::round(INTERNAL_HEIGHT - 120.0f);
+    const float y = std::round(INTERNAL_HEIGHT - 140.0f);
 
     DrawTextEx(
-            state.narrationTitleFont,
+            state.interactivePromptFont,
             prompt.c_str(),
             Vector2{x + 2.0f, y + 2.0f},
             fontSize,
@@ -1403,7 +1403,7 @@ static void DrawInteractPrompt(GameState& state)
             BLACK);
 
     DrawTextEx(
-            state.narrationTitleFont,
+            state.interactivePromptFont,
             prompt.c_str(),
             Vector2{x, y},
             fontSize,
