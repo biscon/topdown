@@ -17,6 +17,14 @@
 // Give up hard chase and enter search if the player becomes implausibly far away.
 constexpr const float kHardChaseCutoffDistance = 3500.0f;
 
+enum class HoldAndFireCombatIntent {
+    HoldPosition,
+    Attack,
+    Approach,
+    BackOff,
+    Strafe
+};
+
 static void FireNpcHitscanWeapon(
         GameState& state,
         TopdownNpcRuntime& npc)
@@ -366,6 +374,12 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
 
     const float dtMs = dt * 1000.0f;
 
+    npc.strafeTimerMs -= dtMs;
+    if (npc.strafeTimerMs <= 0.0f) {
+        npc.strafeDir *= -1;
+        npc.strafeTimerMs = RandomRangeFloat(600.0f, 1400.0f);
+    }
+
     UpdateNpcAttackCooldown(npc, dtMs);
     UpdateNpcRepathTimer(npc, dtMs);
 
@@ -384,11 +398,6 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         return;
     }
 
-    if (perception.seesPlayer) {
-        UpdateNpcFacingTowardPlayer(state, npc);
-    }
-
-
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const TopdownNpcAssetRuntime* asset =
             FindTopdownNpcAssetRuntime(state, npc.assetId);
@@ -398,11 +407,18 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         return;
     }
 
+    if (perception.seesPlayer) {
+        UpdateNpcFacingTowardPlayer(state, npc);
+    }
+
+    const Vector2 toPlayer = TopdownSub(player.position, npc.position);
+    const float centerDist = TopdownLength(toPlayer);
+    const float edgeDist = centerDist - player.radius - npc.collisionRadius;
+
     const bool inAttackRange =
-            TopdownIsPlayerWithinNpcAttackRange(npc, player);
+            edgeDist <= asset->rangedMaxRange;
 
     bool clearShot = false;
-
     if (perception.seesPlayer) {
         Vector2 muzzleWorld{};
         if (!TopdownComputeNpcMuzzleWorldPosition(state, npc, *asset, muzzleWorld)) {
@@ -422,61 +438,60 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
             inAttackRange &&
             clearShot;
 
-    if (canTakeShot) {
-        TopdownStopNpcMovement(npc);
-        TopdownResetNpcChaseStuckWatchdog(npc);
+    HoldAndFireCombatIntent intent = HoldAndFireCombatIntent::HoldPosition;
+    Vector2 intentTarget{};
+    bool hasIntentTarget = false;
+    bool forceWalk = false;
 
-        if (npc.attackCooldownRemainingMs <= 0.0f) {
-            StartNpcRangedAttack(state, npc);
-        }
-
-        return;
-    }
-
-    if (npc.combatState != TopdownNpcCombatState::Chase) {
-        npc.combatState = TopdownNpcCombatState::Chase;
-        TopdownResetNpcChaseStuckWatchdog(npc);
-        return;
-    }
-
-    Vector2 chaseTarget{};
-    bool hasChaseTarget = false;
-
-    if (perception.seesPlayer) {
-        const Vector2 toPlayer = TopdownSub(player.position, npc.position);
-        const float centerDist = TopdownLength(toPlayer);
-        const float edgeDist = centerDist - player.radius - npc.collisionRadius;
-
+    if (canTakeShot && npc.attackCooldownRemainingMs <= 0.0f) {
+        intent = HoldAndFireCombatIntent::Attack;
+    } else if (perception.seesPlayer) {
         const float desiredDistance =
                 npc.attackRange * npc.preferredAttackRangeFactor;
-        const float tolerance = 20.0f; // small dead zone to prevent jitter
 
-        if (edgeDist > desiredDistance + tolerance || !clearShot) {
-            chaseTarget = player.position;
-            hasChaseTarget = true;
+        const float tolerance = 20.0f;
+
+        if (!inAttackRange) {
+            intent = HoldAndFireCombatIntent::Approach;
+            intentTarget = player.position;
+            hasIntentTarget = true;
+        } else if (!clearShot) {
+            intent = HoldAndFireCombatIntent::Strafe;
+        } else if (edgeDist > desiredDistance + tolerance) {
+            intent = HoldAndFireCombatIntent::Approach;
+            intentTarget = player.position;
+            hasIntentTarget = true;
         } else if (edgeDist < desiredDistance - tolerance) {
-            Vector2 awayDir =
+            const Vector2 awayDir =
                     TopdownNormalizeOrZero(TopdownSub(npc.position, player.position));
-            chaseTarget = TopdownAdd(npc.position, TopdownMul(awayDir, 100.0f));
-            hasChaseTarget = true;
+
+            if (TopdownLengthSqr(awayDir) > 0.000001f) {
+                intent = HoldAndFireCombatIntent::BackOff;
+                intentTarget = TopdownAdd(npc.position, TopdownMul(awayDir, 100.0f));
+                hasIntentTarget = true;
+                forceWalk = true;
+            } else {
+                intent = HoldAndFireCombatIntent::HoldPosition;
+            }
         } else {
-            TopdownStopNpcMovement(npc);
-            TopdownResetNpcChaseStuckWatchdog(npc);
-            hasChaseTarget = false;
+            intent = HoldAndFireCombatIntent::HoldPosition;
         }
     } else if (npc.hasPlayerTarget) {
-        chaseTarget = npc.lastKnownPlayerPosition;
-        hasChaseTarget = true;
+        intent = HoldAndFireCombatIntent::Approach;
+        intentTarget = npc.lastKnownPlayerPosition;
+        hasIntentTarget = true;
     }
 
     if (npc.persistentChase) {
-        chaseTarget = state.topdown.runtime.player.position;
-        hasChaseTarget = true;
+        intent = HoldAndFireCombatIntent::Approach;
+        intentTarget = state.topdown.runtime.player.position;
+        hasIntentTarget = true;
+        forceWalk = false;
     }
 
-    if (npc.persistentChase && hasChaseTarget) {
+    if (npc.persistentChase && hasIntentTarget) {
         const float distanceToChaseTarget =
-                TopdownLength(TopdownSub(chaseTarget, npc.position));
+                TopdownLength(TopdownSub(intentTarget, npc.position));
 
         if (distanceToChaseTarget >= kHardChaseCutoffDistance) {
             npc.hasPlayerTarget = false;
@@ -485,6 +500,48 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
             TopdownStopNpcMovement(npc);
             return;
         }
+    }
+
+    switch (intent) {
+        case HoldAndFireCombatIntent::Attack:
+            StartNpcRangedAttack(state, npc);
+            return;
+
+        case HoldAndFireCombatIntent::HoldPosition:
+            TopdownStopNpcMovement(npc);
+            TopdownResetNpcChaseStuckWatchdog(npc);
+            return;
+
+        case HoldAndFireCombatIntent::Strafe:
+        {
+            const Vector2 forward = TopdownNormalizeOrZero(toPlayer);
+            if (TopdownLengthSqr(forward) <= 0.000001f) {
+                TopdownStopNpcMovement(npc);
+                TopdownResetNpcChaseStuckWatchdog(npc);
+                return;
+            }
+
+            const Vector2 strafeLeft{ -forward.y, forward.x };
+            const Vector2 strafeRight{ forward.y, -forward.x };
+
+            const Vector2 strafeDirVec =
+                    (npc.strafeDir > 0) ? strafeRight : strafeLeft;
+
+            intentTarget = TopdownAdd(npc.position, TopdownMul(strafeDirVec, 120.0f));
+            hasIntentTarget = true;
+            forceWalk = true;
+            break;
+        }
+
+        case HoldAndFireCombatIntent::Approach:
+        case HoldAndFireCombatIntent::BackOff:
+            break;
+    }
+
+    if (npc.combatState != TopdownNpcCombatState::Chase) {
+        npc.combatState = TopdownNpcCombatState::Chase;
+        TopdownResetNpcChaseStuckWatchdog(npc);
+        return;
     }
 
     if (TopdownUpdateNpcChaseStuckWatchdog(npc, dtMs)) {
@@ -496,7 +553,14 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         return;
     }
 
-    if (hasChaseTarget) {
-        UpdateNpcChasePathing(state, npc, chaseTarget);
+    if (hasIntentTarget) {
+        UpdateNpcChasePathing(state, npc, intentTarget);
+
+        if (forceWalk &&
+            npc.move.active &&
+            npc.move.owner == TopdownNpcMoveOwner::Ai) {
+            npc.move.running = false;
+            npc.running = false;
+        }
     }
 }
