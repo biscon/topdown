@@ -40,6 +40,10 @@ function Level_onEnter()
     --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
 end
 
+function Level_phoneTrigger()
+    log("phone triggered")
+end
+
 function Level_bedroomTrigger()
     log("bedroom triggered")
     setSoundEmitterEnabled("phone_emitter", true)

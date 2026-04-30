@@ -1366,6 +1366,8 @@ static void ImportTriggerLayer(
         trigger.script = GetObjectPropertyString(obj, "script", "");
         trigger.repeat = GetObjectPropertyBool(obj, "repeat", false);
         trigger.delayMs = GetObjectPropertyFloat(obj, "delayMs", 0.0f);
+        trigger.interact = GetObjectPropertyBool(obj, "interact", false);
+        trigger.displayName = GetObjectPropertyString(obj, "displayName", "");
 
         if (trigger.delayMs < 0.0f) {
             TraceLog(LOG_WARNING,

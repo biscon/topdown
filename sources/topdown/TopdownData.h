@@ -278,6 +278,9 @@ struct TopdownAuthoredTrigger {
     TopdownTriggerAffects affects = TopdownTriggerAffects::Player;
     bool repeat = false;
     float delayMs = 0.0f;
+
+    bool interact = false;
+    std::string displayName;
 };
 
 struct TopdownAuthoredWindow {

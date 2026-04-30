@@ -19,6 +19,7 @@
 #include "LevelWindows.h"
 #include "LevelProps.h"
 #include "ui/NarrationPopups.h"
+#include "input/Input.h"
 
 static bool IsPointInsideTrigger(
         const TopdownAuthoredTrigger& trigger,
@@ -86,6 +87,61 @@ static void UpdateSingleTriggerPendingCalls(
     runtimeTrigger.pendingCalls.swap(retained);
 }
 
+
+static InputEvent* FindFirstUnconsumedInteractPress(InputData& input)
+{
+    for (auto& ev : FilterEvents(input, true, InputEventType::KeyPressed)) {
+        if (ev.key.key == KEY_E) {
+            return &ev;
+        }
+    }
+
+    return nullptr;
+}
+
+static bool TryHandleInteractiveTriggers(GameState& state)
+{
+    InputEvent* interactEvent = FindFirstUnconsumedInteractPress(state.input);
+    if (!interactEvent) {
+        return false;
+    }
+
+    for (TopdownRuntimeTrigger& runtimeTrigger : state.topdown.runtime.triggers) {
+        if (runtimeTrigger.authoredIndex < 0 ||
+            runtimeTrigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        const TopdownAuthoredTrigger& authored =
+                state.topdown.authored.triggers[runtimeTrigger.authoredIndex];
+
+        if (!authored.interact || !runtimeTrigger.enabled || !runtimeTrigger.playerInside) {
+            continue;
+        }
+
+        if (!runtimeTrigger.repeat && runtimeTrigger.fired) {
+            return true;
+        }
+
+        if (!authored.script.empty()) {
+            const ScriptCallResult result =
+                    ScriptSystemCallTrigger(state, authored.script);
+            if (result == ScriptCallResult::Error) {
+                TraceLog(LOG_WARNING,
+                         "Topdown trigger '%s' script '%s' failed",
+                         authored.id.c_str(),
+                         authored.script.c_str());
+            }
+        }
+
+        runtimeTrigger.fired = true;
+        ConsumeEvent(*interactEvent);
+        return true;
+    }
+
+    return false;
+}
+
 static bool TriggerAffectsPlayer(TopdownTriggerAffects affects)
 {
     return affects == TopdownTriggerAffects::Player ||
@@ -111,6 +167,14 @@ static void UpdateTriggers(GameState& state, float dt)
 
         if (!runtimeTrigger.enabled) {
             runtimeTrigger.playerInside = false;
+            runtimeTrigger.npcHandlesInside.clear();
+            runtimeTrigger.pendingCalls.clear();
+            continue;
+        }
+
+        if (authored.interact) {
+            runtimeTrigger.playerInside =
+                    IsPointInsideTrigger(authored, state.topdown.runtime.player.position);
             runtimeTrigger.npcHandlesInside.clear();
             runtimeTrigger.pendingCalls.clear();
             continue;
@@ -239,6 +303,7 @@ void TopdownUpdate(GameState& state, float dt)
     TopdownUpdateWindows(state, dt);
     TopdownUpdateProps(state, dt);
     UpdateTriggers(state, dt);
+    TryHandleInteractiveTriggers(state);
     TopdownUpdateNarrationPopups(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
