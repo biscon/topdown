@@ -31,11 +31,11 @@ function Level_onEnter()
         running = false,
         waitMs = 3000
     })
-    --SpawnGuardPatrol()
+    SpawnGuardPatrol()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
 
-        --startScript("IntroNarration")
+        startScript("IntroNarration")
     end
     --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
 end
