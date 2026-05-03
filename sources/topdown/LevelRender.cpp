@@ -19,6 +19,7 @@
 #include "LevelWindows.h"
 #include "topdown/LevelProps.h"
 #include "ui/NarrationPopups.h"
+#include "ui/TopdownSpeechBubbles.h"
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -1515,6 +1516,7 @@ void TopdownRenderUi(GameState& state)
     }
 
     DrawHealthBar(state);
+    TopdownRenderSpeechBubbles(state);
     TopdownRenderNarrationPopups(state);
     DrawInteractPrompt(state);
     DrawGameOver(state);

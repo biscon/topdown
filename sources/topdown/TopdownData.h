@@ -122,6 +122,32 @@ enum class TopdownPlayerLifeState {
     GameOver
 };
 
+enum class TopdownSpeechBubbleAnchorType {
+    Player,
+    Npc,
+    Prop
+};
+
+struct TopdownSpeechBubbleEntry {
+    bool active = false;
+
+    TopdownSpeechBubbleAnchorType anchorType = TopdownSpeechBubbleAnchorType::Player;
+
+    // For Player, anchorId can be empty.
+    // For Npc and Prop, this is the runtime string id.
+    std::string anchorId;
+
+    std::string text;
+    Color color = BLACK;
+
+    float elapsedMs = 0.0f;
+    float durationMs = 0.0f;
+};
+
+struct TopdownSpeechBubbleRuntime {
+    std::vector<TopdownSpeechBubbleEntry> entries;
+};
+
 struct TopdownSegment {
     Vector2 a{};
     Vector2 b{};
@@ -1539,6 +1565,7 @@ struct TopdownRuntimeData {
     std::vector<TopdownRuntimeWindow> windows;
 
     std::vector<TopdownWorldEvent> worldEvents;
+    TopdownSpeechBubbleRuntime speechBubbles;
     TopdownNarrationPopupsRuntime narrationPopups;
     float timeMs; // global timer, advances each frame
 };
