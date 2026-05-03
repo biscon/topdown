@@ -19,6 +19,7 @@
 #include "LevelWindows.h"
 #include "LevelProps.h"
 #include "ui/NarrationPopups.h"
+#include "ui/TopdownSpeechBubbles.h"
 #include "input/Input.h"
 
 static bool IsPointInsideTrigger(
@@ -304,6 +305,7 @@ void TopdownUpdate(GameState& state, float dt)
     TopdownUpdateProps(state, dt);
     UpdateTriggers(state, dt);
     TryHandleInteractiveTriggers(state);
+    TopdownUpdateSpeechBubbles(state, dt);
     TopdownUpdateNarrationPopups(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
