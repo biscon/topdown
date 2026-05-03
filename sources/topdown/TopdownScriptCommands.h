@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "data/GameState.h"
+#include "raylib.h"
 
 // Controls
 bool TopdownScriptSetControlsEnabled(GameState& state, bool enabled);
@@ -11,6 +12,19 @@ bool TopdownScriptShowNarration(
         const std::string& title,
         const std::string& body,
         float durationSeconds = 0.0f);
+bool TopdownScriptSpeak(GameState& state, const std::string& text, float durationMs, Color color);
+bool TopdownScriptSpeakNpc(
+        GameState& state,
+        const std::string& npcId,
+        const std::string& text,
+        float durationMs,
+        Color color);
+bool TopdownScriptSpeakProp(
+        GameState& state,
+        const std::string& propId,
+        const std::string& text,
+        float durationMs,
+        Color color);
 bool TopdownScriptEnableScriptCamera(GameState& state);
 bool TopdownScriptDisableScriptCamera(GameState& state);
 bool TopdownScriptSetCameraTarget(GameState& state, const std::string& spawnId);

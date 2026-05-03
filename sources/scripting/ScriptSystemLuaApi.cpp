@@ -53,6 +53,50 @@ static bool ParseOptionalTalkColorAndDuration(
     return false;
 }
 
+namespace {
+
+constexpr int SPEECH_DURATION_DEFAULT_BASE_MS = 1800;
+constexpr int SPEECH_DURATION_PER_CHAR_MS = 35;
+constexpr int SPEECH_DURATION_MIN_MS = 1800;
+constexpr int SPEECH_DURATION_MAX_MS = 6500;
+
+int ComputeDefaultSpeechDurationMs(const std::string& text)
+{
+    const int charCount = static_cast<int>(text.size());
+    const int durationMs = SPEECH_DURATION_DEFAULT_BASE_MS + charCount * SPEECH_DURATION_PER_CHAR_MS;
+    return std::clamp(durationMs, SPEECH_DURATION_MIN_MS, SPEECH_DURATION_MAX_MS);
+}
+
+bool ParseSpeechDurationAndColor(
+        lua_State* L,
+        int firstOptionalArgIndex,
+        const std::string& text,
+        float& outDurationMs,
+        Color& outColor)
+{
+    outColor = BLACK;
+    outDurationMs = static_cast<float>(ComputeDefaultSpeechDurationMs(text));
+
+    Color parsedColor = BLACK;
+    bool hasColor = false;
+    int parsedDurationMs = -1;
+    if (!ParseOptionalTalkColorAndDuration(L, firstOptionalArgIndex, parsedColor, hasColor, parsedDurationMs)) {
+        return false;
+    }
+
+    if (hasColor) {
+        outColor = parsedColor;
+    }
+
+    if (parsedDurationMs > 0) {
+        outDurationMs = static_cast<float>(parsedDurationMs);
+    }
+
+    return true;
+}
+
+} // namespace
+
 static bool ParseOptionalStringList(
         lua_State* L,
         int argIndex,
@@ -341,6 +385,68 @@ static int Lua_showNarration(lua_State* L)
             std::string(title),
             std::string(body),
             durationSeconds);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_speak(lua_State* L)
+{
+    const char* text = luaL_checkstring(L, 1);
+    if (gameState == nullptr || text == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    float durationMs = 0.0f;
+    Color color = BLACK;
+    if (!ParseSpeechDurationAndColor(L, 2, std::string(text), durationMs, color)) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSpeak(*gameState, std::string(text), durationMs, color);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_speakNpc(lua_State* L)
+{
+    const char* npcId = luaL_checkstring(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    if (gameState == nullptr || npcId == nullptr || text == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    float durationMs = 0.0f;
+    Color color = BLACK;
+    if (!ParseSpeechDurationAndColor(L, 3, std::string(text), durationMs, color)) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSpeakNpc(*gameState, std::string(npcId), std::string(text), durationMs, color);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_speakProp(lua_State* L)
+{
+    const char* propId = luaL_checkstring(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    if (gameState == nullptr || propId == nullptr || text == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    float durationMs = 0.0f;
+    Color color = BLACK;
+    if (!ParseSpeechDurationAndColor(L, 3, std::string(text), durationMs, color)) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSpeakProp(*gameState, std::string(propId), std::string(text), durationMs, color);
     lua_pushboolean(L, ok ? 1 : 0);
     return 1;
 }
@@ -1336,6 +1442,9 @@ void RegisterLuaAPI(lua_State* L)
 
     lua_register(L, "delay", Lua_delay);
     lua_register(L, "showNarration", Lua_showNarration);
+    lua_register(L, "speak", Lua_speak);
+    lua_register(L, "speakNpc", Lua_speakNpc);
+    lua_register(L, "speakProp", Lua_speakProp);
     lua_register(L, "changeLevel", Lua_changeLevel);
 
     lua_register(L, "startWalkTo", Lua_startWalkTo);
