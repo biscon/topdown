@@ -9,6 +9,7 @@
 #include "audio/Audio.h"
 #include "resources/AsepriteAsset.h"
 #include "ui/NarrationPopups.h"
+#include "ui/TopdownSpeechBubbles.h"
 #include "utils/Interpolation.h"
 #include "TopdownHelpers.h"
 
@@ -216,6 +217,31 @@ bool TopdownScriptShowNarration(
         float durationSeconds)
 {
     return TopdownQueueNarrationPopup(state, title, body, durationSeconds);
+}
+
+bool TopdownScriptSpeak(GameState& state, const std::string& text, float durationMs, Color color)
+{
+    return TopdownShowPlayerSpeechBubble(state, text, durationMs, color);
+}
+
+bool TopdownScriptSpeakNpc(
+        GameState& state,
+        const std::string& npcId,
+        const std::string& text,
+        float durationMs,
+        Color color)
+{
+    return TopdownShowNpcSpeechBubble(state, npcId, text, durationMs, color);
+}
+
+bool TopdownScriptSpeakProp(
+        GameState& state,
+        const std::string& propId,
+        const std::string& text,
+        float durationMs,
+        Color color)
+{
+    return TopdownShowPropSpeechBubble(state, propId, text, durationMs, color);
 }
 
 bool TopdownScriptEnableScriptCamera(GameState& state)
