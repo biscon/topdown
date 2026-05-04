@@ -549,8 +549,17 @@ static void DrawWindowFallback(
 
 void TopdownRenderWindows(const GameState& state)
 {
+    static constexpr float kDoorWindowCullMarginPx = 128.0f;
+
     for (const TopdownRuntimeWindow& window : state.topdown.runtime.windows) {
         if (!window.visible) {
+            continue;
+        }
+
+        if (!TopdownWorldRectOverlapsCameraView(
+                    state,
+                    window.worldRect,
+                    kDoorWindowCullMarginPx)) {
             continue;
         }
 
