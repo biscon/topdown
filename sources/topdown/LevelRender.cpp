@@ -188,13 +188,10 @@ static void BlitRenderTargetFull(
     EndTextureMode();
 }
 
-static Rectangle BuildScaledCenteredImageLayerDestRect(
-        const GameState& state,
+static Rectangle BuildImageLayerWorldRect(
         const TopdownRuntimeImageLayer& layer,
         const TextureResource& texRes)
 {
-    const Vector2 screenPos = TopdownWorldToScreen(state, layer.position);
-
     const float baseWidth =
             layer.imageSize.x > 0.0f ? layer.imageSize.x
                                      : static_cast<float>(texRes.texture.width);
@@ -208,11 +205,26 @@ static Rectangle BuildScaledCenteredImageLayerDestRect(
     const float scaledWidth = baseWidth * safeScale;
     const float scaledHeight = baseHeight * safeScale;
 
+    Rectangle worldRect{};
+    worldRect.x = layer.position.x - (scaledWidth - baseWidth) * 0.5f;
+    worldRect.y = layer.position.y - (scaledHeight - baseHeight) * 0.5f;
+    worldRect.width = scaledWidth;
+    worldRect.height = scaledHeight;
+    return worldRect;
+}
+
+static Rectangle BuildScaledCenteredImageLayerDestRect(
+        const GameState& state,
+        const TopdownRuntimeImageLayer& layer,
+        const TextureResource& texRes)
+{
+    const Rectangle worldRect = BuildImageLayerWorldRect(layer, texRes);
+
     Rectangle dst{};
-    dst.x = std::round(screenPos.x - (scaledWidth - baseWidth) * 0.5f);
-    dst.y = std::round(screenPos.y - (scaledHeight - baseHeight) * 0.5f);
-    dst.width = std::round(scaledWidth);
-    dst.height = std::round(scaledHeight);
+    dst.x = std::round(worldRect.x - state.topdown.runtime.camera.position.x);
+    dst.y = std::round(worldRect.y - state.topdown.runtime.camera.position.y);
+    dst.width = std::round(worldRect.width);
+    dst.height = std::round(worldRect.height);
     return dst;
 }
 
@@ -224,6 +236,12 @@ static void DrawImageLayer(const GameState& state, const TopdownRuntimeImageLaye
 
     const TextureResource* texRes = FindTextureResource(state.resources, layer.textureHandle);
     if (texRes == nullptr || !texRes->loaded || texRes->texture.id == 0) {
+        return;
+    }
+
+    const Rectangle worldRect = BuildImageLayerWorldRect(layer, *texRes);
+    static constexpr float kImageLayerCullMarginPx = 128.0f;
+    if (!TopdownWorldRectOverlapsCameraView(state, worldRect, kImageLayerCullMarginPx)) {
         return;
     }
 
