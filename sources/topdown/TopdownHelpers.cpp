@@ -212,6 +212,41 @@ Vector2 TopdownWorldToScreen(const GameState& state, Vector2 worldPos)
     };
 }
 
+static Rectangle NormalizeRectangle(Rectangle r)
+{
+    if (r.width < 0.0f) {
+        r.x += r.width;
+        r.width = -r.width;
+    }
+
+    if (r.height < 0.0f) {
+        r.y += r.height;
+        r.height = -r.height;
+    }
+
+    return r;
+}
+
+bool TopdownWorldRectOverlapsCameraView(
+        const GameState& state,
+        Rectangle worldRect,
+        float marginPx)
+{
+    worldRect = NormalizeRectangle(worldRect);
+
+    const Rectangle cameraRect{
+            state.topdown.runtime.camera.position.x - marginPx,
+            state.topdown.runtime.camera.position.y - marginPx,
+            state.topdown.camera.viewportWidth + marginPx * 2.0f,
+            state.topdown.camera.viewportHeight + marginPx * 2.0f
+    };
+
+    return !(worldRect.x + worldRect.width < cameraRect.x ||
+             cameraRect.x + cameraRect.width < worldRect.x ||
+             worldRect.y + worldRect.height < cameraRect.y ||
+             cameraRect.y + cameraRect.height < worldRect.y);
+}
+
 bool TopdownRaycastSegments(
         Vector2 origin,
         Vector2 dirNormalized,
