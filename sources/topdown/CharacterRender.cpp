@@ -312,6 +312,34 @@ void TopdownRenderPlayerCharacter(GameState& state)
     }
 }
 
+static Rectangle BuildNpcRenderCullWorldRect(const TopdownNpcRuntime& npc)
+{
+    static constexpr float kNpcRenderHalfExtentFallback = 192.0f;
+
+    const float radius = npc.collisionRadius > 0.0f
+            ? npc.collisionRadius
+            : kNpcRenderHalfExtentFallback;
+
+    const float halfExtent = std::max(radius * 3.0f, kNpcRenderHalfExtentFallback);
+
+    return Rectangle{
+            npc.position.x - halfExtent,
+            npc.position.y - halfExtent,
+            halfExtent * 2.0f,
+            halfExtent * 2.0f
+    };
+}
+
+static bool ShouldRenderNpc(const GameState& state, const TopdownNpcRuntime& npc)
+{
+    static constexpr float kNpcRenderCullMarginPx = 256.0f;
+
+    return TopdownWorldRectOverlapsCameraView(
+            state,
+            BuildNpcRenderCullWorldRect(npc),
+            kNpcRenderCullMarginPx);
+}
+
 void TopdownRenderNpcs(GameState& state)
 {
     std::vector<const TopdownNpcRuntime*> sortedNpcs;
@@ -336,6 +364,10 @@ void TopdownRenderNpcs(GameState& state)
 
         const TopdownNpcRuntime& npc = *npcPtr;
         if (!npc.active || !npc.visible) {
+            continue;
+        }
+
+        if (!ShouldRenderNpc(state, npc)) {
             continue;
         }
 
