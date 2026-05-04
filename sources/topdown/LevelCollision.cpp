@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include "LevelCollision.h"
 #include "TopdownHelpers.h"
@@ -167,8 +168,19 @@ void TopdownQueryMovementSegmentGrid(
         return;
     }
 
-    std::vector<int> visitedGeneration(segmentCount, 0);
-    int generation = 1;
+    static thread_local std::vector<int> visitedGeneration;
+    static thread_local int generation = 1;
+
+    if (visitedGeneration.size() < segmentCount) {
+        visitedGeneration.assign(segmentCount, 0);
+        generation = 1;
+    }
+
+    ++generation;
+    if (generation == 0) {
+        std::fill(visitedGeneration.begin(), visitedGeneration.end(), 0);
+        generation = 1;
+    }
 
     int minX = 0;
     int maxX = 0;
