@@ -456,15 +456,32 @@ static void UpdateNpcKnockbackAndCollision(
     Vector2 velocity = npc.knockbackVelocity;
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
 
+    static thread_local std::vector<int> candidateSegmentIndices;
     const auto& segments = state.topdown.runtime.collision.movementSegments;
 
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
-        for (const TopdownSegment& seg : segments) {
+        const Rectangle queryBounds = BuildNpcMovementCollisionQueryBounds(
+                npc.position,
+                npc.collisionRadius,
+                velocity,
+                dt);
+
+        TopdownQueryMovementSegmentGrid(
+                state.topdown.runtime.collision,
+                queryBounds,
+                candidateSegmentIndices);
+
+        for (int segmentIndex : candidateSegmentIndices) {
+            if (segmentIndex < 0 ||
+                segmentIndex >= static_cast<int>(segments.size())) {
+                continue;
+            }
+
             ResolveCircleVsSegment(
                     npc.position,
                     velocity,
                     npc.collisionRadius,
-                    seg);
+                    segments[segmentIndex]);
         }
 
         ResolveNpcKnockbackVsDoors(state, npc);
