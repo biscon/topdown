@@ -1207,6 +1207,27 @@ static void DrawWorldQuadOutline(
     DrawLineEx(sd, sa, thickness, color);
 }
 
+static Rectangle BuildDoorRenderWorldRect(const TopdownRuntimeDoor& door)
+{
+    Vector2 a{};
+    Vector2 b{};
+    Vector2 c{};
+    Vector2 d{};
+    TopdownBuildDoorCorners(door, a, b, c, d);
+
+    const float minX = std::min(std::min(a.x, b.x), std::min(c.x, d.x));
+    const float minY = std::min(std::min(a.y, b.y), std::min(c.y, d.y));
+    const float maxX = std::max(std::max(a.x, b.x), std::max(c.x, d.x));
+    const float maxY = std::max(std::max(a.y, b.y), std::max(c.y, d.y));
+
+    return Rectangle{
+            minX,
+            minY,
+            maxX - minX,
+            maxY - minY
+    };
+}
+
 static void DrawSingleDoor(const GameState& state, const TopdownRuntimeDoor& door)
 {
     if (!door.visible) {
@@ -1231,7 +1252,20 @@ static void DrawSingleDoor(const GameState& state, const TopdownRuntimeDoor& doo
 
 static void TopdownRenderDoors(const GameState& state)
 {
+    static constexpr float kDoorWindowCullMarginPx = 128.0f;
+
     for (const TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+        if (!door.visible) {
+            continue;
+        }
+
+        if (!TopdownWorldRectOverlapsCameraView(
+                    state,
+                    BuildDoorRenderWorldRect(door),
+                    kDoorWindowCullMarginPx)) {
+            continue;
+        }
+
         DrawSingleDoor(state, door);
     }
 }
