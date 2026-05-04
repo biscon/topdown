@@ -81,6 +81,24 @@ static Vector2 BuildNpcFallbackPathVelocity(
     return TopdownMul(dir, speed);
 }
 
+static Rectangle BuildNpcMovementCollisionQueryBounds(
+        Vector2 position,
+        float radius,
+        Vector2 velocity,
+        float dt)
+{
+    const float moveDistance = TopdownLength(TopdownMul(velocity, dt));
+    const float padding = std::max(16.0f, moveDistance + 8.0f);
+    const float queryRadius = radius + padding;
+
+    return Rectangle{
+            position.x - queryRadius,
+            position.y - queryRadius,
+            queryRadius * 2.0f,
+            queryRadius * 2.0f
+    };
+}
+
 static void UpdateNpcMovementAndCollision(
         GameState& state,
         TopdownNpcRuntime& npc,
@@ -109,15 +127,32 @@ static void UpdateNpcMovementAndCollision(
 
     npc.position = TopdownAdd(npc.position, TopdownMul(velocity, dt));
 
-    const auto& segments = state.topdown.runtime.collision.movementSegments;
+    static thread_local std::vector<int> candidateSegmentIndices;
 
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
-        for (const TopdownSegment& seg : segments) {
+        const Rectangle queryBounds = BuildNpcMovementCollisionQueryBounds(
+                npc.position,
+                npc.collisionRadius,
+                velocity,
+                dt);
+
+        TopdownQueryMovementSegmentGrid(
+                state.topdown.runtime.collision,
+                queryBounds,
+                candidateSegmentIndices);
+
+        const auto& segments = state.topdown.runtime.collision.movementSegments;
+
+        for (int segmentIndex : candidateSegmentIndices) {
+            if (segmentIndex < 0 || segmentIndex >= static_cast<int>(segments.size())) {
+                continue;
+            }
+
             ResolveCircleVsSegment(
                     npc.position,
                     velocity,
                     npc.collisionRadius,
-                    seg);
+                    segments[segmentIndex]);
         }
 
         ResolveNpcVsDoors(state, npc);
