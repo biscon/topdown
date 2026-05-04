@@ -718,13 +718,28 @@ struct TopdownSpatialGrid {
     std::vector<TopdownSpatialCell> cells;
 };
 
+struct TopdownCollisionSegmentGridCell {
+    std::vector<int> segmentIndices;
+};
+
+struct TopdownCollisionSegmentGrid {
+    bool built = false;
+    Vector2 origin{};
+    float cellSize = 256.0f;
+    int width = 0;
+    int height = 0;
+    std::vector<TopdownCollisionSegmentGridCell> cells;
+};
+
 struct TopdownCollisionWorld {
     std::vector<TopdownRuntimeObstacle> obstacles;
 
     std::vector<TopdownSegment> movementSegments;
+    std::vector<Rectangle> movementSegmentBounds;
     std::vector<TopdownSegment> visionSegments;
     std::vector<TopdownSegment> boundarySegments;
 
+    TopdownCollisionSegmentGrid movementSegmentGrid;
     TopdownSpatialGrid spatialGrid;
 
     int nextObstacleHandle = 1;

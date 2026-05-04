@@ -3,6 +3,202 @@
 #include "TopdownHelpers.h"
 
 static constexpr float kCollisionEpsilon = 0.001f;
+static constexpr float kMovementGridPadding = 1.0f;
+
+static int MovementGridFloorToInt(float value)
+{
+    return static_cast<int>(std::floor(value));
+}
+
+static int MovementGridClampInt(int value, int minValue, int maxValue)
+{
+    return std::max(minValue, std::min(value, maxValue));
+}
+
+static bool MovementGridRectsOverlap(const Rectangle& a, const Rectangle& b)
+{
+    if (a.x + a.width < b.x || b.x + b.width < a.x) {
+        return false;
+    }
+    if (a.y + a.height < b.y || b.y + b.height < a.y) {
+        return false;
+    }
+    return true;
+}
+
+static int GetMovementGridCellIndex(const TopdownCollisionSegmentGrid& grid, int x, int y)
+{
+    return y * grid.width + x;
+}
+
+static void GetMovementGridRangeForBounds(
+        const TopdownCollisionSegmentGrid& grid,
+        const Rectangle& bounds,
+        int& outMinX,
+        int& outMaxX,
+        int& outMinY,
+        int& outMaxY)
+{
+    const float minX = (bounds.x - grid.origin.x) / grid.cellSize;
+    const float maxX = (bounds.x + bounds.width - grid.origin.x) / grid.cellSize;
+    const float minY = (bounds.y - grid.origin.y) / grid.cellSize;
+    const float maxY = (bounds.y + bounds.height - grid.origin.y) / grid.cellSize;
+
+    outMinX = MovementGridClampInt(MovementGridFloorToInt(minX), 0, grid.width - 1);
+    outMaxX = MovementGridClampInt(MovementGridFloorToInt(maxX), 0, grid.width - 1);
+    outMinY = MovementGridClampInt(MovementGridFloorToInt(minY), 0, grid.height - 1);
+    outMaxY = MovementGridClampInt(MovementGridFloorToInt(maxY), 0, grid.height - 1);
+}
+
+Rectangle TopdownBuildSegmentBounds(const TopdownSegment& seg)
+{
+    const float minX = std::min(seg.a.x, seg.b.x);
+    const float minY = std::min(seg.a.y, seg.b.y);
+    const float maxX = std::max(seg.a.x, seg.b.x);
+    const float maxY = std::max(seg.a.y, seg.b.y);
+
+    return Rectangle{minX, minY, maxX - minX, maxY - minY};
+}
+
+void TopdownRebuildMovementSegmentGrid(TopdownCollisionWorld& collision)
+{
+    TopdownCollisionSegmentGrid& grid = collision.movementSegmentGrid;
+    grid = {};
+    grid.cellSize = 256.0f;
+
+    collision.movementSegmentBounds.clear();
+    collision.movementSegmentBounds.reserve(collision.movementSegments.size());
+
+    if (collision.movementSegments.empty()) {
+        return;
+    }
+
+    Rectangle totalBounds{};
+    bool hasBounds = false;
+
+    for (const TopdownSegment& seg : collision.movementSegments) {
+        const Rectangle segBounds = TopdownBuildSegmentBounds(seg);
+        collision.movementSegmentBounds.push_back(segBounds);
+
+        if (!hasBounds) {
+            totalBounds = segBounds;
+            hasBounds = true;
+            continue;
+        }
+
+        const float minX = std::min(totalBounds.x, segBounds.x);
+        const float minY = std::min(totalBounds.y, segBounds.y);
+        const float maxX = std::max(totalBounds.x + totalBounds.width, segBounds.x + segBounds.width);
+        const float maxY = std::max(totalBounds.y + totalBounds.height, segBounds.y + segBounds.height);
+        totalBounds = Rectangle{minX, minY, maxX - minX, maxY - minY};
+    }
+
+    totalBounds.x -= kMovementGridPadding;
+    totalBounds.y -= kMovementGridPadding;
+    totalBounds.width += kMovementGridPadding * 2.0f;
+    totalBounds.height += kMovementGridPadding * 2.0f;
+
+    grid.origin = Vector2{totalBounds.x, totalBounds.y};
+    grid.width = std::max(1, static_cast<int>(std::ceil(totalBounds.width / grid.cellSize)));
+    grid.height = std::max(1, static_cast<int>(std::ceil(totalBounds.height / grid.cellSize)));
+    grid.cells.assign(grid.width * grid.height, {});
+
+    for (int i = 0; i < static_cast<int>(collision.movementSegmentBounds.size()); ++i) {
+        const Rectangle& segBounds = collision.movementSegmentBounds[i];
+
+        int minX = 0;
+        int maxX = 0;
+        int minY = 0;
+        int maxY = 0;
+        GetMovementGridRangeForBounds(grid, segBounds, minX, maxX, minY, maxY);
+
+        for (int y = minY; y <= maxY; ++y) {
+            for (int x = minX; x <= maxX; ++x) {
+                grid.cells[GetMovementGridCellIndex(grid, x, y)].segmentIndices.push_back(i);
+            }
+        }
+    }
+
+    grid.built = true;
+}
+
+void TopdownQueryMovementSegmentGrid(
+        const TopdownCollisionWorld& collision,
+        Rectangle queryBounds,
+        std::vector<int>& outSegmentIndices)
+{
+    outSegmentIndices.clear();
+
+    const size_t segmentCount = collision.movementSegments.size();
+    const bool hasMatchingBounds = collision.movementSegmentBounds.size() == segmentCount;
+
+    if (segmentCount == 0) {
+        return;
+    }
+
+    auto appendBoundsOverlaps = [&](auto boundsGetter) {
+        for (int i = 0; i < static_cast<int>(segmentCount); ++i) {
+            if (MovementGridRectsOverlap(boundsGetter(i), queryBounds)) {
+                outSegmentIndices.push_back(i);
+            }
+        }
+    };
+
+    if (!collision.movementSegmentGrid.built || !hasMatchingBounds) {
+        if (hasMatchingBounds) {
+            appendBoundsOverlaps([&](int i) -> const Rectangle& {
+                return collision.movementSegmentBounds[i];
+            });
+        } else {
+            for (int i = 0; i < static_cast<int>(segmentCount); ++i) {
+                if (MovementGridRectsOverlap(TopdownBuildSegmentBounds(collision.movementSegments[i]), queryBounds)) {
+                    outSegmentIndices.push_back(i);
+                }
+            }
+        }
+        return;
+    }
+
+    const TopdownCollisionSegmentGrid& grid = collision.movementSegmentGrid;
+    if (grid.width <= 0 || grid.height <= 0 || grid.cells.empty()) {
+        appendBoundsOverlaps([&](int i) -> const Rectangle& {
+            return collision.movementSegmentBounds[i];
+        });
+        return;
+    }
+
+    std::vector<int> visitedGeneration(segmentCount, 0);
+    int generation = 1;
+
+    int minX = 0;
+    int maxX = 0;
+    int minY = 0;
+    int maxY = 0;
+    GetMovementGridRangeForBounds(grid, queryBounds, minX, maxX, minY, maxY);
+
+    for (int y = minY; y <= maxY; ++y) {
+        for (int x = minX; x <= maxX; ++x) {
+            const TopdownCollisionSegmentGridCell& cell =
+                    grid.cells[GetMovementGridCellIndex(grid, x, y)];
+
+            for (int segmentIndex : cell.segmentIndices) {
+                if (segmentIndex < 0 || segmentIndex >= static_cast<int>(segmentCount)) {
+                    continue;
+                }
+                if (visitedGeneration[segmentIndex] == generation) {
+                    continue;
+                }
+                visitedGeneration[segmentIndex] = generation;
+
+                if (MovementGridRectsOverlap(
+                        collision.movementSegmentBounds[segmentIndex],
+                        queryBounds)) {
+                    outSegmentIndices.push_back(segmentIndex);
+                }
+            }
+        }
+    }
+}
 
 
 Vector2 MoveTowardsVector(Vector2 current, Vector2 target, float maxDelta)
@@ -317,4 +513,3 @@ bool RaycastClosestSegmentWithNormal(
     outHitDistance = bestDistance;
     return true;
 }
-

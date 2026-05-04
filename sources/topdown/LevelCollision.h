@@ -39,3 +39,12 @@ bool RaycastClosestSegmentWithNormal(
         Vector2& outHitPoint,
         Vector2& outHitNormal,
         float& outHitDistance);
+
+Rectangle TopdownBuildSegmentBounds(const TopdownSegment& seg);
+
+void TopdownRebuildMovementSegmentGrid(TopdownCollisionWorld& collision);
+
+void TopdownQueryMovementSegmentGrid(
+        const TopdownCollisionWorld& collision,
+        Rectangle queryBounds,
+        std::vector<int>& outSegmentIndices);
