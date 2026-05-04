@@ -36,6 +36,28 @@ static const SpriteClip* FindClipByName(const SpriteAssetResource& sprite, const
     return nullptr;
 }
 
+static Rectangle BuildCenteredPropWorldRect(
+        Vector2 position,
+        float width,
+        float height,
+        Vector2 origin)
+{
+    return Rectangle{
+            position.x - origin.x,
+            position.y - origin.y,
+            width,
+            height
+    };
+}
+
+static bool ShouldRenderPropWorldRect(
+        const GameState& state,
+        Rectangle worldRect)
+{
+    static constexpr float kPropCullMarginPx = 192.0f;
+    return TopdownWorldRectOverlapsCameraView(state, worldRect, kPropCullMarginPx);
+}
+
 void TopdownUpdateProps(GameState& state, float dt)
 {
     const float dtMs = dt * 1000.0f;
@@ -124,6 +146,11 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
                 origin = { dstW * 0.5f, dstH * 0.5f };
             }
 
+            const Rectangle worldRect = BuildCenteredPropWorldRect(prop.position, dstW, dstH, origin);
+            if (!ShouldRenderPropWorldRect(state, worldRect)) {
+                continue;
+            }
+
             // snap top-left instead of pivot
             const float left = roundf(screen.x - origin.x);
             const float top  = roundf(screen.y - origin.y);
@@ -156,6 +183,22 @@ void TopdownRenderProps(GameState& state, TopdownEffectPlacement placement)
 
         const TextureResource* tex = FindTextureResource(state.resources, sprite->textureHandle);
         if (tex == nullptr || !tex->loaded || tex->texture.id == 0) {
+            continue;
+        }
+
+        const float conservativeW = static_cast<float>(tex->texture.width) * scale;
+        const float conservativeH = static_cast<float>(tex->texture.height) * scale;
+
+        Vector2 conservativeOrigin{};
+        if (prop.hasOriginOverride) {
+            conservativeOrigin = prop.originOverride;
+        } else {
+            conservativeOrigin = { conservativeW * 0.5f, conservativeH * 0.5f };
+        }
+
+        const Rectangle conservativeWorldRect =
+                BuildCenteredPropWorldRect(prop.position, conservativeW, conservativeH, conservativeOrigin);
+        if (!ShouldRenderPropWorldRect(state, conservativeWorldRect)) {
             continue;
         }
 
