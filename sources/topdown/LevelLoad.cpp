@@ -2078,6 +2078,10 @@ static bool IsEffectRegionNearCameraView(
 
 void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullRebuild)
 {
+    if (!forceFullRebuild) {
+        return;
+    }
+
     TopdownRenderWorld& render = topdown.runtime.render;
     const Vector2 cameraPos = topdown.runtime.camera.position;
 
