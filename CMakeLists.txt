@@ -59,7 +59,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     if (NOT WIN32)
         target_compile_options(${PROJECT_NAME} PRIVATE
-                -fsanitize=address
+                #-fsanitize=address
                 -fno-omit-frame-pointer
                 -Wreturn-type
                 -Wunused-result
@@ -68,7 +68,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
                 -Wno-sign-conversion
         )
         target_link_options(${PROJECT_NAME} PRIVATE
-                -fsanitize=address
+                #-fsanitize=address
         )
     endif()
 endif()

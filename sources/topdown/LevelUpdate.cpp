@@ -311,10 +311,8 @@ void TopdownUpdate(GameState& state, float dt)
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);
     TopdownUpdateCamera(state, dt);
-    {
-        //ScopeTimer t("RebuildWallOcclusionPolygons");
-        TopdownRebuildWallOcclusionPolygons(state.topdown, false);
-    }
+
+    TopdownRebuildWallOcclusionPolygons(state.topdown, false);
 
     // --- update game over ---
     if (runtime.gameOverActive) {

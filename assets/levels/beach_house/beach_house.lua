@@ -26,37 +26,146 @@ function Level_onEnter()
         }
     )
     --]]
-    assignNpcPatrolRoute("knife_thug_1", {"living_room_window1", "living_room_window2", "living_room_kitchen"}, {
+    assignNpcPatrolRoute("enemy_7", {"living_room_window1", "living_room_window2"}, {
         loop = true,
         running = false,
-        waitMs = 3000
+        waitMs = 4000
     })
     SpawnGuardPatrol()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
-
         startScript("IntroNarration")
     end
     --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
+end
+
+function PhoneCallCutscene()
+    setSoundEmitterEnabled("room_emitter_3", false)
+    playSound("phone_pickup")
+    delay(500)
+    playSound("phone_noise")
+    delay(500)
+    sayNpc("phone", "...Good. You're still breathing.", MAGENTA, 1800)
+
+    speak("Who is this?", CREAM, 1200)
+    delay(1200)
+
+    sayNpc("phone", "Someone who doesn't want you dead in your own house.", MAGENTA, 2600)
+
+    speak("Then start talking.", CREAM, 1400)
+    delay(1400)
+
+    sayNpc("phone", "The men you've been killing—", MAGENTA, 1800)
+    sayNpc("phone", "they were supposed to report in.", MAGENTA, 2200)
+    sayNpc("phone", "They didn't.", MAGENTA, 1400)
+
+    speak("So they send more.", CREAM, 1500)
+    delay(1500)
+
+    sayNpc("phone", "Not just more.", MAGENTA, 1500)
+    sayNpc("phone", "Better.", MAGENTA, 1200)
+
+    -- 🔥 tension beat + spawn
+    delay(800)
+
+    speak("How many?", CREAM, 1200)
+    delay(1200)
+
+    sayNpc("phone", "Enough that staying isn't an option.", MAGENTA, 2400)
+    sayNpc("phone", "You got in once.", MAGENTA, 1400)
+    sayNpc("phone", "Get out the same way.", MAGENTA, 1800)
+
+    speak("Why help me?", CREAM, 1400)
+    delay(1400)
+
+    sayNpc("phone", "...Because if they find you, they start asking questions.", MAGENTA, 3000)
+    sayNpc("phone", "And I'm not ready for those yet.", MAGENTA, 2200)
+
+    sayNpc("phone", "Move.", MAGENTA, 1000)
+    sayNpc("phone", "They're already on their way.", MAGENTA, 2200)
+    stopSound("phone_noise")
+    playSound("dialtone")
+    delay(1600)
+    stopSound("dialtone")
+    playSound("phone_put_down")
+    delay(2000)
+    setSoundEmitterEnabled("room_emitter_3", true)
+end
+
+function SpawnBackup1()
+    log("Spawn backup 1")
+    spawnNpcSmart("backup_a", "pistolthug", "backup_arrival", false, false)
+    spawnNpcSmart("backup_d", "pistolthug", "backup_arrival", false, false)
+    spawnNpcSmart("backup_e", "pistolthug", "backup_arrival", false, false)
+    assignNpcPatrolRoute("backup_a", {"hallway_far_end", "hallway_middle", "hallway_start"}, {loop = true,running = false, waitMs = 2000})
+    assignNpcPatrolRoute("backup_d", {"hallway_start", "hallway_middle", "hallway_far_end"}, {loop = true,running = false, waitMs = 3000})
+    assignNpcPatrolRoute("backup_e", {"study", "bathroom"}, {loop = true, running = false, waitMs = 4000})
+end
+
+function SpawnBackup2()
+    log("Spawn backup 2")
+    playMusic("motivation", 20000)
+    spawnNpcSmart("backup_b", "pistolthug", "living_room_window1", false, false)
+    spawnNpcSmart("backup_c", "pistolthug", "living_room_window2", false, false)
+    assignNpcPatrolRoute("backup_b", {"living_room_window1", "living_room_kitchen", "living_room_window2", "study"}, {loop = true,running = false, waitMs = 2500})
+    assignNpcPatrolRoute("backup_c", {"living_room_window2", "living_room_window1", "living_room_kitchen"}, {loop = true,running = false, waitMs = 4000})
+
+end
+
+function SpawnBackup3()
+    log("Spawn backup 3")
+    spawnNpcSmart("backup_f", "pistolthug", "patrol_2_1", false, false)
+    spawnNpcSmart("backup_g", "pistolthug", "patrol_2_3", false, false)
+    assignNpcPatrolRoute("backup_f", {"patrol_2_1", "patrol_2_3"}, {loop = true, running = false, waitMs = 2000})
+    assignNpcPatrolRoute("backup_g", {"patrol_2_3", "patrol_2_1"}, {loop = true, running = false, waitMs = 2000})
+end
+
+
+
+function EscapeStartCutscene()
+    playSound("car_breaks")
+    delay(2000)
+    playSound("car_door_open")
+    delay(1000)
+    playSound("car_door_open")
+    delay(500)
+    playSound("car_door_open")
+    SpawnBackup1()
+    setTriggerEnabled("backup2_trigger", true)
+    setTriggerEnabled("backup3_trigger", true)
+    panCameraTarget("backup_arrival", 1500)
+    speakNpc("backup_a", "Search the house!", RED, 3000)
+    playSound("drama")
+    delay(2500)
+    panCameraTarget("bedroom_phone", 1000)
+    delay(1000)
+    speak("Fuck!")
 end
 
 function Level_phoneTrigger()
     log("phone triggered")
     setSoundEmitterEnabled("phone_emitter", false)
     setPropAnimation("phone", "Idle")
+    disableControls()
+    enableScriptCamera()
+    PhoneCallCutscene()
+    EscapeStartCutscene()
+    disableScriptCamera()
+    enableControls()
 end
 
 function Level_bedroomTrigger()
     log("bedroom triggered")
     setSoundEmitterEnabled("phone_emitter", true)
     setPropAnimation("phone", "Ring")
+    speakProp("phone", "RIIIIIIING!!!", YELLOW, 3000)
+    speakNpc("enemy_4", "Come get some!", CREAM)
 end
 
 function IntroNarration()
     disableControls()
     enableScriptCamera()
-    playMusic("pistolero", 3000)
-    --playSound("drama")
+    playSound("drama")
     delay(3000)
     panCameraTarget("intro_camera_1", 7000)
     showNarration("Coming Home", "Upon returning to my idyllic beach house, I noticed something was off.", 5)
@@ -130,17 +239,17 @@ function SpawnGuardPatrol()
     })
     -]]
 
-    spawnNpcSmart("patrol_2_guard_1", "pistolthug", "patrol_2_1", false)
+    spawnNpcSmart("patrol_2_guard_1", "knifethug", "patrol_2_1", false)
     assignNpcPatrolRoute("patrol_2_guard_1", {"patrol_2_2", "patrol_2_3", "patrol_2_1"}, {
         loop = true,
         running = false,
         waitMs = 5000
     })
-    spawnNpcSmart("patrol_2_guard_2", "pistolthug", "patrol_2_3", false)
+    spawnNpcSmart("patrol_2_guard_2", "knifethug", "patrol_2_3", false)
     assignNpcPatrolRoute("patrol_2_guard_2", {"patrol_2_2", "patrol_2_1", "patrol_2_3"}, {
         loop = true,
         running = false,
-        waitMs = 8000
+        waitMs = 2500
     })
 end
 
@@ -239,4 +348,10 @@ function BeachHouseAudioLoop()
             delay(math.random(4000, 8000))
         end
     end
+end
+
+-- Utility ----------------------------------------------------------------------
+function sayNpc(id, text, color, duration)
+    speakProp(id, text, color, duration)
+    delay(duration)
 end

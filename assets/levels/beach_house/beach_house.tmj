@@ -8138,37 +8138,8 @@
          "objects":[
                 {
                  "height":0,
-                 "id":38,
-                 "name":"zombie_1",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"zombie"
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":110
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":808.5,
-                 "y":-530.416666666667
-                }, 
-                {
-                 "height":0,
                  "id":90,
-                 "name":"pistol_thug_1",
+                 "name":"enemy_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -8180,12 +8151,12 @@
                         {
                          "name":"guard",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":45
+                         "value":145
                         }, 
                         {
                          "name":"persistentChase",
@@ -8196,13 +8167,13 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":709.666666666666,
-                 "y":317.666666666666
+                 "x":873.666666666666,
+                 "y":298.999999999999
                 }, 
                 {
                  "height":0,
                  "id":185,
-                 "name":"knife_thug_1",
+                 "name":"enemy_7",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -8214,7 +8185,7 @@
                         {
                          "name":"guard",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"orientation",
@@ -8236,7 +8207,70 @@
                 {
                  "height":0,
                  "id":227,
-                 "name":"pistol_thug_2",
+                 "name":"enemy_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"pistolthug"
+                        }, 
+                        {
+                         "name":"guard",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":180
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":false
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":900.166666666667,
+                 "y":-219.5
+                }, 
+                {
+                 "height":0,
+                 "id":228,
+                 "name":"enemy_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"assetId",
+                         "type":"string",
+                         "value":"knifethug"
+                        }, 
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":-90
+                        }, 
+                        {
+                         "name":"persistentChase",
+                         "type":"bool",
+                         "value":false
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":805.833333333333,
+                 "y":-431.833333333333
+                }, 
+                {
+                 "height":0,
+                 "id":229,
+                 "name":"enemy_4",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -8249,64 +8283,6 @@
                          "name":"guard",
                          "type":"bool",
                          "value":true
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":-90
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":841.5,
-                 "y":-263.5
-                }, 
-                {
-                 "height":0,
-                 "id":228,
-                 "name":"pistol_thug_3",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"pistolthug"
-                        }, 
-                        {
-                         "name":"orientation",
-                         "type":"float",
-                         "value":-90
-                        }, 
-                        {
-                         "name":"persistentChase",
-                         "type":"bool",
-                         "value":false
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":932.5,
-                 "y":-438.5
-                }, 
-                {
-                 "height":0,
-                 "id":229,
-                 "name":"pistol_thug_4",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"assetId",
-                         "type":"string",
-                         "value":"pistolthug"
                         }, 
                         {
                          "name":"orientation",
@@ -8328,24 +8304,24 @@
                 {
                  "height":0,
                  "id":230,
-                 "name":"pistol_thug_5",
+                 "name":"enemy_5",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"pistolthug"
+                         "value":"knifethug"
                         }, 
                         {
                          "name":"guard",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"orientation",
                          "type":"float",
-                         "value":0
+                         "value":90
                         }, 
                         {
                          "name":"persistentChase",
@@ -8356,25 +8332,25 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":419.5,
-                 "y":-225
+                 "x":305.5,
+                 "y":-258.333333333333
                 }, 
                 {
                  "height":0,
                  "id":231,
-                 "name":"pistol_thug_6",
+                 "name":"enemy_6",
                  "opacity":1,
                  "point":true,
                  "properties":[
                         {
                          "name":"assetId",
                          "type":"string",
-                         "value":"pistolthug"
+                         "value":"knifethug"
                         }, 
                         {
                          "name":"guard",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"orientation",
@@ -8390,8 +8366,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":496.5,
-                 "y":-47.5
+                 "x":421.833333333333,
+                 "y":-35.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -8448,12 +8424,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8506,12 +8482,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8549,7 +8525,7 @@
                         {
                          "name":"hingeSide",
                          "type":"string",
-                         "value":"bottom"
+                         "value":"top"
                         }, 
                         {
                          "name":"locked",
@@ -8564,12 +8540,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8622,12 +8598,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8645,12 +8621,12 @@
                         {
                          "name":"autoClose",
                          "type":"bool",
-                         "value":false
+                         "value":true
                         }, 
                         {
                          "name":"autoCloseStrength",
                          "type":"float",
-                         "value":3
+                         "value":2
                         }, 
                         {
                          "name":"closeSoundId",
@@ -8680,12 +8656,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8738,12 +8714,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8854,12 +8830,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -8917,12 +8893,12 @@
                         {
                          "name":"swingMaxDeg",
                          "type":"float",
-                         "value":110
+                         "value":90
                         }, 
                         {
                          "name":"swingMinDeg",
                          "type":"float",
-                         "value":-110
+                         "value":-90
                         }],
                  "rotation":0,
                  "type":"",
@@ -9330,7 +9306,7 @@
                 {
                  "height":66.6666666666667,
                  "id":121,
-                 "name":"test_trigger1",
+                 "name":"backup2_trigger",
                  "opacity":1,
                  "properties":[
                         {
@@ -9346,73 +9322,19 @@
                         {
                          "name":"repeat",
                          "type":"bool",
-                         "value":true
+                         "value":false
                         }, 
                         {
                          "name":"script",
                          "type":"string",
-                         "value":"Level_onTestTrigger1"
+                         "value":"SpawnBackup2"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":false,
-                 "width":84.6666666666667,
-                 "x":560.666666666667,
-                 "y":138.666666666666
-                }, 
-                {
-                 "height":0,
-                 "id":122,
-                 "name":"test_trigger2",
-                 "opacity":1,
-                 "polygon":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":70.6666666666666,
-                         "y":-38.6666666666666
-                        }, 
-                        {
-                         "x":112,
-                         "y":-17.3333333333334
-                        }, 
-                        {
-                         "x":106,
-                         "y":29.3333333333334
-                        }, 
-                        {
-                         "x":14.6666666666666,
-                         "y":28
-                        }],
-                 "properties":[
-                        {
-                         "name":"affects",
-                         "type":"string",
-                         "value":"player"
-                        }, 
-                        {
-                         "name":"delayMs",
-                         "type":"float",
-                         "value":1000
-                        }, 
-                        {
-                         "name":"repeat",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"script",
-                         "type":"string",
-                         "value":"Level_onTestTrigger2"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":907.75,
-                 "y":667.416666666667
+                 "width":30,
+                 "x":559.666666666667,
+                 "y":-469.666666666667
                 }, 
                 {
                  "height":62.5454545454546,
@@ -9428,7 +9350,7 @@
                         {
                          "name":"delayMs",
                          "type":"float",
-                         "value":2000
+                         "value":0
                         }, 
                         {
                          "name":"repeat",
@@ -9479,6 +9401,39 @@
                  "width":39.2727,
                  "x":182.36365,
                  "y":-552.909113636364
+                }, 
+                {
+                 "height":21.3333666666667,
+                 "id":246,
+                 "name":"backup3_trigger",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"affects",
+                         "type":"string",
+                         "value":"player"
+                        }, 
+                        {
+                         "name":"delayMs",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"repeat",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"SpawnBackup3"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":122.666666666667,
+                 "x":560,
+                 "y":-274.666683333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10144,6 +10099,104 @@
                  "width":0,
                  "x":509,
                  "y":-983
+                },
+            
+                {
+                 "height":0,
+                 "id":239,
+                 "name":"bedroom_phone",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":271.333333333333,
+                 "y":-1474
+                }, 
+                {
+                 "height":0,
+                 "id":240,
+                 "name":"hallway_far_end",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"orientation",
+                         "type":"float",
+                         "value":180
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":693.333333333333,
+                 "y":-1336.66666666667
+                }, 
+                {
+                 "height":0,
+                 "id":241,
+                 "name":"backup_arrival",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":801.333333333333,
+                 "y":-494.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":242,
+                 "name":"hallway_middle",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":692.666666666667,
+                 "y":-1032
+                }, 
+                {
+                 "height":0,
+                 "id":243,
+                 "name":"study",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":422.666666666667,
+                 "y":-1154.66666666667
+                }, 
+                {
+                 "height":0,
+                 "id":244,
+                 "name":"hallway_start",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":690.666666666667,
+                 "y":-760
+                }, 
+                {
+                 "height":0,
+                 "id":245,
+                 "name":"bathroom",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":912.666666666667,
+                 "y":-1182
                 }],
          "offsetx":-68,
          "offsety":940,
@@ -10214,7 +10267,7 @@
          "y":0
         }],
  "nextlayerid":88,
- "nextobjectid":239,
+ "nextobjectid":247,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

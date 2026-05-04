@@ -1,6 +1,27 @@
 {
     "audio": [
         {
+            "id": "pistolero",
+            "file": "music/pistolero.ogg",
+            "type": "music",
+            "volume": 0.7,
+            "loop": false
+        },
+        {
+            "id": "dystopia",
+            "file": "music/dystopia.mp3",
+            "type": "music",
+            "volume": 0.5,
+            "loop": true
+        },
+        {
+            "id": "motivation",
+            "file": "music/motivation.mp3",
+            "type": "music",
+            "volume": 0.5,
+            "loop": true
+        },
+        {
             "id": "ui_click",
             "file": "ui/click.ogg",
             "type": "sound",
@@ -118,13 +139,6 @@
             "file": "sfx/drama.wav",
             "type": "sound",
             "volume": 1.0
-        },
-        {
-            "id": "pistolero",
-            "file": "music/pistolero.ogg",
-            "type": "music",
-            "volume": 0.7,
-            "loop": false
         },
         {
             "id": "window_break2",

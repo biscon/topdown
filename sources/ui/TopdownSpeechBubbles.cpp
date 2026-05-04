@@ -12,18 +12,21 @@
 
 namespace {
 
+    // speak("Hej Per, har du savnet mig?", WHITE, 16000)
 constexpr float SPEECH_FADE_DURATION_MS = 250.0f;
 constexpr float SPEECH_FONT_SIZE = 28.0f;
 constexpr float SPEECH_FONT_SPACING = 1.0f;
-constexpr float SPEECH_TEXT_PADDING = 12.0f;
+constexpr float SPEECH_TEXT_PADDING = 16.0f;
 constexpr float SPEECH_MAX_BUBBLE_WIDTH = 480.0f;
 constexpr float SPEECH_LINE_HEIGHT_MULTIPLIER = 1.10f;
-constexpr float SPEECH_ANCHOR_VERTICAL_OFFSET = 74.0f;
+constexpr float SPEECH_ANCHOR_VERTICAL_OFFSET = 64.0f;
 constexpr float SPEECH_ANCHOR_BUBBLE_SPACING = 12.0f;
-constexpr float SPEECH_BORDER_INSET = 2.0f;
+constexpr float SPEECH_BORDER_INSET = 3.0f;
+constexpr float SPEECH_BUBBLE_ROUNDNESS = 0.25f;
 
-const Color SPEECH_BUBBLE_OUTER_COLOR = {26, 26, 26, 210};
-const Color SPEECH_BUBBLE_INNER_COLOR = {242, 242, 234, 250};
+const Color SPEECH_BUBBLE_OUTER_COLOR = {150, 110, 70, 255};
+const Color SPEECH_BUBBLE_INNER_COLOR = {34, 26, 20, 255};
+//const Color SPEECH_BUBBLE_INNER_COLOR = {52, 38, 28, 255};
 
 bool CanShowSpeechBubble(const GameState& state, const std::string& text, float durationMs)
 {
@@ -402,6 +405,9 @@ void TopdownRenderSpeechBubbles(GameState& state)
         bubbleX = Clamp(bubbleX, 0.0f, static_cast<float>(INTERNAL_WIDTH) - bubbleWidth);
         bubbleY = Clamp(bubbleY, 0.0f, static_cast<float>(INTERNAL_HEIGHT) - bubbleHeight);
 
+        bubbleX = roundf(bubbleX);
+        bubbleY = roundf(bubbleY);
+
         Rectangle outerRect{bubbleX, bubbleY, bubbleWidth, bubbleHeight};
         Rectangle innerRect{
                 bubbleX + SPEECH_BORDER_INSET,
@@ -418,11 +424,14 @@ void TopdownRenderSpeechBubbles(GameState& state)
         const Color innerColor = ScaleColorAlpha(SPEECH_BUBBLE_INNER_COLOR, alpha);
         const Color textColor = ScaleColorAlpha(entry.color, alpha);
 
-        DrawRectangleRec(outerRect, outerColor);
-        DrawRectangleRec(innerRect, innerColor);
+        DrawRectangleRounded(outerRect, SPEECH_BUBBLE_ROUNDNESS, 8, outerColor);
+        DrawRectangleRounded(innerRect, SPEECH_BUBBLE_ROUNDNESS, 8, innerColor);
 
-        Vector2 textPos{innerRect.x + SPEECH_TEXT_PADDING - SPEECH_BORDER_INSET,
-                        innerRect.y + SPEECH_TEXT_PADDING - SPEECH_BORDER_INSET};
+        Vector2 textPos{
+                roundf(innerRect.x + SPEECH_TEXT_PADDING - SPEECH_BORDER_INSET),
+                roundf(innerRect.y + SPEECH_TEXT_PADDING - SPEECH_BORDER_INSET)
+        };
+
         for (const std::string& line : lines) {
             DrawTextEx(
                     state.speechFont,

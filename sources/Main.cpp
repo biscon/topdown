@@ -117,7 +117,7 @@ static bool LoadFonts(GameState& state) {
         TraceLog(LOG_ERROR, "Could not load hover label font from %s", boldFontPath.c_str());
         return false;
     }
-    state.speechFont = LoadFontEx(boldFontPath.c_str(), 50, nullptr, 0);
+    state.speechFont = LoadFontEx(boldFontPath.c_str(), 28, nullptr, 0);
     if(state.speechFont.texture.id == 0) {
         TraceLog(LOG_ERROR, "Could not load speech font from %s", boldFontPath.c_str());
         return false;

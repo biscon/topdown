@@ -4,8 +4,8 @@
             "assetId": "knifethug",
             "baseDrawScale": 3.0,
             "collisionRadius": 38.0,
-            "walkSpeed": 200,
-            "runSpeed": 600,
+            "walkSpeed": 250,
+            "runSpeed": 700,
             "hurtStunMs": 300,
             "maxHealth": 100,
             "corpseExpirationMs": -1,
@@ -14,6 +14,7 @@
             "aiMode": "seek_and_destroy",
             "attackType": "melee",
 
+            "reactionTimeMs": 200.0,
             "visionRange": 900.0,
             "hearingRange": 320.0,
             "gunshotHearingRange": 1000.0,
@@ -21,7 +22,7 @@
 
             "attackRange": 60.0,
             "attackCooldownMs": 600.0,
-            "attackDamage": 40.0,
+            "attackDamage": 50.0,
             "attackHitNormalizedTime": 0.7,
             "attackRecoverMs": 300.0,
 

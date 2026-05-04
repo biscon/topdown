@@ -1,5 +1,46 @@
 {
     "audio": [
-
+        {
+            "id": "car_breaks",
+            "file": "../../audio/sfx/car_breaks.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "car_door_open",
+            "file": "../../audio/sfx/car_door_open.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "phone_noise",
+            "file": "../../audio/sfx/phone_noise.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": true
+        },
+        {
+            "id": "dialtone",
+            "file": "../../audio/sfx/dialtone.wav",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "phone_pickup",
+            "file": "../../audio/sfx/phone_pickup.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        },
+        {
+            "id": "phone_put_down",
+            "file": "../../audio/sfx/phone_put_down.ogg",
+            "type": "sound",
+            "volume": 1.0,
+            "loop": false
+        }
     ]
 }

@@ -242,6 +242,44 @@ static Vector2 ComputeSegmentHitNormal(
 }
 
 
+static float Cross2D(Vector2 a, Vector2 b)
+{
+    return a.x * b.y - a.y * b.x;
+}
+
+static bool RaycastSingleSegment(
+        Vector2 origin,
+        Vector2 dir,
+        const TopdownSegment& seg,
+        float maxDistance,
+        Vector2& outHitPoint,
+        float& outHitDistance)
+{
+    const Vector2 segDir = TopdownSub(seg.b, seg.a);
+    const float denom = Cross2D(dir, segDir);
+
+    if (std::fabs(denom) <= 0.000001f) {
+        return false;
+    }
+
+    const Vector2 toSegStart = TopdownSub(seg.a, origin);
+
+    const float rayT = Cross2D(toSegStart, segDir) / denom;
+    const float segT = Cross2D(toSegStart, dir) / denom;
+
+    if (rayT < 0.0f || rayT > maxDistance) {
+        return false;
+    }
+
+    if (segT < 0.0f || segT > 1.0f) {
+        return false;
+    }
+
+    outHitDistance = rayT;
+    outHitPoint = TopdownAdd(origin, TopdownMul(dir, rayT));
+    return true;
+}
+
 bool RaycastClosestSegmentWithNormal(
         Vector2 origin,
         Vector2 dir,
@@ -258,19 +296,16 @@ bool RaycastClosestSegmentWithNormal(
 
     for (const TopdownSegment& seg : segments) {
         Vector2 point{};
-        float distance = maxDistance;
+        float distance = bestDistance;
 
-        std::vector<TopdownSegment> single{ seg };
-        if (!TopdownRaycastSegments(origin, dir, single, bestDistance, point, &distance)) {
+        if (!RaycastSingleSegment(origin, dir, seg, bestDistance, point, distance)) {
             continue;
         }
 
-        if (distance < bestDistance) {
-            bestDistance = distance;
-            bestPoint = point;
-            bestNormal = ComputeSegmentHitNormal(seg, dir);
-            hit = true;
-        }
+        bestDistance = distance;
+        bestPoint = point;
+        bestNormal = ComputeSegmentHitNormal(seg, dir);
+        hit = true;
     }
 
     if (!hit) {
@@ -282,5 +317,4 @@ bool RaycastClosestSegmentWithNormal(
     outHitDistance = bestDistance;
     return true;
 }
-
 

@@ -12,6 +12,7 @@
 #include "resources/AsepriteAsset.h"
 #include "LevelDoors.h"
 #include "raymath.h"
+#include "LevelEffects.h"
 
 const char* TopdownNpcEngagementStateToString(TopdownNpcEngagementState state)
 {
@@ -704,6 +705,22 @@ void TopdownApplyDamageToPlayer(
     if (damage <= 0.0f) {
         return;
     }
+
+    const float damage01 = Clamp(damage / std::max(1.0f, player.maxHealth), 0.0f, 1.0f);
+
+// Optional curve: small hits stay small, big hits ramp harder.
+    const float shakeT = damage01 * damage01;
+
+    const float shakeDurationMs = Lerp(70.0f, 180.0f, shakeT);
+    const float shakeStrengthPx = Lerp(6.0f, 28.0f, shakeT);
+    const float shakeFrequencyHz = 55.0f;
+
+    TopdownShakeScreen(
+            state,
+            shakeDurationMs,
+            shakeStrengthPx,
+            shakeFrequencyHz,
+            false);
 
     player.health -= damage;
     if (player.health < 0.0f) {

@@ -67,34 +67,51 @@ int ComputeDefaultSpeechDurationMs(const std::string& text)
     return std::clamp(durationMs, SPEECH_DURATION_MIN_MS, SPEECH_DURATION_MAX_MS);
 }
 
-bool ParseSpeechDurationAndColor(
-        lua_State* L,
-        int firstOptionalArgIndex,
-        const std::string& text,
-        float& outDurationMs,
-        Color& outColor)
-{
-    outColor = BLACK;
-    outDurationMs = static_cast<float>(ComputeDefaultSpeechDurationMs(text));
+    bool ParseSpeechDurationAndColor(
+            lua_State* L,
+            int firstOptionalArgIndex,
+            const std::string& text,
+            float& outDurationMs,
+            Color& outColor)
+    {
+        outColor = WHITE;
+        outDurationMs = static_cast<float>(ComputeDefaultSpeechDurationMs(text));
 
-    Color parsedColor = BLACK;
-    bool hasColor = false;
-    int parsedDurationMs = -1;
-    if (!ParseOptionalTalkColorAndDuration(L, firstOptionalArgIndex, parsedColor, hasColor, parsedDurationMs)) {
-        return false;
+        const int top = lua_gettop(L);
+
+        for (int arg = firstOptionalArgIndex; arg <= top; ++arg) {
+            const int type = lua_type(L, arg);
+
+            if (type == LUA_TNIL) {
+                continue;
+            }
+
+            if (type == LUA_TNUMBER) {
+                const int durationMs = static_cast<int>(luaL_checkinteger(L, arg));
+                if (durationMs > 0) {
+                    outDurationMs = static_cast<float>(durationMs);
+                }
+                continue;
+            }
+
+            if (type == LUA_TSTRING) {
+                const char* colorName = lua_tostring(L, arg);
+                Color parsedColor = WHITE;
+
+                if (colorName == nullptr ||
+                    !TryGetTalkColorByName(std::string(colorName), parsedColor)) {
+                    return false;
+                }
+
+                outColor = parsedColor;
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
-
-    if (hasColor) {
-        outColor = parsedColor;
-    }
-
-    if (parsedDurationMs > 0) {
-        outDurationMs = static_cast<float>(parsedDurationMs);
-    }
-
-    return true;
-}
-
 } // namespace
 
 static bool ParseOptionalStringList(
@@ -1175,6 +1192,7 @@ static int Lua_spawnNpc(lua_State* L)
     const char* assetId = luaL_checkstring(L, 2);
     const char* spawnId = luaL_checkstring(L, 3);
     const bool persistentChase = lua_toboolean(L, 4) != 0;
+    const bool guard = lua_toboolean(L, 5) != 0;
 
     if (gameState == nullptr || npcId == nullptr || assetId == nullptr || spawnId == nullptr) {
         lua_pushboolean(L, 0);
@@ -1186,7 +1204,8 @@ static int Lua_spawnNpc(lua_State* L)
             std::string(npcId),
             std::string(assetId),
             std::string(spawnId),
-            persistentChase);
+            persistentChase,
+            guard);
 
     lua_pushboolean(L, ok ? 1 : 0);
     return 1;
@@ -1198,6 +1217,7 @@ static int Lua_spawnNpcSmart(lua_State* L)
     const char* assetId = luaL_checkstring(L, 2);
     const char* spawnId = luaL_checkstring(L, 3);
     const bool persistentChase = lua_toboolean(L, 4) != 0;
+    const bool guard = lua_toboolean(L, 5) != 0;
 
     if (gameState == nullptr || npcId == nullptr || assetId == nullptr || spawnId == nullptr) {
         lua_pushboolean(L, 0);
@@ -1209,7 +1229,8 @@ static int Lua_spawnNpcSmart(lua_State* L)
             std::string(npcId),
             std::string(assetId),
             std::string(spawnId),
-            persistentChase);
+            persistentChase,
+            guard);
 
     lua_pushboolean(L, ok ? 1 : 0);
     return 1;
