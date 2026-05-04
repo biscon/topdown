@@ -357,21 +357,56 @@ static float ComputeRemainingPathDistance(const TopdownScriptMoveState& move, Ve
     return total;
 }
 
+static Rectangle BuildMovementCollisionQueryBounds(
+        Vector2 position,
+        float radius,
+        Vector2 velocity,
+        float dt)
+{
+    const float moveDistance = TopdownLength(TopdownMul(velocity, dt));
+    const float padding = std::max(16.0f, moveDistance + 8.0f);
+    const float queryRadius = radius + padding;
+
+    return Rectangle{
+            position.x - queryRadius,
+            position.y - queryRadius,
+            queryRadius * 2.0f,
+            queryRadius * 2.0f
+    };
+}
+
 static void UpdatePlayerMovementAndCollision(GameState& state, float dt)
 {
     TopdownPlayerRuntime& player = state.topdown.runtime.player;
 
     player.position = TopdownAdd(player.position, TopdownMul(player.velocity, dt));
 
-    const auto& segments = state.topdown.runtime.collision.movementSegments;
+    static thread_local std::vector<int> candidateSegmentIndices;
 
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
-        for (const TopdownSegment& seg : segments) {
+        const Rectangle queryBounds = BuildMovementCollisionQueryBounds(
+                player.position,
+                player.radius,
+                player.velocity,
+                dt);
+
+        TopdownQueryMovementSegmentGrid(
+                state.topdown.runtime.collision,
+                queryBounds,
+                candidateSegmentIndices);
+
+        const auto& segments = state.topdown.runtime.collision.movementSegments;
+
+        for (int segmentIndex : candidateSegmentIndices) {
+            if (segmentIndex < 0 || segmentIndex >= static_cast<int>(segments.size())) {
+                continue;
+            }
+
             ResolveCircleVsSegment(
                     player.position,
                     player.velocity,
                     player.radius,
-                    seg);
+                    segments[segmentIndex]);
         }
 
         ResolvePlayerVsDoors(state);
