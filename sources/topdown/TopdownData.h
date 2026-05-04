@@ -700,32 +700,28 @@ struct TopdownBloodImpactParticle {
     float stretch = 1.0f;
 };
 
-struct TopdownSpatialCell {
-    std::vector<int> movementSegmentIndices;
-    std::vector<int> visionSegmentIndices;
-    std::vector<int> obstacleIndices;
+struct TopdownCollisionSegmentGridCell {
+    std::vector<int> segmentIndices;
 };
 
-struct TopdownSpatialGrid {
+struct TopdownCollisionSegmentGrid {
     bool built = false;
-
     Vector2 origin{};
-    float cellSize = 128.0f;
-
+    float cellSize = 256.0f;
     int width = 0;
     int height = 0;
-
-    std::vector<TopdownSpatialCell> cells;
+    std::vector<TopdownCollisionSegmentGridCell> cells;
 };
 
 struct TopdownCollisionWorld {
     std::vector<TopdownRuntimeObstacle> obstacles;
 
     std::vector<TopdownSegment> movementSegments;
+    std::vector<Rectangle> movementSegmentBounds;
     std::vector<TopdownSegment> visionSegments;
     std::vector<TopdownSegment> boundarySegments;
 
-    TopdownSpatialGrid spatialGrid;
+    TopdownCollisionSegmentGrid movementSegmentGrid;
 
     int nextObstacleHandle = 1;
 };

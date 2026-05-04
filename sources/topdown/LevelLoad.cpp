@@ -21,6 +21,7 @@
 #include "BloodRenderTarget.h"
 #include "TopdownRvo.h"
 #include "LevelWindows.h"
+#include "LevelCollision.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -2358,6 +2359,8 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
             topdown.runtime.collision.movementSegments.push_back(seg);
         }
     }
+
+    TopdownRebuildMovementSegmentGrid(topdown.runtime.collision);
 
     if (!topdown.runtime.nav.navMesh.sourcePolygons.empty()) {
         if (!BuildNavMesh(topdown.runtime.nav.navMesh, topdown.runtime.nav.agentRadius)) {
