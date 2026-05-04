@@ -533,23 +533,6 @@ static void ApplyTopdownEffectRegionBucket(
         RenderTexture2D*& currentSource,
         RenderTexture2D*& currentDest)
 {
-    auto IsEffectRegionNearCameraView = [](const TopdownData& topdown,
-                                           const TopdownAuthoredEffectRegion& authored) {
-        const float margin = 128.0f;
-        const Rectangle view{
-                topdown.runtime.camera.position.x - margin,
-                topdown.runtime.camera.position.y - margin,
-                topdown.camera.viewportWidth + margin * 2.0f,
-                topdown.camera.viewportHeight + margin * 2.0f
-        };
-
-        const Rectangle& r = authored.worldRect;
-        return !(r.x + r.width < view.x ||
-                 view.x + view.width < r.x ||
-                 r.y + r.height < view.y ||
-                 view.y + view.height < r.y);
-    };
-
     for (int effectRegionIndex : bucket) {
         if (effectRegionIndex < 0 ||
             effectRegionIndex >= static_cast<int>(state.topdown.authored.effectRegions.size()) ||
@@ -565,7 +548,7 @@ static void ApplyTopdownEffectRegionBucket(
         if (!runtime.visible) {
             continue;
         }
-        if (!IsEffectRegionNearCameraView(state.topdown, authored)) {
+        if (!TopdownWorldRectOverlapsCameraView(state, authored.worldRect, 128.0f)) {
             continue;
         }
 

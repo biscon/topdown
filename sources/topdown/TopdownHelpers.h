@@ -30,6 +30,10 @@ Vector2 TopdownComputeEffectRegionOcclusionOrigin(
         const TopdownAuthoredEffectRegion& effect);
 
 Vector2 TopdownWorldToScreen(const GameState& state, Vector2 worldPos);
+bool TopdownWorldRectOverlapsCameraView(
+        const GameState& state,
+        Rectangle worldRect,
+        float marginPx = 0.0f);
 
 bool TopdownRaycastSegments(
         Vector2 origin,
