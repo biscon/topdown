@@ -362,7 +362,8 @@ static void SetSceneSampleEffectRegionShaderUniforms(
         Vector2 sceneSize,
         Vector2 regionPos,
         Vector2 regionSize,
-        float timeSeconds)
+        float timeSeconds,
+        bool disableShaderWallOcclusion)
 {
     SetShaderFloatIfValid(shader, shaderEntry.timeLoc, timeSeconds);
     SetShaderVec2IfValid(shader, shaderEntry.scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
@@ -398,13 +399,18 @@ static void SetSceneSampleEffectRegionShaderUniforms(
             authored,
             cam);
 
-    SetShaderOcclusionPolygonIfValid(
-            shader,
-            shaderEntry.useOcclusionPolygonLoc,
-            shaderEntry.occlusionPolygonVertexCountLoc,
-            shaderEntry.occlusionPolygonPointsLoc,
-            runtime,
-            cam);
+    if (disableShaderWallOcclusion) {
+        SetShaderIntIfValid(shader, shaderEntry.useOcclusionPolygonLoc, 0);
+        SetShaderIntIfValid(shader, shaderEntry.occlusionPolygonVertexCountLoc, 0);
+    } else {
+        SetShaderOcclusionPolygonIfValid(
+                shader,
+                shaderEntry.useOcclusionPolygonLoc,
+                shaderEntry.occlusionPolygonVertexCountLoc,
+                shaderEntry.occlusionPolygonPointsLoc,
+                runtime,
+                cam);
+    }
 }
 
 static bool ApplySceneSampleTopdownEffectRegionPass(
@@ -413,6 +419,8 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
         const RenderTexture2D& sourceTarget,
         RenderTexture2D& destTarget)
 {
+    static constexpr bool kUseStencilWallOcclusionForSceneSample = true;
+
     if (effectRegionIndex < 0 ||
         effectRegionIndex >= static_cast<int>(state.topdown.authored.effectRegions.size()) ||
         effectRegionIndex >= static_cast<int>(state.topdown.runtime.render.effectRegions.size())) {
@@ -465,6 +473,12 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
         return false;
     }
 
+    const bool useStencilWallOcclusion =
+            kUseStencilWallOcclusionForSceneSample &&
+            runtime.occludedByWalls &&
+            runtime.hasWallOcclusionTriangles &&
+            !runtime.wallOcclusionTriangleVertices.empty();
+
     const float timeSeconds = static_cast<float>(GetTime());
     const Vector2 sceneSize{
             static_cast<float>(sourceTarget.texture.width),
@@ -486,7 +500,27 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     EndBlendMode();
     EndTextureMode();
 
+    bool shouldUseStencilTest = false;
+    if (useStencilWallOcclusion) {
+        static thread_local std::vector<Vector2> screenTriangleVertices;
+        BuildScreenTriangleVertices(
+                state,
+                runtime.wallOcclusionTriangleVertices,
+                screenTriangleVertices);
+
+        if (screenTriangleVertices.size() >= 3) {
+            BeginTextureMode(destTarget);
+            BeginStencilWriteReplace();
+            DrawStencilTriangleVertices(screenTriangleVertices);
+            EndTextureMode();
+            shouldUseStencilTest = true;
+        }
+    }
+
     BeginTextureMode(destTarget);
+    if (shouldUseStencilTest) {
+        BeginStencilTestEqualOne();
+    }
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
     BeginShaderMode(shaderEntry->shader);
 
@@ -499,7 +533,8 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             sceneSize,
             regionPos,
             regionSize,
-            timeSeconds);
+            timeSeconds,
+            shouldUseStencilTest);
 
     // Scene-sample effects are applied only over the clipped screen-space
     // region. The source rect samples the matching pixels from the previous
@@ -523,6 +558,9 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
 
     EndShaderMode();
     EndBlendMode();
+    if (shouldUseStencilTest) {
+        EndStencilTest();
+    }
     EndTextureMode();
 
     return true;
