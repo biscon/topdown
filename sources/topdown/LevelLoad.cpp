@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 static constexpr float kPointMergeDistanceSqr = 25.0f;
 static constexpr float kAngleEpsilon = 0.0008f;
-static constexpr float kMargin = 400.0f;
+static constexpr float kMargin = 800.0f;
 
 static std::string NormalizePath(const fs::path& p)
 {

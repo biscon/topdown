@@ -1297,12 +1297,16 @@ static void BeginStencilWriteReplace()
     rlDrawRenderBatchActive();
 
     glEnable(GL_STENCIL_TEST);
+
+    glStencilMask(0xFF);
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
 
-    glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
 
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 }
@@ -1357,7 +1361,7 @@ static void BuildScreenTriangleVertices(
 
 static void DebugDrawStencilTriangleMaskTest(GameState& state)
 {
-    static constexpr bool kDebugDrawStencilTriangleMaskTest = false;
+    static constexpr bool kDebugDrawStencilTriangleMaskTest = true;
     if (!kDebugDrawStencilTriangleMaskTest) {
         return;
     }
