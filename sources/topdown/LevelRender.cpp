@@ -207,43 +207,6 @@ static void SetShaderPolygonIfValid(
     SetShaderValueV(shader, polygonPointsLoc, points, SHADER_UNIFORM_VEC2, vertexCount);
 }
 
-static void SetShaderOcclusionPolygonIfValid(
-        const Shader& shader,
-        int useOcclusionPolygonLoc,
-        int occlusionPolygonVertexCountLoc,
-        int occlusionPolygonPointsLoc,
-        const TopdownRuntimeEffectRegion& runtime,
-        const Vector2& cam)
-{
-    const int usePolygon =
-            runtime.hasWallOcclusionPolygon &&
-            runtime.wallOcclusionPolygon.size() >= 3
-            ? 1
-            : 0;
-
-    SetShaderIntIfValid(shader, useOcclusionPolygonLoc, usePolygon);
-
-    if (!usePolygon) {
-        SetShaderIntIfValid(shader, occlusionPolygonVertexCountLoc, 0);
-        return;
-    }
-
-    const int vertexCount = static_cast<int>(runtime.wallOcclusionPolygon.size());
-    SetShaderIntIfValid(shader, occlusionPolygonVertexCountLoc, vertexCount);
-
-    if (occlusionPolygonPointsLoc < 0 || vertexCount <= 0) {
-        return;
-    }
-
-    float points[256 * 2] = {};
-    for (int i = 0; i < vertexCount && i < 256; ++i) {
-        points[i * 2 + 0] = runtime.wallOcclusionPolygon[i].x - cam.x;
-        points[i * 2 + 1] = runtime.wallOcclusionPolygon[i].y - cam.y;
-    }
-
-    SetShaderValueV(shader, occlusionPolygonPointsLoc, points, SHADER_UNIFORM_VEC2, vertexCount);
-}
-
 static int GetRaylibBlendMode(EffectBlendMode mode)
 {
     switch (mode) {
@@ -393,8 +356,6 @@ static void DrawImageLayer(const GameState& state, const TopdownRuntimeImageLaye
             SetShaderIntIfValid(shaderEntry->shader, shaderEntry->usePolygonLoc, 0);
             SetShaderIntIfValid(shaderEntry->shader, shaderEntry->polygonVertexCountLoc, 0);
 
-            SetShaderIntIfValid(shaderEntry->shader, shaderEntry->useOcclusionPolygonLoc, 0);
-            SetShaderIntIfValid(shaderEntry->shader, shaderEntry->occlusionPolygonVertexCountLoc, 0);
 
             if (shaderEntry->tintLoc >= 0) {
                 const float tint[3] = {
@@ -460,8 +421,7 @@ static void SetSceneSampleEffectRegionShaderUniforms(
         Vector2 sceneSize,
         Vector2 regionPos,
         Vector2 regionSize,
-        float timeSeconds,
-        bool disableShaderWallOcclusion)
+        float timeSeconds)
 {
     SetShaderFloatIfValid(shader, shaderEntry.timeLoc, timeSeconds);
     SetShaderVec2IfValid(shader, shaderEntry.scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
@@ -496,19 +456,6 @@ static void SetSceneSampleEffectRegionShaderUniforms(
             shaderEntry.polygonPointsLoc,
             authored,
             cam);
-
-    if (disableShaderWallOcclusion) {
-        SetShaderIntIfValid(shader, shaderEntry.useOcclusionPolygonLoc, 0);
-        SetShaderIntIfValid(shader, shaderEntry.occlusionPolygonVertexCountLoc, 0);
-    } else {
-        SetShaderOcclusionPolygonIfValid(
-                shader,
-                shaderEntry.useOcclusionPolygonLoc,
-                shaderEntry.occlusionPolygonVertexCountLoc,
-                shaderEntry.occlusionPolygonPointsLoc,
-                runtime,
-                cam);
-    }
 }
 
 static void SetSelfTextureEffectRegionShaderUniforms(
@@ -520,8 +467,7 @@ static void SetSelfTextureEffectRegionShaderUniforms(
         Vector2 sceneSize,
         Vector2 regionPos,
         Vector2 regionSize,
-        float timeSeconds,
-        bool disableShaderWallOcclusion)
+        float timeSeconds)
 {
     SetShaderFloatIfValid(shader, shaderEntry.timeLoc, timeSeconds);
     SetShaderVec2IfValid(shader, shaderEntry.scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
@@ -551,19 +497,6 @@ static void SetSelfTextureEffectRegionShaderUniforms(
             shaderEntry.polygonPointsLoc,
             authored,
             cam);
-
-    if (disableShaderWallOcclusion) {
-        SetShaderIntIfValid(shader, shaderEntry.useOcclusionPolygonLoc, 0);
-        SetShaderIntIfValid(shader, shaderEntry.occlusionPolygonVertexCountLoc, 0);
-    } else {
-        SetShaderOcclusionPolygonIfValid(
-                shader,
-                shaderEntry.useOcclusionPolygonLoc,
-                shaderEntry.occlusionPolygonVertexCountLoc,
-                shaderEntry.occlusionPolygonPointsLoc,
-                runtime,
-                cam);
-    }
 }
 
 static bool ApplySceneSampleTopdownEffectRegionPass(
@@ -572,8 +505,6 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
         const RenderTexture2D& sourceTarget,
         RenderTexture2D& destTarget)
 {
-    static constexpr bool kUseStencilWallOcclusionForSceneSample = true;
-
     if (effectRegionIndex < 0 ||
         effectRegionIndex >= static_cast<int>(state.topdown.authored.effectRegions.size()) ||
         effectRegionIndex >= static_cast<int>(state.topdown.runtime.render.effectRegions.size())) {
@@ -626,9 +557,6 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
         return false;
     }
 
-    const bool wantsStencilWallOcclusion =
-            kUseStencilWallOcclusionForSceneSample &&
-            CanUseWallOcclusionStencil(runtime);
 
     const float timeSeconds = static_cast<float>(GetTime());
     const Vector2 sceneSize{
@@ -651,12 +579,8 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     EndBlendMode();
     EndTextureMode();
 
-    bool shouldUseStencilTest = false;
-    if (wantsStencilWallOcclusion) {
-        BeginTextureMode(destTarget);
-        shouldUseStencilTest = WriteWallOcclusionStencilMask(state, runtime);
-        EndTextureMode();
-    }
+    const bool shouldUseStencilTest = CanUseWallOcclusionStencil(runtime) &&
+                                      WriteWallOcclusionStencilMask(state, runtime);
 
     BeginTextureMode(destTarget);
     if (shouldUseStencilTest) {
@@ -674,8 +598,7 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             sceneSize,
             regionPos,
             regionSize,
-            timeSeconds,
-            shouldUseStencilTest);
+            timeSeconds);
 
     // Scene-sample effects are applied only over the clipped screen-space
     // region. The source rect samples the matching pixels from the previous
@@ -712,8 +635,6 @@ static void DrawSelfTextureTopdownEffectRegion(
         const TopdownAuthoredEffectRegion& authored,
         const TopdownRuntimeEffectRegion& runtime)
 {
-    static constexpr bool kUseStencilWallOcclusionForSelfTexture = true;
-
     if (!runtime.visible) {
         return;
     }
@@ -736,9 +657,6 @@ static void DrawSelfTextureTopdownEffectRegion(
         return;
     }
 
-    const bool wantsStencilWallOcclusion =
-            kUseStencilWallOcclusionForSelfTexture &&
-            CanUseWallOcclusionStencil(runtime);
 
     const Vector2 cam = state.topdown.runtime.camera.position;
     const float timeSeconds = static_cast<float>(GetTime());
@@ -764,10 +682,8 @@ static void DrawSelfTextureTopdownEffectRegion(
     Color drawColor = WHITE;
     drawColor.a = static_cast<unsigned char>(std::round(255.0f * Clamp(runtime.opacity, 0.0f, 1.0f)));
 
-    bool shouldUseStencilTest = false;
-    if (wantsStencilWallOcclusion) {
-        shouldUseStencilTest = WriteWallOcclusionStencilMask(state, runtime);
-    }
+    const bool shouldUseStencilTest = CanUseWallOcclusionStencil(runtime) &&
+                                      WriteWallOcclusionStencilMask(state, runtime);
 
     EndBlendMode();
     BeginBlendMode(GetRaylibBlendMode(authored.blendMode));
@@ -786,8 +702,7 @@ static void DrawSelfTextureTopdownEffectRegion(
             sceneSize,
             regionPos,
             regionSize,
-            timeSeconds,
-            shouldUseStencilTest);
+            timeSeconds);
 
     DrawTexturePro(texRes->texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, drawColor);
 
