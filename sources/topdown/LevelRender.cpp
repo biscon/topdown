@@ -470,39 +470,6 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             static_cast<float>(sourceTarget.texture.height)
     };
 
-    static constexpr bool kUsePartialSceneSampleRegionPass = true;
-
-    if (!kUsePartialSceneSampleRegionPass) {
-        BeginTextureMode(destTarget);
-        ClearBackground(BLACK);
-
-        BeginShaderMode(shaderEntry->shader);
-
-        SetSceneSampleEffectRegionShaderUniforms(
-                shaderEntry->shader,
-                *shaderEntry,
-                authored,
-                runtime,
-                cam,
-                sceneSize,
-                regionPos,
-                regionSize,
-                timeSeconds);
-
-        DrawTexturePro(
-                sourceTarget.texture,
-                GetRenderTargetSourceRect(sourceTarget.texture),
-                GetRenderTargetDestRect(destTarget.texture),
-                Vector2{0.0f, 0.0f},
-                0.0f,
-                WHITE);
-
-        EndShaderMode();
-        EndTextureMode();
-
-        return true;
-    }
-
     BeginTextureMode(destTarget);
     ClearBackground(BLACK);
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
@@ -533,6 +500,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             regionSize,
             timeSeconds);
 
+    // Scene-sample effects are applied only over the clipped screen-space
+    // region. The source rect samples the matching pixels from the previous
+    // render target; render textures are Y-flipped in raylib, hence the
+    // negative source height and adjusted source Y.
     const Rectangle dst{
             std::round(clippedRegionRect.x),
             std::round(clippedRegionRect.y),
