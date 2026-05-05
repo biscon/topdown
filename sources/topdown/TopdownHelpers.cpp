@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <array>
 
 #include "raymath.h"
+#include "utils/earcut.h"
 
 
 
@@ -81,6 +83,48 @@ void TopdownEnsureCounterClockwise(std::vector<Vector2>& points)
     if (TopdownIsClockwise(points)) {
         std::reverse(points.begin(), points.end());
     }
+}
+
+bool TopdownTriangulatePolygon(
+        const std::vector<Vector2>& polygon,
+        std::vector<Vector2>& outTriangleVertices)
+{
+    outTriangleVertices.clear();
+
+    if (polygon.size() < 3) {
+        return false;
+    }
+
+    std::vector<Vector2> ring = polygon;
+    TopdownEnsureCounterClockwise(ring);
+
+    std::vector<std::vector<std::array<double, 2>>> earcutInput;
+    earcutInput.emplace_back();
+    earcutInput[0].reserve(ring.size());
+
+    for (const Vector2& point : ring) {
+        earcutInput[0].push_back(
+                std::array<double, 2>{
+                        static_cast<double>(point.x),
+                        static_cast<double>(point.y)});
+    }
+
+    const std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(earcutInput);
+    if (indices.size() < 3) {
+        return false;
+    }
+
+    outTriangleVertices.reserve(indices.size());
+    for (const uint32_t index : indices) {
+        if (index >= ring.size()) {
+            outTriangleVertices.clear();
+            return false;
+        }
+
+        outTriangleVertices.push_back(ring[index]);
+    }
+
+    return !outTriangleVertices.empty();
 }
 
 Rectangle TopdownComputePolygonBounds(const std::vector<Vector2>& points)

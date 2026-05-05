@@ -32,9 +32,6 @@ struct EffectShaderEntry {
     int polygonVertexCountLoc = -1;
     int polygonPointsLoc = -1;
 
-    int useOcclusionPolygonLoc = -1;
-    int occlusionPolygonVertexCountLoc = -1;
-    int occlusionPolygonPointsLoc = -1;
 };
 
 bool InitEffectShaderRegistry();

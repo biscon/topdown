@@ -545,6 +545,9 @@ struct TopdownRuntimeEffectRegion {
 
     bool hasWallOcclusionPolygon = false;
     std::vector<Vector2> wallOcclusionPolygon;
+
+    bool hasWallOcclusionTriangles = false;
+    std::vector<Vector2> wallOcclusionTriangleVertices;
 };
 
 using TopdownTriggerHandle = int;

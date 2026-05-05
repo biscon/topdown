@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 static constexpr float kPointMergeDistanceSqr = 25.0f;
 static constexpr float kAngleEpsilon = 0.0008f;
-static constexpr float kMargin = 400.0f;
+static constexpr float kMargin = 800.0f;
 
 static std::string NormalizePath(const fs::path& p)
 {
@@ -2129,6 +2129,8 @@ void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullReb
         runtime.occludedByWalls = authored.occludedByWalls;
         runtime.hasWallOcclusionPolygon = false;
         runtime.wallOcclusionPolygon.clear();
+        runtime.hasWallOcclusionTriangles = false;
+        runtime.wallOcclusionTriangleVertices.clear();
 
         if (!runtime.occludedByWalls) {
             continue;
@@ -2144,6 +2146,19 @@ void TopdownRebuildWallOcclusionPolygons(TopdownData& topdown, bool forceFullReb
         if (!runtime.hasWallOcclusionPolygon) {
             TraceLog(LOG_WARNING,
                      "Failed building wall occlusion polygon for effect region '%s'",
+                     authored.id.c_str());
+            continue;
+        }
+
+        runtime.hasWallOcclusionTriangles =
+                TopdownTriangulatePolygon(
+                        runtime.wallOcclusionPolygon,
+                        runtime.wallOcclusionTriangleVertices);
+
+        if (!runtime.hasWallOcclusionTriangles) {
+            runtime.wallOcclusionTriangleVertices.clear();
+            TraceLog(LOG_WARNING,
+                     "Failed triangulating wall occlusion polygon for effect region '%s'",
                      authored.id.c_str());
         }
     }
