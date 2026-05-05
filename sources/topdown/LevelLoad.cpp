@@ -1904,10 +1904,8 @@ static bool BuildWallOcclusionPolygon(
         const TopdownAuthoredEffectRegion& effect,
         std::vector<Vector2>& outPolygon)
 {
-    static constexpr int kMaxOcclusionPolygonPoints = 256;
     static thread_local std::vector<float> rayAngles;
     static thread_local std::vector<TopdownOcclusionHitPoint> hits;
-    static thread_local std::vector<Vector2> reducedPolygon;
     static thread_local std::vector<int> candidateSegmentIndices;
 
     outPolygon.clear();
@@ -2032,28 +2030,7 @@ static bool BuildWallOcclusionPolygon(
         return false;
     }
 
-    if (outPolygon.size() > static_cast<size_t>(kMaxOcclusionPolygonPoints)) {
-        reducedPolygon.clear();
-        reducedPolygon.reserve(kMaxOcclusionPolygonPoints);
 
-        const float step = static_cast<float>(outPolygon.size()) /
-                           static_cast<float>(kMaxOcclusionPolygonPoints);
-
-        for (int i = 0; i < kMaxOcclusionPolygonPoints; ++i) {
-            const int sourceIndex = static_cast<int>(std::floor(step * static_cast<float>(i)));
-            const int clampedIndex =
-                    std::clamp(sourceIndex, 0, static_cast<int>(outPolygon.size()) - 1);
-            reducedPolygon.push_back(outPolygon[clampedIndex]);
-        }
-
-        TraceLog(LOG_WARNING,
-                 "Wall occlusion polygon for effect '%s' has %d points, downsampling to %d",
-                 effect.id.c_str(),
-                 static_cast<int>(outPolygon.size()),
-                 kMaxOcclusionPolygonPoints);
-
-        outPolygon.swap(reducedPolygon);
-    }
 
     return true;
 }

@@ -6,7 +6,7 @@
 #include "topdown/TopdownData.h"
 
 struct TopdownNpcRingSlotBuildConfig {
-    float candidatePadding = 8.0f;
+    float candidatePadding = 16.0f;
     int maxRings = 3;
     float minRadiusStep = 12.0f;
     float raycastEpsilon = 0.001f;
