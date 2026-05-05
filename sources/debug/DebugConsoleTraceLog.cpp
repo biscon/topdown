@@ -93,14 +93,22 @@ void InstallDebugConsoleTraceLogHook()
 
 void FlushPendingDebugConsoleTraceLog(GameState& state)
 {
-    std::vector<PendingDebugTraceLine> pending;
+    static thread_local std::vector<PendingDebugTraceLine> pending;
+    pending.clear();
 
     {
         std::lock_guard<std::mutex> lock(gPendingDebugTraceMutex);
+
+        if (gPendingDebugTraceLines.empty()) {
+            return;
+        }
+
         pending.swap(gPendingDebugTraceLines);
     }
 
     for (const PendingDebugTraceLine& line : pending) {
         DebugConsoleAddLine(state, line.text, TraceLogLevelToColor(line.logLevel));
     }
+
+    pending.clear();
 }
