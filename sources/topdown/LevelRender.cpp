@@ -334,6 +334,24 @@ static void DrawTopLayers(const GameState& state)
     }
 }
 
+static Rectangle ClampRectToRenderTarget(Rectangle r, float width, float height)
+{
+    if (r.width <= 0.0f || r.height <= 0.0f) {
+        return Rectangle{0.0f, 0.0f, 0.0f, 0.0f};
+    }
+
+    const float minX = Clamp(r.x, 0.0f, width);
+    const float minY = Clamp(r.y, 0.0f, height);
+    const float maxX = Clamp(r.x + r.width, 0.0f, width);
+    const float maxY = Clamp(r.y + r.height, 0.0f, height);
+
+    if (maxX <= minX || maxY <= minY) {
+        return Rectangle{0.0f, 0.0f, 0.0f, 0.0f};
+    }
+
+    return Rectangle{ minX, minY, maxX - minX, maxY - minY };
+}
+
 static bool ApplySceneSampleTopdownEffectRegionPass(
         const GameState& state,
         int effectRegionIndex,
@@ -366,15 +384,31 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
 
     const Vector2 cam = state.topdown.runtime.camera.position;
 
-    Vector2 regionPos{
+    const Vector2 regionPos{
             authored.worldRect.x - cam.x,
             authored.worldRect.y - cam.y
     };
 
-    Vector2 regionSize{
+    const Vector2 regionSize{
             authored.worldRect.width,
             authored.worldRect.height
     };
+
+    const Rectangle regionScreenRect{
+            authored.worldRect.x - cam.x,
+            authored.worldRect.y - cam.y,
+            authored.worldRect.width,
+            authored.worldRect.height
+    };
+
+    const Rectangle clippedRegionRect = ClampRectToRenderTarget(
+            regionScreenRect,
+            static_cast<float>(sourceTarget.texture.width),
+            static_cast<float>(sourceTarget.texture.height));
+
+    if (clippedRegionRect.width <= 0.0f || clippedRegionRect.height <= 0.0f) {
+        return false;
+    }
 
     const float timeSeconds = static_cast<float>(GetTime());
     const Vector2 sceneSize{
@@ -382,9 +416,87 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             static_cast<float>(sourceTarget.texture.height)
     };
 
+    static constexpr bool kUsePartialSceneSampleRegionPass = true;
+
+    if (!kUsePartialSceneSampleRegionPass) {
+        BeginTextureMode(destTarget);
+        ClearBackground(BLACK);
+
+        BeginShaderMode(shaderEntry->shader);
+
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->uvScaleLoc, runtime.shaderParams.uvScale);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->distortionAmountLoc, runtime.shaderParams.distortionAmount);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->intensityLoc, runtime.shaderParams.intensity);
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->phaseOffsetLoc, runtime.shaderParams.phaseOffset);
+
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->sceneSizeLoc, sceneSize);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionPosLoc, regionPos);
+        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionSizeLoc, regionSize);
+
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->brightnessLoc, runtime.shaderParams.brightness);
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->contrastLoc, runtime.shaderParams.contrast);
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->saturationLoc, runtime.shaderParams.saturation);
+        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->softnessLoc, runtime.shaderParams.softness);
+
+        if (shaderEntry->tintLoc >= 0) {
+            const float tint[3] = {
+                    runtime.shaderParams.tintR,
+                    runtime.shaderParams.tintG,
+                    runtime.shaderParams.tintB
+            };
+            SetShaderValue(shaderEntry->shader, shaderEntry->tintLoc, tint, SHADER_UNIFORM_VEC3);
+        }
+
+        SetShaderPolygonIfValid(
+                shaderEntry->shader,
+                shaderEntry->usePolygonLoc,
+                shaderEntry->polygonVertexCountLoc,
+                shaderEntry->polygonPointsLoc,
+                authored,
+                cam);
+
+        SetShaderOcclusionPolygonIfValid(
+                shaderEntry->shader,
+                shaderEntry->useOcclusionPolygonLoc,
+                shaderEntry->occlusionPolygonVertexCountLoc,
+                shaderEntry->occlusionPolygonPointsLoc,
+                runtime,
+                cam);
+
+        DrawTexturePro(
+                sourceTarget.texture,
+                GetRenderTargetSourceRect(sourceTarget.texture),
+                GetRenderTargetDestRect(destTarget.texture),
+                Vector2{0.0f, 0.0f},
+                0.0f,
+                WHITE);
+
+        EndShaderMode();
+        EndTextureMode();
+
+        return true;
+    }
+
     BeginTextureMode(destTarget);
     ClearBackground(BLACK);
+    BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
 
+    DrawTexturePro(
+            sourceTarget.texture,
+            GetRenderTargetSourceRect(sourceTarget.texture),
+            GetRenderTargetDestRect(destTarget.texture),
+            Vector2{0.0f, 0.0f},
+            0.0f,
+            WHITE);
+
+    EndBlendMode();
+    EndTextureMode();
+
+    BeginTextureMode(destTarget);
+    BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
     BeginShaderMode(shaderEntry->shader);
 
     SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
@@ -429,15 +541,24 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
             runtime,
             cam);
 
-    DrawTexturePro(
-            sourceTarget.texture,
-            GetRenderTargetSourceRect(sourceTarget.texture),
-            GetRenderTargetDestRect(destTarget.texture),
-            Vector2{0.0f, 0.0f},
-            0.0f,
-            WHITE);
+    const Rectangle dst{
+            std::round(clippedRegionRect.x),
+            std::round(clippedRegionRect.y),
+            std::round(clippedRegionRect.width),
+            std::round(clippedRegionRect.height)
+    };
+
+    const Rectangle src{
+            clippedRegionRect.x,
+            static_cast<float>(sourceTarget.texture.height) - (clippedRegionRect.y + clippedRegionRect.height),
+            clippedRegionRect.width,
+            -clippedRegionRect.height
+    };
+
+    DrawTexturePro(sourceTarget.texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
 
     EndShaderMode();
+    EndBlendMode();
     EndTextureMode();
 
     return true;
