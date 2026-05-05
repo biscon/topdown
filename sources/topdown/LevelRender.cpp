@@ -352,6 +352,60 @@ static Rectangle ClampRectToRenderTarget(Rectangle r, float width, float height)
     return Rectangle{ minX, minY, maxX - minX, maxY - minY };
 }
 
+static void SetSceneSampleEffectRegionShaderUniforms(
+        const Shader& shader,
+        const EffectShaderEntry& shaderEntry,
+        const TopdownAuthoredEffectRegion& authored,
+        const TopdownRuntimeEffectRegion& runtime,
+        Vector2 cam,
+        Vector2 sceneSize,
+        Vector2 regionPos,
+        Vector2 regionSize,
+        float timeSeconds)
+{
+    SetShaderFloatIfValid(shader, shaderEntry.timeLoc, timeSeconds);
+    SetShaderVec2IfValid(shader, shaderEntry.scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
+    SetShaderVec2IfValid(shader, shaderEntry.uvScaleLoc, runtime.shaderParams.uvScale);
+    SetShaderVec2IfValid(shader, shaderEntry.distortionAmountLoc, runtime.shaderParams.distortionAmount);
+    SetShaderVec2IfValid(shader, shaderEntry.noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
+    SetShaderFloatIfValid(shader, shaderEntry.intensityLoc, runtime.shaderParams.intensity);
+    SetShaderFloatIfValid(shader, shaderEntry.phaseOffsetLoc, runtime.shaderParams.phaseOffset);
+
+    SetShaderVec2IfValid(shader, shaderEntry.sceneSizeLoc, sceneSize);
+    SetShaderVec2IfValid(shader, shaderEntry.regionPosLoc, regionPos);
+    SetShaderVec2IfValid(shader, shaderEntry.regionSizeLoc, regionSize);
+
+    SetShaderFloatIfValid(shader, shaderEntry.brightnessLoc, runtime.shaderParams.brightness);
+    SetShaderFloatIfValid(shader, shaderEntry.contrastLoc, runtime.shaderParams.contrast);
+    SetShaderFloatIfValid(shader, shaderEntry.saturationLoc, runtime.shaderParams.saturation);
+    SetShaderFloatIfValid(shader, shaderEntry.softnessLoc, runtime.shaderParams.softness);
+
+    if (shaderEntry.tintLoc >= 0) {
+        const float tint[3] = {
+                runtime.shaderParams.tintR,
+                runtime.shaderParams.tintG,
+                runtime.shaderParams.tintB
+        };
+        SetShaderValue(shader, shaderEntry.tintLoc, tint, SHADER_UNIFORM_VEC3);
+    }
+
+    SetShaderPolygonIfValid(
+            shader,
+            shaderEntry.usePolygonLoc,
+            shaderEntry.polygonVertexCountLoc,
+            shaderEntry.polygonPointsLoc,
+            authored,
+            cam);
+
+    SetShaderOcclusionPolygonIfValid(
+            shader,
+            shaderEntry.useOcclusionPolygonLoc,
+            shaderEntry.occlusionPolygonVertexCountLoc,
+            shaderEntry.occlusionPolygonPointsLoc,
+            runtime,
+            cam);
+}
+
 static bool ApplySceneSampleTopdownEffectRegionPass(
         const GameState& state,
         int effectRegionIndex,
@@ -424,47 +478,16 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
 
         BeginShaderMode(shaderEntry->shader);
 
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->uvScaleLoc, runtime.shaderParams.uvScale);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->distortionAmountLoc, runtime.shaderParams.distortionAmount);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->intensityLoc, runtime.shaderParams.intensity);
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->phaseOffsetLoc, runtime.shaderParams.phaseOffset);
-
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->sceneSizeLoc, sceneSize);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionPosLoc, regionPos);
-        SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionSizeLoc, regionSize);
-
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->brightnessLoc, runtime.shaderParams.brightness);
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->contrastLoc, runtime.shaderParams.contrast);
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->saturationLoc, runtime.shaderParams.saturation);
-        SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->softnessLoc, runtime.shaderParams.softness);
-
-        if (shaderEntry->tintLoc >= 0) {
-            const float tint[3] = {
-                    runtime.shaderParams.tintR,
-                    runtime.shaderParams.tintG,
-                    runtime.shaderParams.tintB
-            };
-            SetShaderValue(shaderEntry->shader, shaderEntry->tintLoc, tint, SHADER_UNIFORM_VEC3);
-        }
-
-        SetShaderPolygonIfValid(
+        SetSceneSampleEffectRegionShaderUniforms(
                 shaderEntry->shader,
-                shaderEntry->usePolygonLoc,
-                shaderEntry->polygonVertexCountLoc,
-                shaderEntry->polygonPointsLoc,
+                *shaderEntry,
                 authored,
-                cam);
-
-        SetShaderOcclusionPolygonIfValid(
-                shaderEntry->shader,
-                shaderEntry->useOcclusionPolygonLoc,
-                shaderEntry->occlusionPolygonVertexCountLoc,
-                shaderEntry->occlusionPolygonPointsLoc,
                 runtime,
-                cam);
+                cam,
+                sceneSize,
+                regionPos,
+                regionSize,
+                timeSeconds);
 
         DrawTexturePro(
                 sourceTarget.texture,
@@ -499,47 +522,16 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
     BeginShaderMode(shaderEntry->shader);
 
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->uvScaleLoc, runtime.shaderParams.uvScale);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->distortionAmountLoc, runtime.shaderParams.distortionAmount);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->intensityLoc, runtime.shaderParams.intensity);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->phaseOffsetLoc, runtime.shaderParams.phaseOffset);
-
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->sceneSizeLoc, sceneSize);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionPosLoc, regionPos);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionSizeLoc, regionSize);
-
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->brightnessLoc, runtime.shaderParams.brightness);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->contrastLoc, runtime.shaderParams.contrast);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->saturationLoc, runtime.shaderParams.saturation);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->softnessLoc, runtime.shaderParams.softness);
-
-    if (shaderEntry->tintLoc >= 0) {
-        const float tint[3] = {
-                runtime.shaderParams.tintR,
-                runtime.shaderParams.tintG,
-                runtime.shaderParams.tintB
-        };
-        SetShaderValue(shaderEntry->shader, shaderEntry->tintLoc, tint, SHADER_UNIFORM_VEC3);
-    }
-
-    SetShaderPolygonIfValid(
+    SetSceneSampleEffectRegionShaderUniforms(
             shaderEntry->shader,
-            shaderEntry->usePolygonLoc,
-            shaderEntry->polygonVertexCountLoc,
-            shaderEntry->polygonPointsLoc,
+            *shaderEntry,
             authored,
-            cam);
-
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
             runtime,
-            cam);
+            cam,
+            sceneSize,
+            regionPos,
+            regionSize,
+            timeSeconds);
 
     const Rectangle dst{
             std::round(clippedRegionRect.x),
@@ -549,10 +541,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     };
 
     const Rectangle src{
-            clippedRegionRect.x,
-            static_cast<float>(sourceTarget.texture.height) - (clippedRegionRect.y + clippedRegionRect.height),
-            clippedRegionRect.width,
-            -clippedRegionRect.height
+            dst.x,
+            static_cast<float>(sourceTarget.texture.height) - (dst.y + dst.height),
+            dst.width,
+            -dst.height
     };
 
     DrawTexturePro(sourceTarget.texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
