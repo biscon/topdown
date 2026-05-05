@@ -89,6 +89,36 @@ static void BuildScreenTriangleVertices(
     }
 }
 
+static bool CanUseWallOcclusionStencil(const TopdownRuntimeEffectRegion& runtime)
+{
+    return runtime.occludedByWalls &&
+           runtime.hasWallOcclusionTriangles &&
+           runtime.wallOcclusionTriangleVertices.size() >= 3;
+}
+
+static bool WriteWallOcclusionStencilMask(
+        const GameState& state,
+        const TopdownRuntimeEffectRegion& runtime)
+{
+    if (!CanUseWallOcclusionStencil(runtime)) {
+        return false;
+    }
+
+    static thread_local std::vector<Vector2> screenTriangleVertices;
+    BuildScreenTriangleVertices(
+            state,
+            runtime.wallOcclusionTriangleVertices,
+            screenTriangleVertices);
+
+    if (screenTriangleVertices.size() < 3) {
+        return false;
+    }
+
+    BeginStencilWriteReplace();
+    DrawStencilTriangleVertices(screenTriangleVertices);
+    return true;
+}
+
 
 static Rectangle GetRenderTargetSourceRect(const Texture2D& tex)
 {
@@ -541,11 +571,9 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
         return false;
     }
 
-    const bool useStencilWallOcclusion =
+    const bool wantsStencilWallOcclusion =
             kUseStencilWallOcclusionForSceneSample &&
-            runtime.occludedByWalls &&
-            runtime.hasWallOcclusionTriangles &&
-            !runtime.wallOcclusionTriangleVertices.empty();
+            CanUseWallOcclusionStencil(runtime);
 
     const float timeSeconds = static_cast<float>(GetTime());
     const Vector2 sceneSize{
@@ -569,20 +597,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     EndTextureMode();
 
     bool shouldUseStencilTest = false;
-    if (useStencilWallOcclusion) {
-        static thread_local std::vector<Vector2> screenTriangleVertices;
-        BuildScreenTriangleVertices(
-                state,
-                runtime.wallOcclusionTriangleVertices,
-                screenTriangleVertices);
-
-        if (screenTriangleVertices.size() >= 3) {
-            BeginTextureMode(destTarget);
-            BeginStencilWriteReplace();
-            DrawStencilTriangleVertices(screenTriangleVertices);
-            EndTextureMode();
-            shouldUseStencilTest = true;
-        }
+    if (wantsStencilWallOcclusion) {
+        BeginTextureMode(destTarget);
+        shouldUseStencilTest = WriteWallOcclusionStencilMask(state, runtime);
+        EndTextureMode();
     }
 
     BeginTextureMode(destTarget);
