@@ -579,8 +579,12 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     EndBlendMode();
     EndTextureMode();
 
-    const bool shouldUseStencilTest = CanUseWallOcclusionStencil(runtime) &&
-                                      WriteWallOcclusionStencilMask(state, runtime);
+    bool shouldUseStencilTest = false;
+    if (CanUseWallOcclusionStencil(runtime)) {
+        BeginTextureMode(destTarget);
+        shouldUseStencilTest = WriteWallOcclusionStencilMask(state, runtime);
+        EndTextureMode();
+    }
 
     BeginTextureMode(destTarget);
     if (shouldUseStencilTest) {
