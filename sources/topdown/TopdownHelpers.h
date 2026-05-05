@@ -10,6 +10,9 @@ float TopdownSignedPolygonArea(const std::vector<Vector2>& points);
 bool TopdownIsClockwise(const std::vector<Vector2>& points);
 void TopdownEnsureClockwise(std::vector<Vector2>& points);
 void TopdownEnsureCounterClockwise(std::vector<Vector2>& points);
+bool TopdownTriangulatePolygon(
+        const std::vector<Vector2>& polygon,
+        std::vector<Vector2>& outTriangleVertices);
 
 Rectangle TopdownComputePolygonBounds(const std::vector<Vector2>& points);
 std::vector<TopdownSegment> TopdownBuildSegmentsFromPolygon(const std::vector<Vector2>& points);
