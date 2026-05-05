@@ -511,6 +511,61 @@ static void SetSceneSampleEffectRegionShaderUniforms(
     }
 }
 
+static void SetSelfTextureEffectRegionShaderUniforms(
+        const Shader& shader,
+        const EffectShaderEntry& shaderEntry,
+        const TopdownAuthoredEffectRegion& authored,
+        const TopdownRuntimeEffectRegion& runtime,
+        Vector2 cam,
+        Vector2 sceneSize,
+        Vector2 regionPos,
+        Vector2 regionSize,
+        float timeSeconds,
+        bool disableShaderWallOcclusion)
+{
+    SetShaderFloatIfValid(shader, shaderEntry.timeLoc, timeSeconds);
+    SetShaderVec2IfValid(shader, shaderEntry.scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
+    SetShaderVec2IfValid(shader, shaderEntry.uvScaleLoc, runtime.shaderParams.uvScale);
+    SetShaderVec2IfValid(shader, shaderEntry.distortionAmountLoc, runtime.shaderParams.distortionAmount);
+    SetShaderVec2IfValid(shader, shaderEntry.noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
+    SetShaderFloatIfValid(shader, shaderEntry.intensityLoc, runtime.shaderParams.intensity);
+    SetShaderFloatIfValid(shader, shaderEntry.phaseOffsetLoc, runtime.shaderParams.phaseOffset);
+    SetShaderVec2IfValid(shader, shaderEntry.sceneSizeLoc, sceneSize);
+    SetShaderVec2IfValid(shader, shaderEntry.regionPosLoc, regionPos);
+    SetShaderVec2IfValid(shader, shaderEntry.regionSizeLoc, regionSize);
+    SetShaderFloatIfValid(shader, shaderEntry.softnessLoc, runtime.shaderParams.softness);
+
+    if (shaderEntry.tintLoc >= 0) {
+        const float tint[3] = {
+                runtime.shaderParams.tintR,
+                runtime.shaderParams.tintG,
+                runtime.shaderParams.tintB
+        };
+        SetShaderValue(shader, shaderEntry.tintLoc, tint, SHADER_UNIFORM_VEC3);
+    }
+
+    SetShaderPolygonIfValid(
+            shader,
+            shaderEntry.usePolygonLoc,
+            shaderEntry.polygonVertexCountLoc,
+            shaderEntry.polygonPointsLoc,
+            authored,
+            cam);
+
+    if (disableShaderWallOcclusion) {
+        SetShaderIntIfValid(shader, shaderEntry.useOcclusionPolygonLoc, 0);
+        SetShaderIntIfValid(shader, shaderEntry.occlusionPolygonVertexCountLoc, 0);
+    } else {
+        SetShaderOcclusionPolygonIfValid(
+                shader,
+                shaderEntry.useOcclusionPolygonLoc,
+                shaderEntry.occlusionPolygonVertexCountLoc,
+                shaderEntry.occlusionPolygonPointsLoc,
+                runtime,
+                cam);
+    }
+}
+
 static bool ApplySceneSampleTopdownEffectRegionPass(
         const GameState& state,
         int effectRegionIndex,
@@ -657,6 +712,8 @@ static void DrawSelfTextureTopdownEffectRegion(
         const TopdownAuthoredEffectRegion& authored,
         const TopdownRuntimeEffectRegion& runtime)
 {
+    static constexpr bool kUseStencilWallOcclusionForSelfTexture = true;
+
     if (!runtime.visible) {
         return;
     }
@@ -678,6 +735,10 @@ static void DrawSelfTextureTopdownEffectRegion(
     if (shaderEntry == nullptr) {
         return;
     }
+
+    const bool wantsStencilWallOcclusion =
+            kUseStencilWallOcclusionForSelfTexture &&
+            CanUseWallOcclusionStencil(runtime);
 
     const Vector2 cam = state.topdown.runtime.camera.position;
     const float timeSeconds = static_cast<float>(GetTime());
@@ -703,52 +764,37 @@ static void DrawSelfTextureTopdownEffectRegion(
     Color drawColor = WHITE;
     drawColor.a = static_cast<unsigned char>(std::round(255.0f * Clamp(runtime.opacity, 0.0f, 1.0f)));
 
+    bool shouldUseStencilTest = false;
+    if (wantsStencilWallOcclusion) {
+        shouldUseStencilTest = WriteWallOcclusionStencilMask(state, runtime);
+    }
+
     EndBlendMode();
     BeginBlendMode(GetRaylibBlendMode(authored.blendMode));
 
-    BeginShaderMode(shaderEntry->shader);
-
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->timeLoc, timeSeconds);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->scrollSpeedLoc, runtime.shaderParams.scrollSpeed);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->uvScaleLoc, runtime.shaderParams.uvScale);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->distortionAmountLoc, runtime.shaderParams.distortionAmount);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->noiseScrollSpeedLoc, runtime.shaderParams.noiseScrollSpeed);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->intensityLoc, runtime.shaderParams.intensity);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->phaseOffsetLoc, runtime.shaderParams.phaseOffset);
-
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->sceneSizeLoc, sceneSize);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionPosLoc, regionPos);
-    SetShaderVec2IfValid(shaderEntry->shader, shaderEntry->regionSizeLoc, regionSize);
-    SetShaderFloatIfValid(shaderEntry->shader, shaderEntry->softnessLoc, runtime.shaderParams.softness);
-
-    if (shaderEntry->tintLoc >= 0) {
-        const float tint[3] = {
-                runtime.shaderParams.tintR,
-                runtime.shaderParams.tintG,
-                runtime.shaderParams.tintB
-        };
-        SetShaderValue(shaderEntry->shader, shaderEntry->tintLoc, tint, SHADER_UNIFORM_VEC3);
+    if (shouldUseStencilTest) {
+        BeginStencilTestEqualOne();
     }
 
-    SetShaderPolygonIfValid(
+    BeginShaderMode(shaderEntry->shader);
+    SetSelfTextureEffectRegionShaderUniforms(
             shaderEntry->shader,
-            shaderEntry->usePolygonLoc,
-            shaderEntry->polygonVertexCountLoc,
-            shaderEntry->polygonPointsLoc,
+            *shaderEntry,
             authored,
-            cam);
-
-    SetShaderOcclusionPolygonIfValid(
-            shaderEntry->shader,
-            shaderEntry->useOcclusionPolygonLoc,
-            shaderEntry->occlusionPolygonVertexCountLoc,
-            shaderEntry->occlusionPolygonPointsLoc,
             runtime,
-            cam);
+            cam,
+            sceneSize,
+            regionPos,
+            regionSize,
+            timeSeconds,
+            shouldUseStencilTest);
 
     DrawTexturePro(texRes->texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, drawColor);
 
     EndShaderMode();
+    if (shouldUseStencilTest) {
+        EndStencilTest();
+    }
 
     EndBlendMode();
     BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
