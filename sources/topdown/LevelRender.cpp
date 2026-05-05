@@ -12,6 +12,7 @@
 #include "topdown/CharacterRender.h"
 #include "TopdownHelpers.h"
 #include "rlgl.h"
+#include "external/glad.h"
 #include "BloodRenderTarget.h"
 #include "TopdownPlayerVignette.h"
 #include "audio/Audio.h"
@@ -1291,6 +1292,111 @@ static void DrawWorldQuadOutline(
     DrawLineEx(sd, sa, thickness, color);
 }
 
+static void BeginStencilWriteReplace()
+{
+    rlDrawRenderBatchActive();
+
+    glEnable(GL_STENCIL_TEST);
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+}
+
+static void BeginStencilTestEqualOne()
+{
+    rlDrawRenderBatchActive();
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0x00);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+}
+
+static void EndStencilTest()
+{
+    rlDrawRenderBatchActive();
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0xFF);
+    glDisable(GL_STENCIL_TEST);
+}
+
+static void DrawStencilTriangleVertices(const std::vector<Vector2>& screenTriangleVertices)
+{
+    if (screenTriangleVertices.size() < 3) {
+        return;
+    }
+
+    rlDrawRenderBatchActive();
+    rlSetTexture(0);
+    rlBegin(RL_TRIANGLES);
+    for (const Vector2& p : screenTriangleVertices) {
+        rlVertex2f(p.x, p.y);
+    }
+    rlEnd();
+    rlDrawRenderBatchActive();
+}
+
+static void BuildScreenTriangleVertices(
+        const GameState& state,
+        const std::vector<Vector2>& worldTriangleVertices,
+        std::vector<Vector2>& outScreenTriangleVertices)
+{
+    outScreenTriangleVertices.clear();
+    outScreenTriangleVertices.reserve(worldTriangleVertices.size());
+
+    for (const Vector2& worldVertex : worldTriangleVertices) {
+        outScreenTriangleVertices.push_back(TopdownWorldToScreen(state, worldVertex));
+    }
+}
+
+static void DebugDrawStencilTriangleMaskTest(GameState& state)
+{
+    static constexpr bool kDebugDrawStencilTriangleMaskTest = false;
+    if (!kDebugDrawStencilTriangleMaskTest) {
+        return;
+    }
+
+    const TopdownRuntimeEffectRegion* firstTriangulatedRegion = nullptr;
+
+    for (const TopdownRuntimeEffectRegion& runtimeEffectRegion : state.topdown.runtime.render.effectRegions) {
+        if (!runtimeEffectRegion.hasWallOcclusionTriangles ||
+            runtimeEffectRegion.wallOcclusionTriangleVertices.empty()) {
+            continue;
+        }
+
+        firstTriangulatedRegion = &runtimeEffectRegion;
+        break;
+    }
+
+    if (firstTriangulatedRegion == nullptr) {
+        return;
+    }
+
+    std::vector<Vector2> screenTriangleVertices;
+    BuildScreenTriangleVertices(
+            state,
+            firstTriangulatedRegion->wallOcclusionTriangleVertices,
+            screenTriangleVertices);
+
+    if (screenTriangleVertices.size() < 3) {
+        return;
+    }
+
+    BeginStencilWriteReplace();
+    DrawStencilTriangleVertices(screenTriangleVertices);
+
+    BeginStencilTestEqualOne();
+    DrawRectangle(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT, Color{255, 0, 255, 90});
+
+    EndStencilTest();
+}
+
 static Rectangle BuildDoorRenderWorldRect(const TopdownRuntimeDoor& door)
 {
     Vector2 a{};
@@ -1406,6 +1512,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     DrawMuzzleFlashEffects(state);
     DrawTopLayers(state);
     TopdownRenderProps(state, TopdownEffectPlacement::Final);
+    DebugDrawStencilTriangleMaskTest(state);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
