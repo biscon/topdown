@@ -541,10 +541,10 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
     };
 
     const Rectangle src{
-            clippedRegionRect.x,
-            static_cast<float>(sourceTarget.texture.height) - (clippedRegionRect.y + clippedRegionRect.height),
-            clippedRegionRect.width,
-            -clippedRegionRect.height
+            dst.x,
+            static_cast<float>(sourceTarget.texture.height) - (dst.y + dst.height),
+            dst.width,
+            -dst.height
     };
 
     DrawTexturePro(sourceTarget.texture, src, dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
