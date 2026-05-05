@@ -550,7 +550,7 @@ static bool ApplySceneSampleTopdownEffectRegionPass(
 
     const Rectangle src{
             clippedRegionRect.x,
-            static_cast<float>(sourceTarget.texture.height) - clippedRegionRect.y,
+            static_cast<float>(sourceTarget.texture.height) - (clippedRegionRect.y + clippedRegionRect.height),
             clippedRegionRect.width,
             -clippedRegionRect.height
     };
