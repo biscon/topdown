@@ -1949,7 +1949,7 @@ static bool BuildWallOcclusionPolygon(
     }
 
     std::sort(rayAngles.begin(), rayAngles.end());
-    static constexpr float kRayAngleMergeEpsilon = 0.000001f;
+    static constexpr float kRayAngleMergeEpsilon = 0.00001f;
     const auto newEnd = std::unique(
             rayAngles.begin(),
             rayAngles.end(),
