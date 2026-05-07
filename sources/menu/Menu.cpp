@@ -68,7 +68,7 @@ struct Menu {
     int selected = 0;
 };
 
-static std::stack<std::function<std::shared_ptr<Menu>()>> menuStack;
+static std::stack<std::shared_ptr<Menu>> menuStack;
 
 static constexpr float MENU_TITLE_Y = 105.0f;
 static constexpr float MENU_CENTER_X = INTERNAL_WIDTH * 0.5f;
@@ -217,7 +217,7 @@ static void ReturnToMainMenuRoot()
     while (!menuStack.empty()) {
         menuStack.pop();
     }
-    menuStack.push(&createMainMenu);
+    menuStack.push(createMainMenu());
 }
 
 static std::shared_ptr<Menu> createResolutionMenu()
@@ -615,8 +615,8 @@ static std::shared_ptr<Menu> createMainMenu()
 void MenuInit(GameState* gameState)
 {
     game = gameState;
-    menuStack = std::stack<std::function<std::shared_ptr<Menu>()>>();
-    menuStack.push(&createMainMenu);
+    menuStack = std::stack<std::shared_ptr<Menu>>();
+    menuStack.push(createMainMenu());
     gDraggingSliderIndex = -1;
     gSliderPreviewCooldown = 0.0f;
     gLastSliderPreviewValue = -9999.0f;
@@ -647,7 +647,7 @@ void MenuRenderUi(GameState& state)
         return;
     }
 
-    std::shared_ptr<Menu> menu = menuStack.top()();
+    std::shared_ptr<Menu> menu = menuStack.top();
     if (!menu) {
         return;
     }
@@ -707,7 +707,7 @@ void MenuRenderUi(GameState& state)
                 PlaySoundById(state, "ui_click");
 
                 if (item.isSubmenu && item.submenuBuilder) {
-                    menuStack.push(item.submenuBuilder);
+                    menuStack.push(item.submenuBuilder());
                 } else if (item.action) {
                     item.action();
                 }
