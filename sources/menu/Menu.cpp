@@ -487,7 +487,7 @@ static std::shared_ptr<Menu> createSaveMenu()
     for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
         MenuItem item;
         item.text = "Slot " + std::to_string(slot) + " - " + GetSaveSlotSummary(slot);
-        item.enabled = false;
+        item.enabled = true;
         item.action = [slot] {
             if (SaveGameToSlot(*game, slot)) {
                 TraceLog(LOG_INFO, "Saved game to slot %d", slot);
