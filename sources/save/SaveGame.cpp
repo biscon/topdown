@@ -12,8 +12,10 @@
 #include "utils/json.hpp"
 #include "debug/DebugConsole.h"
 #include "resources/Resources.h"
+#include "resources/AsepriteAsset.h"
 #include "scripting/ScriptSystem.h"
 #include "topdown/LevelLoad.h"
+#include "topdown/BloodRenderTarget.h"
 #include "topdown/LevelRegistry.h"
 #include "topdown/LevelScripting.h"
 #include "topdown/NpcRegistry.h"
@@ -26,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 4;
+    static constexpr int SAVE_VERSION = 5;
 
 
     struct SavedMusicSlotState {
@@ -147,11 +149,104 @@ namespace
         TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
         TopdownNpcEngagementState engagementState = TopdownNpcEngagementState::Unaware;
 
+        Vector2 guardHomePosition{};
+        bool hasGuardHomePosition = false;
+        float guardLookAtSoundRadians = 0.0f;
+
         SavedNpcPatrolRuntime patrol;
     };
 
     struct SavedTopdownNpcsRuntime {
         std::vector<SavedNpcRuntime> npcs;
+    };
+
+
+    struct SavedDoorRuntime {
+        std::string id;
+        bool visible = true;
+        bool locked = false;
+        float angleRadians = 0.0f;
+        float angularVelocity = 0.0f;
+        bool wasNearClosed = true;
+        bool openSoundPlayedThisSwing = false;
+    };
+
+    struct SavedWindowRuntime {
+        std::string id;
+        bool visible = true;
+        bool broken = false;
+    };
+
+    struct SavedPropRuntime {
+        std::string id;
+        bool active = false;
+        bool visible = true;
+        Vector2 position{};
+        float opacity = 1.0f;
+        std::string currentAnimation;
+        std::string baseAnimation;
+        float animationTimeMs = 0.0f;
+        bool oneShotActive = false;
+        std::string oneShotAnimation;
+        float oneShotDurationMs = 0.0f;
+        bool moving = false;
+        Vector2 moveStart{};
+        Vector2 moveEnd{};
+        float moveTimerMs = 0.0f;
+        float moveDurationMs = 0.0f;
+        MoveInterpolation moveInterpolation = MoveInterpolation::Linear;
+    };
+
+    struct SavedImageLayerRuntime {
+        std::string name;
+        bool visible = true;
+        float opacity = 1.0f;
+    };
+
+    struct SavedEffectRegionRuntime {
+        std::string id;
+        bool visible = true;
+        float opacity = 1.0f;
+    };
+
+    struct SavedTriggerRuntime {
+        std::string id;
+        bool enabled = true;
+        bool repeat = false;
+        bool fired = false;
+        bool playerInside = false;
+        std::vector<TopdownCharacterHandle> npcHandlesInside;
+    };
+
+    struct SavedEmitterRuntime {
+        std::string id;
+        bool enabled = true;
+        float volume = 1.0f;
+    };
+
+    struct SavedBloodDecalRuntime {
+        bool active = false;
+        Vector2 position{};
+        float radius = 20.0f;
+        float rotationRadians = 0.0f;
+        float opacity = 1.0f;
+        float ageMs = 0.0f;
+        float fadeInMs = 0.0f;
+        float stretch = 1.0f;
+        bool useGeneratedStamp = false;
+        bool preferStreakStamp = false;
+        int stampIndex = -1;
+    };
+
+    struct SavedTopdownWorldRuntime {
+        std::vector<SavedDoorRuntime> doors;
+        std::vector<SavedWindowRuntime> windows;
+        std::vector<SavedPropRuntime> props;
+        std::vector<SavedImageLayerRuntime> imageLayers;
+        std::vector<SavedEffectRegionRuntime> effectRegions;
+        std::vector<SavedTriggerRuntime> triggers;
+        std::vector<SavedEmitterRuntime> emitters;
+        std::vector<SavedBloodDecalRuntime> bloodDecals;
     };
 
     struct SaveRestoreData {
@@ -168,6 +263,7 @@ namespace
         SavedAudioState audio;
         SavedTopdownCoreRuntime topdownCore;
         SavedTopdownNpcsRuntime topdownNpcs;
+        SavedTopdownWorldRuntime topdownWorld;
     };
 
     static std::string NormalizePath(const fs::path& p)
@@ -285,6 +381,7 @@ namespace
     static int ToInt(TopdownCameraMode v) { return static_cast<int>(v); }
     static int ToInt(TopdownNpcAiMode v) { return static_cast<int>(v); }
     static int ToInt(TopdownNpcEngagementState v) { return static_cast<int>(v); }
+    static int ToInt(MoveInterpolation v) { return static_cast<int>(v); }
 
 
     static TopdownPlayerLifeState ToPlayerLifeState(int v)
@@ -357,6 +454,47 @@ namespace
                 return static_cast<TopdownNpcEngagementState>(v);
         }
         return TopdownNpcEngagementState::Unaware;
+    }
+
+
+    static MoveInterpolation ToMoveInterpolation(int v)
+    {
+        switch (static_cast<MoveInterpolation>(v)) {
+            case MoveInterpolation::Linear:
+            case MoveInterpolation::Accelerate:
+            case MoveInterpolation::Decelerate:
+            case MoveInterpolation::AccelerateDecelerate:
+            case MoveInterpolation::Overshoot:
+                return static_cast<MoveInterpolation>(v);
+        }
+        return MoveInterpolation::Linear;
+    }
+
+    static const SpriteClip* FindSpriteClipByNameInSave(
+            const SpriteAssetResource& sprite,
+            const std::string& clipName)
+    {
+        for (const SpriteClip& clip : sprite.clips) {
+            if (clip.name == clipName) {
+                return &clip;
+            }
+        }
+        return nullptr;
+    }
+
+    static bool PropHasAnimationClip(const GameState& state, const TopdownRuntimeProp& prop, const std::string& animation)
+    {
+        if (animation.empty()) {
+            return false;
+        }
+
+        if (prop.type != TopdownPropType::Sprite || prop.spriteHandle < 0) {
+            return false;
+        }
+
+        const SpriteAssetResource* sprite = FindSpriteAssetResource(state.resources, prop.spriteHandle);
+        return sprite != nullptr && sprite->loaded &&
+               FindSpriteClipByNameInSave(*sprite, animation) != nullptr;
     }
 
     static void SerializeTopdownCoreRuntime(const GameState& state, json& outRoot)
@@ -600,6 +738,9 @@ namespace
             npcJson["hostile"] = npc.hostile;
             npcJson["persistentChase"] = npc.persistentChase;
             npcJson["guard"] = npc.guard;
+            npcJson["guardHomePosition"] = SerializeVector2(npc.guardHomePosition);
+            npcJson["hasGuardHomePosition"] = npc.hasGuardHomePosition;
+            npcJson["guardLookAtSoundRadians"] = npc.guardLookAtSoundRadians;
             npcJson["engagementState"] = ToInt(npc.engagementState);
             npcJson["aiMode"] = ToInt(npc.aiMode);
 
@@ -688,6 +829,13 @@ namespace
             npc.hostile = npcJson.value("hostile", true);
             npc.persistentChase = npcJson.value("persistentChase", false);
             npc.guard = npcJson.value("guard", false);
+            npc.hasGuardHomePosition = npcJson.value("hasGuardHomePosition", npc.guard);
+            if (npcJson.contains("guardHomePosition") && npcJson["guardHomePosition"].is_object()) {
+                npc.guardHomePosition = DeserializeVector2(npcJson["guardHomePosition"]);
+            } else {
+                npc.guardHomePosition = npc.position;
+            }
+            npc.guardLookAtSoundRadians = npcJson.value("guardLookAtSoundRadians", npc.rotationRadians);
             npc.engagementState = ToNpcEngagementState(npcJson.value("engagementState", 0));
             npc.aiMode = ToNpcAiMode(npcJson.value("aiMode", 0));
 
@@ -860,9 +1008,9 @@ namespace
             npc->hostile = savedNpc.hostile;
             npc->aiMode = savedNpc.aiMode;
             npc->engagementState = savedNpc.engagementState;
-            npc->guardHomePosition = savedNpc.position;
-            npc->hasGuardHomePosition = savedNpc.guard;
-            npc->guardLookAtSoundRadians = savedNpc.rotationRadians;
+            npc->guardHomePosition = savedNpc.guardHomePosition;
+            npc->hasGuardHomePosition = savedNpc.hasGuardHomePosition;
+            npc->guardLookAtSoundRadians = savedNpc.guardLookAtSoundRadians;
 
             ClearNpcTransientRuntime(*npc);
 
@@ -886,6 +1034,442 @@ namespace
 
         TopdownRvoRequestRebuild(state);
         TopdownRvoEnsureReady(state);
+    }
+
+
+    static void SerializeTopdownWorldRuntime(const GameState& state, json& outRoot)
+    {
+        json world;
+
+        world["doors"] = json::array();
+        for (const TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+            json j;
+            j["id"] = door.id;
+            j["visible"] = door.visible;
+            j["locked"] = door.locked;
+            j["angleRadians"] = door.angleRadians;
+            j["angularVelocity"] = door.angularVelocity;
+            j["wasNearClosed"] = door.wasNearClosed;
+            j["openSoundPlayedThisSwing"] = door.openSoundPlayedThisSwing;
+            world["doors"].push_back(j);
+        }
+
+        world["windows"] = json::array();
+        for (const TopdownRuntimeWindow& window : state.topdown.runtime.windows) {
+            json j;
+            j["id"] = window.id;
+            j["visible"] = window.visible;
+            j["broken"] = window.broken;
+            world["windows"].push_back(j);
+        }
+
+        world["props"] = json::array();
+        for (const TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+            json j;
+            j["id"] = prop.id;
+            j["active"] = prop.active;
+            j["visible"] = prop.visible;
+            j["position"] = SerializeVector2(prop.position);
+            j["opacity"] = prop.opacity;
+            j["currentAnimation"] = prop.currentAnimation;
+            j["baseAnimation"] = prop.baseAnimation;
+            j["animationTimeMs"] = prop.animationTimeMs;
+            j["oneShotActive"] = prop.oneShotActive;
+            j["oneShotAnimation"] = prop.oneShotAnimation;
+            j["oneShotDurationMs"] = prop.oneShotDurationMs;
+            j["moving"] = prop.moving;
+            j["moveStart"] = SerializeVector2(prop.moveStart);
+            j["moveEnd"] = SerializeVector2(prop.moveEnd);
+            j["moveTimerMs"] = prop.moveTimerMs;
+            j["moveDurationMs"] = prop.moveDurationMs;
+            j["moveInterpolation"] = ToInt(prop.moveInterpolation);
+            world["props"].push_back(j);
+        }
+
+        world["imageLayers"] = json::array();
+        auto writeLayer = [&](const TopdownRuntimeImageLayer& layer) {
+            if (layer.authoredIndex < 0 ||
+                layer.authoredIndex >= static_cast<int>(state.topdown.authored.imageLayers.size())) {
+                return;
+            }
+
+            json j;
+            j["name"] = state.topdown.authored.imageLayers[layer.authoredIndex].name;
+            j["visible"] = layer.visible;
+            j["opacity"] = layer.opacity;
+            world["imageLayers"].push_back(j);
+        };
+        for (const TopdownRuntimeImageLayer& layer : state.topdown.runtime.render.bottomLayers) {
+            writeLayer(layer);
+        }
+        for (const TopdownRuntimeImageLayer& layer : state.topdown.runtime.render.topLayers) {
+            writeLayer(layer);
+        }
+
+        world["effectRegions"] = json::array();
+        for (const TopdownRuntimeEffectRegion& effect : state.topdown.runtime.render.effectRegions) {
+            if (effect.authoredIndex < 0 ||
+                effect.authoredIndex >= static_cast<int>(state.topdown.authored.effectRegions.size())) {
+                continue;
+            }
+
+            json j;
+            j["id"] = state.topdown.authored.effectRegions[effect.authoredIndex].id;
+            j["visible"] = effect.visible;
+            j["opacity"] = effect.opacity;
+            world["effectRegions"].push_back(j);
+        }
+
+        world["triggers"] = json::array();
+        for (const TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
+            if (trigger.authoredIndex < 0 ||
+                trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+                continue;
+            }
+
+            json j;
+            j["id"] = state.topdown.authored.triggers[trigger.authoredIndex].id;
+            j["enabled"] = trigger.enabled;
+            j["repeat"] = trigger.repeat;
+            j["fired"] = trigger.fired;
+            j["playerInside"] = trigger.playerInside;
+            j["npcHandlesInside"] = json::array();
+            for (TopdownCharacterHandle handle : trigger.npcHandlesInside) {
+                j["npcHandlesInside"].push_back(handle);
+            }
+            world["triggers"].push_back(j);
+        }
+
+        world["emitters"] = json::array();
+        for (const SoundEmitterInstance& emitter : state.audio.levelEmitters) {
+            json j;
+            j["id"] = emitter.id;
+            j["enabled"] = emitter.enabled;
+            j["volume"] = emitter.volume;
+            world["emitters"].push_back(j);
+        }
+
+        world["bloodDecals"] = json::array();
+        for (const TopdownBloodDecal& decal : state.topdown.runtime.render.bloodDecals) {
+            if (!decal.active) {
+                continue;
+            }
+
+            json j;
+            j["active"] = decal.active;
+            j["position"] = SerializeVector2(decal.position);
+            j["radius"] = decal.radius;
+            j["rotationRadians"] = decal.rotationRadians;
+            j["opacity"] = decal.opacity;
+            j["ageMs"] = decal.ageMs;
+            j["fadeInMs"] = decal.fadeInMs;
+            j["stretch"] = decal.stretch;
+            j["useGeneratedStamp"] = decal.useGeneratedStamp;
+            j["preferStreakStamp"] = decal.preferStreakStamp;
+            j["stampIndex"] = decal.stampIndex;
+            world["bloodDecals"].push_back(j);
+        }
+
+        outRoot["topdownWorld"] = world;
+    }
+
+    static SavedTopdownWorldRuntime DeserializeTopdownWorldRuntime(const json& root)
+    {
+        SavedTopdownWorldRuntime out;
+        if (!root.contains("topdownWorld") || !root["topdownWorld"].is_object()) {
+            return out;
+        }
+
+        const json& world = root["topdownWorld"];
+
+        if (world.contains("doors") && world["doors"].is_array()) {
+            for (const json& j : world["doors"]) {
+                if (!j.is_object()) continue;
+                SavedDoorRuntime door;
+                door.id = j.value("id", "");
+                door.visible = j.value("visible", true);
+                door.locked = j.value("locked", false);
+                door.angleRadians = j.value("angleRadians", 0.0f);
+                door.angularVelocity = j.value("angularVelocity", 0.0f);
+                door.wasNearClosed = j.value("wasNearClosed", true);
+                door.openSoundPlayedThisSwing = j.value("openSoundPlayedThisSwing", false);
+                out.doors.push_back(door);
+            }
+        }
+
+        if (world.contains("windows") && world["windows"].is_array()) {
+            for (const json& j : world["windows"]) {
+                if (!j.is_object()) continue;
+                SavedWindowRuntime window;
+                window.id = j.value("id", "");
+                window.visible = j.value("visible", true);
+                window.broken = j.value("broken", false);
+                out.windows.push_back(window);
+            }
+        }
+
+        if (world.contains("props") && world["props"].is_array()) {
+            for (const json& j : world["props"]) {
+                if (!j.is_object()) continue;
+                SavedPropRuntime prop;
+                prop.id = j.value("id", "");
+                prop.active = j.value("active", false);
+                prop.visible = j.value("visible", true);
+                if (j.contains("position") && j["position"].is_object()) prop.position = DeserializeVector2(j["position"]);
+                prop.opacity = j.value("opacity", 1.0f);
+                prop.currentAnimation = j.value("currentAnimation", "");
+                prop.baseAnimation = j.value("baseAnimation", "");
+                prop.animationTimeMs = j.value("animationTimeMs", 0.0f);
+                prop.oneShotActive = j.value("oneShotActive", false);
+                prop.oneShotAnimation = j.value("oneShotAnimation", "");
+                prop.oneShotDurationMs = j.value("oneShotDurationMs", 0.0f);
+                prop.moving = j.value("moving", false);
+                if (j.contains("moveStart") && j["moveStart"].is_object()) prop.moveStart = DeserializeVector2(j["moveStart"]);
+                if (j.contains("moveEnd") && j["moveEnd"].is_object()) prop.moveEnd = DeserializeVector2(j["moveEnd"]);
+                prop.moveTimerMs = j.value("moveTimerMs", 0.0f);
+                prop.moveDurationMs = j.value("moveDurationMs", 0.0f);
+                prop.moveInterpolation = ToMoveInterpolation(j.value("moveInterpolation", 0));
+                out.props.push_back(prop);
+            }
+        }
+
+        if (world.contains("imageLayers") && world["imageLayers"].is_array()) {
+            for (const json& j : world["imageLayers"]) {
+                if (!j.is_object()) continue;
+                SavedImageLayerRuntime layer;
+                layer.name = j.value("name", "");
+                layer.visible = j.value("visible", true);
+                layer.opacity = j.value("opacity", 1.0f);
+                out.imageLayers.push_back(layer);
+            }
+        }
+
+        if (world.contains("effectRegions") && world["effectRegions"].is_array()) {
+            for (const json& j : world["effectRegions"]) {
+                if (!j.is_object()) continue;
+                SavedEffectRegionRuntime effect;
+                effect.id = j.value("id", "");
+                effect.visible = j.value("visible", true);
+                effect.opacity = j.value("opacity", 1.0f);
+                out.effectRegions.push_back(effect);
+            }
+        }
+
+        if (world.contains("triggers") && world["triggers"].is_array()) {
+            for (const json& j : world["triggers"]) {
+                if (!j.is_object()) continue;
+                SavedTriggerRuntime trigger;
+                trigger.id = j.value("id", "");
+                trigger.enabled = j.value("enabled", true);
+                trigger.repeat = j.value("repeat", false);
+                trigger.fired = j.value("fired", false);
+                trigger.playerInside = j.value("playerInside", false);
+                if (j.contains("npcHandlesInside") && j["npcHandlesInside"].is_array()) {
+                    for (const json& handle : j["npcHandlesInside"]) {
+                        if (handle.is_number_integer()) {
+                            trigger.npcHandlesInside.push_back(handle.get<TopdownCharacterHandle>());
+                        }
+                    }
+                }
+                out.triggers.push_back(trigger);
+            }
+        }
+
+        if (world.contains("emitters") && world["emitters"].is_array()) {
+            for (const json& j : world["emitters"]) {
+                if (!j.is_object()) continue;
+                SavedEmitterRuntime emitter;
+                emitter.id = j.value("id", "");
+                emitter.enabled = j.value("enabled", true);
+                emitter.volume = j.value("volume", 1.0f);
+                out.emitters.push_back(emitter);
+            }
+        }
+
+        if (world.contains("bloodDecals") && world["bloodDecals"].is_array()) {
+            for (const json& j : world["bloodDecals"]) {
+                if (!j.is_object()) continue;
+                SavedBloodDecalRuntime decal;
+                decal.active = j.value("active", false);
+                if (j.contains("position") && j["position"].is_object()) decal.position = DeserializeVector2(j["position"]);
+                decal.radius = j.value("radius", 20.0f);
+                decal.rotationRadians = j.value("rotationRadians", 0.0f);
+                decal.opacity = j.value("opacity", 1.0f);
+                decal.ageMs = j.value("ageMs", 0.0f);
+                decal.fadeInMs = j.value("fadeInMs", 0.0f);
+                decal.stretch = j.value("stretch", 1.0f);
+                decal.useGeneratedStamp = j.value("useGeneratedStamp", false);
+                decal.preferStreakStamp = j.value("preferStreakStamp", false);
+                decal.stampIndex = j.value("stampIndex", -1);
+                out.bloodDecals.push_back(decal);
+            }
+        }
+
+        return out;
+    }
+
+    static void RestoreTopdownWorldRuntime(GameState& state, const SavedTopdownWorldRuntime& saved)
+    {
+        std::unordered_map<std::string, const SavedDoorRuntime*> doorsById;
+        for (const SavedDoorRuntime& door : saved.doors) {
+            if (!door.id.empty()) doorsById[door.id] = &door;
+        }
+        for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+            auto it = doorsById.find(door.id);
+            if (it == doorsById.end()) continue;
+            const SavedDoorRuntime& savedDoor = *it->second;
+            door.visible = savedDoor.visible;
+            door.locked = savedDoor.locked;
+            door.angleRadians = savedDoor.angleRadians;
+            door.angularVelocity = savedDoor.angularVelocity;
+            door.wasNearClosed = savedDoor.wasNearClosed;
+            door.openSoundPlayedThisSwing = savedDoor.openSoundPlayedThisSwing;
+        }
+        TopdownRebuildWallOcclusionPolygons(state.topdown, true);
+
+        std::unordered_map<std::string, const SavedWindowRuntime*> windowsById;
+        for (const SavedWindowRuntime& window : saved.windows) {
+            if (!window.id.empty()) windowsById[window.id] = &window;
+        }
+        for (TopdownRuntimeWindow& window : state.topdown.runtime.windows) {
+            auto it = windowsById.find(window.id);
+            if (it == windowsById.end()) continue;
+            window.visible = it->second->visible;
+            window.broken = it->second->broken;
+        }
+
+        std::unordered_map<std::string, const SavedPropRuntime*> propsById;
+        for (const SavedPropRuntime& prop : saved.props) {
+            if (!prop.id.empty()) propsById[prop.id] = &prop;
+        }
+        for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+            auto it = propsById.find(prop.id);
+            if (it == propsById.end()) continue;
+            const SavedPropRuntime& savedProp = *it->second;
+            prop.active = savedProp.active;
+            prop.visible = savedProp.visible;
+            prop.position = savedProp.position;
+            prop.opacity = savedProp.opacity;
+            if (!savedProp.baseAnimation.empty() &&
+                PropHasAnimationClip(state, prop, savedProp.baseAnimation)) {
+                prop.baseAnimation = savedProp.baseAnimation;
+            }
+            if (!savedProp.currentAnimation.empty() &&
+                PropHasAnimationClip(state, prop, savedProp.currentAnimation)) {
+                prop.currentAnimation = savedProp.currentAnimation;
+            }
+            prop.animationTimeMs = savedProp.animationTimeMs;
+            if (savedProp.oneShotActive && PropHasAnimationClip(state, prop, savedProp.oneShotAnimation)) {
+                prop.oneShotActive = true;
+                prop.oneShotAnimation = savedProp.oneShotAnimation;
+                prop.oneShotDurationMs = savedProp.oneShotDurationMs;
+            } else {
+                prop.oneShotActive = false;
+                prop.oneShotAnimation.clear();
+                prop.oneShotDurationMs = 0.0f;
+            }
+            prop.moving = savedProp.moving;
+            prop.moveStart = savedProp.moveStart;
+            prop.moveEnd = savedProp.moveEnd;
+            prop.moveTimerMs = savedProp.moveTimerMs;
+            prop.moveDurationMs = savedProp.moveDurationMs;
+            prop.moveInterpolation = savedProp.moveInterpolation;
+        }
+
+        std::unordered_map<std::string, const SavedImageLayerRuntime*> imageLayersByName;
+        for (const SavedImageLayerRuntime& layer : saved.imageLayers) {
+            if (!layer.name.empty()) imageLayersByName[layer.name] = &layer;
+        }
+        auto restoreLayer = [&](TopdownRuntimeImageLayer& layer) {
+            if (layer.authoredIndex < 0 ||
+                layer.authoredIndex >= static_cast<int>(state.topdown.authored.imageLayers.size())) {
+                return;
+            }
+            const std::string& name = state.topdown.authored.imageLayers[layer.authoredIndex].name;
+            auto it = imageLayersByName.find(name);
+            if (it == imageLayersByName.end()) return;
+            layer.visible = it->second->visible;
+            layer.opacity = it->second->opacity;
+        };
+        for (TopdownRuntimeImageLayer& layer : state.topdown.runtime.render.bottomLayers) {
+            restoreLayer(layer);
+        }
+        for (TopdownRuntimeImageLayer& layer : state.topdown.runtime.render.topLayers) {
+            restoreLayer(layer);
+        }
+
+        std::unordered_map<std::string, const SavedEffectRegionRuntime*> effectsById;
+        for (const SavedEffectRegionRuntime& effect : saved.effectRegions) {
+            if (!effect.id.empty()) effectsById[effect.id] = &effect;
+        }
+        for (TopdownRuntimeEffectRegion& effect : state.topdown.runtime.render.effectRegions) {
+            if (effect.authoredIndex < 0 ||
+                effect.authoredIndex >= static_cast<int>(state.topdown.authored.effectRegions.size())) {
+                continue;
+            }
+            const std::string& id = state.topdown.authored.effectRegions[effect.authoredIndex].id;
+            auto it = effectsById.find(id);
+            if (it == effectsById.end()) continue;
+            effect.visible = it->second->visible;
+            effect.opacity = it->second->opacity;
+        }
+
+        std::unordered_map<std::string, const SavedTriggerRuntime*> triggersById;
+        for (const SavedTriggerRuntime& trigger : saved.triggers) {
+            if (!trigger.id.empty()) triggersById[trigger.id] = &trigger;
+        }
+        for (TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
+            if (trigger.authoredIndex < 0 ||
+                trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+                continue;
+            }
+            const std::string& id = state.topdown.authored.triggers[trigger.authoredIndex].id;
+            auto it = triggersById.find(id);
+            if (it == triggersById.end()) continue;
+            const SavedTriggerRuntime& savedTrigger = *it->second;
+            trigger.pendingCalls.clear();
+            trigger.enabled = savedTrigger.enabled;
+            trigger.repeat = savedTrigger.repeat;
+            trigger.fired = savedTrigger.fired;
+            trigger.playerInside = savedTrigger.playerInside;
+            trigger.npcHandlesInside = savedTrigger.npcHandlesInside;
+        }
+
+        std::unordered_map<std::string, const SavedEmitterRuntime*> emittersById;
+        for (const SavedEmitterRuntime& emitter : saved.emitters) {
+            if (!emitter.id.empty()) emittersById[emitter.id] = &emitter;
+        }
+        for (SoundEmitterInstance& emitter : state.audio.levelEmitters) {
+            auto it = emittersById.find(emitter.id);
+            if (it == emittersById.end()) continue;
+            emitter.enabled = it->second->enabled;
+            emitter.volume = it->second->volume;
+        }
+
+        state.topdown.runtime.render.bloodDecals.clear();
+        state.topdown.runtime.render.bloodDecals.reserve(saved.bloodDecals.size());
+        for (const SavedBloodDecalRuntime& savedDecal : saved.bloodDecals) {
+            if (!savedDecal.active) {
+                continue;
+            }
+
+            TopdownBloodDecal decal;
+            decal.active = savedDecal.active;
+            decal.position = savedDecal.position;
+            decal.radius = savedDecal.radius;
+            decal.targetRadius = savedDecal.radius;
+            decal.rotationRadians = savedDecal.rotationRadians;
+            decal.opacity = savedDecal.opacity;
+            decal.spawnOpacity = savedDecal.opacity;
+            decal.ageMs = savedDecal.ageMs;
+            decal.fadeInMs = savedDecal.fadeInMs;
+            decal.stretch = savedDecal.stretch;
+            decal.useGeneratedStamp = savedDecal.useGeneratedStamp;
+            decal.preferStreakStamp = savedDecal.preferStreakStamp;
+            decal.stampIndex = savedDecal.stampIndex;
+            state.topdown.runtime.render.bloodDecals.push_back(decal);
+        }
+        MarkTopdownBloodRenderTargetDirty(state);
     }
 
     static void SerializeScriptState(const GameState& state, json& outRoot)
@@ -1074,6 +1658,14 @@ namespace
         }
         outData.topdownNpcs = DeserializeTopdownNpcsRuntime(root);
 
+        if (!root.contains("topdownWorld") || !root["topdownWorld"].is_object()) {
+            TraceLog(LOG_ERROR,
+                     "Save file missing topdownWorld: %s",
+                     savePath.string().c_str());
+            return false;
+        }
+        outData.topdownWorld = DeserializeTopdownWorldRuntime(root);
+
         return true;
     }
 
@@ -1215,6 +1807,14 @@ bool CanSaveGame(const GameState& state, std::string* outReason)
         return fail("No level id");
     }
 
+    if (state.topdown.hasPendingLevelChange) {
+        return fail("Cannot save during level transition");
+    }
+
+    if (state.topdown.runtime.returnToMenuRequested) {
+        return fail("Cannot save now");
+    }
+
     if (!state.topdown.runtime.controlsEnabled) {
         return fail("Cannot save now");
     }
@@ -1279,6 +1879,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
     SerializeAudioState(state, root);
     SerializeTopdownCoreRuntime(state, root);
     SerializeTopdownNpcsRuntime(state, root);
+    SerializeTopdownWorldRuntime(state, root);
 
     const fs::path savePath = GetSaveSlotPath(slotIndex);
     std::ofstream out(savePath);
@@ -1321,6 +1922,7 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
 
     RestoreTopdownCoreRuntime(state, data.topdownCore);
     RestoreTopdownNpcsRuntime(state, data.topdownNpcs);
+    RestoreTopdownWorldRuntime(state, data.topdownWorld);
 
     return ApplyPostLevelLoadSaveRestoreData(state, data);
 }
