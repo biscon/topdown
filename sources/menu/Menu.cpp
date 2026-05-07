@@ -493,7 +493,7 @@ static std::shared_ptr<Menu> createSaveMenu()
                 TraceLog(LOG_INFO, "Saved game to slot %d", slot);
                 ShowMenuToast("Game Saved");
                 ReturnToMainMenuRoot();
-                game->mode = GameMode::Game;
+                game->mode = GameMode::TopDown;
             } else {
                 TraceLog(LOG_ERROR, "Failed saving game to slot %d", slot);
                 ShowMenuToast("Save Failed");
