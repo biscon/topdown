@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <exception>
 #include <unordered_map>
+#include <vector>
 
 #include "utils/json.hpp"
 #include "debug/DebugConsole.h"
@@ -15,14 +16,17 @@
 #include "topdown/LevelLoad.h"
 #include "topdown/LevelRegistry.h"
 #include "topdown/LevelScripting.h"
+#include "topdown/NpcRegistry.h"
 #include "topdown/PlayerRegistry.h"
+#include "topdown/TopdownNpcPatrol.h"
+#include "topdown/TopdownRvo.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 3;
+    static constexpr int SAVE_VERSION = 4;
 
 
     struct SavedMusicSlotState {
@@ -103,6 +107,53 @@ namespace
         SavedCameraRuntime camera;
     };
 
+    struct SavedNpcPatrolRuntime {
+        bool active = false;
+        bool paused = false;
+        bool loop = true;
+        bool running = false;
+
+        float waitMs = 0.0f;
+        float waitRemainingMs = 0.0f;
+
+        int currentPoint = 0;
+
+        std::vector<std::string> routeSpawnIds;
+    };
+
+    struct SavedNpcRuntime {
+        std::string id;
+        std::string assetId;
+
+        int handle = -1;
+
+        bool active = true;
+        bool visible = true;
+        bool dead = false;
+        bool corpse = false;
+
+        Vector2 position{};
+        Vector2 facing{1.0f, 0.0f};
+        Vector2 currentVelocity{};
+
+        float rotationRadians = 0.0f;
+        float health = 100.0f;
+        float corpseElapsedMs = 0.0f;
+
+        bool hostile = true;
+        bool persistentChase = false;
+        bool guard = false;
+
+        TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+        TopdownNpcEngagementState engagementState = TopdownNpcEngagementState::Unaware;
+
+        SavedNpcPatrolRuntime patrol;
+    };
+
+    struct SavedTopdownNpcsRuntime {
+        std::vector<SavedNpcRuntime> npcs;
+    };
+
     struct SaveRestoreData {
         bool controlsEnabled = true;
 
@@ -116,6 +167,7 @@ namespace
 
         SavedAudioState audio;
         SavedTopdownCoreRuntime topdownCore;
+        SavedTopdownNpcsRuntime topdownNpcs;
     };
 
     static std::string NormalizePath(const fs::path& p)
@@ -231,6 +283,9 @@ namespace
     static int ToInt(TopdownLocomotionType v) { return static_cast<int>(v); }
     static int ToInt(TopdownFireMode v) { return static_cast<int>(v); }
     static int ToInt(TopdownCameraMode v) { return static_cast<int>(v); }
+    static int ToInt(TopdownNpcAiMode v) { return static_cast<int>(v); }
+    static int ToInt(TopdownNpcEngagementState v) { return static_cast<int>(v); }
+
 
     static TopdownPlayerLifeState ToPlayerLifeState(int v)
     {
@@ -277,6 +332,31 @@ namespace
                 return static_cast<TopdownCameraMode>(v);
         }
         return TopdownCameraMode::Player;
+    }
+
+    static TopdownNpcAiMode ToNpcAiMode(int v)
+    {
+        switch (static_cast<TopdownNpcAiMode>(v)) {
+            case TopdownNpcAiMode::None:
+            case TopdownNpcAiMode::SeekAndDestroy:
+            case TopdownNpcAiMode::HoldAndFire:
+                return static_cast<TopdownNpcAiMode>(v);
+        }
+        return TopdownNpcAiMode::None;
+    }
+
+    static TopdownNpcEngagementState ToNpcEngagementState(int v)
+    {
+        switch (static_cast<TopdownNpcEngagementState>(v)) {
+            case TopdownNpcEngagementState::Unaware:
+            case TopdownNpcEngagementState::Guarding:
+            case TopdownNpcEngagementState::Reacting:
+            case TopdownNpcEngagementState::Investigating:
+            case TopdownNpcEngagementState::Engaged:
+            case TopdownNpcEngagementState::ReturningToGuardPost:
+                return static_cast<TopdownNpcEngagementState>(v);
+        }
+        return TopdownNpcEngagementState::Unaware;
     }
 
     static void SerializeTopdownCoreRuntime(const GameState& state, json& outRoot)
@@ -497,6 +577,317 @@ namespace
         runtime.gameOverElapsedMs = 0.0f;
     }
 
+    static void SerializeTopdownNpcsRuntime(const GameState& state, json& outRoot)
+    {
+        json topdownNpcs;
+        topdownNpcs["npcs"] = json::array();
+
+        for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+            json npcJson;
+            npcJson["id"] = npc.id;
+            npcJson["assetId"] = npc.assetId;
+            npcJson["handle"] = npc.handle;
+            npcJson["active"] = npc.active;
+            npcJson["visible"] = npc.visible;
+            npcJson["dead"] = npc.dead;
+            npcJson["corpse"] = npc.corpse;
+            npcJson["position"] = SerializeVector2(npc.position);
+            npcJson["facing"] = SerializeVector2(npc.facing);
+            npcJson["rotationRadians"] = npc.rotationRadians;
+            npcJson["currentVelocity"] = SerializeVector2(npc.currentVelocity);
+            npcJson["health"] = npc.health;
+            npcJson["corpseElapsedMs"] = npc.corpseElapsedMs;
+            npcJson["hostile"] = npc.hostile;
+            npcJson["persistentChase"] = npc.persistentChase;
+            npcJson["guard"] = npc.guard;
+            npcJson["engagementState"] = ToInt(npc.engagementState);
+            npcJson["aiMode"] = ToInt(npc.aiMode);
+
+            const TopdownNpcPatrolState& patrol = npc.scriptBehavior.patrol;
+            json patrolJson;
+            patrolJson["active"] =
+                    npc.scriptBehavior.mode == TopdownNpcScriptBehaviorMode::PatrolRoute &&
+                    patrol.active;
+            patrolJson["paused"] = patrol.paused;
+            patrolJson["loop"] = patrol.loop;
+            patrolJson["running"] = patrol.running;
+            patrolJson["waitMs"] = patrol.waitDurationMs;
+            patrolJson["waitRemainingMs"] = patrol.waitTimerMs;
+            patrolJson["currentPoint"] = patrol.currentPointIndex;
+            patrolJson["routeSpawnIds"] = json::array();
+            for (const std::string& spawnId : patrol.spawnIds) {
+                patrolJson["routeSpawnIds"].push_back(spawnId);
+            }
+            npcJson["patrol"] = patrolJson;
+
+            topdownNpcs["npcs"].push_back(npcJson);
+        }
+
+        outRoot["topdownNpcs"] = topdownNpcs;
+    }
+
+    static SavedNpcPatrolRuntime DeserializeNpcPatrolRuntime(const json& j)
+    {
+        SavedNpcPatrolRuntime out;
+        out.active = j.value("active", false);
+        out.paused = j.value("paused", false);
+        out.loop = j.value("loop", true);
+        out.running = j.value("running", false);
+        out.waitMs = j.value("waitMs", 0.0f);
+        out.waitRemainingMs = j.value("waitRemainingMs", 0.0f);
+        out.currentPoint = j.value("currentPoint", 0);
+
+        if (j.contains("routeSpawnIds") && j["routeSpawnIds"].is_array()) {
+            for (const json& spawnId : j["routeSpawnIds"]) {
+                if (spawnId.is_string()) {
+                    out.routeSpawnIds.push_back(spawnId.get<std::string>());
+                }
+            }
+        }
+
+        return out;
+    }
+
+    static SavedTopdownNpcsRuntime DeserializeTopdownNpcsRuntime(const json& root)
+    {
+        SavedTopdownNpcsRuntime out;
+        if (!root.contains("topdownNpcs") || !root["topdownNpcs"].is_object()) {
+            return out;
+        }
+
+        const json& topdownNpcs = root["topdownNpcs"];
+        if (!topdownNpcs.contains("npcs") || !topdownNpcs["npcs"].is_array()) {
+            return out;
+        }
+
+        for (const json& npcJson : topdownNpcs["npcs"]) {
+            if (!npcJson.is_object()) {
+                continue;
+            }
+
+            SavedNpcRuntime npc;
+            npc.id = npcJson.value("id", "");
+            npc.assetId = npcJson.value("assetId", "");
+            npc.handle = npcJson.value("handle", -1);
+            npc.active = npcJson.value("active", true);
+            npc.visible = npcJson.value("visible", true);
+            npc.dead = npcJson.value("dead", false);
+            npc.corpse = npcJson.value("corpse", false);
+            if (npcJson.contains("position") && npcJson["position"].is_object()) {
+                npc.position = DeserializeVector2(npcJson["position"]);
+            }
+            if (npcJson.contains("facing") && npcJson["facing"].is_object()) {
+                npc.facing = DeserializeVector2(npcJson["facing"]);
+            }
+            if (npcJson.contains("currentVelocity") && npcJson["currentVelocity"].is_object()) {
+                npc.currentVelocity = DeserializeVector2(npcJson["currentVelocity"]);
+            }
+            npc.rotationRadians = npcJson.value("rotationRadians", 0.0f);
+            npc.health = npcJson.value("health", 100.0f);
+            npc.corpseElapsedMs = npcJson.value("corpseElapsedMs", 0.0f);
+            npc.hostile = npcJson.value("hostile", true);
+            npc.persistentChase = npcJson.value("persistentChase", false);
+            npc.guard = npcJson.value("guard", false);
+            npc.engagementState = ToNpcEngagementState(npcJson.value("engagementState", 0));
+            npc.aiMode = ToNpcAiMode(npcJson.value("aiMode", 0));
+
+            if (npcJson.contains("patrol") && npcJson["patrol"].is_object()) {
+                npc.patrol = DeserializeNpcPatrolRuntime(npcJson["patrol"]);
+            }
+
+            out.npcs.push_back(npc);
+        }
+
+        return out;
+    }
+
+    static void ClearNpcTransientRuntime(TopdownNpcRuntime& npc)
+    {
+        npc.combatState = TopdownNpcCombatState::None;
+        npc.hasPlayerTarget = false;
+        npc.lastKnownPlayerPosition = {};
+        npc.investigationPosition = {};
+        npc.repathTimerMs = 0.0f;
+
+        npc.attackHitPending = false;
+        npc.attackHitApplied = false;
+        npc.attackStateTimeMs = 0.0f;
+        npc.attackAnimationDurationMs = 0.0f;
+        npc.attackCooldownRemainingMs = 0.0f;
+
+        npc.searchStateTimeMs = 0.0f;
+        npc.hurtStunRemainingMs = 0.0f;
+        npc.knockbackVelocity = {};
+
+        npc.move = {};
+        npc.moving = false;
+        npc.running = false;
+
+        npc.oneShotActive = false;
+        npc.oneShotClip = {};
+        npc.oneShotTimeMs = 0.0f;
+
+        npc.scriptLoopClip = {};
+        npc.scriptLoopTimeMs = 0.0f;
+        npc.animationMode = TopdownNpcAnimationMode::AutomaticLocomotion;
+
+        npc.renderOpacity = 1.0f;
+
+        npc.chaseStuckTimerMs = 0.0f;
+        npc.chaseStuckLastPosition = npc.position;
+        npc.patrolLastProgressPosition = npc.position;
+        npc.patrolStuckTimerMs = 0.0f;
+        npc.patrolYieldTimerMs = 0.0f;
+        npc.patrolRetryDelayMs = 0.0f;
+        npc.patrolStuckCount = 0;
+        npc.patrolIsYielding = false;
+        npc.patrolIsRetryDelay = false;
+        npc.investigationContextHandle = -1;
+        npc.investigationSlotIndex = -1;
+        npc.investigationProgressTimerMs = 0.0f;
+        npc.investigationLastPosition = npc.position;
+        npc.reactionTimerMs = 0.0f;
+        npc.hasReactedToPlayer = false;
+        npc.engagedLostTargetTimerMs = 0.0f;
+    }
+
+    static void RestoreNpcPatrolRuntime(
+            GameState& state,
+            TopdownNpcRuntime& npc,
+            const SavedNpcPatrolRuntime& saved)
+    {
+        if (!saved.active || saved.routeSpawnIds.empty()) {
+            npc.scriptBehavior = {};
+            return;
+        }
+
+        TopdownNpcPatrolRouteOptions options;
+        options.loop = saved.loop;
+        options.running = saved.running;
+        options.waitMs = saved.waitMs;
+
+        if (!TopdownAssignNpcPatrolRoute(state, npc, saved.routeSpawnIds, options)) {
+            TraceLog(LOG_WARNING,
+                     "Failed restoring NPC patrol route for '%s'",
+                     npc.id.c_str());
+            npc.scriptBehavior = {};
+            return;
+        }
+
+        TopdownNpcPatrolState& patrol = npc.scriptBehavior.patrol;
+        const int routeSize = static_cast<int>(patrol.spawnIds.size());
+        patrol.currentPointIndex = routeSize > 0
+                ? std::max(0, std::min(saved.currentPoint, routeSize - 1))
+                : 0;
+        patrol.waitTimerMs = std::max(0.0f, saved.waitRemainingMs);
+        patrol.paused = saved.paused;
+        patrol.running = saved.running;
+        patrol.loop = saved.loop;
+        patrol.interrupted = false;
+    }
+
+    static void RestoreNpcDeathAnimation(GameState& state, TopdownNpcRuntime& npc)
+    {
+        const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
+        if (asset == nullptr) {
+            return;
+        }
+
+        if (TopdownNpcClipRefIsValid(asset->deathClip)) {
+            TopdownSetNpcAutomaticLoopAnimation(npc, asset->deathClip);
+        } else if (TopdownNpcClipRefIsValid(asset->idleClip)) {
+            TopdownSetNpcAutomaticLoopAnimation(npc, asset->idleClip);
+        }
+    }
+
+    static void RestoreTopdownNpcsRuntime(GameState& state, const SavedTopdownNpcsRuntime& saved)
+    {
+        TopdownRuntimeData& runtime = state.topdown.runtime;
+        runtime.npcs.clear();
+        runtime.npcPatrolContexts.clear();
+        runtime.nextNpcPatrolContextHandle = 1;
+        runtime.npcInvestigations.clear();
+        runtime.nextNpcInvestigationContextHandle = 1;
+        runtime.nextNpcHandle = 1;
+
+        for (const SavedNpcRuntime& savedNpc : saved.npcs) {
+            if (savedNpc.id.empty() || savedNpc.assetId.empty()) {
+                continue;
+            }
+
+            if (!EnsureTopdownNpcAssetLoaded(state, savedNpc.assetId)) {
+                TraceLog(LOG_WARNING,
+                         "Skipping restored NPC '%s', asset failed to load: %s",
+                         savedNpc.id.c_str(),
+                         savedNpc.assetId.c_str());
+                continue;
+            }
+
+            if (!TopdownSpawnNpcRuntime(
+                    state,
+                    savedNpc.id,
+                    savedNpc.assetId,
+                    savedNpc.position,
+                    savedNpc.rotationRadians * RAD2DEG,
+                    savedNpc.visible,
+                    savedNpc.persistentChase,
+                    savedNpc.guard,
+                    false)) {
+                TraceLog(LOG_WARNING,
+                         "Skipping restored NPC '%s', spawn failed",
+                         savedNpc.id.c_str());
+                continue;
+            }
+
+            TopdownNpcRuntime* npc = runtime.npcs.empty() ? nullptr : &runtime.npcs.back();
+            if (npc == nullptr || npc->id != savedNpc.id) {
+                continue;
+            }
+
+            npc->handle = savedNpc.handle > 0 ? savedNpc.handle : npc->handle;
+            npc->active = savedNpc.active;
+            npc->visible = savedNpc.visible;
+            npc->dead = savedNpc.dead;
+            npc->corpse = savedNpc.corpse;
+            npc->position = savedNpc.position;
+            npc->facing = savedNpc.facing;
+            npc->rotationRadians = savedNpc.rotationRadians;
+            npc->currentVelocity = savedNpc.currentVelocity;
+            npc->health = savedNpc.health;
+            npc->corpseElapsedMs = savedNpc.corpseElapsedMs;
+            npc->persistentChase = savedNpc.persistentChase;
+            npc->guard = savedNpc.guard;
+            npc->hostile = savedNpc.hostile;
+            npc->aiMode = savedNpc.aiMode;
+            npc->engagementState = savedNpc.engagementState;
+            npc->guardHomePosition = savedNpc.position;
+            npc->hasGuardHomePosition = savedNpc.guard;
+            npc->guardLookAtSoundRadians = savedNpc.rotationRadians;
+
+            ClearNpcTransientRuntime(*npc);
+
+            if (npc->dead || npc->corpse) {
+                npc->combatState = TopdownNpcCombatState::None;
+                npc->hasPlayerTarget = false;
+                npc->move = {};
+                npc->moving = false;
+                npc->running = false;
+                RestoreNpcDeathAnimation(state, *npc);
+            } else {
+                RestoreNpcPatrolRuntime(state, *npc, savedNpc.patrol);
+            }
+        }
+
+        int maxHandle = 0;
+        for (const TopdownNpcRuntime& npc : runtime.npcs) {
+            maxHandle = std::max(maxHandle, npc.handle);
+        }
+        runtime.nextNpcHandle = maxHandle + 1;
+
+        TopdownRvoRequestRebuild(state);
+        TopdownRvoEnsureReady(state);
+    }
+
     static void SerializeScriptState(const GameState& state, json& outRoot)
     {
         json scriptState;
@@ -667,12 +1058,21 @@ namespace
         }
 
         if (!root.contains("topdownCore") || !root["topdownCore"].is_object()) {
-            TraceLog(LOG_WARNING,
-                     "Save file missing topdownCore, using defaults: %s",
+            TraceLog(LOG_ERROR,
+                     "Save file missing topdownCore: %s",
                      savePath.string().c_str());
+            return false;
         }
         outData.topdownCore = DeserializeTopdownCoreRuntime(root);
         outData.controlsEnabled = outData.topdownCore.controlsEnabled;
+
+        if (!root.contains("topdownNpcs") || !root["topdownNpcs"].is_object()) {
+            TraceLog(LOG_ERROR,
+                     "Save file missing topdownNpcs: %s",
+                     savePath.string().c_str());
+            return false;
+        }
+        outData.topdownNpcs = DeserializeTopdownNpcsRuntime(root);
 
         return true;
     }
@@ -819,6 +1219,10 @@ bool CanSaveGame(const GameState& state, std::string* outReason)
         return fail("Cannot save now");
     }
 
+    if (state.topdown.runtime.scriptedMove.active) {
+        return fail("Cannot save now");
+    }
+
     if (state.topdown.runtime.gameOverActive ||
         state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive) {
         return fail("Cannot save while dead");
@@ -874,6 +1278,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
     SerializeScriptState(state, root);
     SerializeAudioState(state, root);
     SerializeTopdownCoreRuntime(state, root);
+    SerializeTopdownNpcsRuntime(state, root);
 
     const fs::path savePath = GetSaveSlotPath(slotIndex);
     std::ofstream out(savePath);
@@ -915,6 +1320,7 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
     }
 
     RestoreTopdownCoreRuntime(state, data.topdownCore);
+    RestoreTopdownNpcsRuntime(state, data.topdownNpcs);
 
     return ApplyPostLevelLoadSaveRestoreData(state, data);
 }
