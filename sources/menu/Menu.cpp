@@ -68,7 +68,7 @@ struct Menu {
     int selected = 0;
 };
 
-static std::stack<std::function<std::shared_ptr<Menu>()>> menuStack;
+static std::stack<std::shared_ptr<Menu>> menuStack;
 
 static constexpr float MENU_TITLE_Y = 105.0f;
 static constexpr float MENU_CENTER_X = INTERNAL_WIDTH * 0.5f;
@@ -217,7 +217,7 @@ static void ReturnToMainMenuRoot()
     while (!menuStack.empty()) {
         menuStack.pop();
     }
-    menuStack.push(&createMainMenu);
+    menuStack.push(createMainMenu());
 }
 
 static std::shared_ptr<Menu> createResolutionMenu()
@@ -487,13 +487,15 @@ static std::shared_ptr<Menu> createSaveMenu()
     for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
         MenuItem item;
         item.text = "Slot " + std::to_string(slot) + " - " + GetSaveSlotSummary(slot);
-        item.enabled = false;
+        std::string reason;
+        item.enabled = CanSaveGame(*game, &reason);
+        item.color = item.enabled ? LIGHTGRAY : DARKGRAY;
         item.action = [slot] {
             if (SaveGameToSlot(*game, slot)) {
                 TraceLog(LOG_INFO, "Saved game to slot %d", slot);
                 ShowMenuToast("Game Saved");
                 ReturnToMainMenuRoot();
-                game->mode = GameMode::Game;
+                game->mode = GameMode::TopDown;
             } else {
                 TraceLog(LOG_ERROR, "Failed saving game to slot %d", slot);
                 ShowMenuToast("Save Failed");
@@ -574,8 +576,9 @@ static std::shared_ptr<Menu> createMainMenu()
             save.text = "Save Game";
             save.isSubmenu = true;
             save.submenuBuilder = createSaveMenu;
-            save.enabled = game->topdown.runtime.controlsEnabled;
-            save.color = game->topdown.runtime.controlsEnabled ? LIGHTGRAY : DARKGRAY;
+            std::string reason;
+            save.enabled = CanSaveGame(*game, &reason);
+            save.color = save.enabled ? LIGHTGRAY : DARKGRAY;
             menu->items.push_back(save);
         }
     }
@@ -612,8 +615,8 @@ static std::shared_ptr<Menu> createMainMenu()
 void MenuInit(GameState* gameState)
 {
     game = gameState;
-    menuStack = std::stack<std::function<std::shared_ptr<Menu>()>>();
-    menuStack.push(&createMainMenu);
+    menuStack = std::stack<std::shared_ptr<Menu>>();
+    menuStack.push(createMainMenu());
     gDraggingSliderIndex = -1;
     gSliderPreviewCooldown = 0.0f;
     gLastSliderPreviewValue = -9999.0f;
@@ -644,7 +647,7 @@ void MenuRenderUi(GameState& state)
         return;
     }
 
-    std::shared_ptr<Menu> menu = menuStack.top()();
+    std::shared_ptr<Menu> menu = menuStack.top();
     if (!menu) {
         return;
     }
@@ -704,7 +707,7 @@ void MenuRenderUi(GameState& state)
                 PlaySoundById(state, "ui_click");
 
                 if (item.isSubmenu && item.submenuBuilder) {
-                    menuStack.push(item.submenuBuilder);
+                    menuStack.push(item.submenuBuilder());
                 } else if (item.action) {
                     item.action();
                 }

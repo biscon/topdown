@@ -2,9 +2,6 @@ local Glow = require("effects.glow")
 
 function Level_onEnter()
     log("running onEnter")
-    --startScript("WalkAround")
-    --startScript("ZombiePatrol")
-    --spawnNpc("knifethug_1", "knifethug", "patrol_1")
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
     startScript("StudyCeilingLampGlowLoop")
@@ -26,17 +23,27 @@ function Level_onEnter()
         }
     )
     --]]
+    RestoreLevel()
+    if not flag("beach_house_init") then
+        setFlag("beach_house_init", true)
+        startScript("IntroNarration")
+        SpawnAndAssignInitialPatrols()
+    end
+    --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
+end
+
+function RestoreLevel()
+    SetPhoneRinging(flag("beach_house_phone_ringing"))
+    SetExitUnlocked(flag("beach_house_exit_unlocked"))
+end
+
+function SpawnAndAssignInitialPatrols()
     assignNpcPatrolRoute("enemy_7", {"living_room_window1", "living_room_window2"}, {
         loop = true,
         running = false,
         waitMs = 4000
     })
     SpawnGuardPatrol()
-    if not flag("beach_house_init") then
-        setFlag("beach_house_init", true)
-        --startScript("IntroNarration")
-    end
-    --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
 end
 
 function PhoneCallCutscene()
@@ -47,20 +54,17 @@ function PhoneCallCutscene()
     delay(500)
     sayNpc("phone", "...Good. You're still breathing.", MAGENTA, 1800)
 
-    speak("Who is this?", CREAM, 1200)
-    delay(1200)
+    say("Who is this?", CREAM, 1200)
 
     sayNpc("phone", "Someone who doesn't want you dead in your own house.", MAGENTA, 2600)
 
-    speak("Then start talking.", CREAM, 1400)
-    delay(1400)
+    say("Then start talking.", CREAM, 1400)
 
     sayNpc("phone", "The men you've been killing—", MAGENTA, 1800)
     sayNpc("phone", "they were supposed to report in.", MAGENTA, 2200)
     sayNpc("phone", "They didn't.", MAGENTA, 1400)
 
-    speak("So they send more.", CREAM, 1500)
-    delay(1500)
+    say("So they send more.", CREAM, 1500)
 
     sayNpc("phone", "Not just more.", MAGENTA, 1500)
     sayNpc("phone", "Better.", MAGENTA, 1200)
@@ -68,15 +72,13 @@ function PhoneCallCutscene()
     -- 🔥 tension beat + spawn
     delay(800)
 
-    speak("How many?", CREAM, 1200)
-    delay(1200)
+    say("How many?", CREAM, 1200)
 
     sayNpc("phone", "Enough that staying isn't an option.", MAGENTA, 2400)
     sayNpc("phone", "You got in once.", MAGENTA, 1400)
     sayNpc("phone", "Get out the same way.", MAGENTA, 1800)
 
-    speak("Why help me?", CREAM, 1400)
-    delay(1400)
+    say("Why help me?", CREAM, 1400)
 
     sayNpc("phone", "...Because if they find you, they start asking questions.", MAGENTA, 3000)
     sayNpc("phone", "And I'm not ready for those yet.", MAGENTA, 2200)
@@ -144,20 +146,19 @@ end
 
 function Level_phoneTrigger()
     log("phone triggered")
-    setSoundEmitterEnabled("phone_emitter", false)
-    setPropAnimation("phone", "Idle")
+    SetPhoneRinging(false)
     disableControls()
     enableScriptCamera()
     PhoneCallCutscene()
     EscapeStartCutscene()
     disableScriptCamera()
     enableControls()
+    SetExitUnlocked(true)
 end
 
 function Level_bedroomTrigger()
     log("bedroom triggered")
-    setSoundEmitterEnabled("phone_emitter", true)
-    setPropAnimation("phone", "Ring")
+    SetPhoneRinging(true)
     speakProp("phone", "RIIIIIIING!!!", YELLOW, 3000)
     speakNpc("enemy_4", "Come get some!", CREAM)
 end
@@ -183,17 +184,19 @@ function IntroNarration()
     stopMusic(20000)
 end
 
-local count = 1
-function Level_onTestTrigger1()
-    log("running onTestTrigger1")
-    spawnNpcSmart("enemy_" .. count, "knifethug", "test_spawn", false)
-    count = count + 1
+function SetPhoneRinging(ringing)
+    setFlag("beach_house_phone_ringing", ringing)
+    setSoundEmitterEnabled("phone_emitter", ringing)
+    if ringing then
+        setPropAnimation("phone", "Ring")
+    else
+        setPropAnimation("phone", "Idle")
+    end
 end
 
---local count = 1
-function Level_onTestTrigger2()
-    spawnNpcSmart("enemy_" .. count, "pistolthug", "patrol_1", false)
-    count = count + 1
+function SetExitUnlocked(unlocked)
+    setFlag("beach_house_exit_unlocked", unlocked)
+    -- setTriggerEnabled("exit_trigger", unlocked)
 end
 
 function WalkAround()
@@ -353,5 +356,10 @@ end
 -- Utility ----------------------------------------------------------------------
 function sayNpc(id, text, color, duration)
     speakProp(id, text, color, duration)
+    delay(duration)
+end
+
+function say(text, color, duration)
+    speak(text, color, duration)
     delay(duration)
 end
