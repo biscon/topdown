@@ -487,7 +487,9 @@ static std::shared_ptr<Menu> createSaveMenu()
     for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
         MenuItem item;
         item.text = "Slot " + std::to_string(slot) + " - " + GetSaveSlotSummary(slot);
-        item.enabled = true;
+        std::string reason;
+        item.enabled = CanSaveGame(*game, &reason);
+        item.color = item.enabled ? LIGHTGRAY : DARKGRAY;
         item.action = [slot] {
             if (SaveGameToSlot(*game, slot)) {
                 TraceLog(LOG_INFO, "Saved game to slot %d", slot);
@@ -574,8 +576,9 @@ static std::shared_ptr<Menu> createMainMenu()
             save.text = "Save Game";
             save.isSubmenu = true;
             save.submenuBuilder = createSaveMenu;
-            save.enabled = game->topdown.runtime.controlsEnabled;
-            save.color = game->topdown.runtime.controlsEnabled ? LIGHTGRAY : DARKGRAY;
+            std::string reason;
+            save.enabled = CanSaveGame(*game, &reason);
+            save.color = save.enabled ? LIGHTGRAY : DARKGRAY;
             menu->items.push_back(save);
         }
     }

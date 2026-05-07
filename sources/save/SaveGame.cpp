@@ -15,13 +15,14 @@
 #include "topdown/LevelLoad.h"
 #include "topdown/LevelRegistry.h"
 #include "topdown/LevelScripting.h"
+#include "topdown/PlayerRegistry.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 2;
+    static constexpr int SAVE_VERSION = 3;
 
 
     struct SavedMusicSlotState {
@@ -41,6 +42,67 @@ namespace
         bool musicAIsCurrent = true;
     };
 
+
+    struct SavedPlayerRuntime {
+        Vector2 position{};
+        Vector2 velocity{};
+        Vector2 facing{1.0f, 0.0f};
+
+        float health = 100.0f;
+        float maxHealth = 100.0f;
+
+        float hurtCooldownRemainingMs = 0.0f;
+        float hitSlowdownRemainingMs = 0.0f;
+        float hitSlowdownMultiplier = 1.0f;
+        float damageFlashRemainingMs = 0.0f;
+        float lowHealthEffectWeight = 0.0f;
+
+        TopdownPlayerLifeState lifeState = TopdownPlayerLifeState::Alive;
+    };
+
+    struct SavedPlayerCharacterRuntime {
+        bool active = false;
+        std::string equippedSetId;
+
+        TopdownLocomotionType locomotion = TopdownLocomotionType::Idle;
+        bool running = false;
+
+        float bodyFacingRadians = 0.0f;
+        float desiredAimRadians = 0.0f;
+        float feetRotationRadians = 0.0f;
+        float upperRotationRadians = 0.0f;
+
+        bool aimFrozen = false;
+
+        float feetAnimationTimeMs = 0.0f;
+        float upperAnimationTimeMs = 0.0f;
+    };
+
+    struct SavedPlayerAttackRuntime {
+        std::string equipmentSetId;
+        TopdownFireMode currentFireMode = TopdownFireMode::SemiAuto;
+        float cooldownRemainingMs = 0.0f;
+    };
+
+    struct SavedCameraRuntime {
+        Vector2 position{};
+        Vector2 targetPosition{};
+        Vector2 aimOffset{};
+
+        TopdownCameraMode mode = TopdownCameraMode::Player;
+        Vector2 scriptedTarget{};
+    };
+
+    struct SavedTopdownCoreRuntime {
+        bool controlsEnabled = true;
+        float timeMs = 0.0f;
+
+        SavedPlayerRuntime player;
+        SavedPlayerCharacterRuntime playerCharacter;
+        SavedPlayerAttackRuntime playerAttack;
+        SavedCameraRuntime camera;
+    };
+
     struct SaveRestoreData {
         bool controlsEnabled = true;
 
@@ -53,6 +115,7 @@ namespace
         std::unordered_map<std::string, std::string> strings;
 
         SavedAudioState audio;
+        SavedTopdownCoreRuntime topdownCore;
     };
 
     static std::string NormalizePath(const fs::path& p)
@@ -161,6 +224,277 @@ namespace
         c.b = static_cast<unsigned char>(j.value("b", 255));
         c.a = static_cast<unsigned char>(j.value("a", 255));
         return c;
+    }
+
+
+    static int ToInt(TopdownPlayerLifeState v) { return static_cast<int>(v); }
+    static int ToInt(TopdownLocomotionType v) { return static_cast<int>(v); }
+    static int ToInt(TopdownFireMode v) { return static_cast<int>(v); }
+    static int ToInt(TopdownCameraMode v) { return static_cast<int>(v); }
+
+    static TopdownPlayerLifeState ToPlayerLifeState(int v)
+    {
+        switch (static_cast<TopdownPlayerLifeState>(v)) {
+            case TopdownPlayerLifeState::Alive:
+            case TopdownPlayerLifeState::Dying:
+            case TopdownPlayerLifeState::Dead:
+            case TopdownPlayerLifeState::GameOver:
+                return static_cast<TopdownPlayerLifeState>(v);
+        }
+        return TopdownPlayerLifeState::Alive;
+    }
+
+    static TopdownLocomotionType ToLocomotionType(int v)
+    {
+        switch (static_cast<TopdownLocomotionType>(v)) {
+            case TopdownLocomotionType::Idle:
+            case TopdownLocomotionType::Forward:
+            case TopdownLocomotionType::Backward:
+            case TopdownLocomotionType::StrafeLeft:
+            case TopdownLocomotionType::StrafeRight:
+                return static_cast<TopdownLocomotionType>(v);
+        }
+        return TopdownLocomotionType::Idle;
+    }
+
+    static TopdownFireMode ToFireMode(int v)
+    {
+        switch (static_cast<TopdownFireMode>(v)) {
+            case TopdownFireMode::SemiAuto:
+            case TopdownFireMode::FullAuto:
+            case TopdownFireMode::Burst:
+                return static_cast<TopdownFireMode>(v);
+        }
+        return TopdownFireMode::SemiAuto;
+    }
+
+    static TopdownCameraMode ToCameraMode(int v)
+    {
+        switch (static_cast<TopdownCameraMode>(v)) {
+            case TopdownCameraMode::Player:
+            case TopdownCameraMode::Scripted:
+            case TopdownCameraMode::Manual:
+                return static_cast<TopdownCameraMode>(v);
+        }
+        return TopdownCameraMode::Player;
+    }
+
+    static void SerializeTopdownCoreRuntime(const GameState& state, json& outRoot)
+    {
+        const TopdownRuntimeData& runtime = state.topdown.runtime;
+        const TopdownPlayerRuntime& player = runtime.player;
+        const TopdownCharacterRuntime& character = runtime.playerCharacter;
+        const TopdownPlayerAttackRuntime& attack = runtime.playerAttack;
+        const TopdownCameraRuntime& camera = runtime.camera;
+
+        json topdownCore;
+        topdownCore["controlsEnabled"] = runtime.controlsEnabled;
+        topdownCore["timeMs"] = runtime.timeMs;
+
+        json playerJson;
+        playerJson["position"] = SerializeVector2(player.position);
+        playerJson["velocity"] = SerializeVector2(player.velocity);
+        playerJson["facing"] = SerializeVector2(player.facing);
+        playerJson["health"] = player.health;
+        playerJson["maxHealth"] = player.maxHealth;
+        playerJson["hurtCooldownRemainingMs"] = player.hurtCooldownRemainingMs;
+        playerJson["hitSlowdownRemainingMs"] = player.hitSlowdownRemainingMs;
+        playerJson["hitSlowdownMultiplier"] = player.hitSlowdownMultiplier;
+        playerJson["damageFlashRemainingMs"] = player.damageFlashRemainingMs;
+        playerJson["lowHealthEffectWeight"] = player.lowHealthEffectWeight;
+        playerJson["lifeState"] = ToInt(player.lifeState);
+        topdownCore["player"] = playerJson;
+
+        json characterJson;
+        characterJson["active"] = character.active;
+        characterJson["equippedSetId"] = character.equippedSetId;
+        characterJson["locomotion"] = ToInt(character.locomotion);
+        characterJson["running"] = character.running;
+        characterJson["bodyFacingRadians"] = character.bodyFacingRadians;
+        characterJson["desiredAimRadians"] = character.desiredAimRadians;
+        characterJson["feetRotationRadians"] = character.feetRotationRadians;
+        characterJson["upperRotationRadians"] = character.upperRotationRadians;
+        characterJson["aimFrozen"] = character.aimFrozen;
+        characterJson["feetAnimationTimeMs"] = character.feetAnimationTimeMs;
+        characterJson["upperAnimationTimeMs"] = character.upperAnimationTimeMs;
+        topdownCore["playerCharacter"] = characterJson;
+
+        json attackJson;
+        attackJson["equipmentSetId"] = attack.equipmentSetId;
+        attackJson["currentFireMode"] = ToInt(attack.currentFireMode);
+        attackJson["cooldownRemainingMs"] = attack.cooldownRemainingMs;
+        topdownCore["playerAttack"] = attackJson;
+
+        json cameraJson;
+        cameraJson["position"] = SerializeVector2(camera.position);
+        cameraJson["targetPosition"] = SerializeVector2(camera.targetPosition);
+        cameraJson["aimOffset"] = SerializeVector2(camera.aimOffset);
+        cameraJson["mode"] = ToInt(camera.mode);
+        cameraJson["scriptedTarget"] = SerializeVector2(camera.scriptedTarget);
+        topdownCore["camera"] = cameraJson;
+
+        outRoot["topdownCore"] = topdownCore;
+    }
+
+    static SavedTopdownCoreRuntime DeserializeTopdownCoreRuntime(const json& root)
+    {
+        SavedTopdownCoreRuntime out;
+        if (!root.contains("topdownCore") || !root["topdownCore"].is_object()) {
+            return out;
+        }
+
+        const json& topdownCore = root["topdownCore"];
+        out.controlsEnabled = topdownCore.value("controlsEnabled", true);
+        out.timeMs = topdownCore.value("timeMs", 0.0f);
+
+        if (topdownCore.contains("player") && topdownCore["player"].is_object()) {
+            const json& player = topdownCore["player"];
+            if (player.contains("position") && player["position"].is_object()) {
+                out.player.position = DeserializeVector2(player["position"]);
+            }
+            if (player.contains("velocity") && player["velocity"].is_object()) {
+                out.player.velocity = DeserializeVector2(player["velocity"]);
+            }
+            if (player.contains("facing") && player["facing"].is_object()) {
+                out.player.facing = DeserializeVector2(player["facing"]);
+            }
+            out.player.health = player.value("health", 100.0f);
+            out.player.maxHealth = player.value("maxHealth", 100.0f);
+            out.player.hurtCooldownRemainingMs = player.value("hurtCooldownRemainingMs", 0.0f);
+            out.player.hitSlowdownRemainingMs = player.value("hitSlowdownRemainingMs", 0.0f);
+            out.player.hitSlowdownMultiplier = player.value("hitSlowdownMultiplier", 1.0f);
+            out.player.damageFlashRemainingMs = player.value("damageFlashRemainingMs", 0.0f);
+            out.player.lowHealthEffectWeight = player.value("lowHealthEffectWeight", 0.0f);
+            out.player.lifeState = ToPlayerLifeState(player.value("lifeState", 0));
+        }
+
+        if (topdownCore.contains("playerCharacter") && topdownCore["playerCharacter"].is_object()) {
+            const json& character = topdownCore["playerCharacter"];
+            out.playerCharacter.active = character.value("active", false);
+            out.playerCharacter.equippedSetId = character.value("equippedSetId", "");
+            out.playerCharacter.locomotion = ToLocomotionType(character.value("locomotion", 0));
+            out.playerCharacter.running = character.value("running", false);
+            out.playerCharacter.bodyFacingRadians = character.value("bodyFacingRadians", 0.0f);
+            out.playerCharacter.desiredAimRadians = character.value("desiredAimRadians", 0.0f);
+            out.playerCharacter.feetRotationRadians = character.value("feetRotationRadians", 0.0f);
+            out.playerCharacter.upperRotationRadians = character.value("upperRotationRadians", 0.0f);
+            out.playerCharacter.aimFrozen = character.value("aimFrozen", false);
+            out.playerCharacter.feetAnimationTimeMs = character.value("feetAnimationTimeMs", 0.0f);
+            out.playerCharacter.upperAnimationTimeMs = character.value("upperAnimationTimeMs", 0.0f);
+        }
+
+        if (topdownCore.contains("playerAttack") && topdownCore["playerAttack"].is_object()) {
+            const json& attack = topdownCore["playerAttack"];
+            out.playerAttack.equipmentSetId = attack.value("equipmentSetId", "");
+            out.playerAttack.currentFireMode = ToFireMode(attack.value("currentFireMode", 0));
+            out.playerAttack.cooldownRemainingMs = attack.value("cooldownRemainingMs", 0.0f);
+        }
+
+        if (topdownCore.contains("camera") && topdownCore["camera"].is_object()) {
+            const json& camera = topdownCore["camera"];
+            if (camera.contains("position") && camera["position"].is_object()) {
+                out.camera.position = DeserializeVector2(camera["position"]);
+            }
+            if (camera.contains("targetPosition") && camera["targetPosition"].is_object()) {
+                out.camera.targetPosition = DeserializeVector2(camera["targetPosition"]);
+            }
+            if (camera.contains("aimOffset") && camera["aimOffset"].is_object()) {
+                out.camera.aimOffset = DeserializeVector2(camera["aimOffset"]);
+            }
+            out.camera.mode = ToCameraMode(camera.value("mode", 0));
+            if (camera.contains("scriptedTarget") && camera["scriptedTarget"].is_object()) {
+                out.camera.scriptedTarget = DeserializeVector2(camera["scriptedTarget"]);
+            }
+        }
+
+        return out;
+    }
+
+    static void RestoreTopdownCoreRuntime(GameState& state, const SavedTopdownCoreRuntime& saved)
+    {
+        TopdownRuntimeData& runtime = state.topdown.runtime;
+
+        runtime.controlsEnabled = saved.controlsEnabled;
+        runtime.timeMs = saved.timeMs;
+
+        runtime.player.position = saved.player.position;
+        runtime.player.velocity = saved.player.velocity;
+        runtime.player.desiredVelocity = {};
+        runtime.player.facing = saved.player.facing;
+        runtime.player.health = saved.player.health;
+        runtime.player.maxHealth = saved.player.maxHealth;
+        runtime.player.hurtCooldownRemainingMs = saved.player.hurtCooldownRemainingMs;
+        runtime.player.hitSlowdownRemainingMs = saved.player.hitSlowdownRemainingMs;
+        runtime.player.hitSlowdownMultiplier = saved.player.hitSlowdownMultiplier;
+        runtime.player.damageFlashRemainingMs = saved.player.damageFlashRemainingMs;
+        runtime.player.lowHealthEffectWeight = saved.player.lowHealthEffectWeight;
+        runtime.player.lifeState = saved.player.lifeState;
+        runtime.player.moveInputForward = 0.0f;
+        runtime.player.moveInputRight = 0.0f;
+        runtime.player.wantsRun = false;
+
+        runtime.playerCharacter.active = saved.playerCharacter.active;
+        runtime.playerCharacter.equippedSetId = saved.playerCharacter.equippedSetId.empty()
+                ? runtime.playerCharacter.equippedSetId
+                : saved.playerCharacter.equippedSetId;
+        runtime.playerCharacter.locomotion = saved.playerCharacter.locomotion;
+        runtime.playerCharacter.running = saved.playerCharacter.running;
+        runtime.playerCharacter.bodyFacingRadians = saved.playerCharacter.bodyFacingRadians;
+        runtime.playerCharacter.desiredAimRadians = saved.playerCharacter.desiredAimRadians;
+        runtime.playerCharacter.feetRotationRadians = saved.playerCharacter.feetRotationRadians;
+        runtime.playerCharacter.upperRotationRadians = saved.playerCharacter.upperRotationRadians;
+        runtime.playerCharacter.aimFrozen = saved.playerCharacter.aimFrozen;
+        runtime.playerCharacter.feetAnimationTimeMs = saved.playerCharacter.feetAnimationTimeMs;
+        runtime.playerCharacter.upperAnimationTimeMs = saved.playerCharacter.upperAnimationTimeMs;
+        runtime.playerCharacter.currentFeetHandle =
+                FindTopdownPlayerFeetAnimationHandle(state, "idle");
+        runtime.playerCharacter.currentUpperHandle =
+                FindTopdownPlayerEquipmentAnimationHandle(
+                        state,
+                        runtime.playerCharacter.equippedSetId,
+                        "idle");
+
+        runtime.playerAttack = {};
+        runtime.playerAttack.equipmentSetId = saved.playerAttack.equipmentSetId.empty()
+                ? runtime.playerCharacter.equippedSetId
+                : saved.playerAttack.equipmentSetId;
+        runtime.playerAttack.currentFireMode = saved.playerAttack.currentFireMode;
+        runtime.playerAttack.cooldownRemainingMs = saved.playerAttack.cooldownRemainingMs;
+        runtime.playerAttack.state = TopdownPlayerAttackState::Idle;
+        runtime.playerAttack.active = false;
+        runtime.playerAttack.triggerHeld = false;
+        runtime.playerAttack.wantsTriggerRelease = false;
+        runtime.playerAttack.pendingPrimaryAttack = false;
+        runtime.playerAttack.pendingSecondaryAttack = false;
+        runtime.playerAttack.rifleLoopPlaying = false;
+
+        if (FindTopdownPlayerWeaponConfigByEquipmentSetId(state, runtime.playerAttack.equipmentSetId) == nullptr) {
+            runtime.playerAttack.equipmentSetId = runtime.playerCharacter.equippedSetId;
+            runtime.playerAttack.currentFireMode = TopdownFireMode::SemiAuto;
+        }
+
+        runtime.camera.position = saved.camera.position;
+        runtime.camera.targetPosition = saved.camera.targetPosition;
+        runtime.camera.aimOffset = saved.camera.aimOffset;
+        runtime.camera.mode = saved.camera.mode;
+        runtime.camera.scriptedTarget = saved.camera.scriptedTarget;
+        runtime.camera.isPanning = false;
+        runtime.camera.panTimerMs = 0.0f;
+        runtime.camera.panDurationMs = 0.0f;
+        runtime.camera.panStart = {};
+        runtime.camera.panEnd = {};
+        if (runtime.controlsEnabled && runtime.camera.mode == TopdownCameraMode::Scripted) {
+            runtime.camera.mode = TopdownCameraMode::Player;
+        }
+
+        runtime.scriptedMove = {};
+        runtime.screenShake = {};
+        runtime.worldEvents.clear();
+        runtime.speechBubbles.entries.clear();
+        runtime.narrationPopups = {};
+        runtime.returnToMenuRequested = false;
+        runtime.gameOverActive = false;
+        runtime.gameOverElapsedMs = 0.0f;
     }
 
     static void SerializeScriptState(const GameState& state, json& outRoot)
@@ -332,6 +666,14 @@ namespace
             }
         }
 
+        if (!root.contains("topdownCore") || !root["topdownCore"].is_object()) {
+            TraceLog(LOG_WARNING,
+                     "Save file missing topdownCore, using defaults: %s",
+                     savePath.string().c_str());
+        }
+        outData.topdownCore = DeserializeTopdownCoreRuntime(root);
+        outData.controlsEnabled = outData.topdownCore.controlsEnabled;
+
         return true;
     }
 
@@ -444,10 +786,61 @@ namespace
     {
         RestoreAudioState(state, data);
 
-        state.topdown.runtime.controlsEnabled = data.controlsEnabled;
         state.mode = GameMode::TopDown;
         return true;
     }
+}
+
+bool CanSaveGame(const GameState& state, std::string* outReason)
+{
+    auto fail = [&](const std::string& reason) {
+        if (outReason != nullptr) {
+            *outReason = reason;
+        }
+        return false;
+    };
+
+    const bool hasActiveTopdownLevel = state.topdown.runtime.levelActive;
+    const bool isTopdownGameplay = state.mode == GameMode::TopDown;
+    const bool isPausedTopdownMenu = state.mode == GameMode::Menu && hasActiveTopdownLevel;
+    if (!isTopdownGameplay && !isPausedTopdownMenu) {
+        return fail("Not in game");
+    }
+
+    if (!hasActiveTopdownLevel) {
+        return fail("No active level");
+    }
+
+    if (state.topdown.currentLevelId.empty()) {
+        return fail("No level id");
+    }
+
+    if (!state.topdown.runtime.controlsEnabled) {
+        return fail("Cannot save now");
+    }
+
+    if (state.topdown.runtime.gameOverActive ||
+        state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive) {
+        return fail("Cannot save while dead");
+    }
+
+    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (!npc.active || !npc.visible || npc.dead || npc.corpse) {
+            continue;
+        }
+
+        if (npc.engagementState == TopdownNpcEngagementState::Reacting ||
+            npc.engagementState == TopdownNpcEngagementState::Engaged ||
+            npc.combatState != TopdownNpcCombatState::None ||
+            npc.hasPlayerTarget) {
+            return fail("Cannot save in combat");
+        }
+    }
+
+    if (outReason != nullptr) {
+        outReason->clear();
+    }
+    return true;
 }
 
 bool SaveGameToSlot(GameState& state, int slotIndex)
@@ -457,8 +850,9 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
         return false;
     }
 
-    if (state.topdown.currentLevelId.empty()) {
-        TraceLog(LOG_ERROR, "Cannot save: no current topdown level id");
+    std::string reason;
+    if (!CanSaveGame(state, &reason)) {
+        TraceLog(LOG_WARNING, "Cannot save game: %s", reason.c_str());
         return false;
     }
 
@@ -479,6 +873,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
     root["saveName"] = saveName;
     SerializeScriptState(state, root);
     SerializeAudioState(state, root);
+    SerializeTopdownCoreRuntime(state, root);
 
     const fs::path savePath = GetSaveSlotPath(slotIndex);
     std::ofstream out(savePath);
@@ -518,6 +913,8 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
         state.mode = GameMode::Menu;
         return false;
     }
+
+    RestoreTopdownCoreRuntime(state, data.topdownCore);
 
     return ApplyPostLevelLoadSaveRestoreData(state, data);
 }
