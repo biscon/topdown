@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <ctime>
 #include <cstdio>
+#include <exception>
 
 #include "utils/json.hpp"
 #include "debug/DebugConsole.h"
@@ -15,7 +16,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 1;
+    static constexpr int SAVE_VERSION = 2;
 
 
     struct SavedMusicSlotState {
@@ -37,6 +38,10 @@ namespace
 
     struct SaveRestoreData {
         bool controlsEnabled = true;
+
+        std::string levelId;
+        std::string saveName;
+        std::string savedAt;
 
         std::unordered_map<std::string, bool> flags;
         std::unordered_map<std::string, int> ints;
@@ -253,7 +258,16 @@ namespace
                 TraceLog(LOG_ERROR, "Failed to open save file: %s", savePath.string().c_str());
                 return false;
             }
-            in >> root;
+
+            try {
+                in >> root;
+            } catch (const std::exception& ex) {
+                TraceLog(LOG_ERROR,
+                         "Failed parsing save file %s: %s",
+                         savePath.string().c_str(),
+                         ex.what());
+                return false;
+            }
         }
 
         const int version = root.value("version", 0);
@@ -262,6 +276,15 @@ namespace
                      "Unsupported save version %d in file: %s",
                      version,
                      savePath.string().c_str());
+            return false;
+        }
+
+        outData.levelId = root.value("levelId", "");
+        outData.saveName = root.value("saveName", "");
+        outData.savedAt = root.value("savedAt", "");
+
+        if (outData.levelId.empty()) {
+            TraceLog(LOG_ERROR, "Save file missing levelId: %s", savePath.string().c_str());
             return false;
         }
 
@@ -417,13 +440,26 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
         return false;
     }
 
+    if (state.topdown.currentLevelId.empty()) {
+        TraceLog(LOG_ERROR, "Cannot save: no current topdown level id");
+        return false;
+    }
+
     if (!EnsureSaveDirExists()) {
         TraceLog(LOG_ERROR, "Failed to create save directory");
         return false;
     }
 
+    const std::string saveName =
+            !state.topdown.currentLevelSaveName.empty()
+            ? state.topdown.currentLevelSaveName
+            : state.topdown.currentLevelId;
+
     json root;
     root["version"] = SAVE_VERSION;
+    root["savedAt"] = BuildCurrentSaveTimestamp();
+    root["levelId"] = state.topdown.currentLevelId;
+    root["saveName"] = saveName;
     SerializeScriptState(state, root);
     SerializeAudioState(state, root);
 
@@ -483,11 +519,27 @@ std::string GetSaveSlotSummary(int slotIndex)
         if (!in.is_open()) {
             return "Unreadable";
         }
-        in >> root;
+
+        try {
+            in >> root;
+        } catch (const std::exception&) {
+            return "Corrupt";
+        }
     }
 
-    const std::string saveName = root.value("saveName", root.value("sceneId", ""));
-    const std::string savedAt = root.value("savedAt", "");
+    try {
+        const std::string levelId = root.value("levelId", "");
+        const std::string savedAt = root.value("savedAt", "");
+        std::string saveName = root.value("saveName", "");
+        if (saveName.empty()) {
+            saveName = levelId;
+        }
+        if (saveName.empty()) {
+            saveName = root.value("sceneId", "");
+        }
 
-    return FormatSaveSummary(saveName, savedAt);
+        return FormatSaveSummary(saveName, savedAt);
+    } catch (const std::exception&) {
+        return "Corrupt";
+    }
 }
