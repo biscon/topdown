@@ -6,10 +6,15 @@
 #include <ctime>
 #include <cstdio>
 #include <exception>
+#include <unordered_map>
 
 #include "utils/json.hpp"
 #include "debug/DebugConsole.h"
 #include "resources/Resources.h"
+#include "scripting/ScriptSystem.h"
+#include "topdown/LevelLoad.h"
+#include "topdown/LevelRegistry.h"
+#include "topdown/LevelScripting.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -420,11 +425,23 @@ namespace
         RestoreMusicSlotState(state, data.audio.musicB, state.audio.musicB);
     }
 
-    static bool ApplySaveRestoreData(GameState& state, const SaveRestoreData& data)
+    static void UnloadCurrentTopdownLevelForSaveLoad(GameState& state)
     {
+        if (state.topdown.runtime.levelActive) {
+            TopdownRunLevelExitHook(state);
+            ScriptSystemShutdown(state.script);
+        }
 
+        TopdownUnloadLevel(state);
+    }
+
+    static void RestorePersistentScriptState(GameState& state, const SaveRestoreData& data)
+    {
         RestoreScriptState(state, data);
+    }
 
+    static bool ApplyPostLevelLoadSaveRestoreData(GameState& state, const SaveRestoreData& data)
+    {
         RestoreAudioState(state, data);
 
         state.topdown.runtime.controlsEnabled = data.controlsEnabled;
@@ -489,7 +506,20 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
         return false;
     }
 
-    return ApplySaveRestoreData(state, data);
+    UnloadCurrentTopdownLevelForSaveLoad(state);
+
+    RestorePersistentScriptState(state, data);
+
+    if (!TopdownLoadLevelById(state, data.levelId.c_str())) {
+        TraceLog(LOG_ERROR,
+                 "Failed loading saved topdown level '%s' from slot %d",
+                 data.levelId.c_str(),
+                 slotIndex);
+        state.mode = GameMode::Menu;
+        return false;
+    }
+
+    return ApplyPostLevelLoadSaveRestoreData(state, data);
 }
 
 bool DoesSaveSlotExist(int slotIndex)
