@@ -362,6 +362,34 @@ static int Lua_setAmmo(lua_State* L)
     return 1;
 }
 
+static int Lua_getLoadedAmmo(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    int amount = 0;
+    TopdownScriptGetLoadedAmmo(*gameState, std::string(equipmentSetId), amount);
+    lua_pushinteger(L, amount);
+    return 1;
+}
+
+static int Lua_setLoadedAmmo(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    const int amount = static_cast<int>(luaL_checkinteger(L, 2));
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetLoadedAmmo(*gameState, std::string(equipmentSetId), amount);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_setFlag(lua_State* L)
 {
     const char* name = luaL_checkstring(L, 1);
@@ -1576,6 +1604,8 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "removeAmmo", Lua_removeAmmo);
     lua_register(L, "getAmmo", Lua_getAmmo);
     lua_register(L, "setAmmo", Lua_setAmmo);
+    lua_register(L, "getLoadedAmmo", Lua_getLoadedAmmo);
+    lua_register(L, "setLoadedAmmo", Lua_setLoadedAmmo);
 
     lua_register(L, "walkTo", Lua_walkTo);
     lua_register(L, "runTo", Lua_runTo);
