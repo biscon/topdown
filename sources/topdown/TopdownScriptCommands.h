@@ -43,6 +43,12 @@ bool TopdownScriptRemoveEquipmentSet(GameState& state, const std::string& equipm
 bool TopdownScriptHasEquipmentSet(GameState& state, const std::string& equipmentSetId, bool& outOwned);
 bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipmentSetId);
 
+// Player ammo
+bool TopdownScriptAddAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptRemoveAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& outAmount);
+bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount);
+
 // NPC lifecycle
 bool TopdownScriptSpawnNpc(
         GameState& state,

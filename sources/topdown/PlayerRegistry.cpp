@@ -220,6 +220,32 @@ static void ReadPlayerWeaponConfigs(
             cfg.noiseRadius = 0.0f;
         }
 
+        cfg.ammoType = entry.value("ammoType", std::string());
+        cfg.magazineSize = std::max(0, entry.value("magazineSize", 0));
+        cfg.ammoPerShot = std::max(0, entry.value("ammoPerShot", 0));
+        cfg.reloadDurationMs = std::max(0.0f, entry.value("reloadDurationMs", 0.0f));
+
+        if (cfg.ammoType.empty()) {
+            cfg.magazineSize = 0;
+            cfg.ammoPerShot = 0;
+            cfg.reloadDurationMs = 0.0f;
+        } else {
+            if (cfg.magazineSize <= 0) {
+                TraceLog(LOG_WARNING,
+                         "Player weapon config '%s': ammoType '%s' has no magazineSize",
+                         cfg.equipmentSetId.c_str(),
+                         cfg.ammoType.c_str());
+            }
+
+            if (cfg.ammoPerShot <= 0) {
+                TraceLog(LOG_WARNING,
+                         "Player weapon config '%s': ammoType '%s' has invalid ammoPerShot, defaulting to 1",
+                         cfg.equipmentSetId.c_str(),
+                         cfg.ammoType.c_str());
+                cfg.ammoPerShot = 1;
+            }
+        }
+
         {
             const std::string attackTypeStr =
                     entry.value("primaryAttackType", std::string("none"));
@@ -1095,6 +1121,47 @@ namespace {
                HasTopdownPlayerEquipmentAnimationSet(state, equipmentSetId);
     }
 
+    const TopdownInventoryCount* FindTopdownInventoryCount(
+            const std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        for (const TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                return &entry;
+            }
+        }
+
+        return nullptr;
+    }
+
+    TopdownInventoryCount* FindTopdownInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        for (TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                return &entry;
+            }
+        }
+
+        return nullptr;
+    }
+
+    TopdownInventoryCount& FindOrCreateTopdownInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        if (TopdownInventoryCount* entry = FindTopdownInventoryCount(counts, id)) {
+            return *entry;
+        }
+
+        TopdownInventoryCount entry;
+        entry.id = id;
+        entry.count = 0;
+        counts.push_back(entry);
+        return counts.back();
+    }
+
     void ApplyTopdownPlayerEquipmentConfig(
             GameState& state,
             const TopdownPlayerWeaponConfig& config)
@@ -1228,6 +1295,98 @@ bool TopdownPlayerEquipSlot(GameState& state, int slot)
     }
 
     return TopdownPlayerEquipEquipmentSet(state, config->equipmentSetId);
+}
+
+int TopdownPlayerGetReserveAmmo(
+        const GameState& state,
+        const std::string& ammoType)
+{
+    if (ammoType.empty()) {
+        return 0;
+    }
+
+    const TopdownInventoryCount* entry = FindTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    return entry != nullptr ? std::max(0, entry->count) : 0;
+}
+
+int TopdownPlayerGetLoadedAmmo(
+        const GameState& state,
+        const std::string& equipmentSetId)
+{
+    if (equipmentSetId.empty()) {
+        return 0;
+    }
+
+    const TopdownInventoryCount* entry = FindTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.loadedAmmo,
+            equipmentSetId);
+    return entry != nullptr ? std::max(0, entry->count) : 0;
+}
+
+bool TopdownPlayerSetReserveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int count)
+{
+    if (ammoType.empty()) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, count);
+    return true;
+}
+
+bool TopdownPlayerSetLoadedAmmo(
+        GameState& state,
+        const std::string& equipmentSetId,
+        int count)
+{
+    if (equipmentSetId.empty()) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.loadedAmmo,
+            equipmentSetId);
+    entry.count = std::max(0, count);
+    return true;
+}
+
+bool TopdownPlayerAddAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount)
+{
+    if (ammoType.empty() || amount <= 0) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, entry.count) + amount;
+    return true;
+}
+
+bool TopdownPlayerRemoveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount)
+{
+    if (ammoType.empty() || amount <= 0) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, entry.count - amount);
+    return true;
 }
 
 void TopdownValidatePlayerEquipmentRuntime(GameState& state)
@@ -1416,6 +1575,8 @@ void InitializeTopdownPlayerCharacterRuntime(GameState& state)
 
     state.topdown.runtime.playerInventory.ownedEquipmentSetIds.clear();
     state.topdown.runtime.playerInventory.ownedEquipmentSetIds.push_back(kFallbackEquipmentSetId);
+    state.topdown.runtime.playerInventory.reserveAmmo.clear();
+    state.topdown.runtime.playerInventory.loadedAmmo.clear();
 
     runtime.equippedSetId = kFallbackEquipmentSetId;
 

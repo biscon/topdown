@@ -306,6 +306,62 @@ static int Lua_equipEquipmentSet(lua_State* L)
     return 1;
 }
 
+static int Lua_addAmmo(lua_State* L)
+{
+    const char* ammoType = luaL_checkstring(L, 1);
+    const int amount = static_cast<int>(luaL_checkinteger(L, 2));
+    if (gameState == nullptr || ammoType == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptAddAmmo(*gameState, std::string(ammoType), amount);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_removeAmmo(lua_State* L)
+{
+    const char* ammoType = luaL_checkstring(L, 1);
+    const int amount = static_cast<int>(luaL_checkinteger(L, 2));
+    if (gameState == nullptr || ammoType == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptRemoveAmmo(*gameState, std::string(ammoType), amount);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_getAmmo(lua_State* L)
+{
+    const char* ammoType = luaL_checkstring(L, 1);
+    if (gameState == nullptr || ammoType == nullptr) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    int amount = 0;
+    TopdownScriptGetAmmo(*gameState, std::string(ammoType), amount);
+    lua_pushinteger(L, amount);
+    return 1;
+}
+
+static int Lua_setAmmo(lua_State* L)
+{
+    const char* ammoType = luaL_checkstring(L, 1);
+    const int amount = static_cast<int>(luaL_checkinteger(L, 2));
+    if (gameState == nullptr || ammoType == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetAmmo(*gameState, std::string(ammoType), amount);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_setFlag(lua_State* L)
 {
     const char* name = luaL_checkstring(L, 1);
@@ -1516,6 +1572,10 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "removeEquipmentSet", Lua_removeEquipmentSet);
     lua_register(L, "hasEquipmentSet", Lua_hasEquipmentSet);
     lua_register(L, "equipEquipmentSet", Lua_equipEquipmentSet);
+    lua_register(L, "addAmmo", Lua_addAmmo);
+    lua_register(L, "removeAmmo", Lua_removeAmmo);
+    lua_register(L, "getAmmo", Lua_getAmmo);
+    lua_register(L, "setAmmo", Lua_setAmmo);
 
     lua_register(L, "walkTo", Lua_walkTo);
     lua_register(L, "runTo", Lua_runTo);

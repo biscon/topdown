@@ -36,6 +36,27 @@ bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipme
     return TopdownPlayerEquipEquipmentSet(state, equipmentSetId);
 }
 
+bool TopdownScriptAddAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerAddAmmo(state, ammoType, amount);
+}
+
+bool TopdownScriptRemoveAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerRemoveAmmo(state, ammoType, amount);
+}
+
+bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& outAmount)
+{
+    outAmount = TopdownPlayerGetReserveAmmo(state, ammoType);
+    return !ammoType.empty();
+}
+
+bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerSetReserveAmmo(state, ammoType, amount);
+}
+
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
     for (auto& l : state.topdown.runtime.render.bottomLayers) {

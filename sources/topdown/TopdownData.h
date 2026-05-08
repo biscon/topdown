@@ -853,6 +853,11 @@ struct TopdownPlayerWeaponConfig {
     float meleeDoorImpulse = 0.0f;
     float noiseRadius = 1200.0f;
 
+    std::string ammoType;
+    int magazineSize = 0;
+    int ammoPerShot = 0;
+    float reloadDurationMs = 0.0f;
+
     TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
 
     TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
@@ -1522,8 +1527,16 @@ struct TopdownWorldEvent {
     int sourceNpcHandle = -1; // only valid if sourceType == Npc
 };
 
+struct TopdownInventoryCount {
+    std::string id;
+    int count = 0;
+};
+
 struct TopdownPlayerInventoryRuntime {
     std::vector<std::string> ownedEquipmentSetIds;
+
+    std::vector<TopdownInventoryCount> reserveAmmo;
+    std::vector<TopdownInventoryCount> loadedAmmo;
 };
 
 struct TopdownRuntimeData {
