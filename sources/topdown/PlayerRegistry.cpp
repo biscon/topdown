@@ -1074,6 +1074,205 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
     return nullptr;
 }
 
+namespace {
+    constexpr const char* kFallbackEquipmentSetId = "knife";
+
+    bool IsTopdownPlayerEquipmentSetOwned(
+            const TopdownPlayerInventoryRuntime& inventory,
+            const std::string& equipmentSetId)
+    {
+        return std::find(
+                inventory.ownedEquipmentSetIds.begin(),
+                inventory.ownedEquipmentSetIds.end(),
+                equipmentSetId) != inventory.ownedEquipmentSetIds.end();
+    }
+
+    bool IsTopdownPlayerEquipmentSetUsable(
+            const GameState& state,
+            const std::string& equipmentSetId)
+    {
+        return FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId) != nullptr &&
+               HasTopdownPlayerEquipmentAnimationSet(state, equipmentSetId);
+    }
+
+    void ApplyTopdownPlayerEquipmentConfig(
+            GameState& state,
+            const TopdownPlayerWeaponConfig& config)
+    {
+        TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+
+        character.equippedSetId = config.equipmentSetId;
+        character.currentUpperHandle = FindTopdownPlayerEquipmentAnimationHandle(
+                state,
+                character.equippedSetId,
+                "idle");
+
+        attack.equipmentSetId = config.equipmentSetId;
+        attack.currentFireMode = config.defaultFireMode;
+        attack.active = false;
+        attack.state = TopdownPlayerAttackState::Idle;
+        attack.input = TopdownAttackInput::Primary;
+        attack.attackType = TopdownAttackType::None;
+        attack.stateTimeMs = 0.0f;
+        attack.animationDurationMs = 0.0f;
+        attack.cooldownRemainingMs = 0.0f;
+        attack.triggerHeld = false;
+        attack.wantsTriggerRelease = false;
+        attack.burstShotsRemaining = 0;
+        attack.burstShotTimerMs = 0.0f;
+        attack.pendingPrimaryAttack = false;
+        attack.pendingSecondaryAttack = false;
+        attack.fullAutoShakeCooldownMs = 0.0f;
+        attack.meleeHitPending = false;
+        attack.meleeHitApplied = false;
+        attack.rifleLoopPlaying = false;
+    }
+}
+
+bool TopdownPlayerHasEquipmentSet(
+        const GameState& state,
+        const std::string& equipmentSetId)
+{
+    return IsTopdownPlayerEquipmentSetOwned(
+            state.topdown.runtime.playerInventory,
+            equipmentSetId);
+}
+
+bool TopdownPlayerAddEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (IsTopdownPlayerEquipmentSetOwned(inventory, equipmentSetId)) {
+        return true;
+    }
+
+    if (!IsTopdownPlayerEquipmentSetUsable(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot add player equipment set '%s': missing weapon config or animation set",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    inventory.ownedEquipmentSetIds.push_back(equipmentSetId);
+    return true;
+}
+
+bool TopdownPlayerRemoveEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    if (equipmentSetId == kFallbackEquipmentSetId) {
+        TraceLog(LOG_WARNING, "Cannot remove fallback player equipment set '%s'", kFallbackEquipmentSetId);
+        return false;
+    }
+
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    auto it = std::find(
+            inventory.ownedEquipmentSetIds.begin(),
+            inventory.ownedEquipmentSetIds.end(),
+            equipmentSetId);
+    if (it == inventory.ownedEquipmentSetIds.end()) {
+        return true;
+    }
+
+    inventory.ownedEquipmentSetIds.erase(it);
+
+    if (state.topdown.runtime.playerCharacter.equippedSetId == equipmentSetId ||
+        state.topdown.runtime.playerAttack.equipmentSetId == equipmentSetId) {
+        if (!TopdownPlayerEquipEquipmentSet(state, kFallbackEquipmentSetId)) {
+            TopdownValidatePlayerEquipmentRuntime(state);
+        }
+    }
+
+    return true;
+}
+
+bool TopdownPlayerEquipEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': missing weapon config",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    if (!TopdownPlayerHasEquipmentSet(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': not owned",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    if (!HasTopdownPlayerEquipmentAnimationSet(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': missing animation set",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    ApplyTopdownPlayerEquipmentConfig(state, *config);
+    return true;
+}
+
+bool TopdownPlayerEquipSlot(GameState& state, int slot)
+{
+    const TopdownPlayerWeaponConfig* config = FindTopdownPlayerWeaponConfigBySlot(state, slot);
+    if (config == nullptr) {
+        return false;
+    }
+
+    return TopdownPlayerEquipEquipmentSet(state, config->equipmentSetId);
+}
+
+void TopdownValidatePlayerEquipmentRuntime(GameState& state)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    if (IsTopdownPlayerEquipmentSetUsable(state, kFallbackEquipmentSetId)) {
+        if (!IsTopdownPlayerEquipmentSetOwned(inventory, kFallbackEquipmentSetId)) {
+            inventory.ownedEquipmentSetIds.push_back(kFallbackEquipmentSetId);
+        }
+    } else {
+        TraceLog(LOG_ERROR,
+                 "Player fallback equipment set '%s' is missing weapon config or animation set",
+                 kFallbackEquipmentSetId);
+    }
+
+    const std::string equippedSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    if (!equippedSetId.empty() &&
+        TopdownPlayerHasEquipmentSet(state, equippedSetId) &&
+        IsTopdownPlayerEquipmentSetUsable(state, equippedSetId)) {
+        const TopdownPlayerWeaponConfig* config =
+                FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equippedSetId);
+        if (config != nullptr) {
+            ApplyTopdownPlayerEquipmentConfig(state, *config);
+            return;
+        }
+    }
+
+    if (TopdownPlayerHasEquipmentSet(state, kFallbackEquipmentSetId) &&
+        TopdownPlayerEquipEquipmentSet(state, kFallbackEquipmentSetId)) {
+        return;
+    }
+
+    for (const std::string& ownedId : inventory.ownedEquipmentSetIds) {
+        if (IsTopdownPlayerEquipmentSetUsable(state, ownedId)) {
+            const TopdownPlayerWeaponConfig* config =
+                    FindTopdownPlayerWeaponConfigByEquipmentSetId(state, ownedId);
+            if (config != nullptr) {
+                ApplyTopdownPlayerEquipmentConfig(state, *config);
+                return;
+            }
+        }
+    }
+}
+
 bool LoadTopdownPlayerCharacterAssets(GameState& state)
 {
     TopdownCharacterAssetData& asset = state.topdown.playerCharacterAsset;
@@ -1215,7 +1414,10 @@ void InitializeTopdownPlayerCharacterRuntime(GameState& state)
     runtime = {};
     runtime.active = asset.loaded;
 
-    runtime.equippedSetId = "handgun";
+    state.topdown.runtime.playerInventory.ownedEquipmentSetIds.clear();
+    state.topdown.runtime.playerInventory.ownedEquipmentSetIds.push_back(kFallbackEquipmentSetId);
+
+    runtime.equippedSetId = kFallbackEquipmentSetId;
 
     runtime.bodyFacingRadians = 0.0f;
     runtime.desiredAimRadians = 0.0f;
@@ -1252,4 +1454,6 @@ void InitializeTopdownPlayerCharacterRuntime(GameState& state)
         state.topdown.runtime.playerAttack.equipmentSetId = runtime.equippedSetId;
         state.topdown.runtime.playerAttack.currentFireMode = TopdownFireMode::SemiAuto;
     }
+
+    TopdownValidatePlayerEquipmentRuntime(state);
 }

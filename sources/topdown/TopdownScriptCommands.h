@@ -36,6 +36,13 @@ bool TopdownScriptStartRunTo(GameState& state, Vector2 target);
 bool TopdownScriptStartWalkToSpawn(GameState& state, const std::string& spawnId);
 bool TopdownScriptStartRunToSpawn(GameState& state, const std::string& spawnId);
 
+
+// Player equipment
+bool TopdownScriptAddEquipmentSet(GameState& state, const std::string& equipmentSetId);
+bool TopdownScriptRemoveEquipmentSet(GameState& state, const std::string& equipmentSetId);
+bool TopdownScriptHasEquipmentSet(GameState& state, const std::string& equipmentSetId, bool& outOwned);
+bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipmentSetId);
+
 // NPC lifecycle
 bool TopdownScriptSpawnNpc(
         GameState& state,

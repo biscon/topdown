@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 5;
+    static constexpr int SAVE_VERSION = 6;
 
 
     struct SavedMusicSlotState {
@@ -107,6 +107,10 @@ namespace
         SavedPlayerCharacterRuntime playerCharacter;
         SavedPlayerAttackRuntime playerAttack;
         SavedCameraRuntime camera;
+    };
+
+    struct SavedTopdownInventoryRuntime {
+        std::vector<std::string> ownedEquipmentSetIds;
     };
 
     struct SavedNpcPatrolRuntime {
@@ -262,6 +266,7 @@ namespace
 
         SavedAudioState audio;
         SavedTopdownCoreRuntime topdownCore;
+        SavedTopdownInventoryRuntime topdownInventory;
         SavedTopdownNpcsRuntime topdownNpcs;
         SavedTopdownWorldRuntime topdownWorld;
     };
@@ -554,6 +559,32 @@ namespace
         outRoot["topdownCore"] = topdownCore;
     }
 
+    static void SerializeTopdownInventoryRuntime(const GameState& state, json& outRoot)
+    {
+        json inventory;
+        inventory["ownedEquipmentSets"] = state.topdown.runtime.playerInventory.ownedEquipmentSetIds;
+        outRoot["topdownInventory"] = inventory;
+    }
+
+    static SavedTopdownInventoryRuntime DeserializeTopdownInventoryRuntime(const json& root)
+    {
+        SavedTopdownInventoryRuntime out;
+        if (!root.contains("topdownInventory") || !root["topdownInventory"].is_object()) {
+            return out;
+        }
+
+        const json& inventory = root["topdownInventory"];
+        if (inventory.contains("ownedEquipmentSets") && inventory["ownedEquipmentSets"].is_array()) {
+            for (const json& entry : inventory["ownedEquipmentSets"]) {
+                if (entry.is_string()) {
+                    out.ownedEquipmentSetIds.push_back(entry.get<std::string>());
+                }
+            }
+        }
+
+        return out;
+    }
+
     static SavedTopdownCoreRuntime DeserializeTopdownCoreRuntime(const json& root)
     {
         SavedTopdownCoreRuntime out;
@@ -713,6 +744,11 @@ namespace
         runtime.returnToMenuRequested = false;
         runtime.gameOverActive = false;
         runtime.gameOverElapsedMs = 0.0f;
+    }
+
+    static void RestoreTopdownInventoryRuntime(GameState& state, const SavedTopdownInventoryRuntime& saved)
+    {
+        state.topdown.runtime.playerInventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
     }
 
     static void SerializeTopdownNpcsRuntime(const GameState& state, json& outRoot)
@@ -1650,6 +1686,14 @@ namespace
         outData.topdownCore = DeserializeTopdownCoreRuntime(root);
         outData.controlsEnabled = outData.topdownCore.controlsEnabled;
 
+        if (!root.contains("topdownInventory") || !root["topdownInventory"].is_object()) {
+            TraceLog(LOG_ERROR,
+                     "Save file missing topdownInventory: %s",
+                     savePath.string().c_str());
+            return false;
+        }
+        outData.topdownInventory = DeserializeTopdownInventoryRuntime(root);
+
         if (!root.contains("topdownNpcs") || !root["topdownNpcs"].is_object()) {
             TraceLog(LOG_ERROR,
                      "Save file missing topdownNpcs: %s",
@@ -1878,6 +1922,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
     SerializeScriptState(state, root);
     SerializeAudioState(state, root);
     SerializeTopdownCoreRuntime(state, root);
+    SerializeTopdownInventoryRuntime(state, root);
     SerializeTopdownNpcsRuntime(state, root);
     SerializeTopdownWorldRuntime(state, root);
 
@@ -1921,6 +1966,8 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
     }
 
     RestoreTopdownCoreRuntime(state, data.topdownCore);
+    RestoreTopdownInventoryRuntime(state, data.topdownInventory);
+    TopdownValidatePlayerEquipmentRuntime(state);
     RestoreTopdownNpcsRuntime(state, data.topdownNpcs);
     RestoreTopdownWorldRuntime(state, data.topdownWorld);
 
