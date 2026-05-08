@@ -1,7 +1,10 @@
 #include "topdown/LevelRender.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <string>
 #include <vector>
 
 #include "data/GameState.h"
@@ -10,6 +13,7 @@
 #include "resources/TextureAsset.h"
 #include "render/EffectShaderRegistry.h"
 #include "topdown/CharacterRender.h"
+#include "topdown/PlayerRegistry.h"
 #include "TopdownHelpers.h"
 #include "rlgl.h"
 #include "external/glad.h"
@@ -1516,6 +1520,150 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     }
 }
 
+static void BuildEquipmentHudLabel(
+        const std::string& equipmentSetId,
+        char* outLabel,
+        size_t outLabelSize)
+{
+    if (outLabel == nullptr || outLabelSize == 0) {
+        return;
+    }
+
+    if (equipmentSetId.empty()) {
+        std::snprintf(outLabel, outLabelSize, "Unarmed");
+        return;
+    }
+
+    size_t writeIndex = 0;
+    bool nextUpper = true;
+    for (char ch : equipmentSetId) {
+        if (writeIndex + 1 >= outLabelSize) {
+            break;
+        }
+
+        if (ch == '_' || ch == '-') {
+            outLabel[writeIndex++] = ' ';
+            nextUpper = true;
+            continue;
+        }
+
+        const unsigned char c = static_cast<unsigned char>(ch);
+        outLabel[writeIndex++] = nextUpper
+                ? static_cast<char>(std::toupper(c))
+                : static_cast<char>(std::tolower(c));
+        nextUpper = false;
+    }
+
+    outLabel[writeIndex] = '\0';
+}
+
+static void DrawCurrentWeaponAmmoHud(GameState& state)
+{
+    const TopdownPlayerWeaponConfig* weaponConfig = TopdownPlayerGetCurrentWeaponConfig(state);
+    if (weaponConfig == nullptr) {
+        return;
+    }
+
+    char label[96]{};
+    BuildEquipmentHudLabel(weaponConfig->equipmentSetId, label, sizeof(label));
+    const bool usesAmmo = TopdownPlayerWeaponUsesAmmo(*weaponConfig);
+
+    constexpr float kPanelW = 430.0f;
+    constexpr float kPanelX = INTERNAL_WIDTH - kPanelW - 28.0f;
+    constexpr int kTitleFontSize = 24;
+    constexpr int kLineFontSize = 20;
+
+    const float panelH = usesAmmo ? 126.0f : 68.0f;
+    const float panelY = INTERNAL_HEIGHT - panelH - 28.0f;
+    const Rectangle panel{kPanelX, panelY, kPanelW, panelH};
+    DrawRectangleRec(panel, Color{18, 18, 18, 205});
+    DrawRectangleLinesEx(panel, 2.0f, Color{0, 0, 0, 230});
+
+    DrawText(
+            label,
+            static_cast<int>(panel.x + 16.0f),
+            static_cast<int>(panel.y + 12.0f),
+            kTitleFontSize,
+            WHITE);
+
+    if (!usesAmmo) {
+        return;
+    }
+
+    const int loadedAmmo = std::clamp(
+            TopdownPlayerGetLoadedAmmo(state, weaponConfig->equipmentSetId),
+            0,
+            weaponConfig->magazineSize);
+    const int reserveAmmo = std::max(
+            0,
+            TopdownPlayerGetReserveAmmo(state, weaponConfig->ammoType));
+
+    char ammoText[96]{};
+    std::snprintf(
+            ammoText,
+            sizeof(ammoText),
+            "%d / %d   Reserve: %d",
+            loadedAmmo,
+            weaponConfig->magazineSize,
+            reserveAmmo);
+
+    DrawText(
+            ammoText,
+            static_cast<int>(panel.x + 16.0f),
+            static_cast<int>(panel.y + 44.0f),
+            kLineFontSize,
+            LIGHTGRAY);
+
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const bool reloading = attack.reloadActive &&
+                           (attack.reloadEquipmentSetId.empty() ||
+                            attack.reloadEquipmentSetId == weaponConfig->equipmentSetId);
+    if (reloading) {
+        const float reloadProgress = (attack.reloadDurationMs > 0.0f)
+                ? std::clamp(attack.reloadTimerMs / attack.reloadDurationMs, 0.0f, 1.0f)
+                : 0.0f;
+
+        DrawText(
+                "Reloading...",
+                static_cast<int>(panel.x + 16.0f),
+                static_cast<int>(panel.y + 72.0f),
+                kLineFontSize,
+                YELLOW);
+
+        const Rectangle barBg{panel.x + 150.0f, panel.y + 76.0f, 250.0f, 14.0f};
+        const Rectangle barFill{
+                barBg.x,
+                barBg.y,
+                std::round(barBg.width * reloadProgress),
+                barBg.height};
+        DrawRectangleRec(barBg, Color{45, 45, 45, 230});
+        if (barFill.width > 0.0f) {
+            DrawRectangleRec(barFill, Color{230, 190, 55, 240});
+        }
+        DrawRectangleLinesEx(barBg, 1.0f, Color{0, 0, 0, 230});
+        return;
+    }
+
+    const char* statusText = nullptr;
+    Color statusColor = LIGHTGRAY;
+    if (loadedAmmo <= 0 && reserveAmmo <= 0) {
+        statusText = "EMPTY";
+        statusColor = RED;
+    } else if (loadedAmmo <= 0 && reserveAmmo > 0) {
+        statusText = "Press R";
+        statusColor = YELLOW;
+    }
+
+    if (statusText != nullptr) {
+        DrawText(
+                statusText,
+                static_cast<int>(panel.x + 16.0f),
+                static_cast<int>(panel.y + 76.0f),
+                kLineFontSize,
+                statusColor);
+    }
+}
+
 static void DrawHealthBar(GameState& state) {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
 
@@ -1745,6 +1893,7 @@ void TopdownRenderUi(GameState& state)
     }
 
     DrawHealthBar(state);
+    DrawCurrentWeaponAmmoHud(state);
     TopdownRenderSpeechBubbles(state);
     TopdownRenderNarrationPopups(state);
     DrawInteractPrompt(state);

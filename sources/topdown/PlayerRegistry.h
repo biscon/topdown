@@ -35,6 +35,15 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
         const GameState& state,
         int slot);
 
+const TopdownPlayerWeaponConfig* TopdownPlayerGetCurrentWeaponConfig(
+        const GameState& state);
+
+bool TopdownPlayerWeaponUsesAmmo(
+        const TopdownPlayerWeaponConfig& config);
+
+bool TopdownPlayerCurrentWeaponUsesAmmo(
+        const GameState& state);
+
 bool TopdownPlayerHasEquipmentSet(
         const GameState& state,
         const std::string& equipmentSetId);
