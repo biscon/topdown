@@ -376,7 +376,8 @@ static bool CanAttemptHeldFullAutoPrimaryAttack(const GameState& state)
     const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
-    if (!attack.triggerHeld ||
+    if (attack.reloadActive ||
+        !attack.triggerHeld ||
         attack.currentFireMode != TopdownFireMode::FullAuto ||
         attack.cooldownRemainingMs > 0.0f) {
         return false;
@@ -404,7 +405,7 @@ static bool BeginPlayerAttackRuntime(
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
-    if (attack.active) {
+    if (attack.active || attack.reloadActive) {
         return false;
     }
 
@@ -1143,6 +1144,13 @@ static void ConsumeQueuedPlayerAttackInputs(GameState& state)
 {
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
 
+    if (attack.reloadActive) {
+        attack.pendingPrimaryAttack = false;
+        attack.pendingSecondaryAttack = false;
+        attack.triggerHeld = false;
+        return;
+    }
+
     if (attack.pendingSecondaryAttack) {
         attack.pendingSecondaryAttack = false;
         TryStartPlayerAttack(state, TopdownAttackInput::Secondary);
@@ -1169,7 +1177,9 @@ static void UpdatePlayerRifleLoopAudio(GameState& state)
     if (weaponConfig != nullptr &&
         weaponConfig->tracerStyle == TopdownTracerStyle::Rifle &&
         attack.currentFireMode == TopdownFireMode::FullAuto) {
-        if (attack.triggerHeld && PlayerHasLoadedAmmoForShot(state, *weaponConfig)) {
+        if (!attack.reloadActive &&
+            attack.triggerHeld &&
+            PlayerHasLoadedAmmoForShot(state, *weaponConfig)) {
             if (!attack.rifleLoopPlaying) {
                 PlaySoundById(state, "rifle_full_auto_start", RandomRangeFloat(0.98f, 1.02f));
                 PlaySoundById(state, "rifle_full_auto_loop", RandomRangeFloat(0.98f, 1.02f));
@@ -1191,6 +1201,7 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
 
     UpdatePlayerAttackTimers(attack, dt);
     UpdateActivePlayerAttack(state, dt);
+    TopdownPlayerUpdateReload(state, dt);
     ConsumeQueuedPlayerAttackInputs(state);
     UpdatePlayerRifleLoopAudio(state);
 }
