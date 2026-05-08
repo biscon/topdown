@@ -48,6 +48,8 @@ bool TopdownScriptAddAmmo(GameState& state, const std::string& ammoType, int amo
 bool TopdownScriptRemoveAmmo(GameState& state, const std::string& ammoType, int amount);
 bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& outAmount);
 bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptGetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int& outAmount);
+bool TopdownScriptSetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int amount);
 
 // NPC lifecycle
 bool TopdownScriptSpawnNpc(
