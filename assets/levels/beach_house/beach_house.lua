@@ -26,8 +26,12 @@ function Level_onEnter()
     RestoreLevel()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
-        startScript("IntroNarration")
+        --startScript("IntroNarration")
         SpawnAndAssignInitialPatrols()
+        addEquipmentSet("handgun")
+        equipEquipmentSet("handgun")
+        addAmmo("pistol", 24)
+        setLoadedAmmo("handgun", 0)
     end
     --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
 end
