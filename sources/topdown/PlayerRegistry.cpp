@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "resources/AsepriteAsset.h"
+#include "audio/Audio.h"
 #include "utils/json.hpp"
 #include "raymath.h"
 
@@ -1162,12 +1163,64 @@ namespace {
         return counts.back();
     }
 
+    bool PlayerWeaponCanUseReload(const TopdownPlayerWeaponConfig& config)
+    {
+        return !config.ammoType.empty() &&
+               config.magazineSize > 0 &&
+               config.ammoPerShot > 0 &&
+               config.reloadDurationMs > 0.0f;
+    }
+
+    void StopPlayerRifleLoopIfPlaying(GameState& state)
+    {
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+        if (!attack.rifleLoopPlaying) {
+            return;
+        }
+
+        StopSoundById(state, "rifle_full_auto_loop");
+        PlaySoundById(state, "rifle_full_auto_end");
+        attack.rifleLoopPlaying = false;
+    }
+
+    void ClearPlayerReloadState(TopdownPlayerAttackRuntime& attack)
+    {
+        attack.reloadActive = false;
+        attack.reloadTimerMs = 0.0f;
+        attack.reloadDurationMs = 0.0f;
+        attack.reloadEquipmentSetId.clear();
+    }
+
+    bool CompletePlayerReload(GameState& state, const TopdownPlayerWeaponConfig& config)
+    {
+        if (!PlayerWeaponCanUseReload(config)) {
+            TraceLog(LOG_WARNING,
+                     "Cannot complete reload for player equipment '%s': invalid ammo config",
+                     config.equipmentSetId.c_str());
+            return false;
+        }
+
+        const int loadedAmmo = std::clamp(
+                TopdownPlayerGetLoadedAmmo(state, config.equipmentSetId),
+                0,
+                config.magazineSize);
+        const int reserveAmmo = std::max(0, TopdownPlayerGetReserveAmmo(state, config.ammoType));
+        const int needed = std::max(0, config.magazineSize - loadedAmmo);
+        const int taken = std::min(needed, reserveAmmo);
+
+        TopdownPlayerSetLoadedAmmo(state, config.equipmentSetId, loadedAmmo + taken);
+        TopdownPlayerSetReserveAmmo(state, config.ammoType, reserveAmmo - taken);
+        return taken > 0;
+    }
+
     void ApplyTopdownPlayerEquipmentConfig(
             GameState& state,
             const TopdownPlayerWeaponConfig& config)
     {
         TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
         TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+
+        StopPlayerRifleLoopIfPlaying(state);
 
         character.equippedSetId = config.equipmentSetId;
         character.currentUpperHandle = FindTopdownPlayerEquipmentAnimationHandle(
@@ -1190,6 +1243,7 @@ namespace {
         attack.burstShotTimerMs = 0.0f;
         attack.pendingPrimaryAttack = false;
         attack.pendingSecondaryAttack = false;
+        ClearPlayerReloadState(attack);
         attack.fullAutoShakeCooldownMs = 0.0f;
         attack.meleeHitPending = false;
         attack.meleeHitApplied = false;
@@ -1387,6 +1441,145 @@ bool TopdownPlayerRemoveAmmo(
             ammoType);
     entry.count = std::max(0, entry.count - amount);
     return true;
+}
+
+bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state)
+{
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (attack.active || attack.reloadActive) {
+        return false;
+    }
+
+    const std::string& equipmentSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr || !PlayerWeaponCanUseReload(*config)) {
+        return false;
+    }
+
+    if (!TopdownPlayerHasEquipmentSet(state, config->equipmentSetId)) {
+        return false;
+    }
+
+    const int loadedAmmo = std::clamp(
+            TopdownPlayerGetLoadedAmmo(state, config->equipmentSetId),
+            0,
+            config->magazineSize);
+    if (loadedAmmo >= config->magazineSize) {
+        return false;
+    }
+
+    return TopdownPlayerGetReserveAmmo(state, config->ammoType) > 0;
+}
+
+bool TopdownPlayerStartReload(GameState& state)
+{
+    if (!TopdownPlayerCanReloadCurrentWeapon(state)) {
+        return false;
+    }
+
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const std::string& equipmentSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr) {
+        return false;
+    }
+
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    attack.burstShotsRemaining = 0;
+    attack.burstShotTimerMs = 0.0f;
+    StopPlayerRifleLoopIfPlaying(state);
+
+    attack.reloadActive = true;
+    attack.reloadTimerMs = 0.0f;
+    attack.reloadDurationMs = config->reloadDurationMs;
+    attack.reloadEquipmentSetId = config->equipmentSetId;
+    return true;
+}
+
+void TopdownPlayerCancelReload(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    ClearPlayerReloadState(attack);
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    StopPlayerRifleLoopIfPlaying(state);
+}
+
+void TopdownPlayerUpdateReload(GameState& state, float dt)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (!attack.reloadActive) {
+        return;
+    }
+
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    StopPlayerRifleLoopIfPlaying(state);
+
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, attack.reloadEquipmentSetId);
+    if (config == nullptr ||
+        attack.reloadEquipmentSetId != state.topdown.runtime.playerCharacter.equippedSetId ||
+        !TopdownPlayerHasEquipmentSet(state, attack.reloadEquipmentSetId) ||
+        !PlayerWeaponCanUseReload(*config)) {
+        TopdownPlayerCancelReload(state);
+        return;
+    }
+
+    attack.reloadDurationMs = std::max(0.0f, attack.reloadDurationMs);
+    if (attack.reloadDurationMs <= 0.0f) {
+        attack.reloadDurationMs = config->reloadDurationMs;
+    }
+
+    attack.reloadTimerMs = std::max(0.0f, attack.reloadTimerMs + dt * 1000.0f);
+    if (attack.reloadTimerMs < attack.reloadDurationMs) {
+        return;
+    }
+
+    CompletePlayerReload(state, *config);
+    ClearPlayerReloadState(attack);
+}
+
+void TopdownPlayerValidateReloadState(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (!attack.reloadActive) {
+        ClearPlayerReloadState(attack);
+        return;
+    }
+
+    if (attack.reloadEquipmentSetId.empty()) {
+        attack.reloadEquipmentSetId = attack.equipmentSetId;
+    }
+
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, attack.reloadEquipmentSetId);
+    if (config == nullptr ||
+        attack.reloadEquipmentSetId != state.topdown.runtime.playerCharacter.equippedSetId ||
+        !TopdownPlayerHasEquipmentSet(state, attack.reloadEquipmentSetId) ||
+        !PlayerWeaponCanUseReload(*config)) {
+        TopdownPlayerCancelReload(state);
+        return;
+    }
+
+    attack.reloadTimerMs = std::max(0.0f, attack.reloadTimerMs);
+    attack.reloadDurationMs = attack.reloadDurationMs > 0.0f
+            ? attack.reloadDurationMs
+            : config->reloadDurationMs;
+
+    if (attack.reloadTimerMs >= attack.reloadDurationMs) {
+        CompletePlayerReload(state, *config);
+        ClearPlayerReloadState(attack);
+    }
 }
 
 void TopdownValidatePlayerEquipmentRuntime(GameState& state)

@@ -71,6 +71,15 @@ void TopdownHandleInput(GameState& state)
                 ConsumeEvent(ev);
                 break;
 
+            case KEY_R:
+                if (!state.topdown.runtime.controlsEnabled || state.debug.console.open) {
+                    break;
+                }
+
+                TopdownPlayerStartReload(state);
+                ConsumeEvent(ev);
+                break;
+
             case KEY_ONE:
             case KEY_TWO:
             case KEY_THREE:

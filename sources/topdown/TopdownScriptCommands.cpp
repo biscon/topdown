@@ -68,6 +68,17 @@ bool TopdownScriptSetLoadedAmmo(GameState& state, const std::string& equipmentSe
     return TopdownPlayerSetLoadedAmmo(state, equipmentSetId, amount);
 }
 
+bool TopdownScriptReloadCurrentWeapon(GameState& state)
+{
+    return TopdownPlayerStartReload(state);
+}
+
+bool TopdownScriptIsReloading(GameState& state, bool& outReloading)
+{
+    outReloading = state.topdown.runtime.playerAttack.reloadActive;
+    return true;
+}
+
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {
     for (auto& l : state.topdown.runtime.render.bottomLayers) {

@@ -1074,6 +1074,11 @@ struct TopdownPlayerAttackRuntime {
     bool pendingPrimaryAttack = false;
     bool pendingSecondaryAttack = false;
 
+    bool reloadActive = false;
+    float reloadTimerMs = 0.0f;
+    float reloadDurationMs = 0.0f;
+    std::string reloadEquipmentSetId;
+
     float fullAutoShakeCooldownMs = 0.0f;
 
     bool meleeHitPending = false;

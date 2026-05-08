@@ -83,6 +83,12 @@ bool TopdownPlayerRemoveAmmo(
         const std::string& ammoType,
         int amount);
 
+bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state);
+bool TopdownPlayerStartReload(GameState& state);
+void TopdownPlayerCancelReload(GameState& state);
+void TopdownPlayerUpdateReload(GameState& state, float dt);
+void TopdownPlayerValidateReloadState(GameState& state);
+
 void TopdownValidatePlayerEquipmentRuntime(GameState& state);
 
 SpriteAssetHandle FindTopdownPlayerEquipmentAttackAnimationHandle(

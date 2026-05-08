@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 7;
+    static constexpr int SAVE_VERSION = 8;
 
 
     struct SavedMusicSlotState {
@@ -88,6 +88,11 @@ namespace
         std::string equipmentSetId;
         TopdownFireMode currentFireMode = TopdownFireMode::SemiAuto;
         float cooldownRemainingMs = 0.0f;
+
+        bool reloadActive = false;
+        float reloadTimerMs = 0.0f;
+        float reloadDurationMs = 0.0f;
+        std::string reloadEquipmentSetId;
     };
 
     struct SavedCameraRuntime {
@@ -548,6 +553,10 @@ namespace
         attackJson["equipmentSetId"] = attack.equipmentSetId;
         attackJson["currentFireMode"] = ToInt(attack.currentFireMode);
         attackJson["cooldownRemainingMs"] = attack.cooldownRemainingMs;
+        attackJson["reloadActive"] = attack.reloadActive;
+        attackJson["reloadTimerMs"] = attack.reloadTimerMs;
+        attackJson["reloadDurationMs"] = attack.reloadDurationMs;
+        attackJson["reloadEquipmentSetId"] = attack.reloadEquipmentSetId;
         topdownCore["playerAttack"] = attackJson;
 
         json cameraJson;
@@ -705,6 +714,10 @@ namespace
             out.playerAttack.equipmentSetId = attack.value("equipmentSetId", "");
             out.playerAttack.currentFireMode = ToFireMode(attack.value("currentFireMode", 0));
             out.playerAttack.cooldownRemainingMs = attack.value("cooldownRemainingMs", 0.0f);
+            out.playerAttack.reloadActive = attack.value("reloadActive", false);
+            out.playerAttack.reloadTimerMs = attack.value("reloadTimerMs", 0.0f);
+            out.playerAttack.reloadDurationMs = attack.value("reloadDurationMs", 0.0f);
+            out.playerAttack.reloadEquipmentSetId = attack.value("reloadEquipmentSetId", "");
         }
 
         if (topdownCore.contains("camera") && topdownCore["camera"].is_object()) {
@@ -784,6 +797,10 @@ namespace
         runtime.playerAttack.pendingPrimaryAttack = false;
         runtime.playerAttack.pendingSecondaryAttack = false;
         runtime.playerAttack.rifleLoopPlaying = false;
+        runtime.playerAttack.reloadActive = saved.playerAttack.reloadActive;
+        runtime.playerAttack.reloadTimerMs = saved.playerAttack.reloadTimerMs;
+        runtime.playerAttack.reloadDurationMs = saved.playerAttack.reloadDurationMs;
+        runtime.playerAttack.reloadEquipmentSetId = saved.playerAttack.reloadEquipmentSetId;
 
         if (FindTopdownPlayerWeaponConfigByEquipmentSetId(state, runtime.playerAttack.equipmentSetId) == nullptr) {
             runtime.playerAttack.equipmentSetId = runtime.playerCharacter.equippedSetId;
@@ -820,6 +837,18 @@ namespace
         inventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
         inventory.reserveAmmo = saved.reserveAmmo;
         inventory.loadedAmmo = saved.loadedAmmo;
+    }
+
+    static void RestoreTopdownPlayerReloadRuntime(GameState& state, const SavedPlayerAttackRuntime& saved)
+    {
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+        attack.reloadActive = saved.reloadActive;
+        attack.reloadTimerMs = saved.reloadTimerMs;
+        attack.reloadDurationMs = saved.reloadDurationMs;
+        attack.reloadEquipmentSetId = saved.reloadEquipmentSetId.empty()
+                ? attack.equipmentSetId
+                : saved.reloadEquipmentSetId;
+        TopdownPlayerValidateReloadState(state);
     }
 
     static void SerializeTopdownNpcsRuntime(const GameState& state, json& outRoot)
@@ -2039,6 +2068,7 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
     RestoreTopdownCoreRuntime(state, data.topdownCore);
     RestoreTopdownInventoryRuntime(state, data.topdownInventory);
     TopdownValidatePlayerEquipmentRuntime(state);
+    RestoreTopdownPlayerReloadRuntime(state, data.topdownCore.playerAttack);
     RestoreTopdownNpcsRuntime(state, data.topdownNpcs);
     RestoreTopdownWorldRuntime(state, data.topdownWorld);
 

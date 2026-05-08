@@ -50,6 +50,8 @@ bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& ou
 bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount);
 bool TopdownScriptGetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int& outAmount);
 bool TopdownScriptSetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int amount);
+bool TopdownScriptReloadCurrentWeapon(GameState& state);
+bool TopdownScriptIsReloading(GameState& state, bool& outReloading);
 
 // NPC lifecycle
 bool TopdownScriptSpawnNpc(
