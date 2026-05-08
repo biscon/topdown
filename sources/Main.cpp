@@ -93,10 +93,12 @@ static void ProcessGameModeInput(GameState& state)
         if (ev.key.key == KEY_ESCAPE) {
             if (state.mode == GameMode::TopDown) {
                 state.mode = GameMode::Menu;
+                MenuRefreshRoot();
                 TraceLog(LOG_DEBUG, "Opening menu");
                 ConsumeEvent(ev);
             } else if (state.mode == GameMode::Game) {
                 state.mode = GameMode::Menu;
+                MenuRefreshRoot();
                 TraceLog(LOG_DEBUG, "Opening menu");
                 ConsumeEvent(ev);
             }
