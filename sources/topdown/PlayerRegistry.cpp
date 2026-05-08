@@ -1171,6 +1171,39 @@ namespace {
                config.reloadDurationMs > 0.0f;
     }
 
+    int ClampLoadedAmmoForEquipmentSet(
+            const GameState& state,
+            const std::string& equipmentSetId,
+            int count)
+    {
+        const TopdownPlayerWeaponConfig* config =
+                FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+        if (config != nullptr && config->magazineSize > 0) {
+            return std::clamp(count, 0, config->magazineSize);
+        }
+
+        return std::max(0, count);
+    }
+
+    void ValidateTopdownPlayerLoadedAmmoRuntime(GameState& state)
+    {
+        std::vector<TopdownInventoryCount>& loadedAmmo =
+                state.topdown.runtime.playerInventory.loadedAmmo;
+
+        loadedAmmo.erase(
+                std::remove_if(
+                        loadedAmmo.begin(),
+                        loadedAmmo.end(),
+                        [](const TopdownInventoryCount& entry) {
+                            return entry.id.empty();
+                        }),
+                loadedAmmo.end());
+
+        for (TopdownInventoryCount& entry : loadedAmmo) {
+            entry.count = ClampLoadedAmmoForEquipmentSet(state, entry.id, entry.count);
+        }
+    }
+
     void StopPlayerRifleLoopIfPlaying(GameState& state)
     {
         TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
@@ -1376,7 +1409,9 @@ int TopdownPlayerGetLoadedAmmo(
     const TopdownInventoryCount* entry = FindTopdownInventoryCount(
             state.topdown.runtime.playerInventory.loadedAmmo,
             equipmentSetId);
-    return entry != nullptr ? std::max(0, entry->count) : 0;
+    return entry != nullptr
+            ? ClampLoadedAmmoForEquipmentSet(state, equipmentSetId, entry->count)
+            : 0;
 }
 
 bool TopdownPlayerSetReserveAmmo(
@@ -1407,7 +1442,7 @@ bool TopdownPlayerSetLoadedAmmo(
     TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
             state.topdown.runtime.playerInventory.loadedAmmo,
             equipmentSetId);
-    entry.count = std::max(0, count);
+    entry.count = ClampLoadedAmmoForEquipmentSet(state, equipmentSetId, count);
     return true;
 }
 
@@ -1584,6 +1619,8 @@ void TopdownPlayerValidateReloadState(GameState& state)
 
 void TopdownValidatePlayerEquipmentRuntime(GameState& state)
 {
+    ValidateTopdownPlayerLoadedAmmoRuntime(state);
+
     TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
 
     if (IsTopdownPlayerEquipmentSetUsable(state, kFallbackEquipmentSetId)) {
