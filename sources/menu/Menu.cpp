@@ -212,12 +212,31 @@ static Rectangle GetSliderValueRect(const Rectangle& itemRect)
     };
 }
 
-static void ReturnToMainMenuRoot()
+static void RebuildMainMenuRoot()
 {
     while (!menuStack.empty()) {
         menuStack.pop();
     }
+
     menuStack.push(createMainMenu());
+}
+
+static void ReturnToMainMenuRoot()
+{
+    RebuildMainMenuRoot();
+}
+
+static void PopMenuStackOneLevel()
+{
+    if (menuStack.size() <= 1) {
+        return;
+    }
+
+    menuStack.pop();
+
+    if (menuStack.size() == 1) {
+        RebuildMainMenuRoot();
+    }
 }
 
 static std::shared_ptr<Menu> createResolutionMenu()
@@ -233,9 +252,7 @@ static std::shared_ptr<Menu> createResolutionMenu()
         MenuItem back;
         back.text = "Back";
         back.action = [] {
-            if (!menuStack.empty()) {
-                menuStack.pop();
-            }
+            PopMenuStackOneLevel();
         };
         menu->items.push_back(back);
 
@@ -266,9 +283,7 @@ static std::shared_ptr<Menu> createResolutionMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -310,9 +325,7 @@ static std::shared_ptr<Menu> createDisplayModeMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -391,9 +404,7 @@ static std::shared_ptr<Menu> createGraphicsMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -436,9 +447,7 @@ static std::shared_ptr<Menu> createAudioMenu()
     back.text = "Back";
     back.action = [] {
         SaveSettings(game->settings);
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -469,9 +478,7 @@ static std::shared_ptr<Menu> createSettingsMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -507,9 +514,7 @@ static std::shared_ptr<Menu> createSaveMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -542,9 +547,7 @@ static std::shared_ptr<Menu> createLoadMenu()
     MenuItem back;
     back.text = "Back";
     back.action = [] {
-        if (!menuStack.empty()) {
-            menuStack.pop();
-        }
+        PopMenuStackOneLevel();
     };
     menu->items.push_back(back);
 
@@ -616,9 +619,21 @@ void MenuInit(GameState* gameState)
 {
     game = gameState;
     menuStack = std::stack<std::shared_ptr<Menu>>();
-    menuStack.push(createMainMenu());
+    RebuildMainMenuRoot();
     gDraggingSliderIndex = -1;
     gSliderPreviewCooldown = 0.0f;
+    gLastSliderPreviewValue = -9999.0f;
+}
+
+void MenuRefreshRoot()
+{
+    if (game == nullptr) {
+        return;
+    }
+
+    RebuildMainMenuRoot();
+
+    gDraggingSliderIndex = -1;
     gLastSliderPreviewValue = -9999.0f;
 }
 
@@ -837,7 +852,7 @@ void MenuHandleInput(GameState& state)
             gLastSliderPreviewValue = -9999.0f;
 
             if (menuStack.size() > 1) {
-                menuStack.pop();
+                PopMenuStackOneLevel();
             } else {
                 ResumeBestAvailableMode();
                 TraceLog(LOG_DEBUG, "closing menu");
