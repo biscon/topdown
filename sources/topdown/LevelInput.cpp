@@ -91,25 +91,14 @@ void TopdownHandleInput(GameState& state)
                     default: break;
                 }
 
-                const TopdownPlayerWeaponConfig* weaponConfig =
-                        FindTopdownPlayerWeaponConfigBySlot(state, slot);
-
-                if (weaponConfig != nullptr &&
-                    HasTopdownPlayerEquipmentAnimationSet(state, weaponConfig->equipmentSetId)) {
-                    state.topdown.runtime.playerCharacter.equippedSetId = weaponConfig->equipmentSetId;
-                    state.topdown.runtime.playerAttack.equipmentSetId = weaponConfig->equipmentSetId;
-                    state.topdown.runtime.playerAttack.currentFireMode = weaponConfig->defaultFireMode;
-                    state.topdown.runtime.playerAttack.triggerHeld = false;
-                    state.topdown.runtime.playerAttack.pendingPrimaryAttack = false;
-                    state.topdown.runtime.playerAttack.pendingSecondaryAttack = false;
-
+                if (TopdownPlayerEquipSlot(state, slot)) {
                     TraceLog(LOG_INFO,
                              "Switched player weapon slot %d -> %s",
                              slot,
-                             weaponConfig->equipmentSetId.c_str());
+                             state.topdown.runtime.playerCharacter.equippedSetId.c_str());
                 } else {
                     TraceLog(LOG_WARNING,
-                             "Player weapon slot %d is not configured or missing animation set",
+                             "Player weapon slot %d is unavailable, not owned, or not configured",
                              slot);
                 }
 

@@ -5,6 +5,7 @@
 #include "nav/NavMeshQuery.h"
 #include "raymath.h"
 #include "topdown/NpcRegistry.h"
+#include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownNpcPatrol.h"
 #include "audio/Audio.h"
 #include "resources/AsepriteAsset.h"
@@ -12,6 +13,28 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "utils/Interpolation.h"
 #include "TopdownHelpers.h"
+
+
+bool TopdownScriptAddEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerAddEquipmentSet(state, equipmentSetId);
+}
+
+bool TopdownScriptRemoveEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerRemoveEquipmentSet(state, equipmentSetId);
+}
+
+bool TopdownScriptHasEquipmentSet(GameState& state, const std::string& equipmentSetId, bool& outOwned)
+{
+    outOwned = TopdownPlayerHasEquipmentSet(state, equipmentSetId);
+    return true;
+}
+
+bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerEquipEquipmentSet(state, equipmentSetId);
+}
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {

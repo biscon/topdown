@@ -252,6 +252,60 @@ int Lua_consolePrint(lua_State* L)
     return 0;
 }
 
+
+static int Lua_addEquipmentSet(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptAddEquipmentSet(*gameState, std::string(equipmentSetId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_removeEquipmentSet(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptRemoveEquipmentSet(*gameState, std::string(equipmentSetId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_hasEquipmentSet(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    bool owned = false;
+    const bool ok = TopdownScriptHasEquipmentSet(*gameState, std::string(equipmentSetId), owned);
+    lua_pushboolean(L, ok && owned ? 1 : 0);
+    return 1;
+}
+
+static int Lua_equipEquipmentSet(lua_State* L)
+{
+    const char* equipmentSetId = luaL_checkstring(L, 1);
+    if (gameState == nullptr || equipmentSetId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptEquipEquipmentSet(*gameState, std::string(equipmentSetId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_setFlag(lua_State* L)
 {
     const char* name = luaL_checkstring(L, 1);
@@ -1457,6 +1511,11 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "getInt", Lua_getInt);
     lua_register(L, "setString", Lua_setString);
     lua_register(L, "getString", Lua_getString);
+
+    lua_register(L, "addEquipmentSet", Lua_addEquipmentSet);
+    lua_register(L, "removeEquipmentSet", Lua_removeEquipmentSet);
+    lua_register(L, "hasEquipmentSet", Lua_hasEquipmentSet);
+    lua_register(L, "equipEquipmentSet", Lua_equipEquipmentSet);
 
     lua_register(L, "walkTo", Lua_walkTo);
     lua_register(L, "runTo", Lua_runTo);

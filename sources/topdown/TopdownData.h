@@ -1021,7 +1021,7 @@ struct TopdownCharacterAssetData {
 struct TopdownCharacterRuntime {
     bool active = false;
 
-    std::string equippedSetId = "handgun";
+    std::string equippedSetId = "knife";
 
     TopdownLocomotionType locomotion = TopdownLocomotionType::Idle;
     bool running = false;
@@ -1522,6 +1522,10 @@ struct TopdownWorldEvent {
     int sourceNpcHandle = -1; // only valid if sourceType == Npc
 };
 
+struct TopdownPlayerInventoryRuntime {
+    std::vector<std::string> ownedEquipmentSetIds;
+};
+
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -1540,6 +1544,7 @@ struct TopdownRuntimeData {
     TopdownPlayerRuntime player;
     TopdownCharacterRuntime playerCharacter;
     TopdownPlayerAttackRuntime playerAttack;
+    TopdownPlayerInventoryRuntime playerInventory;
     TopdownCameraRuntime camera;
     TopdownDebugData debug;
 

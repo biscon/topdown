@@ -35,6 +35,28 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
         const GameState& state,
         int slot);
 
+bool TopdownPlayerHasEquipmentSet(
+        const GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerAddEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerRemoveEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerEquipEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerEquipSlot(
+        GameState& state,
+        int slot);
+
+void TopdownValidatePlayerEquipmentRuntime(GameState& state);
+
 SpriteAssetHandle FindTopdownPlayerEquipmentAttackAnimationHandle(
         const GameState& state,
         const std::string& equipmentSetId,
