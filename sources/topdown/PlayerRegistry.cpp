@@ -1101,6 +1101,27 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
     return nullptr;
 }
 
+const TopdownPlayerWeaponConfig* TopdownPlayerGetCurrentWeaponConfig(
+        const GameState& state)
+{
+    return FindTopdownPlayerWeaponConfigByEquipmentSetId(
+            state,
+            state.topdown.runtime.playerCharacter.equippedSetId);
+}
+
+bool TopdownPlayerWeaponUsesAmmo(const TopdownPlayerWeaponConfig& config)
+{
+    return !config.ammoType.empty() &&
+           config.magazineSize > 0 &&
+           config.ammoPerShot > 0;
+}
+
+bool TopdownPlayerCurrentWeaponUsesAmmo(const GameState& state)
+{
+    const TopdownPlayerWeaponConfig* config = TopdownPlayerGetCurrentWeaponConfig(state);
+    return config != nullptr && TopdownPlayerWeaponUsesAmmo(*config);
+}
+
 namespace {
     constexpr const char* kFallbackEquipmentSetId = "knife";
 
@@ -1165,10 +1186,7 @@ namespace {
 
     bool PlayerWeaponCanUseReload(const TopdownPlayerWeaponConfig& config)
     {
-        return !config.ammoType.empty() &&
-               config.magazineSize > 0 &&
-               config.ammoPerShot > 0 &&
-               config.reloadDurationMs > 0.0f;
+        return TopdownPlayerWeaponUsesAmmo(config) && config.reloadDurationMs > 0.0f;
     }
 
     int ClampLoadedAmmoForEquipmentSet(
