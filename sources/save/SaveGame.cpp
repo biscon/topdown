@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 6;
+    static constexpr int SAVE_VERSION = 7;
 
 
     struct SavedMusicSlotState {
@@ -111,6 +111,8 @@ namespace
 
     struct SavedTopdownInventoryRuntime {
         std::vector<std::string> ownedEquipmentSetIds;
+        std::vector<TopdownInventoryCount> reserveAmmo;
+        std::vector<TopdownInventoryCount> loadedAmmo;
     };
 
     struct SavedNpcPatrolRuntime {
@@ -559,11 +561,74 @@ namespace
         outRoot["topdownCore"] = topdownCore;
     }
 
+    static json SerializeInventoryCounts(const std::vector<TopdownInventoryCount>& counts)
+    {
+        json out = json::array();
+        for (const TopdownInventoryCount& entry : counts) {
+            if (entry.id.empty()) {
+                continue;
+            }
+
+            json entryJson;
+            entryJson["id"] = entry.id;
+            entryJson["count"] = std::max(0, entry.count);
+            out.push_back(entryJson);
+        }
+        return out;
+    }
+
     static void SerializeTopdownInventoryRuntime(const GameState& state, json& outRoot)
     {
+        const TopdownPlayerInventoryRuntime& playerInventory =
+                state.topdown.runtime.playerInventory;
+
         json inventory;
-        inventory["ownedEquipmentSets"] = state.topdown.runtime.playerInventory.ownedEquipmentSetIds;
+        inventory["ownedEquipmentSets"] = playerInventory.ownedEquipmentSetIds;
+        inventory["reserveAmmo"] = SerializeInventoryCounts(playerInventory.reserveAmmo);
+        inventory["loadedAmmo"] = SerializeInventoryCounts(playerInventory.loadedAmmo);
         outRoot["topdownInventory"] = inventory;
+    }
+
+    static void AddSavedInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id,
+            int count)
+    {
+        if (id.empty()) {
+            return;
+        }
+
+        for (TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                entry.count = std::max(0, count);
+                return;
+            }
+        }
+
+        TopdownInventoryCount entry;
+        entry.id = id;
+        entry.count = std::max(0, count);
+        counts.push_back(entry);
+    }
+
+    static void DeserializeInventoryCounts(
+            const json& inventory,
+            const char* fieldName,
+            std::vector<TopdownInventoryCount>& outCounts)
+    {
+        if (!inventory.contains(fieldName) || !inventory[fieldName].is_array()) {
+            return;
+        }
+
+        for (const json& entry : inventory[fieldName]) {
+            if (!entry.is_object()) {
+                continue;
+            }
+
+            const std::string id = entry.value("id", std::string());
+            const int count = entry.value("count", 0);
+            AddSavedInventoryCount(outCounts, id, count);
+        }
     }
 
     static SavedTopdownInventoryRuntime DeserializeTopdownInventoryRuntime(const json& root)
@@ -581,6 +646,9 @@ namespace
                 }
             }
         }
+
+        DeserializeInventoryCounts(inventory, "reserveAmmo", out.reserveAmmo);
+        DeserializeInventoryCounts(inventory, "loadedAmmo", out.loadedAmmo);
 
         return out;
     }
@@ -748,7 +816,10 @@ namespace
 
     static void RestoreTopdownInventoryRuntime(GameState& state, const SavedTopdownInventoryRuntime& saved)
     {
-        state.topdown.runtime.playerInventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
+        TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+        inventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
+        inventory.reserveAmmo = saved.reserveAmmo;
+        inventory.loadedAmmo = saved.loadedAmmo;
     }
 
     static void SerializeTopdownNpcsRuntime(const GameState& state, json& outRoot)

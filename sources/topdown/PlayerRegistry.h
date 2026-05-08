@@ -55,6 +55,34 @@ bool TopdownPlayerEquipSlot(
         GameState& state,
         int slot);
 
+int TopdownPlayerGetReserveAmmo(
+        const GameState& state,
+        const std::string& ammoType);
+
+int TopdownPlayerGetLoadedAmmo(
+        const GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerSetReserveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int count);
+
+bool TopdownPlayerSetLoadedAmmo(
+        GameState& state,
+        const std::string& equipmentSetId,
+        int count);
+
+bool TopdownPlayerAddAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount);
+
+bool TopdownPlayerRemoveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount);
+
 void TopdownValidatePlayerEquipmentRuntime(GameState& state);
 
 SpriteAssetHandle FindTopdownPlayerEquipmentAttackAnimationHandle(
