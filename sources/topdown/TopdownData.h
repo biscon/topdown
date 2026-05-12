@@ -1190,6 +1190,71 @@ struct TopdownNpcScriptBehaviorState {
     TopdownNpcPatrolState patrol;
 };
 
+
+struct TopdownNpcColorSet3 {
+    Color colors[3]{};
+};
+
+struct TopdownNpcColorSet4 {
+    Color colors[4]{};
+};
+
+struct TopdownNpcColorSet5 {
+    Color colors[5]{};
+};
+
+struct TopdownNamedNpcColorSet3 {
+    std::string name;
+    TopdownNpcColorSet3 set;
+};
+
+struct TopdownNamedNpcColorSet4 {
+    std::string name;
+    TopdownNpcColorSet4 set;
+};
+
+struct TopdownNamedNpcColorSet5 {
+    std::string name;
+    TopdownNpcColorSet5 set;
+};
+
+struct TopdownNpcColorPresetRegistry {
+    bool loaded = false;
+
+    std::vector<TopdownNamedNpcColorSet3> skinPresets;
+    std::vector<TopdownNamedNpcColorSet3> hairPresets;
+    std::vector<TopdownNamedNpcColorSet5> chestPresets;
+    std::vector<TopdownNamedNpcColorSet4> legsPresets;
+};
+
+struct TopdownNpcColorSubstitutionDefinition {
+    bool active = false;
+
+    TopdownNpcColorSet3 sourceSkin;
+    TopdownNpcColorSet3 sourceHair;
+    TopdownNpcColorSet5 sourceChest;
+    TopdownNpcColorSet4 sourceLegs;
+
+    std::string skinPresetId;
+    std::string hairPresetId;
+    std::string chestPresetId;
+    std::string legsPresetId;
+};
+
+struct TopdownNpcResolvedColorSubstitution {
+    bool active = false;
+
+    TopdownNpcColorSet3 dstSkin;
+    TopdownNpcColorSet3 dstHair;
+    TopdownNpcColorSet5 dstChest;
+    TopdownNpcColorSet4 dstLegs;
+
+    std::string resolvedSkinPresetId;
+    std::string resolvedHairPresetId;
+    std::string resolvedChestPresetId;
+    std::string resolvedLegsPresetId;
+};
+
 struct TopdownNpcAnimationSourceDefinition {
     std::string asepriteJsonPath;
     bool hasOrigin = false;
@@ -1244,6 +1309,8 @@ struct TopdownNpcAssetDefinition {
     TopdownNpcAttackEffectsConfig attackEffects;
 
     std::vector<TopdownNpcAnimationSourceDefinition> animations;
+
+    TopdownNpcColorSubstitutionDefinition colorSubstitution;
 };
 
 struct TopdownNpcClipRef {
@@ -1310,6 +1377,8 @@ struct TopdownNpcAssetRuntime {
     std::vector<std::string> hitReactionSoundIds;
 
     TopdownNpcAttackEffectsConfig attackEffects;
+
+    TopdownNpcColorSubstitutionDefinition colorSubstitution;
 };
 
 
@@ -1437,6 +1506,8 @@ struct TopdownNpcRuntime {
     bool hasGuardHomePosition = false;
     float guardLookAtSoundTimerMs = 0.0f;
     float guardLookAtSoundRadians = 0.0f;
+
+    TopdownNpcResolvedColorSubstitution colorSubstitution;
 };
 
 struct TopdownNpcInvestigationSlot {
@@ -1672,6 +1743,7 @@ struct TopdownData {
 
     std::vector<TopdownNpcAssetDefinition> npcAssetRegistry;
     std::vector<TopdownNpcAssetRuntime> npcAssets;
+    TopdownNpcColorPresetRegistry npcColorPresets;
 
     std::vector<TopdownLevelRegistryEntry> levelRegistry;
 
