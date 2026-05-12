@@ -17,6 +17,8 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+static constexpr float kPickupRadius = 52.0f;
+
 static std::string NormalizeItemPath(const fs::path& path)
 {
     return path.lexically_normal().string();
@@ -386,7 +388,6 @@ void TopdownUpdateItems(GameState& state, float dt)
         return;
     }
 
-    static constexpr float kPickupRadius = 42.0f;
     static constexpr float kPickupRadiusSqr = kPickupRadius * kPickupRadius;
     const Vector2 playerPosition = state.topdown.runtime.player.position;
 
@@ -454,24 +455,21 @@ void TopdownRenderItems(GameState& state)
         const Vector2 screen = TopdownWorldToScreen(state, item.position);
 
         const float phase = timeMs * 0.004f + static_cast<float>(i) * 0.7f;
-        const float bobSin = std::sin(phase);
-        const float bob = bobSin * 4.0f;
+        const float pulse01 = 0.5f + 0.5f * std::sin(phase);
+        const float pulseScale = 0.94f + pulse01 * 0.12f;
+        const float renderW = std::max(1.0f, std::round(dstW * pulseScale));
+        const float renderH = std::max(1.0f, std::round(dstH * pulseScale));
 
-        // bobSin is -1 at the bottom of the bob and +1 at the top.
-        // Convert that into 0..1 height, then shrink/dim the shadow as the item rises.
-        const float bobHeight01 = (-bobSin + 1.0f) * 0.5f;
-        const float shadowScale = 1.0f - bobHeight01 * 0.28f;
+        const float shadowScale = 0.97f + pulse01 * 0.06f;
         const unsigned char shadowAlpha =
-                static_cast<unsigned char>(std::round(76.0f - bobHeight01 * 22.0f));
+                static_cast<unsigned char>(std::round(60.0f + pulse01 * 14.0f));
 
-        const float shadowRadiusX = std::max(7.0f, dstW * 0.52f) * shadowScale;
-        const float shadowRadiusY = std::max(2.0f, dstH * 0.18f) * shadowScale;
+        const float shadowRadius = std::max(10.0f, std::max(dstW, dstH) * 0.42f) * shadowScale;
 
-        DrawEllipse(
+        DrawCircle(
                 static_cast<int>(std::round(screen.x)),
-                static_cast<int>(std::round(screen.y + dstH * 0.55f)),
-                shadowRadiusX,
-                shadowRadiusY,
+                static_cast<int>(std::round(screen.y)),
+                shadowRadius,
                 Color{0, 0, 0, shadowAlpha});
 
         Rectangle src{
@@ -481,14 +479,12 @@ void TopdownRenderItems(GameState& state)
                 static_cast<float>(tex->texture.height)
         };
 
-        const Vector2 origin{ dstW * 0.5f, dstH * 0.5f };
-        const float left = std::round(screen.x - origin.x);
-        const float top = std::round(screen.y + bob - origin.y);
+        const Vector2 origin{ renderW * 0.5f, renderH * 0.5f };
         const Rectangle dst{
-                left + origin.x,
-                top + origin.y,
-                dstW,
-                dstH
+                std::round(screen.x),
+                std::round(screen.y),
+                renderW,
+                renderH
         };
 
         DrawTexturePro(tex->texture, src, dst, origin, 0.0f, WHITE);
