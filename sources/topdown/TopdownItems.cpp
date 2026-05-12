@@ -456,7 +456,7 @@ void TopdownRenderItems(GameState& state)
 
         const float phase = timeMs * 0.004f + static_cast<float>(i) * 0.7f;
         const float pulse01 = 0.5f + 0.5f * std::sin(phase);
-        const float pulseScale = 0.94f + pulse01 * 0.12f;
+        const float pulseScale = 0.84f + pulse01 * 0.12f;
         const float renderW = std::max(1.0f, std::round(dstW * pulseScale));
         const float renderH = std::max(1.0f, std::round(dstH * pulseScale));
 

@@ -1754,7 +1754,7 @@ static void DrawCurrentWeaponAmmoHud(GameState& state)
     BuildEquipmentHudLabel(weaponConfig->equipmentSetId, label, sizeof(label));
     const bool usesAmmo = TopdownPlayerWeaponUsesAmmo(*weaponConfig);
 
-    constexpr float kPanelW = 340.0f;
+    constexpr float kPanelW = 200.0f;
     constexpr float kPanelX = INTERNAL_WIDTH - kPanelW - 28.0f;
     constexpr float kPanelY = 28.0f;
 
