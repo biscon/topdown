@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 5;
+    static constexpr int SAVE_VERSION = 10;
 
 
     struct SavedMusicSlotState {
@@ -88,6 +88,11 @@ namespace
         std::string equipmentSetId;
         TopdownFireMode currentFireMode = TopdownFireMode::SemiAuto;
         float cooldownRemainingMs = 0.0f;
+
+        bool reloadActive = false;
+        float reloadTimerMs = 0.0f;
+        float reloadDurationMs = 0.0f;
+        std::string reloadEquipmentSetId;
     };
 
     struct SavedCameraRuntime {
@@ -107,6 +112,20 @@ namespace
         SavedPlayerCharacterRuntime playerCharacter;
         SavedPlayerAttackRuntime playerAttack;
         SavedCameraRuntime camera;
+    };
+
+    struct SavedTopdownInventoryRuntime {
+        std::vector<std::string> ownedEquipmentSetIds;
+        std::vector<TopdownInventoryCount> reserveAmmo;
+        std::vector<TopdownInventoryCount> loadedAmmo;
+        int carriedHealthItems = 0;
+        int maxCarriedHealthItems = 3;
+        float carriedHealthHealAmount = 0.0f;
+        float carriedHealthConsumeMs = 0.0f;
+        bool healthUseActive = false;
+        float healthUseTimerMs = 0.0f;
+        float healthUseDurationMs = 0.0f;
+        float healthUseHealAmount = 0.0f;
     };
 
     struct SavedNpcPatrolRuntime {
@@ -209,6 +228,14 @@ namespace
         float opacity = 1.0f;
     };
 
+    struct SavedItemRuntime {
+        std::string id;
+        std::string itemId;
+        bool active = true;
+        bool visible = true;
+        Vector2 position{};
+    };
+
     struct SavedTriggerRuntime {
         std::string id;
         bool enabled = true;
@@ -244,6 +271,7 @@ namespace
         std::vector<SavedPropRuntime> props;
         std::vector<SavedImageLayerRuntime> imageLayers;
         std::vector<SavedEffectRegionRuntime> effectRegions;
+        std::vector<SavedItemRuntime> items;
         std::vector<SavedTriggerRuntime> triggers;
         std::vector<SavedEmitterRuntime> emitters;
         std::vector<SavedBloodDecalRuntime> bloodDecals;
@@ -262,6 +290,7 @@ namespace
 
         SavedAudioState audio;
         SavedTopdownCoreRuntime topdownCore;
+        SavedTopdownInventoryRuntime topdownInventory;
         SavedTopdownNpcsRuntime topdownNpcs;
         SavedTopdownWorldRuntime topdownWorld;
     };
@@ -541,6 +570,10 @@ namespace
         attackJson["equipmentSetId"] = attack.equipmentSetId;
         attackJson["currentFireMode"] = ToInt(attack.currentFireMode);
         attackJson["cooldownRemainingMs"] = attack.cooldownRemainingMs;
+        attackJson["reloadActive"] = attack.reloadActive;
+        attackJson["reloadTimerMs"] = attack.reloadTimerMs;
+        attackJson["reloadDurationMs"] = attack.reloadDurationMs;
+        attackJson["reloadEquipmentSetId"] = attack.reloadEquipmentSetId;
         topdownCore["playerAttack"] = attackJson;
 
         json cameraJson;
@@ -552,6 +585,114 @@ namespace
         topdownCore["camera"] = cameraJson;
 
         outRoot["topdownCore"] = topdownCore;
+    }
+
+    static json SerializeInventoryCounts(const std::vector<TopdownInventoryCount>& counts)
+    {
+        json out = json::array();
+        for (const TopdownInventoryCount& entry : counts) {
+            if (entry.id.empty()) {
+                continue;
+            }
+
+            json entryJson;
+            entryJson["id"] = entry.id;
+            entryJson["count"] = std::max(0, entry.count);
+            out.push_back(entryJson);
+        }
+        return out;
+    }
+
+    static void SerializeTopdownInventoryRuntime(const GameState& state, json& outRoot)
+    {
+        const TopdownPlayerInventoryRuntime& playerInventory =
+                state.topdown.runtime.playerInventory;
+
+        json inventory;
+        inventory["ownedEquipmentSets"] = playerInventory.ownedEquipmentSetIds;
+        inventory["reserveAmmo"] = SerializeInventoryCounts(playerInventory.reserveAmmo);
+        inventory["loadedAmmo"] = SerializeInventoryCounts(playerInventory.loadedAmmo);
+        inventory["carriedHealthItems"] = playerInventory.carriedHealthItems;
+        inventory["maxCarriedHealthItems"] = playerInventory.maxCarriedHealthItems;
+        inventory["carriedHealthHealAmount"] = playerInventory.carriedHealthHealAmount;
+        inventory["carriedHealthConsumeMs"] = playerInventory.carriedHealthConsumeMs;
+        inventory["healthUseActive"] = playerInventory.healthUseActive;
+        inventory["healthUseTimerMs"] = playerInventory.healthUseTimerMs;
+        inventory["healthUseDurationMs"] = playerInventory.healthUseDurationMs;
+        inventory["healthUseHealAmount"] = playerInventory.healthUseHealAmount;
+        outRoot["topdownInventory"] = inventory;
+    }
+
+    static void AddSavedInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id,
+            int count)
+    {
+        if (id.empty()) {
+            return;
+        }
+
+        for (TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                entry.count = std::max(0, count);
+                return;
+            }
+        }
+
+        TopdownInventoryCount entry;
+        entry.id = id;
+        entry.count = std::max(0, count);
+        counts.push_back(entry);
+    }
+
+    static void DeserializeInventoryCounts(
+            const json& inventory,
+            const char* fieldName,
+            std::vector<TopdownInventoryCount>& outCounts)
+    {
+        if (!inventory.contains(fieldName) || !inventory[fieldName].is_array()) {
+            return;
+        }
+
+        for (const json& entry : inventory[fieldName]) {
+            if (!entry.is_object()) {
+                continue;
+            }
+
+            const std::string id = entry.value("id", std::string());
+            const int count = entry.value("count", 0);
+            AddSavedInventoryCount(outCounts, id, count);
+        }
+    }
+
+    static SavedTopdownInventoryRuntime DeserializeTopdownInventoryRuntime(const json& root)
+    {
+        SavedTopdownInventoryRuntime out;
+        if (!root.contains("topdownInventory") || !root["topdownInventory"].is_object()) {
+            return out;
+        }
+
+        const json& inventory = root["topdownInventory"];
+        if (inventory.contains("ownedEquipmentSets") && inventory["ownedEquipmentSets"].is_array()) {
+            for (const json& entry : inventory["ownedEquipmentSets"]) {
+                if (entry.is_string()) {
+                    out.ownedEquipmentSetIds.push_back(entry.get<std::string>());
+                }
+            }
+        }
+
+        DeserializeInventoryCounts(inventory, "reserveAmmo", out.reserveAmmo);
+        DeserializeInventoryCounts(inventory, "loadedAmmo", out.loadedAmmo);
+        out.carriedHealthItems = std::max(0, inventory.value("carriedHealthItems", 0));
+        out.maxCarriedHealthItems = std::max(0, inventory.value("maxCarriedHealthItems", 3));
+        out.carriedHealthHealAmount = std::max(0.0f, inventory.value("carriedHealthHealAmount", 0.0f));
+        out.carriedHealthConsumeMs = std::max(0.0f, inventory.value("carriedHealthConsumeMs", 0.0f));
+        out.healthUseActive = inventory.value("healthUseActive", false);
+        out.healthUseTimerMs = std::max(0.0f, inventory.value("healthUseTimerMs", 0.0f));
+        out.healthUseDurationMs = std::max(0.0f, inventory.value("healthUseDurationMs", 0.0f));
+        out.healthUseHealAmount = std::max(0.0f, inventory.value("healthUseHealAmount", 0.0f));
+
+        return out;
     }
 
     static SavedTopdownCoreRuntime DeserializeTopdownCoreRuntime(const json& root)
@@ -606,6 +747,10 @@ namespace
             out.playerAttack.equipmentSetId = attack.value("equipmentSetId", "");
             out.playerAttack.currentFireMode = ToFireMode(attack.value("currentFireMode", 0));
             out.playerAttack.cooldownRemainingMs = attack.value("cooldownRemainingMs", 0.0f);
+            out.playerAttack.reloadActive = attack.value("reloadActive", false);
+            out.playerAttack.reloadTimerMs = attack.value("reloadTimerMs", 0.0f);
+            out.playerAttack.reloadDurationMs = attack.value("reloadDurationMs", 0.0f);
+            out.playerAttack.reloadEquipmentSetId = attack.value("reloadEquipmentSetId", "");
         }
 
         if (topdownCore.contains("camera") && topdownCore["camera"].is_object()) {
@@ -685,6 +830,10 @@ namespace
         runtime.playerAttack.pendingPrimaryAttack = false;
         runtime.playerAttack.pendingSecondaryAttack = false;
         runtime.playerAttack.rifleLoopPlaying = false;
+        runtime.playerAttack.reloadActive = saved.playerAttack.reloadActive;
+        runtime.playerAttack.reloadTimerMs = saved.playerAttack.reloadTimerMs;
+        runtime.playerAttack.reloadDurationMs = saved.playerAttack.reloadDurationMs;
+        runtime.playerAttack.reloadEquipmentSetId = saved.playerAttack.reloadEquipmentSetId;
 
         if (FindTopdownPlayerWeaponConfigByEquipmentSetId(state, runtime.playerAttack.equipmentSetId) == nullptr) {
             runtime.playerAttack.equipmentSetId = runtime.playerCharacter.equippedSetId;
@@ -713,6 +862,37 @@ namespace
         runtime.returnToMenuRequested = false;
         runtime.gameOverActive = false;
         runtime.gameOverElapsedMs = 0.0f;
+    }
+
+    static void RestoreTopdownInventoryRuntime(GameState& state, const SavedTopdownInventoryRuntime& saved)
+    {
+        TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+        inventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
+        inventory.reserveAmmo = saved.reserveAmmo;
+        inventory.loadedAmmo = saved.loadedAmmo;
+        inventory.maxCarriedHealthItems = std::max(0, saved.maxCarriedHealthItems);
+        inventory.carriedHealthItems = std::min(
+                std::max(0, saved.carriedHealthItems),
+                inventory.maxCarriedHealthItems);
+        inventory.carriedHealthHealAmount = std::max(0.0f, saved.carriedHealthHealAmount);
+        inventory.carriedHealthConsumeMs = std::max(0.0f, saved.carriedHealthConsumeMs);
+        inventory.healthUseActive = saved.healthUseActive;
+        inventory.healthUseTimerMs = std::max(0.0f, saved.healthUseTimerMs);
+        inventory.healthUseDurationMs = std::max(0.0f, saved.healthUseDurationMs);
+        inventory.healthUseHealAmount = std::max(0.0f, saved.healthUseHealAmount);
+        TopdownPlayerValidateHealthItemUse(state);
+    }
+
+    static void RestoreTopdownPlayerReloadRuntime(GameState& state, const SavedPlayerAttackRuntime& saved)
+    {
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+        attack.reloadActive = saved.reloadActive;
+        attack.reloadTimerMs = saved.reloadTimerMs;
+        attack.reloadDurationMs = saved.reloadDurationMs;
+        attack.reloadEquipmentSetId = saved.reloadEquipmentSetId.empty()
+                ? attack.equipmentSetId
+                : saved.reloadEquipmentSetId;
+        TopdownPlayerValidateReloadState(state);
     }
 
     static void SerializeTopdownNpcsRuntime(const GameState& state, json& outRoot)
@@ -1120,6 +1300,17 @@ namespace
             world["effectRegions"].push_back(j);
         }
 
+        world["items"] = json::array();
+        for (const TopdownRuntimeItem& item : state.topdown.runtime.items) {
+            json j;
+            j["id"] = item.id;
+            j["itemId"] = item.itemId;
+            j["active"] = item.active;
+            j["visible"] = item.visible;
+            j["position"] = SerializeVector2(item.position);
+            world["items"].push_back(j);
+        }
+
         world["triggers"] = json::array();
         for (const TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
             if (trigger.authoredIndex < 0 ||
@@ -1252,6 +1443,19 @@ namespace
                 effect.visible = j.value("visible", true);
                 effect.opacity = j.value("opacity", 1.0f);
                 out.effectRegions.push_back(effect);
+            }
+        }
+
+        if (world.contains("items") && world["items"].is_array()) {
+            for (const json& j : world["items"]) {
+                if (!j.is_object()) continue;
+                SavedItemRuntime item;
+                item.id = j.value("id", "");
+                item.itemId = j.value("itemId", "");
+                item.active = j.value("active", true);
+                item.visible = j.value("visible", true);
+                if (j.contains("position") && j["position"].is_object()) item.position = DeserializeVector2(j["position"]);
+                out.items.push_back(item);
             }
         }
 
@@ -1412,6 +1616,22 @@ namespace
             if (it == effectsById.end()) continue;
             effect.visible = it->second->visible;
             effect.opacity = it->second->opacity;
+        }
+
+        std::unordered_map<std::string, const SavedItemRuntime*> itemsById;
+        for (const SavedItemRuntime& item : saved.items) {
+            if (!item.id.empty()) itemsById[item.id] = &item;
+        }
+        for (TopdownRuntimeItem& item : state.topdown.runtime.items) {
+            auto it = itemsById.find(item.id);
+            if (it == itemsById.end()) continue;
+
+            const SavedItemRuntime& savedItem = *it->second;
+
+            // Keep item.itemId authored by the level. The save only restores mutable runtime state.
+            item.active = savedItem.active;
+            item.visible = savedItem.visible;
+            item.position = savedItem.position;
         }
 
         std::unordered_map<std::string, const SavedTriggerRuntime*> triggersById;
@@ -1650,6 +1870,14 @@ namespace
         outData.topdownCore = DeserializeTopdownCoreRuntime(root);
         outData.controlsEnabled = outData.topdownCore.controlsEnabled;
 
+        if (!root.contains("topdownInventory") || !root["topdownInventory"].is_object()) {
+            TraceLog(LOG_ERROR,
+                     "Save file missing topdownInventory: %s",
+                     savePath.string().c_str());
+            return false;
+        }
+        outData.topdownInventory = DeserializeTopdownInventoryRuntime(root);
+
         if (!root.contains("topdownNpcs") || !root["topdownNpcs"].is_object()) {
             TraceLog(LOG_ERROR,
                      "Save file missing topdownNpcs: %s",
@@ -1878,6 +2106,7 @@ bool SaveGameToSlot(GameState& state, int slotIndex)
     SerializeScriptState(state, root);
     SerializeAudioState(state, root);
     SerializeTopdownCoreRuntime(state, root);
+    SerializeTopdownInventoryRuntime(state, root);
     SerializeTopdownNpcsRuntime(state, root);
     SerializeTopdownWorldRuntime(state, root);
 
@@ -1921,6 +2150,9 @@ bool LoadGameFromSlot(GameState& state, int slotIndex)
     }
 
     RestoreTopdownCoreRuntime(state, data.topdownCore);
+    RestoreTopdownInventoryRuntime(state, data.topdownInventory);
+    TopdownValidatePlayerEquipmentRuntime(state);
+    RestoreTopdownPlayerReloadRuntime(state, data.topdownCore.playerAttack);
     RestoreTopdownNpcsRuntime(state, data.topdownNpcs);
     RestoreTopdownWorldRuntime(state, data.topdownWorld);
 

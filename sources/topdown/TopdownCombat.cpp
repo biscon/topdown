@@ -324,6 +324,79 @@ struct PlayerRangedAttackContext
     Vector2 baseDir{1.0f, 0.0f};
 };
 
+static bool PlayerWeaponUsesLoadedAmmo(const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    return !weaponConfig.ammoType.empty() &&
+           weaponConfig.magazineSize > 0 &&
+           weaponConfig.ammoPerShot > 0;
+}
+
+static bool PlayerHasLoadedAmmoForShot(
+        const GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    if (!PlayerWeaponUsesLoadedAmmo(weaponConfig)) {
+        return true;
+    }
+
+    return TopdownPlayerGetLoadedAmmo(state, weaponConfig.equipmentSetId) >=
+           weaponConfig.ammoPerShot;
+}
+
+static bool TryConsumePlayerLoadedAmmoForShot(
+        GameState& state,
+        const TopdownPlayerWeaponConfig& weaponConfig)
+{
+    if (!PlayerWeaponUsesLoadedAmmo(weaponConfig)) {
+        return true;
+    }
+
+    const int loadedAmmo = TopdownPlayerGetLoadedAmmo(state, weaponConfig.equipmentSetId);
+    if (loadedAmmo < weaponConfig.ammoPerShot) {
+        TraceLog(LOG_INFO,
+                 "Player ranged shot blocked for '%s': loaded ammo %d < ammoPerShot %d",
+                 weaponConfig.equipmentSetId.c_str(),
+                 loadedAmmo,
+                 weaponConfig.ammoPerShot);
+        PlaySoundById(state, (GetRandomValue(0, 1) == 0) ? "dry_fire_01" : "dry_fire_02");
+        return false;
+    }
+
+    const int newLoadedAmmo = std::max(0, loadedAmmo - weaponConfig.ammoPerShot);
+    TopdownPlayerSetLoadedAmmo(state, weaponConfig.equipmentSetId, newLoadedAmmo);
+    TraceLog(LOG_DEBUG,
+             "Player ranged shot consumed %d loaded ammo for '%s' (%d remaining)",
+             weaponConfig.ammoPerShot,
+             weaponConfig.equipmentSetId.c_str(),
+             newLoadedAmmo);
+    return true;
+}
+
+static bool CanAttemptHeldFullAutoPrimaryAttack(const GameState& state)
+{
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
+
+    if (attack.reloadActive ||
+        !attack.triggerHeld ||
+        attack.currentFireMode != TopdownFireMode::FullAuto ||
+        attack.cooldownRemainingMs > 0.0f) {
+        return false;
+    }
+
+    const TopdownPlayerWeaponConfig* weaponConfig =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, character.equippedSetId);
+    if (weaponConfig == nullptr) {
+        return false;
+    }
+
+    if (weaponConfig->primaryAttackType != TopdownAttackType::Ranged) {
+        return true;
+    }
+
+    return PlayerHasLoadedAmmoForShot(state, *weaponConfig);
+}
+
 static bool BeginPlayerAttackRuntime(
         GameState& state,
         TopdownAttackInput input,
@@ -333,7 +406,10 @@ static bool BeginPlayerAttackRuntime(
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
-    if (attack.active) {
+    // Attacking aborts timed medkit use before the attack proceeds; cancel does not consume or heal.
+    TopdownPlayerCancelHealthItemUse(state);
+
+    if (attack.active || attack.reloadActive) {
         return false;
     }
 
@@ -1011,6 +1087,17 @@ static bool TryStartPlayerAttack(
     }
 
     if (attackType == TopdownAttackType::Ranged) {
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+        if (!TryConsumePlayerLoadedAmmoForShot(state, *weaponConfig)) {
+            attack.active = false;
+            attack.state = TopdownPlayerAttackState::Idle;
+            attack.attackType = TopdownAttackType::None;
+            attack.stateTimeMs = 0.0f;
+            attack.animationDurationMs = 0.0f;
+            attack.cooldownRemainingMs = 0.0f;
+            return false;
+        }
+
         const PlayerRangedAttackContext ctx =
                 BuildPlayerRangedAttackContext(state, *weaponConfig);
 
@@ -1061,6 +1148,13 @@ static void ConsumeQueuedPlayerAttackInputs(GameState& state)
 {
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
 
+    if (attack.reloadActive) {
+        attack.pendingPrimaryAttack = false;
+        attack.pendingSecondaryAttack = false;
+        attack.triggerHeld = false;
+        return;
+    }
+
     if (attack.pendingSecondaryAttack) {
         attack.pendingSecondaryAttack = false;
         TryStartPlayerAttack(state, TopdownAttackInput::Secondary);
@@ -1071,9 +1165,7 @@ static void ConsumeQueuedPlayerAttackInputs(GameState& state)
         TryStartPlayerAttack(state, TopdownAttackInput::Primary);
     }
 
-    if (attack.triggerHeld &&
-        attack.currentFireMode == TopdownFireMode::FullAuto &&
-        attack.cooldownRemainingMs <= 0.0f) {
+    if (CanAttemptHeldFullAutoPrimaryAttack(state)) {
         TryStartPlayerAttack(state, TopdownAttackInput::Primary);
     }
 }
@@ -1089,7 +1181,9 @@ static void UpdatePlayerRifleLoopAudio(GameState& state)
     if (weaponConfig != nullptr &&
         weaponConfig->tracerStyle == TopdownTracerStyle::Rifle &&
         attack.currentFireMode == TopdownFireMode::FullAuto) {
-        if (attack.triggerHeld) {
+        if (!attack.reloadActive &&
+            attack.triggerHeld &&
+            PlayerHasLoadedAmmoForShot(state, *weaponConfig)) {
             if (!attack.rifleLoopPlaying) {
                 PlaySoundById(state, "rifle_full_auto_start", RandomRangeFloat(0.98f, 1.02f));
                 PlaySoundById(state, "rifle_full_auto_loop", RandomRangeFloat(0.98f, 1.02f));
@@ -1111,6 +1205,8 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
 
     UpdatePlayerAttackTimers(attack, dt);
     UpdateActivePlayerAttack(state, dt);
+    TopdownPlayerUpdateReload(state, dt);
+    TopdownPlayerUpdateHealthItemUse(state, dt);
     ConsumeQueuedPlayerAttackInputs(state);
     UpdatePlayerRifleLoopAudio(state);
 }

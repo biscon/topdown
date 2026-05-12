@@ -71,6 +71,32 @@ void TopdownHandleInput(GameState& state)
                 ConsumeEvent(ev);
                 break;
 
+            case KEY_R:
+                if (!state.topdown.runtime.controlsEnabled || state.debug.console.open) {
+                    break;
+                }
+
+                TopdownPlayerStartReload(state);
+                ConsumeEvent(ev);
+                break;
+
+            case KEY_Q:
+                if (!state.topdown.runtime.controlsEnabled || state.debug.console.open) {
+                    break;
+                }
+
+                if (TopdownPlayerUseHealthItem(state)) {
+                    TraceLog(
+                            LOG_INFO,
+                            "Used or started carried health item: %d/%d carried",
+                            state.topdown.runtime.playerInventory.carriedHealthItems,
+                            state.topdown.runtime.playerInventory.maxCarriedHealthItems);
+                } else {
+                    TraceLog(LOG_INFO, "Cannot use carried health item right now");
+                }
+                ConsumeEvent(ev);
+                break;
+
             case KEY_ONE:
             case KEY_TWO:
             case KEY_THREE:
@@ -91,25 +117,14 @@ void TopdownHandleInput(GameState& state)
                     default: break;
                 }
 
-                const TopdownPlayerWeaponConfig* weaponConfig =
-                        FindTopdownPlayerWeaponConfigBySlot(state, slot);
-
-                if (weaponConfig != nullptr &&
-                    HasTopdownPlayerEquipmentAnimationSet(state, weaponConfig->equipmentSetId)) {
-                    state.topdown.runtime.playerCharacter.equippedSetId = weaponConfig->equipmentSetId;
-                    state.topdown.runtime.playerAttack.equipmentSetId = weaponConfig->equipmentSetId;
-                    state.topdown.runtime.playerAttack.currentFireMode = weaponConfig->defaultFireMode;
-                    state.topdown.runtime.playerAttack.triggerHeld = false;
-                    state.topdown.runtime.playerAttack.pendingPrimaryAttack = false;
-                    state.topdown.runtime.playerAttack.pendingSecondaryAttack = false;
-
+                if (TopdownPlayerEquipSlot(state, slot)) {
                     TraceLog(LOG_INFO,
                              "Switched player weapon slot %d -> %s",
                              slot,
-                             weaponConfig->equipmentSetId.c_str());
+                             state.topdown.runtime.playerCharacter.equippedSetId.c_str());
                 } else {
                     TraceLog(LOG_WARNING,
-                             "Player weapon slot %d is not configured or missing animation set",
+                             "Player weapon slot %d is unavailable, not owned, or not configured",
                              slot);
                 }
 

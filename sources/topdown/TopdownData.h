@@ -29,6 +29,12 @@ enum class TopdownPropType {
     Sprite
 };
 
+enum class TopdownItemKind {
+    Unknown,
+    Ammo,
+    Health
+};
+
 enum class TopdownEffectPlacement {
     AfterBottom,
     AfterCharacters,
@@ -236,6 +242,34 @@ struct TopdownAuthoredDoor {
     Color outlineColor = BLACK;
 };
 
+struct TopdownItemDefinition {
+    std::string id;
+    std::string displayName;
+    TopdownItemKind kind = TopdownItemKind::Unknown;
+
+    std::string ammoType;
+    int amount = 0;
+
+    float healAmount = 0.0f;
+    float consumeMs = 0.0f;
+
+    std::string texturePath;
+    TextureHandle textureHandle = -1;
+};
+
+struct TopdownItemRegistry {
+    bool loaded = false;
+    std::vector<TopdownItemDefinition> definitions;
+};
+
+struct TopdownAuthoredItem {
+    int tiledObjectId = -1;
+    std::string id;
+    std::string itemId;
+    Vector2 position{};
+    bool visible = true;
+};
+
 struct TopdownAuthoredProp {
     int tiledObjectId = -1;
     std::string id;
@@ -418,6 +452,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredPolygon> obstacles;
     std::vector<TopdownAuthoredImageLayer> imageLayers;
     std::vector<TopdownAuthoredProp> props;
+    std::vector<TopdownAuthoredItem> items;
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
     std::vector<TopdownAuthoredTrigger> triggers;
@@ -437,6 +472,16 @@ struct TopdownRuntimeObstacle {
     std::vector<TopdownSegment> edges;
 
     Rectangle bounds{};
+    bool visible = true;
+};
+
+struct TopdownRuntimeItem {
+    int authoredIndex = -1;
+    int tiledObjectId = -1;
+    std::string id;
+    std::string itemId;
+    Vector2 position{};
+    bool active = true;
     bool visible = true;
 };
 
@@ -853,6 +898,12 @@ struct TopdownPlayerWeaponConfig {
     float meleeDoorImpulse = 0.0f;
     float noiseRadius = 1200.0f;
 
+    std::string ammoType;
+    int magazineSize = 0;
+    int ammoPerShot = 0;
+    float reloadDurationMs = 0.0f;
+    std::string reloadSoundId;
+
     TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
 
     TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
@@ -1021,7 +1072,7 @@ struct TopdownCharacterAssetData {
 struct TopdownCharacterRuntime {
     bool active = false;
 
-    std::string equippedSetId = "handgun";
+    std::string equippedSetId = "knife";
 
     TopdownLocomotionType locomotion = TopdownLocomotionType::Idle;
     bool running = false;
@@ -1068,6 +1119,11 @@ struct TopdownPlayerAttackRuntime {
 
     bool pendingPrimaryAttack = false;
     bool pendingSecondaryAttack = false;
+
+    bool reloadActive = false;
+    float reloadTimerMs = 0.0f;
+    float reloadDurationMs = 0.0f;
+    std::string reloadEquipmentSetId;
 
     float fullAutoShakeCooldownMs = 0.0f;
 
@@ -1522,6 +1578,28 @@ struct TopdownWorldEvent {
     int sourceNpcHandle = -1; // only valid if sourceType == Npc
 };
 
+struct TopdownInventoryCount {
+    std::string id;
+    int count = 0;
+};
+
+struct TopdownPlayerInventoryRuntime {
+    std::vector<std::string> ownedEquipmentSetIds;
+
+    std::vector<TopdownInventoryCount> reserveAmmo;
+    std::vector<TopdownInventoryCount> loadedAmmo;
+
+    int carriedHealthItems = 0;
+    int maxCarriedHealthItems = 3;
+    float carriedHealthHealAmount = 0.0f;
+    float carriedHealthConsumeMs = 0.0f;
+
+    bool healthUseActive = false;
+    float healthUseTimerMs = 0.0f;
+    float healthUseDurationMs = 0.0f;
+    float healthUseHealAmount = 0.0f;
+};
+
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -1540,6 +1618,7 @@ struct TopdownRuntimeData {
     TopdownPlayerRuntime player;
     TopdownCharacterRuntime playerCharacter;
     TopdownPlayerAttackRuntime playerAttack;
+    TopdownPlayerInventoryRuntime playerInventory;
     TopdownCameraRuntime camera;
     TopdownDebugData debug;
 
@@ -1557,6 +1636,7 @@ struct TopdownRuntimeData {
     int nextNpcPatrolContextHandle = 1;
     std::vector<TopdownNpcPatrolContext> npcPatrolContexts;
     std::vector<TopdownRuntimeProp> props;
+    std::vector<TopdownRuntimeItem> items;
 
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
@@ -1580,6 +1660,7 @@ struct TopdownData {
     std::vector<TopdownLevelRegistryEntry> levelRegistry;
 
     TopdownBloodStampLibrary bloodStampLibrary;
+    TopdownItemRegistry itemRegistry;
 
     std::string currentLevelId;
     std::string currentLevelSaveName;

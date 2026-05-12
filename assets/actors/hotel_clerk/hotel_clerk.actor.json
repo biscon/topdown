@@ -1,9 +1,0 @@
-{
-    "asepriteJson": "hotel_clerk.json",
-    "feetPivot": {
-        "x": 27,
-        "y": 79
-    },
-    "baseDrawScale": 6.0,
-    "useRightForLeft": true
-}

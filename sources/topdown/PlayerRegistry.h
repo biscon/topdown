@@ -35,6 +35,79 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
         const GameState& state,
         int slot);
 
+const TopdownPlayerWeaponConfig* TopdownPlayerGetCurrentWeaponConfig(
+        const GameState& state);
+
+bool TopdownPlayerWeaponUsesAmmo(
+        const TopdownPlayerWeaponConfig& config);
+
+bool TopdownPlayerCurrentWeaponUsesAmmo(
+        const GameState& state);
+
+bool TopdownPlayerHasEquipmentSet(
+        const GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerAddEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerRemoveEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerEquipEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerEquipSlot(
+        GameState& state,
+        int slot);
+
+int TopdownPlayerGetReserveAmmo(
+        const GameState& state,
+        const std::string& ammoType);
+
+int TopdownPlayerGetLoadedAmmo(
+        const GameState& state,
+        const std::string& equipmentSetId);
+
+bool TopdownPlayerSetReserveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int count);
+
+bool TopdownPlayerSetLoadedAmmo(
+        GameState& state,
+        const std::string& equipmentSetId,
+        int count);
+
+bool TopdownPlayerAddAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount);
+
+bool TopdownPlayerRemoveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount);
+
+bool TopdownPlayerCanUseHealthItem(const GameState& state);
+bool TopdownPlayerUseHealthItem(GameState& state);
+bool TopdownPlayerStartHealthItemUse(GameState& state);
+void TopdownPlayerCancelHealthItemUse(GameState& state);
+void TopdownPlayerUpdateHealthItemUse(GameState& state, float dt);
+bool TopdownPlayerIsUsingHealthItem(const GameState& state);
+void TopdownPlayerValidateHealthItemUse(GameState& state);
+
+bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state);
+bool TopdownPlayerStartReload(GameState& state);
+void TopdownPlayerCancelReload(GameState& state);
+void TopdownPlayerUpdateReload(GameState& state, float dt);
+void TopdownPlayerValidateReloadState(GameState& state);
+
+void TopdownValidatePlayerEquipmentRuntime(GameState& state);
+
 SpriteAssetHandle FindTopdownPlayerEquipmentAttackAnimationHandle(
         const GameState& state,
         const std::string& equipmentSetId,

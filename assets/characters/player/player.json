@@ -125,7 +125,13 @@
             "bloodDecalSpreadDegrees": 80.0,
             "bloodDecalWallPadding": 6.0,
             "bloodDecalOpacityMin": 0.72,
-            "bloodDecalOpacityMax": 0.95
+            "bloodDecalOpacityMax": 0.95,
+
+            "ammoType": "pistol",
+            "magazineSize": 12,
+            "ammoPerShot": 1,
+            "reloadDurationMs": 900,
+            "reloadSound": "pistol_reload"
         },
         {
             "equipmentSetId": "shotgun",
@@ -192,7 +198,13 @@
             "bloodDecalSpreadDegrees": 105.0,
             "bloodDecalWallPadding": 8.0,
             "bloodDecalOpacityMin": 0.75,
-            "bloodDecalOpacityMax": 1.0
+            "bloodDecalOpacityMax": 1.0,
+
+            "ammoType": "shotgun",
+            "magazineSize": 6,
+            "ammoPerShot": 1,
+            "reloadDurationMs": 1200,
+            "reloadSound": "shotgun_reload"
         },
         {
             "equipmentSetId": "rifle",
@@ -261,7 +273,13 @@
             "bloodDecalSpreadDegrees": 70.0,
             "bloodDecalWallPadding": 6.0,
             "bloodDecalOpacityMin": 0.72,
-            "bloodDecalOpacityMax": 0.95
+            "bloodDecalOpacityMax": 0.95,
+
+            "ammoType": "rifle",
+            "magazineSize": 30,
+            "ammoPerShot": 1,
+            "reloadDurationMs": 1400,
+            "reloadSound": "rifle_reload"
         }
     ]
 }

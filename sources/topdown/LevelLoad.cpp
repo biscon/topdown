@@ -22,6 +22,7 @@
 #include "TopdownRvo.h"
 #include "LevelWindows.h"
 #include "LevelCollision.h"
+#include "topdown/TopdownItems.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -2224,6 +2225,7 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
 
     topdown.runtime.nav.navMesh = {};
     topdown.runtime.props.clear();
+    topdown.runtime.items.clear();
     topdown.runtime.nav.navMesh.sourcePolygons.clear();
     topdown.runtime.nav.navMesh.blockerPolygons.clear();
 
@@ -2312,6 +2314,8 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         runtime.sortIndex = authored.sortIndex;
         topdown.runtime.props.push_back(runtime);
     }
+
+    BuildTopdownRuntimeItemsFromAuthored(topdown);
 
     for (const TopdownAuthoredWindow& authored : topdown.authored.windows) {
         TopdownRuntimeWindow runtimeWindow =
@@ -2516,6 +2520,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
     bool foundBoundary = false;
 
+    if (!LoadTopdownItemDefinitions(state)) {
+        TopdownUnloadLevel(state);
+        return false;
+    }
+
     if (!root.contains("layers") || !root["layers"].is_array()) {
         TraceLog(LOG_ERROR, "Topdown level missing layers array: %s", tmjNorm.c_str());
         return false;
@@ -2564,6 +2573,11 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
         if (layerName == "Props" && layerType == "objectgroup") {
             ImportPropLayer(state, layer, levelDir, state.topdown.authored.baseAssetScale);
+            continue;
+        }
+
+        if (layerName == "Items" && layerType == "objectgroup") {
+            ImportTopdownItemLayer(state, layer, state.topdown.authored.baseAssetScale);
             continue;
         }
 
@@ -2663,11 +2677,14 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     TraceLog(LOG_INFO, "  baseAssetScale: %d", state.topdown.currentLevelBaseAssetScale);
     TraceLog(LOG_INFO, "  obstacles: %d", static_cast<int>(state.topdown.authored.obstacles.size()));
     TraceLog(LOG_INFO, "  image layers: %d", static_cast<int>(state.topdown.authored.imageLayers.size()));
+    TraceLog(LOG_INFO, "  item definitions: %d", static_cast<int>(state.topdown.itemRegistry.definitions.size()));
     TraceLog(LOG_INFO, "  spawns: %d", static_cast<int>(state.topdown.authored.spawns.size()));
     TraceLog(LOG_INFO, "  movement segments: %d", static_cast<int>(state.topdown.runtime.collision.movementSegments.size()));
     TraceLog(LOG_INFO, "  vision segments: %d", static_cast<int>(state.topdown.runtime.collision.visionSegments.size()));
     TraceLog(LOG_INFO, "  effect regions: %d", static_cast<int>(state.topdown.authored.effectRegions.size()));
     TraceLog(LOG_INFO, "  triggers: %d", static_cast<int>(state.topdown.authored.triggers.size()));
+    TraceLog(LOG_INFO, "  authored items: %d", static_cast<int>(state.topdown.authored.items.size()));
+    TraceLog(LOG_INFO, "  runtime items: %d", static_cast<int>(state.topdown.runtime.items.size()));
     TraceLog(LOG_INFO, "  effect buckets: after_bottom=%d after_characters=%d final=%d",
              static_cast<int>(state.topdown.runtime.render.afterBottomEffectRegionIndices.size()),
              static_cast<int>(state.topdown.runtime.render.afterCharactersEffectRegionIndices.size()),

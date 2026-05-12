@@ -1,0 +1,36 @@
+{
+    "items": [
+        {
+            "id": "pistol_mag",
+            "displayName": "Pistol Magazine",
+            "kind": "ammo",
+            "ammoType": "pistol",
+            "amount": 12,
+            "texture": "assets/items/pistol_mag.png"
+        },
+        {
+            "id": "shotgun_shells",
+            "displayName": "Shotgun Shells",
+            "kind": "ammo",
+            "ammoType": "shotgun",
+            "amount": 6,
+            "texture": "assets/items/shotgun_shells.png"
+        },
+        {
+            "id": "rifle_mag",
+            "displayName": "Rifle Magazine",
+            "kind": "ammo",
+            "ammoType": "rifle",
+            "amount": 30,
+            "texture": "assets/items/rifle_mag.png"
+        },
+        {
+            "id": "medkit",
+            "displayName": "Medkit",
+            "kind": "health",
+            "healAmount": 50,
+            "consumeMs": 2000,
+            "texture": "assets/items/medkit.png"
+        }
+    ]
+}

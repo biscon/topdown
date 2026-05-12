@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "resources/AsepriteAsset.h"
+#include "audio/Audio.h"
 #include "utils/json.hpp"
 #include "raymath.h"
 
@@ -218,6 +219,33 @@ static void ReadPlayerWeaponConfigs(
                      "Player weapon config '%s': noiseRadius < 0, clamping to 0",
                      cfg.equipmentSetId.c_str());
             cfg.noiseRadius = 0.0f;
+        }
+
+        cfg.ammoType = entry.value("ammoType", std::string());
+        cfg.magazineSize = std::max(0, entry.value("magazineSize", 0));
+        cfg.ammoPerShot = std::max(0, entry.value("ammoPerShot", 0));
+        cfg.reloadDurationMs = std::max(0.0f, entry.value("reloadDurationMs", 0.0f));
+        cfg.reloadSoundId = entry.value("reloadSound", std::string());
+
+        if (cfg.ammoType.empty()) {
+            cfg.magazineSize = 0;
+            cfg.ammoPerShot = 0;
+            cfg.reloadDurationMs = 0.0f;
+        } else {
+            if (cfg.magazineSize <= 0) {
+                TraceLog(LOG_WARNING,
+                         "Player weapon config '%s': ammoType '%s' has no magazineSize",
+                         cfg.equipmentSetId.c_str(),
+                         cfg.ammoType.c_str());
+            }
+
+            if (cfg.ammoPerShot <= 0) {
+                TraceLog(LOG_WARNING,
+                         "Player weapon config '%s': ammoType '%s' has invalid ammoPerShot, defaulting to 1",
+                         cfg.equipmentSetId.c_str(),
+                         cfg.ammoType.c_str());
+                cfg.ammoPerShot = 1;
+            }
         }
 
         {
@@ -1074,6 +1102,768 @@ const TopdownPlayerWeaponConfig* FindTopdownPlayerWeaponConfigBySlot(
     return nullptr;
 }
 
+const TopdownPlayerWeaponConfig* TopdownPlayerGetCurrentWeaponConfig(
+        const GameState& state)
+{
+    return FindTopdownPlayerWeaponConfigByEquipmentSetId(
+            state,
+            state.topdown.runtime.playerCharacter.equippedSetId);
+}
+
+bool TopdownPlayerWeaponUsesAmmo(const TopdownPlayerWeaponConfig& config)
+{
+    return !config.ammoType.empty() &&
+           config.magazineSize > 0 &&
+           config.ammoPerShot > 0;
+}
+
+bool TopdownPlayerCurrentWeaponUsesAmmo(const GameState& state)
+{
+    const TopdownPlayerWeaponConfig* config = TopdownPlayerGetCurrentWeaponConfig(state);
+    return config != nullptr && TopdownPlayerWeaponUsesAmmo(*config);
+}
+
+namespace {
+    constexpr const char* kFallbackEquipmentSetId = "knife";
+
+    bool IsTopdownPlayerEquipmentSetOwned(
+            const TopdownPlayerInventoryRuntime& inventory,
+            const std::string& equipmentSetId)
+    {
+        return std::find(
+                inventory.ownedEquipmentSetIds.begin(),
+                inventory.ownedEquipmentSetIds.end(),
+                equipmentSetId) != inventory.ownedEquipmentSetIds.end();
+    }
+
+    bool IsTopdownPlayerEquipmentSetUsable(
+            const GameState& state,
+            const std::string& equipmentSetId)
+    {
+        return FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId) != nullptr &&
+               HasTopdownPlayerEquipmentAnimationSet(state, equipmentSetId);
+    }
+
+    const TopdownInventoryCount* FindTopdownInventoryCount(
+            const std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        for (const TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                return &entry;
+            }
+        }
+
+        return nullptr;
+    }
+
+    TopdownInventoryCount* FindTopdownInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        for (TopdownInventoryCount& entry : counts) {
+            if (entry.id == id) {
+                return &entry;
+            }
+        }
+
+        return nullptr;
+    }
+
+    TopdownInventoryCount& FindOrCreateTopdownInventoryCount(
+            std::vector<TopdownInventoryCount>& counts,
+            const std::string& id)
+    {
+        if (TopdownInventoryCount* entry = FindTopdownInventoryCount(counts, id)) {
+            return *entry;
+        }
+
+        TopdownInventoryCount entry;
+        entry.id = id;
+        entry.count = 0;
+        counts.push_back(entry);
+        return counts.back();
+    }
+
+    bool PlayerWeaponCanUseReload(const TopdownPlayerWeaponConfig& config)
+    {
+        return TopdownPlayerWeaponUsesAmmo(config) && config.reloadDurationMs > 0.0f;
+    }
+
+    int ClampLoadedAmmoForEquipmentSet(
+            const GameState& state,
+            const std::string& equipmentSetId,
+            int count)
+    {
+        const TopdownPlayerWeaponConfig* config =
+                FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+        if (config != nullptr && config->magazineSize > 0) {
+            return std::clamp(count, 0, config->magazineSize);
+        }
+
+        return std::max(0, count);
+    }
+
+    void ValidateTopdownPlayerLoadedAmmoRuntime(GameState& state)
+    {
+        std::vector<TopdownInventoryCount>& loadedAmmo =
+                state.topdown.runtime.playerInventory.loadedAmmo;
+
+        loadedAmmo.erase(
+                std::remove_if(
+                        loadedAmmo.begin(),
+                        loadedAmmo.end(),
+                        [](const TopdownInventoryCount& entry) {
+                            return entry.id.empty();
+                        }),
+                loadedAmmo.end());
+
+        for (TopdownInventoryCount& entry : loadedAmmo) {
+            entry.count = ClampLoadedAmmoForEquipmentSet(state, entry.id, entry.count);
+        }
+    }
+
+    void StopPlayerRifleLoopIfPlaying(GameState& state)
+    {
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+        if (!attack.rifleLoopPlaying) {
+            return;
+        }
+
+        StopSoundById(state, "rifle_full_auto_loop");
+        PlaySoundById(state, "rifle_full_auto_end");
+        attack.rifleLoopPlaying = false;
+    }
+
+    void ClearPlayerReloadState(TopdownPlayerAttackRuntime& attack)
+    {
+        attack.reloadActive = false;
+        attack.reloadTimerMs = 0.0f;
+        attack.reloadDurationMs = 0.0f;
+        attack.reloadEquipmentSetId.clear();
+    }
+
+    bool CompletePlayerReload(GameState& state, const TopdownPlayerWeaponConfig& config)
+    {
+        if (!PlayerWeaponCanUseReload(config)) {
+            TraceLog(LOG_WARNING,
+                     "Cannot complete reload for player equipment '%s': invalid ammo config",
+                     config.equipmentSetId.c_str());
+            return false;
+        }
+
+        const int loadedAmmo = std::clamp(
+                TopdownPlayerGetLoadedAmmo(state, config.equipmentSetId),
+                0,
+                config.magazineSize);
+        const int reserveAmmo = std::max(0, TopdownPlayerGetReserveAmmo(state, config.ammoType));
+        const int needed = std::max(0, config.magazineSize - loadedAmmo);
+        const int taken = std::min(needed, reserveAmmo);
+
+        TopdownPlayerSetLoadedAmmo(state, config.equipmentSetId, loadedAmmo + taken);
+        TopdownPlayerSetReserveAmmo(state, config.ammoType, reserveAmmo - taken);
+        return taken > 0;
+    }
+
+    void ApplyTopdownPlayerEquipmentConfig(
+            GameState& state,
+            const TopdownPlayerWeaponConfig& config)
+    {
+        TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
+        TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+
+        StopPlayerRifleLoopIfPlaying(state);
+
+        character.equippedSetId = config.equipmentSetId;
+        character.currentUpperHandle = FindTopdownPlayerEquipmentAnimationHandle(
+                state,
+                character.equippedSetId,
+                "idle");
+
+        attack.equipmentSetId = config.equipmentSetId;
+        attack.currentFireMode = config.defaultFireMode;
+        attack.active = false;
+        attack.state = TopdownPlayerAttackState::Idle;
+        attack.input = TopdownAttackInput::Primary;
+        attack.attackType = TopdownAttackType::None;
+        attack.stateTimeMs = 0.0f;
+        attack.animationDurationMs = 0.0f;
+        attack.cooldownRemainingMs = 0.0f;
+        attack.triggerHeld = false;
+        attack.wantsTriggerRelease = false;
+        attack.burstShotsRemaining = 0;
+        attack.burstShotTimerMs = 0.0f;
+        attack.pendingPrimaryAttack = false;
+        attack.pendingSecondaryAttack = false;
+        ClearPlayerReloadState(attack);
+        attack.fullAutoShakeCooldownMs = 0.0f;
+        attack.meleeHitPending = false;
+        attack.meleeHitApplied = false;
+        attack.rifleLoopPlaying = false;
+    }
+}
+
+bool TopdownPlayerHasEquipmentSet(
+        const GameState& state,
+        const std::string& equipmentSetId)
+{
+    return IsTopdownPlayerEquipmentSetOwned(
+            state.topdown.runtime.playerInventory,
+            equipmentSetId);
+}
+
+bool TopdownPlayerAddEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (IsTopdownPlayerEquipmentSetOwned(inventory, equipmentSetId)) {
+        return true;
+    }
+
+    if (!IsTopdownPlayerEquipmentSetUsable(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot add player equipment set '%s': missing weapon config or animation set",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    inventory.ownedEquipmentSetIds.push_back(equipmentSetId);
+    return true;
+}
+
+bool TopdownPlayerRemoveEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    if (equipmentSetId == kFallbackEquipmentSetId) {
+        TraceLog(LOG_WARNING, "Cannot remove fallback player equipment set '%s'", kFallbackEquipmentSetId);
+        return false;
+    }
+
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    auto it = std::find(
+            inventory.ownedEquipmentSetIds.begin(),
+            inventory.ownedEquipmentSetIds.end(),
+            equipmentSetId);
+    if (it == inventory.ownedEquipmentSetIds.end()) {
+        return true;
+    }
+
+    inventory.ownedEquipmentSetIds.erase(it);
+
+    if (state.topdown.runtime.playerCharacter.equippedSetId == equipmentSetId ||
+        state.topdown.runtime.playerAttack.equipmentSetId == equipmentSetId) {
+        if (!TopdownPlayerEquipEquipmentSet(state, kFallbackEquipmentSetId)) {
+            TopdownValidatePlayerEquipmentRuntime(state);
+        }
+    }
+
+    return true;
+}
+
+bool TopdownPlayerEquipEquipmentSet(
+        GameState& state,
+        const std::string& equipmentSetId)
+{
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': missing weapon config",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    if (!TopdownPlayerHasEquipmentSet(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': not owned",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    if (!HasTopdownPlayerEquipmentAnimationSet(state, equipmentSetId)) {
+        TraceLog(LOG_WARNING,
+                 "Cannot equip player equipment set '%s': missing animation set",
+                 equipmentSetId.c_str());
+        return false;
+    }
+
+    if (state.topdown.runtime.playerCharacter.equippedSetId != config->equipmentSetId) {
+        TopdownPlayerCancelHealthItemUse(state);
+    }
+
+    ApplyTopdownPlayerEquipmentConfig(state, *config);
+    return true;
+}
+
+bool TopdownPlayerEquipSlot(GameState& state, int slot)
+{
+    const TopdownPlayerWeaponConfig* config = FindTopdownPlayerWeaponConfigBySlot(state, slot);
+    if (config == nullptr) {
+        return false;
+    }
+
+    return TopdownPlayerEquipEquipmentSet(state, config->equipmentSetId);
+}
+
+int TopdownPlayerGetReserveAmmo(
+        const GameState& state,
+        const std::string& ammoType)
+{
+    if (ammoType.empty()) {
+        return 0;
+    }
+
+    const TopdownInventoryCount* entry = FindTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    return entry != nullptr ? std::max(0, entry->count) : 0;
+}
+
+int TopdownPlayerGetLoadedAmmo(
+        const GameState& state,
+        const std::string& equipmentSetId)
+{
+    if (equipmentSetId.empty()) {
+        return 0;
+    }
+
+    const TopdownInventoryCount* entry = FindTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.loadedAmmo,
+            equipmentSetId);
+    return entry != nullptr
+            ? ClampLoadedAmmoForEquipmentSet(state, equipmentSetId, entry->count)
+            : 0;
+}
+
+bool TopdownPlayerSetReserveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int count)
+{
+    if (ammoType.empty()) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, count);
+    return true;
+}
+
+bool TopdownPlayerSetLoadedAmmo(
+        GameState& state,
+        const std::string& equipmentSetId,
+        int count)
+{
+    if (equipmentSetId.empty()) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.loadedAmmo,
+            equipmentSetId);
+    entry.count = ClampLoadedAmmoForEquipmentSet(state, equipmentSetId, count);
+    return true;
+}
+
+bool TopdownPlayerAddAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount)
+{
+    if (ammoType.empty() || amount <= 0) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, entry.count) + amount;
+    return true;
+}
+
+bool TopdownPlayerRemoveAmmo(
+        GameState& state,
+        const std::string& ammoType,
+        int amount)
+{
+    if (ammoType.empty() || amount <= 0) {
+        return false;
+    }
+
+    TopdownInventoryCount& entry = FindOrCreateTopdownInventoryCount(
+            state.topdown.runtime.playerInventory.reserveAmmo,
+            ammoType);
+    entry.count = std::max(0, entry.count - amount);
+    return true;
+}
+
+bool TopdownPlayerIsUsingHealthItem(const GameState& state)
+{
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    return inventory.healthUseActive && inventory.healthUseDurationMs > 0.0f;
+}
+
+bool TopdownPlayerCanUseHealthItem(const GameState& state)
+{
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            maxCarriedItems);
+
+    if (player.lifeState != TopdownPlayerLifeState::Alive) {
+        return false;
+    }
+
+    if (player.maxHealth <= 0.0f || player.health >= player.maxHealth) {
+        return false;
+    }
+
+    if (carriedItems <= 0 || inventory.carriedHealthHealAmount <= 0.0f) {
+        return false;
+    }
+
+    if (TopdownPlayerIsUsingHealthItem(state)) {
+        return false;
+    }
+
+    // Keep reload and medkit use mutually exclusive: reload can cancel use,
+    // but medkit input should not interrupt an already-started reload.
+    if (attack.reloadActive) {
+        return false;
+    }
+
+    return true;
+}
+
+static void ClearPlayerHealthItemUseState(TopdownPlayerInventoryRuntime& inventory)
+{
+    inventory.healthUseActive = false;
+    inventory.healthUseTimerMs = 0.0f;
+    inventory.healthUseDurationMs = 0.0f;
+    inventory.healthUseHealAmount = 0.0f;
+}
+
+static bool CompletePlayerHealthItemUse(GameState& state)
+{
+    TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            maxCarriedItems);
+    const float healAmount = std::max(0.0f, inventory.healthUseHealAmount);
+
+    ClearPlayerHealthItemUseState(inventory);
+
+    if (player.lifeState != TopdownPlayerLifeState::Alive ||
+        player.maxHealth <= 0.0f ||
+        carriedItems <= 0 ||
+        healAmount <= 0.0f) {
+        inventory.carriedHealthItems = carriedItems;
+        return false;
+    }
+
+    inventory.carriedHealthItems = std::clamp(
+            carriedItems - 1,
+            0,
+            maxCarriedItems);
+    player.health = std::clamp(
+            player.health + healAmount,
+            0.0f,
+            std::max(0.0f, player.maxHealth));
+    return true;
+}
+
+bool TopdownPlayerStartHealthItemUse(GameState& state)
+{
+    if (!TopdownPlayerCanUseHealthItem(state)) {
+        return false;
+    }
+
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const float consumeDurationMs = std::max(0.0f, inventory.carriedHealthConsumeMs);
+
+    if (consumeDurationMs > 0.0f && state.topdown.runtime.playerAttack.active) {
+        return false;
+    }
+
+    if (consumeDurationMs <= 0.0f) {
+        inventory.healthUseHealAmount = inventory.carriedHealthHealAmount;
+        return CompletePlayerHealthItemUse(state);
+    }
+
+    inventory.healthUseActive = true;
+    inventory.healthUseTimerMs = 0.0f;
+    inventory.healthUseDurationMs = consumeDurationMs;
+    inventory.healthUseHealAmount = inventory.carriedHealthHealAmount;
+    return true;
+}
+
+bool TopdownPlayerUseHealthItem(GameState& state)
+{
+    return TopdownPlayerStartHealthItemUse(state);
+}
+
+void TopdownPlayerCancelHealthItemUse(GameState& state)
+{
+    ClearPlayerHealthItemUseState(state.topdown.runtime.playerInventory);
+}
+
+void TopdownPlayerUpdateHealthItemUse(GameState& state, float dt)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (!inventory.healthUseActive) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    if (state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive ||
+        inventory.healthUseDurationMs <= 0.0f ||
+        inventory.healthUseHealAmount <= 0.0f ||
+        inventory.carriedHealthItems <= 0) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    inventory.healthUseTimerMs = std::max(
+            0.0f,
+            inventory.healthUseTimerMs + dt * 1000.0f);
+    if (inventory.healthUseTimerMs >= inventory.healthUseDurationMs) {
+        CompletePlayerHealthItemUse(state);
+    }
+}
+
+void TopdownPlayerValidateHealthItemUse(GameState& state)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (!inventory.healthUseActive) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    inventory.healthUseTimerMs = std::max(0.0f, inventory.healthUseTimerMs);
+    inventory.healthUseDurationMs = std::max(0.0f, inventory.healthUseDurationMs);
+    inventory.healthUseHealAmount = std::max(0.0f, inventory.healthUseHealAmount);
+    inventory.carriedHealthItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            std::max(0, inventory.maxCarriedHealthItems));
+
+    if (state.topdown.runtime.playerAttack.reloadActive ||
+        inventory.healthUseDurationMs <= 0.0f ||
+        inventory.healthUseHealAmount <= 0.0f ||
+        inventory.carriedHealthItems <= 0) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    if (inventory.healthUseTimerMs >= inventory.healthUseDurationMs) {
+        CompletePlayerHealthItemUse(state);
+    }
+}
+
+bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state)
+{
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (attack.active || attack.reloadActive) {
+        return false;
+    }
+
+    const std::string& equipmentSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr || !PlayerWeaponCanUseReload(*config)) {
+        return false;
+    }
+
+    if (!TopdownPlayerHasEquipmentSet(state, config->equipmentSetId)) {
+        return false;
+    }
+
+    const int loadedAmmo = std::clamp(
+            TopdownPlayerGetLoadedAmmo(state, config->equipmentSetId),
+            0,
+            config->magazineSize);
+    if (loadedAmmo >= config->magazineSize) {
+        return false;
+    }
+
+    return TopdownPlayerGetReserveAmmo(state, config->ammoType) > 0;
+}
+
+bool TopdownPlayerStartReload(GameState& state)
+{
+    if (!TopdownPlayerCanReloadCurrentWeapon(state)) {
+        return false;
+    }
+
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const std::string& equipmentSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equipmentSetId);
+    if (config == nullptr) {
+        return false;
+    }
+
+    // Reload and timed medkit use are exclusive; starting reload aborts the use without consuming it.
+    TopdownPlayerCancelHealthItemUse(state);
+
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    attack.burstShotsRemaining = 0;
+    attack.burstShotTimerMs = 0.0f;
+    StopPlayerRifleLoopIfPlaying(state);
+
+    attack.reloadActive = true;
+    attack.reloadTimerMs = 0.0f;
+    attack.reloadDurationMs = config->reloadDurationMs;
+    attack.reloadEquipmentSetId = config->equipmentSetId;
+
+    if (!config->reloadSoundId.empty()) {
+        PlaySoundById(state, config->reloadSoundId);
+    }
+
+    return true;
+}
+
+void TopdownPlayerCancelReload(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    ClearPlayerReloadState(attack);
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    StopPlayerRifleLoopIfPlaying(state);
+}
+
+void TopdownPlayerUpdateReload(GameState& state, float dt)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (!attack.reloadActive) {
+        return;
+    }
+
+    attack.pendingPrimaryAttack = false;
+    attack.pendingSecondaryAttack = false;
+    attack.triggerHeld = false;
+    attack.wantsTriggerRelease = false;
+    StopPlayerRifleLoopIfPlaying(state);
+
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, attack.reloadEquipmentSetId);
+    if (config == nullptr ||
+        attack.reloadEquipmentSetId != state.topdown.runtime.playerCharacter.equippedSetId ||
+        !TopdownPlayerHasEquipmentSet(state, attack.reloadEquipmentSetId) ||
+        !PlayerWeaponCanUseReload(*config)) {
+        TopdownPlayerCancelReload(state);
+        return;
+    }
+
+    attack.reloadDurationMs = std::max(0.0f, attack.reloadDurationMs);
+    if (attack.reloadDurationMs <= 0.0f) {
+        attack.reloadDurationMs = config->reloadDurationMs;
+    }
+
+    attack.reloadTimerMs = std::max(0.0f, attack.reloadTimerMs + dt * 1000.0f);
+    if (attack.reloadTimerMs < attack.reloadDurationMs) {
+        return;
+    }
+
+    CompletePlayerReload(state, *config);
+    ClearPlayerReloadState(attack);
+}
+
+void TopdownPlayerValidateReloadState(GameState& state)
+{
+    TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    if (!attack.reloadActive) {
+        ClearPlayerReloadState(attack);
+        return;
+    }
+
+    if (attack.reloadEquipmentSetId.empty()) {
+        attack.reloadEquipmentSetId = attack.equipmentSetId;
+    }
+
+    const TopdownPlayerWeaponConfig* config =
+            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, attack.reloadEquipmentSetId);
+    if (config == nullptr ||
+        attack.reloadEquipmentSetId != state.topdown.runtime.playerCharacter.equippedSetId ||
+        !TopdownPlayerHasEquipmentSet(state, attack.reloadEquipmentSetId) ||
+        !PlayerWeaponCanUseReload(*config)) {
+        TopdownPlayerCancelReload(state);
+        return;
+    }
+
+    attack.reloadTimerMs = std::max(0.0f, attack.reloadTimerMs);
+    attack.reloadDurationMs = attack.reloadDurationMs > 0.0f
+            ? attack.reloadDurationMs
+            : config->reloadDurationMs;
+
+    if (attack.reloadTimerMs >= attack.reloadDurationMs) {
+        CompletePlayerReload(state, *config);
+        ClearPlayerReloadState(attack);
+    }
+}
+
+void TopdownValidatePlayerEquipmentRuntime(GameState& state)
+{
+    ValidateTopdownPlayerLoadedAmmoRuntime(state);
+
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    if (IsTopdownPlayerEquipmentSetUsable(state, kFallbackEquipmentSetId)) {
+        if (!IsTopdownPlayerEquipmentSetOwned(inventory, kFallbackEquipmentSetId)) {
+            inventory.ownedEquipmentSetIds.push_back(kFallbackEquipmentSetId);
+        }
+    } else {
+        TraceLog(LOG_ERROR,
+                 "Player fallback equipment set '%s' is missing weapon config or animation set",
+                 kFallbackEquipmentSetId);
+    }
+
+    const std::string equippedSetId = state.topdown.runtime.playerCharacter.equippedSetId;
+    if (!equippedSetId.empty() &&
+        TopdownPlayerHasEquipmentSet(state, equippedSetId) &&
+        IsTopdownPlayerEquipmentSetUsable(state, equippedSetId)) {
+        const TopdownPlayerWeaponConfig* config =
+                FindTopdownPlayerWeaponConfigByEquipmentSetId(state, equippedSetId);
+        if (config != nullptr) {
+            ApplyTopdownPlayerEquipmentConfig(state, *config);
+            return;
+        }
+    }
+
+    if (TopdownPlayerHasEquipmentSet(state, kFallbackEquipmentSetId) &&
+        TopdownPlayerEquipEquipmentSet(state, kFallbackEquipmentSetId)) {
+        return;
+    }
+
+    for (const std::string& ownedId : inventory.ownedEquipmentSetIds) {
+        if (IsTopdownPlayerEquipmentSetUsable(state, ownedId)) {
+            const TopdownPlayerWeaponConfig* config =
+                    FindTopdownPlayerWeaponConfigByEquipmentSetId(state, ownedId);
+            if (config != nullptr) {
+                ApplyTopdownPlayerEquipmentConfig(state, *config);
+                return;
+            }
+        }
+    }
+}
+
 bool LoadTopdownPlayerCharacterAssets(GameState& state)
 {
     TopdownCharacterAssetData& asset = state.topdown.playerCharacterAsset;
@@ -1215,7 +2005,12 @@ void InitializeTopdownPlayerCharacterRuntime(GameState& state)
     runtime = {};
     runtime.active = asset.loaded;
 
-    runtime.equippedSetId = "handgun";
+    state.topdown.runtime.playerInventory.ownedEquipmentSetIds.clear();
+    state.topdown.runtime.playerInventory.ownedEquipmentSetIds.push_back(kFallbackEquipmentSetId);
+    state.topdown.runtime.playerInventory.reserveAmmo.clear();
+    state.topdown.runtime.playerInventory.loadedAmmo.clear();
+
+    runtime.equippedSetId = kFallbackEquipmentSetId;
 
     runtime.bodyFacingRadians = 0.0f;
     runtime.desiredAimRadians = 0.0f;
@@ -1252,4 +2047,6 @@ void InitializeTopdownPlayerCharacterRuntime(GameState& state)
         state.topdown.runtime.playerAttack.equipmentSetId = runtime.equippedSetId;
         state.topdown.runtime.playerAttack.currentFireMode = TopdownFireMode::SemiAuto;
     }
+
+    TopdownValidatePlayerEquipmentRuntime(state);
 }

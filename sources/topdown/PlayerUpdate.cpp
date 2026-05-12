@@ -555,6 +555,10 @@ static void UpdatePlayerMovementIntent(GameState& state)
         desiredSpeed *= ClampFloat(player.hitSlowdownMultiplier, 0.0f, 1.0f);
     }
 
+    if (TopdownPlayerIsUsingHealthItem(state)) {
+        desiredSpeed *= 0.5f;
+    }
+
     player.desiredVelocity = TopdownMul(worldInput, desiredSpeed);
 }
 

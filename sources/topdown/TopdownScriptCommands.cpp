@@ -1,10 +1,12 @@
 #include "topdown/TopdownScriptCommands.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "nav/NavMeshQuery.h"
 #include "raymath.h"
 #include "topdown/NpcRegistry.h"
+#include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownNpcPatrol.h"
 #include "audio/Audio.h"
 #include "resources/AsepriteAsset.h"
@@ -12,6 +14,85 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "utils/Interpolation.h"
 #include "TopdownHelpers.h"
+
+
+bool TopdownScriptAddEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerAddEquipmentSet(state, equipmentSetId);
+}
+
+bool TopdownScriptRemoveEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerRemoveEquipmentSet(state, equipmentSetId);
+}
+
+bool TopdownScriptHasEquipmentSet(GameState& state, const std::string& equipmentSetId, bool& outOwned)
+{
+    outOwned = TopdownPlayerHasEquipmentSet(state, equipmentSetId);
+    return true;
+}
+
+bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipmentSetId)
+{
+    return TopdownPlayerEquipEquipmentSet(state, equipmentSetId);
+}
+
+bool TopdownScriptAddAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerAddAmmo(state, ammoType, amount);
+}
+
+bool TopdownScriptRemoveAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerRemoveAmmo(state, ammoType, amount);
+}
+
+bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& outAmount)
+{
+    outAmount = TopdownPlayerGetReserveAmmo(state, ammoType);
+    return !ammoType.empty();
+}
+
+bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount)
+{
+    return TopdownPlayerSetReserveAmmo(state, ammoType, amount);
+}
+
+bool TopdownScriptGetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int& outAmount)
+{
+    outAmount = TopdownPlayerGetLoadedAmmo(state, equipmentSetId);
+    return !equipmentSetId.empty();
+}
+
+bool TopdownScriptSetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int amount)
+{
+    return TopdownPlayerSetLoadedAmmo(state, equipmentSetId, amount);
+}
+
+bool TopdownScriptReloadCurrentWeapon(GameState& state)
+{
+    return TopdownPlayerStartReload(state);
+}
+
+bool TopdownScriptIsReloading(GameState& state, bool& outReloading)
+{
+    outReloading = state.topdown.runtime.playerAttack.reloadActive;
+    return true;
+}
+
+bool TopdownScriptUseHealthItem(GameState& state)
+{
+    return TopdownPlayerUseHealthItem(state);
+}
+
+bool TopdownScriptGetHealthItemCount(GameState& state, int& outAmount)
+{
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    outAmount = std::max(
+            0,
+            std::min(inventory.carriedHealthItems, inventory.maxCarriedHealthItems));
+    return true;
+}
 
 static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
 {

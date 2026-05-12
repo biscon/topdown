@@ -1,7 +1,10 @@
 #include "topdown/LevelRender.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <string>
 #include <vector>
 
 #include "data/GameState.h"
@@ -10,6 +13,7 @@
 #include "resources/TextureAsset.h"
 #include "render/EffectShaderRegistry.h"
 #include "topdown/CharacterRender.h"
+#include "topdown/PlayerRegistry.h"
 #include "TopdownHelpers.h"
 #include "rlgl.h"
 #include "external/glad.h"
@@ -21,6 +25,7 @@
 #include "topdown/LevelProps.h"
 #include "ui/NarrationPopups.h"
 #include "ui/TopdownSpeechBubbles.h"
+#include "topdown/TopdownItems.h"
 
 static void BeginStencilWriteReplace()
 {
@@ -1464,6 +1469,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
     TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
+    TopdownRenderItems(state);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
@@ -1516,6 +1522,306 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     }
 }
 
+static constexpr float HUD_TEXT_SPACING = 1.0f;
+static constexpr float HUD_SPEECH_FONT_SIZE = 28.0f;
+static constexpr float HUD_BODY_FONT_SIZE = 32.0f;
+
+static const Color HUD_PANEL_FILL_COLOR = {34, 26, 20, 220};
+static const Color HUD_PANEL_TITLE_STRIP_COLOR = {52, 38, 28, 210};
+static const Color HUD_PANEL_BORDER_COLOR = {150, 110, 70, 210};
+static const Color HUD_PANEL_INNER_LINE_COLOR = {90, 64, 44, 220};
+static const Color HUD_PANEL_ACCENT_COLOR = {196, 140, 70, 245};
+static const Color HUD_PANEL_SHADOW_COLOR = {12, 9, 7, 175};
+static const Color HUD_TITLE_TEXT_COLOR = {250, 232, 200, 255};
+static const Color HUD_BODY_TEXT_COLOR = {222, 200, 168, 255};
+
+static float SnapHudPixel(float value)
+{
+    return std::round(value);
+}
+
+static Vector2 SnapHudPosition(Vector2 position)
+{
+    return Vector2{SnapHudPixel(position.x), SnapHudPixel(position.y)};
+}
+
+static Rectangle SnapHudRectangle(Rectangle rect)
+{
+    return Rectangle{
+            SnapHudPixel(rect.x),
+            SnapHudPixel(rect.y),
+            SnapHudPixel(rect.width),
+            SnapHudPixel(rect.height)};
+}
+
+static Color HudColorWithAlpha(Color color, unsigned char alpha)
+{
+    color.a = alpha;
+    return color;
+}
+
+static void DrawHudTextShadowed(
+        const Font& font,
+        const char* text,
+        Vector2 position,
+        float fontSize,
+        Color color)
+{
+    if (text == nullptr || text[0] == '\0') {
+        return;
+    }
+
+    const Vector2 snapped = SnapHudPosition(position);
+    DrawTextEx(
+            font,
+            text,
+            Vector2{snapped.x + 2.0f, snapped.y + 2.0f},
+            fontSize,
+            HUD_TEXT_SPACING,
+            HUD_PANEL_SHADOW_COLOR);
+    DrawTextEx(font, text, snapped, fontSize, HUD_TEXT_SPACING, color);
+}
+
+static void DrawCompactHudPanel(Rectangle panel, bool titleStrip)
+{
+    panel = SnapHudRectangle(panel);
+
+    const Rectangle shadow = SnapHudRectangle(Rectangle{
+            panel.x + 3.0f,
+            panel.y + 4.0f,
+            panel.width,
+            panel.height});
+    DrawRectangleRounded(shadow, 0.10f, 6, HUD_PANEL_SHADOW_COLOR);
+    DrawRectangleRounded(panel, 0.10f, 6, HUD_PANEL_FILL_COLOR);
+
+    if (titleStrip) {
+        const Rectangle strip = SnapHudRectangle(Rectangle{panel.x, panel.y, panel.width, 38.0f});
+        DrawRectangleRounded(strip, 0.10f, 6, HUD_PANEL_TITLE_STRIP_COLOR);
+        DrawRectangleRec(
+                SnapHudRectangle(Rectangle{
+                        strip.x,
+                        strip.y + strip.height - 8.0f,
+                        strip.width,
+                        8.0f}),
+                HUD_PANEL_TITLE_STRIP_COLOR);
+        DrawRectangleRec(
+                SnapHudRectangle(Rectangle{panel.x + 12.0f, panel.y + 38.0f, panel.width - 24.0f, 1.0f}),
+                HUD_PANEL_INNER_LINE_COLOR);
+    }
+
+    DrawRectangleRoundedLinesEx(panel, 0.10f, 6, 2.0f, HUD_PANEL_BORDER_COLOR);
+}
+
+static void DrawHudProgressLine(Rectangle line, float progress)
+{
+    line = SnapHudRectangle(line);
+    progress = std::clamp(progress, 0.0f, 1.0f);
+
+    DrawRectangleRec(line, HUD_PANEL_INNER_LINE_COLOR);
+
+    const Rectangle fill = SnapHudRectangle(Rectangle{
+            line.x,
+            line.y,
+            line.width * progress,
+            line.height});
+    if (fill.width > 0.0f) {
+        DrawRectangleRec(fill, HUD_PANEL_ACCENT_COLOR);
+    }
+}
+
+static void BuildEquipmentHudLabel(
+        const std::string& equipmentSetId,
+        char* outLabel,
+        size_t outLabelSize)
+{
+    if (outLabel == nullptr || outLabelSize == 0) {
+        return;
+    }
+
+    if (equipmentSetId.empty()) {
+        std::snprintf(outLabel, outLabelSize, "UNARMED");
+        return;
+    }
+
+    size_t writeIndex = 0;
+    for (char ch : equipmentSetId) {
+        if (writeIndex + 1 >= outLabelSize) {
+            break;
+        }
+
+        if (ch == '_' || ch == '-') {
+            outLabel[writeIndex++] = ' ';
+            continue;
+        }
+
+        const unsigned char c = static_cast<unsigned char>(ch);
+        outLabel[writeIndex++] = static_cast<char>(std::toupper(c));
+    }
+
+    outLabel[writeIndex] = '\0';
+}
+
+static void DrawTopCenterHudText(GameState& state, const char* text, Color textColor)
+{
+    if (text == nullptr || text[0] == '\0') {
+        return;
+    }
+
+    constexpr float kFontSize = 42.0f;
+    constexpr float kTextY = 112.0f;
+
+    const Vector2 textSize = MeasureTextEx(
+            state.narrationTitleFont,
+            text,
+            kFontSize,
+            HUD_TEXT_SPACING);
+    const Vector2 position = SnapHudPosition(Vector2{
+            INTERNAL_WIDTH * 0.5f - textSize.x * 0.5f,
+            kTextY});
+
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            Vector2{position.x + 3.0f, position.y + 3.0f},
+            kFontSize,
+            HUD_TEXT_SPACING,
+            HUD_PANEL_SHADOW_COLOR);
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            Vector2{position.x + 1.0f, position.y + 1.0f},
+            kFontSize,
+            HUD_TEXT_SPACING,
+            Color{0, 0, 0, 210});
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            position,
+            kFontSize,
+            HUD_TEXT_SPACING,
+            textColor);
+}
+
+static void DrawTopCenterActionHud(GameState& state)
+{
+    if (state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive) {
+        return;
+    }
+
+    if (TopdownPlayerIsUsingHealthItem(state)) {
+        const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
+        Color medkitColor = {130, 235, 150, 255};
+        medkitColor.a = static_cast<unsigned char>(std::round(220.0f + pulse01 * 35.0f));
+        DrawTopCenterHudText(state, "PATCHING UP...", medkitColor);
+        return;
+    }
+
+    const TopdownPlayerWeaponConfig* weaponConfig = TopdownPlayerGetCurrentWeaponConfig(state);
+    if (weaponConfig == nullptr || !TopdownPlayerWeaponUsesAmmo(*weaponConfig)) {
+        return;
+    }
+
+    if (state.topdown.runtime.playerAttack.reloadActive) {
+        const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
+        Color reloadColor = HUD_TITLE_TEXT_COLOR;
+        reloadColor.a = static_cast<unsigned char>(std::round(220.0f + pulse01 * 35.0f));
+        DrawTopCenterHudText(state, "RELOADING...", reloadColor);
+        return;
+    }
+
+    const int loadedAmmo = TopdownPlayerGetLoadedAmmo(state, weaponConfig->equipmentSetId);
+    if (loadedAmmo > 0) {
+        return;
+    }
+
+    const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
+    const unsigned char alpha = static_cast<unsigned char>(std::round(110.0f + pulse01 * 145.0f));
+
+    Color warningColor = HUD_PANEL_ACCENT_COLOR;
+    warningColor.a = alpha;
+    DrawTopCenterHudText(state, "RELOAD!", warningColor);
+}
+
+static void DrawCurrentWeaponAmmoHud(GameState& state)
+{
+    const TopdownPlayerWeaponConfig* weaponConfig = TopdownPlayerGetCurrentWeaponConfig(state);
+    if (weaponConfig == nullptr) {
+        return;
+    }
+
+    char label[96]{};
+    BuildEquipmentHudLabel(weaponConfig->equipmentSetId, label, sizeof(label));
+    const bool usesAmmo = TopdownPlayerWeaponUsesAmmo(*weaponConfig);
+
+    constexpr float kPanelW = 340.0f;
+    constexpr float kPanelX = INTERNAL_WIDTH - kPanelW - 28.0f;
+    constexpr float kPanelY = 28.0f;
+
+    // Ammo-free weapons only need a compact header strip.
+    constexpr float kHeaderOnlyPanelH = 40.0f;
+    constexpr float kAmmoPanelH = 92.0f;
+
+    const Rectangle panel{
+            kPanelX,
+            kPanelY,
+            kPanelW,
+            usesAmmo ? kAmmoPanelH : kHeaderOnlyPanelH
+    };
+
+    DrawCompactHudPanel(panel, usesAmmo);
+
+    DrawHudTextShadowed(
+            state.speechFont,
+            label,
+            Vector2{panel.x + 16.0f, panel.y + 6.0f},
+            HUD_SPEECH_FONT_SIZE,
+            HUD_TITLE_TEXT_COLOR);
+
+    if (!usesAmmo) {
+        return;
+    }
+
+    const int loadedAmmo = std::clamp(
+            TopdownPlayerGetLoadedAmmo(state, weaponConfig->equipmentSetId),
+            0,
+            weaponConfig->magazineSize);
+    const int reserveAmmo = std::max(
+            0,
+            TopdownPlayerGetReserveAmmo(state, weaponConfig->ammoType));
+
+    char ammoText[96]{};
+    std::snprintf(
+            ammoText,
+            sizeof(ammoText),
+            "%d / %d   %d",
+            loadedAmmo,
+            weaponConfig->magazineSize,
+            reserveAmmo);
+
+    DrawHudTextShadowed(
+            state.narrationBodyFont,
+            ammoText,
+            Vector2{panel.x + 16.0f, panel.y + 48.0f},
+            HUD_BODY_FONT_SIZE,
+            HUD_BODY_TEXT_COLOR);
+
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
+    const bool reloading = attack.reloadActive &&
+                           (attack.reloadEquipmentSetId.empty() ||
+                            attack.reloadEquipmentSetId == weaponConfig->equipmentSetId);
+    if (!reloading) {
+        return;
+    }
+
+    const float reloadProgress = (attack.reloadDurationMs > 0.0f)
+                                 ? std::clamp(attack.reloadTimerMs / attack.reloadDurationMs, 0.0f, 1.0f)
+                                 : 0.0f;
+
+    DrawHudProgressLine(
+            Rectangle{panel.x + 16.0f, panel.y + panel.height - 12.0f, panel.width - 32.0f, 3.0f},
+            reloadProgress);
+}
+
 static void DrawHealthBar(GameState& state) {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
 
@@ -1524,58 +1830,117 @@ static void DrawHealthBar(GameState& state) {
 
     static constexpr float kBarX = 28.0f;
     static constexpr float kBarY = 28.0f;
-    static constexpr float kBarW = 320.0f;
-    static constexpr float kBarH = 26.0f;
+    static constexpr float kBarW = 340.0f;
+    static constexpr float kBarH = 28.0f;
 
-    Rectangle outer{
+    Rectangle outer = SnapHudRectangle(Rectangle{
             kBarX - 3.0f,
             kBarY - 3.0f,
             kBarW + 6.0f,
             kBarH + 6.0f
-    };
+    });
 
-    Rectangle bg{
+    Rectangle bg = SnapHudRectangle(Rectangle{
             kBarX,
             kBarY,
             kBarW,
             kBarH
-    };
+    });
 
-    Rectangle fill{
+    Rectangle fill = SnapHudRectangle(Rectangle{
             kBarX,
             kBarY,
-            std::round(kBarW * health01),
+            kBarW * health01,
             kBarH
-    };
+    });
 
-    const float danger = 1.0f - health01;
+    const Color healthGoodLeft  = Color{88, 126, 58, 245};
+    const Color healthGoodRight = Color{132, 166, 76, 245};
 
-    Color fillColor{
-            static_cast<unsigned char>(std::round(40.0f + 215.0f * danger)),
-            static_cast<unsigned char>(std::round(220.0f - 170.0f * danger)),
-            35,
-            235
-    };
+    const Color healthWarnLeft  = Color{150, 110, 55, 245};
+    const Color healthWarnRight = Color{196, 140, 70, 245};
 
-    DrawRectangleRec(outer, Fade(BLACK, 0.75f));
-    DrawRectangleRec(bg, Color{18, 18, 18, 210});
+    const Color healthBadLeft   = Color{116, 48, 38, 245};
+    const Color healthBadRight  = Color{170, 70, 48, 245};
 
-    if (fill.width > 0.0f) {
-        DrawRectangleRec(fill, fillColor);
+    Color fillLeft = healthGoodLeft;
+    Color fillRight = healthGoodRight;
+
+    if (health01 <= 0.30f) {
+        fillLeft = healthBadLeft;
+        fillRight = healthBadRight;
+    } else if (health01 <= 0.60f) {
+        fillLeft = healthWarnLeft;
+        fillRight = healthWarnRight;
     }
 
-    DrawRectangleLinesEx(bg, 2.0f, Color{0, 0, 0, 255});
+    DrawRectangleRec(outer, HUD_PANEL_SHADOW_COLOR);
+    DrawRectangleRec(bg, HudColorWithAlpha(HUD_PANEL_FILL_COLOR, 230));
 
-    DrawText(
+    if (fill.width > 0.0f) {
+        DrawRectangleGradientH(
+                static_cast<int>(fill.x),
+                static_cast<int>(fill.y),
+                static_cast<int>(fill.width),
+                static_cast<int>(fill.height),
+                fillLeft,
+                fillRight);
+    }
+
+    DrawRectangleLinesEx(bg, 2.0f, Color{22, 16, 12, 245});
+
+    DrawHudTextShadowed(
+            state.speechFont,
             TextFormat("%d / %d",
                        static_cast<int>(std::round(player.health)),
                        static_cast<int>(std::round(player.maxHealth))),
-            static_cast<int>(kBarX + 10.0f),
-            static_cast<int>(kBarY + 4.0f),
-            18,
-            WHITE);
+            Vector2{kBarX + 10.0f, kBarY - 1.0f},
+            HUD_SPEECH_FONT_SIZE,
+            HUD_TITLE_TEXT_COLOR);
 }
 
+static void DrawHealthItemHud(GameState& state)
+{
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    const int maxItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(inventory.carriedHealthItems, 0, maxItems);
+
+    static constexpr float kPanelX = 28.0f;
+    static constexpr float kPanelY = 68.0f;
+    static constexpr float kPanelH = 40.0f;
+
+    const char* countText = TextFormat("Medkits %d/%d", carriedItems, maxItems);
+    const Vector2 textSize = MeasureTextEx(
+            state.speechFont,
+            countText,
+            HUD_SPEECH_FONT_SIZE,
+            HUD_TEXT_SPACING);
+    const float panelW = std::max(180.0f, SnapHudPixel(textSize.x + 24.0f));
+
+    DrawCompactHudPanel(Rectangle{kPanelX, kPanelY, panelW, kPanelH}, false);
+
+    const Color countColor = carriedItems > 0
+            ? HUD_BODY_TEXT_COLOR
+            : Color{150, 130, 108, 220};
+    DrawHudTextShadowed(
+            state.speechFont,
+            countText,
+            Vector2{kPanelX + 12.0f, kPanelY + 6.0f},
+            HUD_SPEECH_FONT_SIZE,
+            countColor);
+
+    if (!TopdownPlayerIsUsingHealthItem(state)) {
+        return;
+    }
+
+    const float progress = inventory.healthUseDurationMs > 0.0f
+            ? std::clamp(inventory.healthUseTimerMs / inventory.healthUseDurationMs, 0.0f, 1.0f)
+            : 0.0f;
+    DrawHudProgressLine(
+            Rectangle{kPanelX + 12.0f, kPanelY + kPanelH - 7.0f, panelW - 24.0f, 3.0f},
+            progress);
+}
 
 static const TopdownAuthoredTrigger* FindActiveInteractPromptTrigger(const GameState& state)
 {
@@ -1745,6 +2110,9 @@ void TopdownRenderUi(GameState& state)
     }
 
     DrawHealthBar(state);
+    DrawHealthItemHud(state);
+    DrawCurrentWeaponAmmoHud(state);
+    DrawTopCenterActionHud(state);
     TopdownRenderSpeechBubbles(state);
     TopdownRenderNarrationPopups(state);
     DrawInteractPrompt(state);

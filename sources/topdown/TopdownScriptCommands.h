@@ -36,6 +36,25 @@ bool TopdownScriptStartRunTo(GameState& state, Vector2 target);
 bool TopdownScriptStartWalkToSpawn(GameState& state, const std::string& spawnId);
 bool TopdownScriptStartRunToSpawn(GameState& state, const std::string& spawnId);
 
+
+// Player equipment
+bool TopdownScriptAddEquipmentSet(GameState& state, const std::string& equipmentSetId);
+bool TopdownScriptRemoveEquipmentSet(GameState& state, const std::string& equipmentSetId);
+bool TopdownScriptHasEquipmentSet(GameState& state, const std::string& equipmentSetId, bool& outOwned);
+bool TopdownScriptEquipEquipmentSet(GameState& state, const std::string& equipmentSetId);
+
+// Player ammo
+bool TopdownScriptAddAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptRemoveAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptGetAmmo(GameState& state, const std::string& ammoType, int& outAmount);
+bool TopdownScriptSetAmmo(GameState& state, const std::string& ammoType, int amount);
+bool TopdownScriptGetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int& outAmount);
+bool TopdownScriptSetLoadedAmmo(GameState& state, const std::string& equipmentSetId, int amount);
+bool TopdownScriptReloadCurrentWeapon(GameState& state);
+bool TopdownScriptIsReloading(GameState& state, bool& outReloading);
+bool TopdownScriptUseHealthItem(GameState& state);
+bool TopdownScriptGetHealthItemCount(GameState& state, int& outAmount);
+
 // NPC lifecycle
 bool TopdownScriptSpawnNpc(
         GameState& state,
