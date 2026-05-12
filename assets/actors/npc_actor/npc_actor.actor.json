@@ -1,9 +1,0 @@
-{
-    "asepriteJson": "npc_actor.json",
-    "feetPivot": {
-        "x": 27,
-        "y": 79
-    },
-    "baseDrawScale": 3.0,
-    "useRightForLeft": true
-}
