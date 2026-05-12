@@ -2106,17 +2106,16 @@ static void DrawGameOver(GameState& state)
 
 void TopdownRenderUi(GameState& state)
 {
-    if (!state.topdown.runtime.levelActive) {
-        return;
+    if (state.topdown.runtime.levelActive) {
+        DrawHealthBar(state);
+        DrawHealthItemHud(state);
+        DrawCurrentWeaponAmmoHud(state);
+        DrawTopCenterActionHud(state);
+        TopdownRenderSpeechBubbles(state);
+        TopdownRenderNarrationPopups(state);
+        DrawInteractPrompt(state);
+        DrawGameOver(state);
     }
 
-    DrawHealthBar(state);
-    DrawHealthItemHud(state);
-    DrawCurrentWeaponAmmoHud(state);
-    DrawTopCenterActionHud(state);
-    TopdownRenderSpeechBubbles(state);
-    TopdownRenderNarrationPopups(state);
-    DrawInteractPrompt(state);
-    DrawGameOver(state);
     TopdownRenderLoadScreenOverlay(state);
 }
