@@ -10287,8 +10287,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":766.75,
-                 "y":967.5
+                 "x":748.75,
+                 "y":1025.5
                 }, 
                 {
                  "height":0,
@@ -10325,8 +10325,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":778.833333333333,
-                 "y":189.583333333333
+                 "x":318.166666666667,
+                 "y":-397.75
                 }, 
                 {
                  "height":0,
@@ -10365,6 +10365,63 @@
                  "width":0,
                  "x":860,
                  "y":986.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":252,
+                 "name":"ammo_pistol_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"pistol_mag"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":891.333333333,
+                 "y":184
+                }, 
+                {
+                 "height":0,
+                 "id":253,
+                 "name":"ammo_pistol_3",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"pistol_mag"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":209.333333333333,
+                 "y":-386.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":254,
+                 "name":"ammo_pistol_4",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"pistol_mag"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":964,
+                 "y":-208
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10373,7 +10430,7 @@
          "y":0
         }],
  "nextlayerid":89,
- "nextobjectid":252,
+ "nextobjectid":255,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

@@ -251,6 +251,7 @@ struct TopdownItemDefinition {
     int amount = 0;
 
     float healAmount = 0.0f;
+    float consumeMs = 0.0f;
 
     std::string texturePath;
     TextureHandle textureHandle = -1;
@@ -1591,6 +1592,12 @@ struct TopdownPlayerInventoryRuntime {
     int carriedHealthItems = 0;
     int maxCarriedHealthItems = 3;
     float carriedHealthHealAmount = 0.0f;
+    float carriedHealthConsumeMs = 0.0f;
+
+    bool healthUseActive = false;
+    float healthUseTimerMs = 0.0f;
+    float healthUseDurationMs = 0.0f;
+    float healthUseHealAmount = 0.0f;
 };
 
 struct TopdownRuntimeData {

@@ -190,6 +190,7 @@ bool LoadTopdownItemDefinitions(GameState& state)
             def.amount = std::max(0, entry.value("amount", 0));
         } else if (def.kind == TopdownItemKind::Health) {
             def.healAmount = std::max(0.0f, entry.value("healAmount", 0.0f));
+            def.consumeMs = std::max(0.0f, entry.value("consumeMs", 0.0f));
         }
 
         TextureLoadSettings settings{};
@@ -362,6 +363,9 @@ static bool TryPickupHealthItem(
     inventory.carriedHealthHealAmount = std::max(
             inventory.carriedHealthHealAmount,
             def.healAmount);
+    inventory.carriedHealthConsumeMs = std::max(
+            inventory.carriedHealthConsumeMs,
+            def.consumeMs);
 
     item.active = false;
     PlaySoundById(state, "item_added");

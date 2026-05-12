@@ -88,7 +88,7 @@ void TopdownHandleInput(GameState& state)
                 if (TopdownPlayerUseHealthItem(state)) {
                     TraceLog(
                             LOG_INFO,
-                            "Used carried health item: %d/%d remaining",
+                            "Used or started carried health item: %d/%d carried",
                             state.topdown.runtime.playerInventory.carriedHealthItems,
                             state.topdown.runtime.playerInventory.maxCarriedHealthItems);
                 } else {

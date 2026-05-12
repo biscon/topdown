@@ -1389,6 +1389,10 @@ bool TopdownPlayerEquipEquipmentSet(
         return false;
     }
 
+    if (state.topdown.runtime.playerCharacter.equippedSetId != config->equipmentSetId) {
+        TopdownPlayerCancelHealthItemUse(state);
+    }
+
     ApplyTopdownPlayerEquipmentConfig(state, *config);
     return true;
 }
@@ -1497,10 +1501,17 @@ bool TopdownPlayerRemoveAmmo(
     return true;
 }
 
+bool TopdownPlayerIsUsingHealthItem(const GameState& state)
+{
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    return inventory.healthUseActive && inventory.healthUseDurationMs > 0.0f;
+}
+
 bool TopdownPlayerCanUseHealthItem(const GameState& state)
 {
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
     const int carriedItems = std::clamp(
             inventory.carriedHealthItems,
@@ -1519,29 +1530,146 @@ bool TopdownPlayerCanUseHealthItem(const GameState& state)
         return false;
     }
 
+    if (TopdownPlayerIsUsingHealthItem(state)) {
+        return false;
+    }
+
+    // Keep reload and medkit use mutually exclusive: reload can cancel use,
+    // but medkit input should not interrupt an already-started reload.
+    if (attack.reloadActive) {
+        return false;
+    }
+
     return true;
 }
 
-bool TopdownPlayerUseHealthItem(GameState& state)
+static void ClearPlayerHealthItemUseState(TopdownPlayerInventoryRuntime& inventory)
+{
+    inventory.healthUseActive = false;
+    inventory.healthUseTimerMs = 0.0f;
+    inventory.healthUseDurationMs = 0.0f;
+    inventory.healthUseHealAmount = 0.0f;
+}
+
+static bool CompletePlayerHealthItemUse(GameState& state)
+{
+    TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            maxCarriedItems);
+    const float healAmount = std::max(0.0f, inventory.healthUseHealAmount);
+
+    ClearPlayerHealthItemUseState(inventory);
+
+    if (player.lifeState != TopdownPlayerLifeState::Alive ||
+        player.maxHealth <= 0.0f ||
+        carriedItems <= 0 ||
+        healAmount <= 0.0f) {
+        inventory.carriedHealthItems = carriedItems;
+        return false;
+    }
+
+    inventory.carriedHealthItems = std::clamp(
+            carriedItems - 1,
+            0,
+            maxCarriedItems);
+    player.health = std::clamp(
+            player.health + healAmount,
+            0.0f,
+            std::max(0.0f, player.maxHealth));
+    return true;
+}
+
+bool TopdownPlayerStartHealthItemUse(GameState& state)
 {
     if (!TopdownPlayerCanUseHealthItem(state)) {
         return false;
     }
 
-    TopdownPlayerRuntime& player = state.topdown.runtime.player;
     TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const float consumeDurationMs = std::max(0.0f, inventory.carriedHealthConsumeMs);
 
-    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
-    inventory.carriedHealthItems = std::clamp(
-            inventory.carriedHealthItems - 1,
-            0,
-            maxCarriedItems);
+    if (consumeDurationMs > 0.0f && state.topdown.runtime.playerAttack.active) {
+        return false;
+    }
 
-    player.health = std::clamp(
-            player.health + inventory.carriedHealthHealAmount,
-            0.0f,
-            std::max(0.0f, player.maxHealth));
+    if (consumeDurationMs <= 0.0f) {
+        inventory.healthUseHealAmount = inventory.carriedHealthHealAmount;
+        return CompletePlayerHealthItemUse(state);
+    }
+
+    inventory.healthUseActive = true;
+    inventory.healthUseTimerMs = 0.0f;
+    inventory.healthUseDurationMs = consumeDurationMs;
+    inventory.healthUseHealAmount = inventory.carriedHealthHealAmount;
     return true;
+}
+
+bool TopdownPlayerUseHealthItem(GameState& state)
+{
+    return TopdownPlayerStartHealthItemUse(state);
+}
+
+void TopdownPlayerCancelHealthItemUse(GameState& state)
+{
+    ClearPlayerHealthItemUseState(state.topdown.runtime.playerInventory);
+}
+
+void TopdownPlayerUpdateHealthItemUse(GameState& state, float dt)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (!inventory.healthUseActive) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    if (state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive ||
+        inventory.healthUseDurationMs <= 0.0f ||
+        inventory.healthUseHealAmount <= 0.0f ||
+        inventory.carriedHealthItems <= 0) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    inventory.healthUseTimerMs = std::max(
+            0.0f,
+            inventory.healthUseTimerMs + dt * 1000.0f);
+    if (inventory.healthUseTimerMs >= inventory.healthUseDurationMs) {
+        CompletePlayerHealthItemUse(state);
+    }
+}
+
+void TopdownPlayerValidateHealthItemUse(GameState& state)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    if (!inventory.healthUseActive) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    inventory.healthUseTimerMs = std::max(0.0f, inventory.healthUseTimerMs);
+    inventory.healthUseDurationMs = std::max(0.0f, inventory.healthUseDurationMs);
+    inventory.healthUseHealAmount = std::max(0.0f, inventory.healthUseHealAmount);
+    inventory.carriedHealthItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            std::max(0, inventory.maxCarriedHealthItems));
+
+    if (state.topdown.runtime.playerAttack.reloadActive ||
+        inventory.healthUseDurationMs <= 0.0f ||
+        inventory.healthUseHealAmount <= 0.0f ||
+        inventory.carriedHealthItems <= 0) {
+        ClearPlayerHealthItemUseState(inventory);
+        return;
+    }
+
+    if (inventory.healthUseTimerMs >= inventory.healthUseDurationMs) {
+        CompletePlayerHealthItemUse(state);
+    }
 }
 
 bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state)
@@ -1586,6 +1714,9 @@ bool TopdownPlayerStartReload(GameState& state)
     if (config == nullptr) {
         return false;
     }
+
+    // Reload and timed medkit use are exclusive; starting reload aborts the use without consuming it.
+    TopdownPlayerCancelHealthItemUse(state);
 
     attack.pendingPrimaryAttack = false;
     attack.pendingSecondaryAttack = false;

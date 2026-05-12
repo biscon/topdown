@@ -406,6 +406,9 @@ static bool BeginPlayerAttackRuntime(
     TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;
     TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
+    // Attacking aborts timed medkit use before the attack proceeds; cancel does not consume or heal.
+    TopdownPlayerCancelHealthItemUse(state);
+
     if (attack.active || attack.reloadActive) {
         return false;
     }
@@ -1203,6 +1206,7 @@ static void UpdatePlayerAttackRuntime(GameState& state, float dt)
     UpdatePlayerAttackTimers(attack, dt);
     UpdateActivePlayerAttack(state, dt);
     TopdownPlayerUpdateReload(state, dt);
+    TopdownPlayerUpdateHealthItemUse(state, dt);
     ConsumeQueuedPlayerAttackInputs(state);
     UpdatePlayerRifleLoopAudio(state);
 }

@@ -94,6 +94,11 @@ bool TopdownPlayerRemoveAmmo(
 
 bool TopdownPlayerCanUseHealthItem(const GameState& state);
 bool TopdownPlayerUseHealthItem(GameState& state);
+bool TopdownPlayerStartHealthItemUse(GameState& state);
+void TopdownPlayerCancelHealthItemUse(GameState& state);
+void TopdownPlayerUpdateHealthItemUse(GameState& state, float dt);
+bool TopdownPlayerIsUsingHealthItem(const GameState& state);
+void TopdownPlayerValidateHealthItemUse(GameState& state);
 
 bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state);
 bool TopdownPlayerStartReload(GameState& state);

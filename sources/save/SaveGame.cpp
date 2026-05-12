@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 9;
+    static constexpr int SAVE_VERSION = 10;
 
 
     struct SavedMusicSlotState {
@@ -121,6 +121,11 @@ namespace
         int carriedHealthItems = 0;
         int maxCarriedHealthItems = 3;
         float carriedHealthHealAmount = 0.0f;
+        float carriedHealthConsumeMs = 0.0f;
+        bool healthUseActive = false;
+        float healthUseTimerMs = 0.0f;
+        float healthUseDurationMs = 0.0f;
+        float healthUseHealAmount = 0.0f;
     };
 
     struct SavedNpcPatrolRuntime {
@@ -610,6 +615,11 @@ namespace
         inventory["carriedHealthItems"] = playerInventory.carriedHealthItems;
         inventory["maxCarriedHealthItems"] = playerInventory.maxCarriedHealthItems;
         inventory["carriedHealthHealAmount"] = playerInventory.carriedHealthHealAmount;
+        inventory["carriedHealthConsumeMs"] = playerInventory.carriedHealthConsumeMs;
+        inventory["healthUseActive"] = playerInventory.healthUseActive;
+        inventory["healthUseTimerMs"] = playerInventory.healthUseTimerMs;
+        inventory["healthUseDurationMs"] = playerInventory.healthUseDurationMs;
+        inventory["healthUseHealAmount"] = playerInventory.healthUseHealAmount;
         outRoot["topdownInventory"] = inventory;
     }
 
@@ -676,6 +686,11 @@ namespace
         out.carriedHealthItems = std::max(0, inventory.value("carriedHealthItems", 0));
         out.maxCarriedHealthItems = std::max(0, inventory.value("maxCarriedHealthItems", 3));
         out.carriedHealthHealAmount = std::max(0.0f, inventory.value("carriedHealthHealAmount", 0.0f));
+        out.carriedHealthConsumeMs = std::max(0.0f, inventory.value("carriedHealthConsumeMs", 0.0f));
+        out.healthUseActive = inventory.value("healthUseActive", false);
+        out.healthUseTimerMs = std::max(0.0f, inventory.value("healthUseTimerMs", 0.0f));
+        out.healthUseDurationMs = std::max(0.0f, inventory.value("healthUseDurationMs", 0.0f));
+        out.healthUseHealAmount = std::max(0.0f, inventory.value("healthUseHealAmount", 0.0f));
 
         return out;
     }
@@ -860,6 +875,12 @@ namespace
                 std::max(0, saved.carriedHealthItems),
                 inventory.maxCarriedHealthItems);
         inventory.carriedHealthHealAmount = std::max(0.0f, saved.carriedHealthHealAmount);
+        inventory.carriedHealthConsumeMs = std::max(0.0f, saved.carriedHealthConsumeMs);
+        inventory.healthUseActive = saved.healthUseActive;
+        inventory.healthUseTimerMs = std::max(0.0f, saved.healthUseTimerMs);
+        inventory.healthUseDurationMs = std::max(0.0f, saved.healthUseDurationMs);
+        inventory.healthUseHealAmount = std::max(0.0f, saved.healthUseHealAmount);
+        TopdownPlayerValidateHealthItemUse(state);
     }
 
     static void RestoreTopdownPlayerReloadRuntime(GameState& state, const SavedPlayerAttackRuntime& saved)

@@ -1914,6 +1914,17 @@ static void DrawHealthItemHud(GameState& state)
             Vector2{kPanelX + 12.0f, kPanelY + 6.0f},
             HUD_SPEECH_FONT_SIZE,
             countColor);
+
+    if (!TopdownPlayerIsUsingHealthItem(state)) {
+        return;
+    }
+
+    const float progress = inventory.healthUseDurationMs > 0.0f
+            ? std::clamp(inventory.healthUseTimerMs / inventory.healthUseDurationMs, 0.0f, 1.0f)
+            : 0.0f;
+    DrawHudProgressLine(
+            Rectangle{kPanelX + 12.0f, kPanelY + kPanelH - 7.0f, panelW - 24.0f, 3.0f},
+            progress);
 }
 
 static const TopdownAuthoredTrigger* FindActiveInteractPromptTrigger(const GameState& state)
