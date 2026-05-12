@@ -29,6 +29,12 @@ enum class TopdownPropType {
     Sprite
 };
 
+enum class TopdownItemKind {
+    Unknown,
+    Ammo,
+    Health
+};
+
 enum class TopdownEffectPlacement {
     AfterBottom,
     AfterCharacters,
@@ -236,6 +242,33 @@ struct TopdownAuthoredDoor {
     Color outlineColor = BLACK;
 };
 
+struct TopdownItemDefinition {
+    std::string id;
+    std::string displayName;
+    TopdownItemKind kind = TopdownItemKind::Unknown;
+
+    std::string ammoType;
+    int amount = 0;
+
+    float healAmount = 0.0f;
+
+    std::string texturePath;
+    TextureHandle textureHandle = -1;
+};
+
+struct TopdownItemRegistry {
+    bool loaded = false;
+    std::vector<TopdownItemDefinition> definitions;
+};
+
+struct TopdownAuthoredItem {
+    int tiledObjectId = -1;
+    std::string id;
+    std::string itemId;
+    Vector2 position{};
+    bool visible = true;
+};
+
 struct TopdownAuthoredProp {
     int tiledObjectId = -1;
     std::string id;
@@ -418,6 +451,7 @@ struct TopdownAuthoredLevelData {
     std::vector<TopdownAuthoredPolygon> obstacles;
     std::vector<TopdownAuthoredImageLayer> imageLayers;
     std::vector<TopdownAuthoredProp> props;
+    std::vector<TopdownAuthoredItem> items;
     std::vector<TopdownAuthoredSpawn> spawns;
     std::vector<TopdownAuthoredEffectRegion> effectRegions;
     std::vector<TopdownAuthoredTrigger> triggers;
@@ -437,6 +471,16 @@ struct TopdownRuntimeObstacle {
     std::vector<TopdownSegment> edges;
 
     Rectangle bounds{};
+    bool visible = true;
+};
+
+struct TopdownRuntimeItem {
+    int authoredIndex = -1;
+    int tiledObjectId = -1;
+    std::string id;
+    std::string itemId;
+    Vector2 position{};
+    bool active = true;
     bool visible = true;
 };
 
@@ -1580,6 +1624,7 @@ struct TopdownRuntimeData {
     int nextNpcPatrolContextHandle = 1;
     std::vector<TopdownNpcPatrolContext> npcPatrolContexts;
     std::vector<TopdownRuntimeProp> props;
+    std::vector<TopdownRuntimeItem> items;
 
     int nextTriggerHandle = 1;
     std::vector<TopdownRuntimeTrigger> triggers;
@@ -1603,6 +1648,7 @@ struct TopdownData {
     std::vector<TopdownLevelRegistryEntry> levelRegistry;
 
     TopdownBloodStampLibrary bloodStampLibrary;
+    TopdownItemRegistry itemRegistry;
 
     std::string currentLevelId;
     std::string currentLevelSaveName;

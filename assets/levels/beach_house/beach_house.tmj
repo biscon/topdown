@@ -10265,9 +10265,77 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":88,
+         "name":"Items",
+         "objects":[
+                {
+                 "height":0,
+                 "id":247,
+                 "name":"ammo_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"pistol_mag"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":766.75,
+                 "y":967.5
+                }, 
+                {
+                 "height":0,
+                 "id":248,
+                 "name":"medkit_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"medkit"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":805.75,
+                 "y":967.5
+                }, 
+                {
+                 "height":0,
+                 "id":249,
+                 "name":"medkit_2",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"medkit"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":778.833333333333,
+                 "y":189.583333333333
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":88,
- "nextobjectid":247,
+ "nextlayerid":89,
+ "nextobjectid":250,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

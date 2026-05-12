@@ -25,6 +25,7 @@
 #include "topdown/LevelProps.h"
 #include "ui/NarrationPopups.h"
 #include "ui/TopdownSpeechBubbles.h"
+#include "topdown/TopdownItems.h"
 
 static void BeginStencilWriteReplace()
 {
@@ -1468,6 +1469,7 @@ void TopdownRenderWorld(GameState& state, RenderTexture2D& worldTarget, RenderTe
     ClearBackground(DARKGRAY);
     DrawBottomLayers(state);
     TopdownRenderProps(state, TopdownEffectPlacement::AfterBottom);
+    TopdownRenderItems(state);
     EndWorldTarget();
 
     ApplyTopdownEffectRegionBucket(
