@@ -1,5 +1,6 @@
 {
     "levelId": "beach_house",
     "saveName": "Beach House",
+    "loadScreen": "beach_house_load.png",
     "baseAssetScale": 3
 }

@@ -1661,22 +1661,71 @@ static void BuildEquipmentHudLabel(
     outLabel[writeIndex] = '\0';
 }
 
-static void DrawReloadWarningHud(GameState& state)
+static void DrawTopCenterHudText(GameState& state, const char* text, Color textColor)
 {
-    const TopdownPlayerWeaponConfig* weaponConfig = TopdownPlayerGetCurrentWeaponConfig(state);
-    if (weaponConfig == nullptr) {
+    if (text == nullptr || text[0] == '\0') {
         return;
     }
 
-    if (!TopdownPlayerWeaponUsesAmmo(*weaponConfig)) {
-        return;
-    }
+    constexpr float kFontSize = 42.0f;
+    constexpr float kTextY = 112.0f;
 
+    const Vector2 textSize = MeasureTextEx(
+            state.narrationTitleFont,
+            text,
+            kFontSize,
+            HUD_TEXT_SPACING);
+    const Vector2 position = SnapHudPosition(Vector2{
+            INTERNAL_WIDTH * 0.5f - textSize.x * 0.5f,
+            kTextY});
+
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            Vector2{position.x + 3.0f, position.y + 3.0f},
+            kFontSize,
+            HUD_TEXT_SPACING,
+            HUD_PANEL_SHADOW_COLOR);
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            Vector2{position.x + 1.0f, position.y + 1.0f},
+            kFontSize,
+            HUD_TEXT_SPACING,
+            Color{0, 0, 0, 210});
+    DrawTextEx(
+            state.narrationTitleFont,
+            text,
+            position,
+            kFontSize,
+            HUD_TEXT_SPACING,
+            textColor);
+}
+
+static void DrawTopCenterActionHud(GameState& state)
+{
     if (state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive) {
         return;
     }
 
+    if (TopdownPlayerIsUsingHealthItem(state)) {
+        const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
+        Color medkitColor = {130, 235, 150, 255};
+        medkitColor.a = static_cast<unsigned char>(std::round(220.0f + pulse01 * 35.0f));
+        DrawTopCenterHudText(state, "PATCHING UP...", medkitColor);
+        return;
+    }
+
+    const TopdownPlayerWeaponConfig* weaponConfig = TopdownPlayerGetCurrentWeaponConfig(state);
+    if (weaponConfig == nullptr || !TopdownPlayerWeaponUsesAmmo(*weaponConfig)) {
+        return;
+    }
+
     if (state.topdown.runtime.playerAttack.reloadActive) {
+        const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
+        Color reloadColor = HUD_TITLE_TEXT_COLOR;
+        reloadColor.a = static_cast<unsigned char>(std::round(220.0f + pulse01 * 35.0f));
+        DrawTopCenterHudText(state, "RELOADING...", reloadColor);
         return;
     }
 
@@ -1685,46 +1734,12 @@ static void DrawReloadWarningHud(GameState& state)
         return;
     }
 
-    constexpr const char* kWarningText = "RELOAD!";
-    constexpr float kFontSize = 42.0f;
-    constexpr float kWarningY = 112.0f;
-
     const float pulse01 = 0.5f + 0.5f * std::sin(state.topdown.runtime.timeMs * 0.008f);
     const unsigned char alpha = static_cast<unsigned char>(std::round(110.0f + pulse01 * 145.0f));
 
     Color warningColor = HUD_PANEL_ACCENT_COLOR;
     warningColor.a = alpha;
-
-    const Vector2 textSize = MeasureTextEx(
-            state.narrationTitleFont,
-            kWarningText,
-            kFontSize,
-            HUD_TEXT_SPACING);
-    const Vector2 position = SnapHudPosition(Vector2{
-            INTERNAL_WIDTH * 0.5f - textSize.x * 0.5f,
-            kWarningY});
-
-    DrawTextEx(
-            state.narrationTitleFont,
-            kWarningText,
-            Vector2{position.x + 3.0f, position.y + 3.0f},
-            kFontSize,
-            HUD_TEXT_SPACING,
-            HUD_PANEL_SHADOW_COLOR);
-    DrawTextEx(
-            state.narrationTitleFont,
-            kWarningText,
-            Vector2{position.x + 1.0f, position.y + 1.0f},
-            kFontSize,
-            HUD_TEXT_SPACING,
-            Color{0, 0, 0, 210});
-    DrawTextEx(
-            state.narrationTitleFont,
-            kWarningText,
-            position,
-            kFontSize,
-            HUD_TEXT_SPACING,
-            warningColor);
+    DrawTopCenterHudText(state, "RELOAD!", warningColor);
 }
 
 static void DrawCurrentWeaponAmmoHud(GameState& state)
@@ -2097,7 +2112,7 @@ void TopdownRenderUi(GameState& state)
     DrawHealthBar(state);
     DrawHealthItemHud(state);
     DrawCurrentWeaponAmmoHud(state);
-    DrawReloadWarningHud(state);
+    DrawTopCenterActionHud(state);
     TopdownRenderSpeechBubbles(state);
     TopdownRenderNarrationPopups(state);
     DrawInteractPrompt(state);

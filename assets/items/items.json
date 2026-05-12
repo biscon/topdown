@@ -29,7 +29,7 @@
             "displayName": "Medkit",
             "kind": "health",
             "healAmount": 50,
-            "consumeMs": 1000,
+            "consumeMs": 2000,
             "texture": "assets/items/medkit.png"
         }
     ]
