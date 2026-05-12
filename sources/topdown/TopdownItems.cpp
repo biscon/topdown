@@ -448,16 +448,27 @@ void TopdownRenderItems(GameState& state)
         }
 
         const Vector2 screen = TopdownWorldToScreen(state, item.position);
-        const float bob = std::sin(timeMs * 0.004f + static_cast<float>(i) * 0.7f) * 4.0f;
 
-        const float shadowRadiusX = std::max(6.0f, dstW * 0.30f);
-        const float shadowRadiusY = std::max(2.0f, dstH * 0.08f);
+        const float phase = timeMs * 0.004f + static_cast<float>(i) * 0.7f;
+        const float bobSin = std::sin(phase);
+        const float bob = bobSin * 4.0f;
+
+        // bobSin is -1 at the bottom of the bob and +1 at the top.
+        // Convert that into 0..1 height, then shrink/dim the shadow as the item rises.
+        const float bobHeight01 = (-bobSin + 1.0f) * 0.5f;
+        const float shadowScale = 1.0f - bobHeight01 * 0.28f;
+        const unsigned char shadowAlpha =
+                static_cast<unsigned char>(std::round(76.0f - bobHeight01 * 22.0f));
+
+        const float shadowRadiusX = std::max(7.0f, dstW * 0.52f) * shadowScale;
+        const float shadowRadiusY = std::max(2.0f, dstH * 0.18f) * shadowScale;
+
         DrawEllipse(
                 static_cast<int>(std::round(screen.x)),
-                static_cast<int>(std::round(screen.y + dstH * 0.35f)),
+                static_cast<int>(std::round(screen.y + dstH * 0.55f)),
                 shadowRadiusX,
                 shadowRadiusY,
-                Color{0, 0, 0, 70});
+                Color{0, 0, 0, shadowAlpha});
 
         Rectangle src{
                 0.0f,
@@ -479,3 +490,4 @@ void TopdownRenderItems(GameState& state)
         DrawTexturePro(tex->texture, src, dst, origin, 0.0f, WHITE);
     }
 }
+
