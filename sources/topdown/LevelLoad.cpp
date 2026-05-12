@@ -23,6 +23,7 @@
 #include "LevelWindows.h"
 #include "LevelCollision.h"
 #include "topdown/TopdownItems.h"
+#include "topdown/LevelLoadScreen.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -2216,7 +2217,9 @@ static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
 
 static void BuildRuntimeFromAuthored(TopdownData& topdown)
 {
+    TopdownLoadScreenOverlay loadScreenOverlay = topdown.runtime.loadScreenOverlay;
     topdown.runtime = {};
+    topdown.runtime.loadScreenOverlay = loadScreenOverlay;
     topdown.runtime.levelActive = true;
 
     topdown.runtime.nav.levelBoundary = topdown.authored.levelBoundary;
@@ -2470,18 +2473,38 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     const std::string tmjNorm = NormalizePath(tmjPath);
     const fs::path levelDir = tmjPath.parent_path();
 
+    const TopdownLevelRegistryEntry* reg = nullptr;
+    for (const TopdownLevelRegistryEntry& entry : state.topdown.levelRegistry) {
+        if (entry.tiledFilePath == tmjNorm) {
+            reg = &entry;
+            break;
+        }
+    }
+
+    state.topdown.authored = {};
+    state.topdown.runtime = {};
+
+    bool loadScreenPrepared = false;
+    if (reg != nullptr && !reg->loadScreenPath.empty()) {
+        loadScreenPrepared = TopdownPrepareLoadScreenOverlay(
+                state,
+                reg->loadScreenPath,
+                reg->baseAssetScale,
+                true);
+    }
+
     json root;
     {
         std::ifstream in(tmjNorm);
         if (!in.is_open()) {
             TraceLog(LOG_ERROR, "Failed to open topdown level: %s", tmjNorm.c_str());
+            if (loadScreenPrepared) {
+                TopdownClearLoadScreenOverlay(state);
+            }
             return false;
         }
         in >> root;
     }
-
-    state.topdown.authored = {};
-    state.topdown.runtime = {};
 
     state.topdown.authored.tiledFilePath = tmjNorm;
     state.topdown.authored.levelId = tmjPath.stem().string();
@@ -2500,14 +2523,6 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
         state.topdown.currentLevelScriptFilePath = NormalizePath(scriptPath);
     }
 
-    const TopdownLevelRegistryEntry* reg = nullptr;
-    for (const TopdownLevelRegistryEntry& entry : state.topdown.levelRegistry) {
-        if (entry.tiledFilePath == tmjNorm) {
-            reg = &entry;
-            break;
-        }
-    }
-
     if (reg != nullptr) {
         state.topdown.authored.levelId = reg->levelId;
         state.topdown.authored.saveName = reg->saveName;
@@ -2522,11 +2537,17 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
     if (!LoadTopdownItemDefinitions(state)) {
         TopdownUnloadLevel(state);
+        if (loadScreenPrepared) {
+            TopdownClearLoadScreenOverlay(state);
+        }
         return false;
     }
 
     if (!root.contains("layers") || !root["layers"].is_array()) {
         TraceLog(LOG_ERROR, "Topdown level missing layers array: %s", tmjNorm.c_str());
+        if (loadScreenPrepared) {
+            TopdownClearLoadScreenOverlay(state);
+        }
         return false;
     }
 
@@ -2540,6 +2561,9 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
         if (layerName == "LevelBoundary" && layerType == "objectgroup") {
             if (!ImportBoundaryLayer(state.topdown, layer, state.topdown.authored.baseAssetScale)) {
+                if (loadScreenPrepared) {
+                    TopdownClearLoadScreenOverlay(state);
+                }
                 return false;
             }
             foundBoundary = true;
@@ -2615,12 +2639,18 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     if (!foundBoundary) {
         TraceLog(LOG_ERROR, "Topdown level missing LevelBoundary layer: %s", tmjNorm.c_str());
         TopdownUnloadLevel(state);
+        if (loadScreenPrepared) {
+            TopdownClearLoadScreenOverlay(state);
+        }
         return false;
     }
 
     if (!LoadLevelAudioDefinitions(state, NormalizePath(levelDir))) {
         TraceLog(LOG_ERROR, "Failed loading level audio definitions from %s", NormalizePath(levelDir).c_str());
         TopdownUnloadLevel(state);
+        if (loadScreenPrepared) {
+            TopdownClearLoadScreenOverlay(state);
+        }
         return false;
     }
 
@@ -2666,6 +2696,9 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
     if (!TopdownLoadLevelScript(state)) {
         TraceLog(LOG_ERROR, "Failed loading topdown level script");
         TopdownUnloadLevel(state);
+        if (loadScreenPrepared) {
+            TopdownClearLoadScreenOverlay(state);
+        }
         return false;
     }
 
@@ -2705,6 +2738,7 @@ bool TopdownLoadLevel(GameState& state, const char* tiledFilePath, int baseAsset
 
 void TopdownUnloadLevel(GameState& state)
 {
+    TopdownClearLoadScreenOverlay(state);
     ClearLevelAudio(state);
     UnloadTopdownBloodRenderTarget(state);
     TopdownUnloadWindowResources(state.topdown);

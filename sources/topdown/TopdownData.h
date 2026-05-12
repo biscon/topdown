@@ -1470,6 +1470,7 @@ struct TopdownLevelRegistryEntry {
     std::string metadataFilePath;
     std::string tiledFilePath;
     std::string levelDirectoryPath;
+    std::string loadScreenPath;
     int baseAssetScale = 1;
 };
 
@@ -1600,6 +1601,20 @@ struct TopdownPlayerInventoryRuntime {
     float healthUseHealAmount = 0.0f;
 };
 
+struct TopdownLoadScreenOverlay {
+    bool active = false;
+    bool waitingForInput = false;
+    bool fadingOut = false;
+    float opacity = 0.0f;
+    float fadeTimerMs = 0.0f;
+    float fadeDurationMs = 650.0f;
+    float promptTimerMs = 0.0f;
+    int baseAssetScale = 1;
+    std::string texturePath;
+    Texture2D texture{};
+    bool textureLoaded = false;
+};
+
 struct TopdownRuntimeData {
     bool levelActive = false;
     bool controlsEnabled = true;
@@ -1646,7 +1661,8 @@ struct TopdownRuntimeData {
     std::vector<TopdownWorldEvent> worldEvents;
     TopdownSpeechBubbleRuntime speechBubbles;
     TopdownNarrationPopupsRuntime narrationPopups;
-    float timeMs; // global timer, advances each frame
+    TopdownLoadScreenOverlay loadScreenOverlay;
+    float timeMs = 0.0f; // global timer, advances each frame
 };
 
 struct TopdownData {

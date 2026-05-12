@@ -19,6 +19,7 @@
 #include "topdown/TopdownPlayerVignette.h"
 #include "topdown/TopdownRvo.h"
 #include "topdown/TopdownRenderTexture.h"
+#include "topdown/LevelLoadScreen.h"
 #include "external/glfw/include/GLFW/glfw3.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
@@ -281,7 +282,9 @@ int main()
         ProcessGameModeInput(state);
         UpdateDebugConsole(state, dt);
         MenuUpdate(dt);
-        ScriptSystemUpdate(state, dt);
+        if (!TopdownLoadScreenBlocksLevelUpdate(state)) {
+            ScriptSystemUpdate(state, dt);
+        }
 
         if (state.topdown.hasPendingLevelChange) {
             const std::string levelId = state.topdown.pendingLevelId;

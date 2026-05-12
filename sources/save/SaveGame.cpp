@@ -15,6 +15,7 @@
 #include "resources/AsepriteAsset.h"
 #include "scripting/ScriptSystem.h"
 #include "topdown/LevelLoad.h"
+#include "topdown/LevelLoadScreen.h"
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/LevelRegistry.h"
 #include "topdown/LevelScripting.h"
@@ -2036,6 +2037,10 @@ bool CanSaveGame(const GameState& state, std::string* outReason)
     }
 
     if (state.topdown.hasPendingLevelChange) {
+        return fail("Cannot save during level transition");
+    }
+
+    if (TopdownLoadScreenBlocksLevelUpdate(state)) {
         return fail("Cannot save during level transition");
     }
 

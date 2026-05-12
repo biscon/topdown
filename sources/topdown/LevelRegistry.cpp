@@ -86,6 +86,13 @@ bool TopdownScanLevelRegistry(GameState& state)
         reg.levelId = root.value("levelId", levelId);
         reg.saveName = root.value("saveName", reg.levelId);
         reg.baseAssetScale = root.value("baseAssetScale", 1);
+        const std::string loadScreen = root.value("loadScreen", std::string());
+        if (!loadScreen.empty()) {
+            const fs::path loadScreenPath = fs::path(loadScreen).is_absolute()
+                    ? fs::path(loadScreen)
+                    : (levelDir / loadScreen);
+            reg.loadScreenPath = NormalizePath(loadScreenPath);
+        }
         reg.metadataFilePath = NormalizePath(metadataPath);
         reg.tiledFilePath = NormalizePath(tiledPath);
         reg.levelDirectoryPath = NormalizePath(levelDir);
@@ -114,11 +121,12 @@ bool TopdownScanLevelRegistry(GameState& state)
 
     for (const TopdownLevelRegistryEntry& entry : state.topdown.levelRegistry) {
         TraceLog(LOG_INFO,
-                 "  level=%s saveName=%s scale=%d tmj=%s",
+                 "  level=%s saveName=%s scale=%d tmj=%s loadScreen=%s",
                  entry.levelId.c_str(),
                  entry.saveName.c_str(),
                  entry.baseAssetScale,
-                 entry.tiledFilePath.c_str());
+                 entry.tiledFilePath.c_str(),
+                 entry.loadScreenPath.empty() ? "<none>" : entry.loadScreenPath.c_str());
     }
 
     return true;
