@@ -62,10 +62,12 @@ bool TopdownCandidateOverlapsNpcBlockingGeometry(
         float npcRadius,
         const std::vector<TopdownSegment>& blockingSegments,
         float candidatePadding,
+        float wallPadding,
         int ignoreNpcHandle)
 {
-    const float clearance = npcRadius + candidatePadding;
-    const float clearanceSqr = clearance * clearance;
+    const float npcClearance = npcRadius + candidatePadding;
+    const float wallClearance = npcRadius + wallPadding;
+    const float wallClearanceSqr = wallClearance * wallClearance;
 
     for (const TopdownNpcRuntime& npc : runtime.npcs) {
         if (!npc.active) {
@@ -76,7 +78,7 @@ bool TopdownCandidateOverlapsNpcBlockingGeometry(
             continue;
         }
 
-        const float minDist = npc.collisionRadius + clearance;
+        const float minDist = npc.collisionRadius + npcClearance;
         const float minDistSqr = minDist * minDist;
         const Vector2 delta = TopdownSub(candidate, npc.position);
         if (TopdownLengthSqr(delta) < minDistSqr) {
@@ -87,7 +89,7 @@ bool TopdownCandidateOverlapsNpcBlockingGeometry(
     for (const TopdownSegment& segment : blockingSegments) {
         const Vector2 closest = TopdownClosestPointOnSegment(candidate, segment);
         const Vector2 delta = TopdownSub(candidate, closest);
-        if (TopdownLengthSqr(delta) < clearanceSqr) {
+        if (TopdownLengthSqr(delta) < wallClearanceSqr) {
             return true;
         }
     }
@@ -120,6 +122,7 @@ void TopdownCollectValidNpcRingSlots(
                     npcRadius,
                     blockingSegments,
                     config.candidatePadding,
+                    config.wallPadding,
                     ignoreNpcHandle)) {
             outSlots.push_back(origin);
             if (maxSlotCount > 0 && static_cast<int>(outSlots.size()) >= maxSlotCount) {
@@ -153,6 +156,7 @@ void TopdownCollectValidNpcRingSlots(
                         npcRadius,
                         blockingSegments,
                         config.candidatePadding,
+                        config.wallPadding,
                         ignoreNpcHandle)) {
                 continue;
             }
