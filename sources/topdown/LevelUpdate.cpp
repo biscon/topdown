@@ -7,6 +7,7 @@
 #include "topdown/LevelCamera.h"
 #include "topdown/PlayerUpdate.h"
 #include "topdown/TopdownCombat.h"
+#include "topdown/TopdownItems.h"
 #include "raylib.h"
 #include "NpcRegistry.h"
 #include "NpcUpdate.h"
@@ -299,6 +300,7 @@ void TopdownUpdate(GameState& state, float dt)
     ApplyDoorMotionPushToNpcs(state, dt);
 
     TopdownUpdateCombat(state, dt);
+    TopdownUpdateItems(state, dt);
 
     TopdownUpdateLevelEffects(state, dt);
     TopdownUpdateWindows(state, dt);

@@ -10,6 +10,7 @@
 
 #include "raylib.h"
 #include "resources/TextureAsset.h"
+#include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownHelpers.h"
 
 using json = nlohmann::json;
@@ -318,6 +319,95 @@ void BuildTopdownRuntimeItemsFromAuthored(TopdownData& topdown)
         runtime.visible = authored.visible;
 
         topdown.runtime.items.push_back(runtime);
+    }
+}
+
+
+static bool TryPickupAmmoItem(
+        GameState& state,
+        TopdownRuntimeItem& item,
+        const TopdownItemDefinition& def)
+{
+    if (def.ammoType.empty() || def.amount <= 0) {
+        return false;
+    }
+
+    if (!TopdownPlayerAddAmmo(state, def.ammoType, def.amount)) {
+        return false;
+    }
+
+    item.active = false;
+    TraceLog(LOG_INFO,
+             "Picked up ammo item '%s': +%d %s reserve ammo",
+             item.id.c_str(),
+             def.amount,
+             def.ammoType.c_str());
+    return true;
+}
+
+static bool TryPickupHealthItem(
+        GameState& state,
+        TopdownRuntimeItem& item,
+        const TopdownItemDefinition& def)
+{
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const int maxCarried = std::max(0, inventory.maxCarriedHealthItems);
+    if (inventory.carriedHealthItems >= maxCarried) {
+        return false;
+    }
+
+    inventory.carriedHealthItems += 1;
+    inventory.carriedHealthHealAmount = std::max(
+            inventory.carriedHealthHealAmount,
+            def.healAmount);
+
+    item.active = false;
+    TraceLog(LOG_INFO,
+             "Picked up health item '%s': carried %d/%d (heal %.1f)",
+             item.id.c_str(),
+             inventory.carriedHealthItems,
+             maxCarried,
+             def.healAmount);
+    return true;
+}
+
+void TopdownUpdateItems(GameState& state, float dt)
+{
+    (void)dt;
+
+    if (state.topdown.runtime.player.lifeState != TopdownPlayerLifeState::Alive) {
+        return;
+    }
+
+    static constexpr float kPickupRadius = 42.0f;
+    static constexpr float kPickupRadiusSqr = kPickupRadius * kPickupRadius;
+    const Vector2 playerPosition = state.topdown.runtime.player.position;
+
+    for (TopdownRuntimeItem& item : state.topdown.runtime.items) {
+        if (!item.active || !item.visible) {
+            continue;
+        }
+
+        const Vector2 toItem = TopdownSub(item.position, playerPosition);
+        if (TopdownLengthSqr(toItem) > kPickupRadiusSqr) {
+            continue;
+        }
+
+        const TopdownItemDefinition* def = FindTopdownItemDefinition(state, item.itemId);
+        if (def == nullptr) {
+            continue;
+        }
+
+        switch (def->kind) {
+            case TopdownItemKind::Ammo:
+                TryPickupAmmoItem(state, item, *def);
+                break;
+            case TopdownItemKind::Health:
+                TryPickupHealthItem(state, item, *def);
+                break;
+            case TopdownItemKind::Unknown:
+                break;
+        }
     }
 }
 

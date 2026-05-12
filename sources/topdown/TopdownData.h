@@ -1586,6 +1586,10 @@ struct TopdownPlayerInventoryRuntime {
 
     std::vector<TopdownInventoryCount> reserveAmmo;
     std::vector<TopdownInventoryCount> loadedAmmo;
+
+    int carriedHealthItems = 0;
+    int maxCarriedHealthItems = 3;
+    float carriedHealthHealAmount = 0.0f;
 };
 
 struct TopdownRuntimeData {

@@ -16,4 +16,5 @@ void ImportTopdownItemLayer(
         int baseAssetScale);
 
 void BuildTopdownRuntimeItemsFromAuthored(TopdownData& topdown);
+void TopdownUpdateItems(GameState& state, float dt);
 void TopdownRenderItems(GameState& state);

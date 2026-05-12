@@ -28,7 +28,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    static constexpr int SAVE_VERSION = 8;
+    static constexpr int SAVE_VERSION = 9;
 
 
     struct SavedMusicSlotState {
@@ -118,6 +118,9 @@ namespace
         std::vector<std::string> ownedEquipmentSetIds;
         std::vector<TopdownInventoryCount> reserveAmmo;
         std::vector<TopdownInventoryCount> loadedAmmo;
+        int carriedHealthItems = 0;
+        int maxCarriedHealthItems = 3;
+        float carriedHealthHealAmount = 0.0f;
     };
 
     struct SavedNpcPatrolRuntime {
@@ -220,6 +223,14 @@ namespace
         float opacity = 1.0f;
     };
 
+    struct SavedItemRuntime {
+        std::string id;
+        std::string itemId;
+        bool active = true;
+        bool visible = true;
+        Vector2 position{};
+    };
+
     struct SavedTriggerRuntime {
         std::string id;
         bool enabled = true;
@@ -255,6 +266,7 @@ namespace
         std::vector<SavedPropRuntime> props;
         std::vector<SavedImageLayerRuntime> imageLayers;
         std::vector<SavedEffectRegionRuntime> effectRegions;
+        std::vector<SavedItemRuntime> items;
         std::vector<SavedTriggerRuntime> triggers;
         std::vector<SavedEmitterRuntime> emitters;
         std::vector<SavedBloodDecalRuntime> bloodDecals;
@@ -595,6 +607,9 @@ namespace
         inventory["ownedEquipmentSets"] = playerInventory.ownedEquipmentSetIds;
         inventory["reserveAmmo"] = SerializeInventoryCounts(playerInventory.reserveAmmo);
         inventory["loadedAmmo"] = SerializeInventoryCounts(playerInventory.loadedAmmo);
+        inventory["carriedHealthItems"] = playerInventory.carriedHealthItems;
+        inventory["maxCarriedHealthItems"] = playerInventory.maxCarriedHealthItems;
+        inventory["carriedHealthHealAmount"] = playerInventory.carriedHealthHealAmount;
         outRoot["topdownInventory"] = inventory;
     }
 
@@ -658,6 +673,9 @@ namespace
 
         DeserializeInventoryCounts(inventory, "reserveAmmo", out.reserveAmmo);
         DeserializeInventoryCounts(inventory, "loadedAmmo", out.loadedAmmo);
+        out.carriedHealthItems = std::max(0, inventory.value("carriedHealthItems", 0));
+        out.maxCarriedHealthItems = std::max(0, inventory.value("maxCarriedHealthItems", 3));
+        out.carriedHealthHealAmount = std::max(0.0f, inventory.value("carriedHealthHealAmount", 0.0f));
 
         return out;
     }
@@ -837,6 +855,11 @@ namespace
         inventory.ownedEquipmentSetIds = saved.ownedEquipmentSetIds;
         inventory.reserveAmmo = saved.reserveAmmo;
         inventory.loadedAmmo = saved.loadedAmmo;
+        inventory.maxCarriedHealthItems = std::max(0, saved.maxCarriedHealthItems);
+        inventory.carriedHealthItems = std::min(
+                std::max(0, saved.carriedHealthItems),
+                inventory.maxCarriedHealthItems);
+        inventory.carriedHealthHealAmount = std::max(0.0f, saved.carriedHealthHealAmount);
     }
 
     static void RestoreTopdownPlayerReloadRuntime(GameState& state, const SavedPlayerAttackRuntime& saved)
@@ -1256,6 +1279,17 @@ namespace
             world["effectRegions"].push_back(j);
         }
 
+        world["items"] = json::array();
+        for (const TopdownRuntimeItem& item : state.topdown.runtime.items) {
+            json j;
+            j["id"] = item.id;
+            j["itemId"] = item.itemId;
+            j["active"] = item.active;
+            j["visible"] = item.visible;
+            j["position"] = SerializeVector2(item.position);
+            world["items"].push_back(j);
+        }
+
         world["triggers"] = json::array();
         for (const TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
             if (trigger.authoredIndex < 0 ||
@@ -1388,6 +1422,19 @@ namespace
                 effect.visible = j.value("visible", true);
                 effect.opacity = j.value("opacity", 1.0f);
                 out.effectRegions.push_back(effect);
+            }
+        }
+
+        if (world.contains("items") && world["items"].is_array()) {
+            for (const json& j : world["items"]) {
+                if (!j.is_object()) continue;
+                SavedItemRuntime item;
+                item.id = j.value("id", "");
+                item.itemId = j.value("itemId", "");
+                item.active = j.value("active", true);
+                item.visible = j.value("visible", true);
+                if (j.contains("position") && j["position"].is_object()) item.position = DeserializeVector2(j["position"]);
+                out.items.push_back(item);
             }
         }
 
@@ -1548,6 +1595,22 @@ namespace
             if (it == effectsById.end()) continue;
             effect.visible = it->second->visible;
             effect.opacity = it->second->opacity;
+        }
+
+        std::unordered_map<std::string, const SavedItemRuntime*> itemsById;
+        for (const SavedItemRuntime& item : saved.items) {
+            if (!item.id.empty()) itemsById[item.id] = &item;
+        }
+        for (TopdownRuntimeItem& item : state.topdown.runtime.items) {
+            auto it = itemsById.find(item.id);
+            if (it == itemsById.end()) continue;
+
+            const SavedItemRuntime& savedItem = *it->second;
+
+            // Keep item.itemId authored by the level. The save only restores mutable runtime state.
+            item.active = savedItem.active;
+            item.visible = savedItem.visible;
+            item.position = savedItem.position;
         }
 
         std::unordered_map<std::string, const SavedTriggerRuntime*> triggersById;
