@@ -92,6 +92,9 @@ bool TopdownPlayerRemoveAmmo(
         const std::string& ammoType,
         int amount);
 
+bool TopdownPlayerCanUseHealthItem(const GameState& state);
+bool TopdownPlayerUseHealthItem(GameState& state);
+
 bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state);
 bool TopdownPlayerStartReload(GameState& state);
 void TopdownPlayerCancelReload(GameState& state);

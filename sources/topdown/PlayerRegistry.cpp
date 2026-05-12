@@ -1496,6 +1496,53 @@ bool TopdownPlayerRemoveAmmo(
     return true;
 }
 
+bool TopdownPlayerCanUseHealthItem(const GameState& state)
+{
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(
+            inventory.carriedHealthItems,
+            0,
+            maxCarriedItems);
+
+    if (player.lifeState != TopdownPlayerLifeState::Alive) {
+        return false;
+    }
+
+    if (player.maxHealth <= 0.0f || player.health >= player.maxHealth) {
+        return false;
+    }
+
+    if (carriedItems <= 0 || inventory.carriedHealthHealAmount <= 0.0f) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TopdownPlayerUseHealthItem(GameState& state)
+{
+    if (!TopdownPlayerCanUseHealthItem(state)) {
+        return false;
+    }
+
+    TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    const int maxCarriedItems = std::max(0, inventory.maxCarriedHealthItems);
+    inventory.carriedHealthItems = std::clamp(
+            inventory.carriedHealthItems - 1,
+            0,
+            maxCarriedItems);
+
+    player.health = std::clamp(
+            player.health + inventory.carriedHealthHealAmount,
+            0.0f,
+            std::max(0.0f, player.maxHealth));
+    return true;
+}
+
 bool TopdownPlayerCanReloadCurrentWeapon(const GameState& state)
 {
     const TopdownPlayerAttackRuntime& attack = state.topdown.runtime.playerAttack;

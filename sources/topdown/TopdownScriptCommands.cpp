@@ -1,5 +1,6 @@
 #include "topdown/TopdownScriptCommands.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "nav/NavMeshQuery.h"
@@ -76,6 +77,20 @@ bool TopdownScriptReloadCurrentWeapon(GameState& state)
 bool TopdownScriptIsReloading(GameState& state, bool& outReloading)
 {
     outReloading = state.topdown.runtime.playerAttack.reloadActive;
+    return true;
+}
+
+bool TopdownScriptUseHealthItem(GameState& state)
+{
+    return TopdownPlayerUseHealthItem(state);
+}
+
+bool TopdownScriptGetHealthItemCount(GameState& state, int& outAmount)
+{
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+    outAmount = std::max(
+            0,
+            std::min(inventory.carriedHealthItems, inventory.maxCarriedHealthItems));
     return true;
 }
 

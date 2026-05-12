@@ -415,6 +415,31 @@ static int Lua_isReloading(lua_State* L)
     return 1;
 }
 
+static int Lua_useHealthItem(lua_State* L)
+{
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptUseHealthItem(*gameState);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_getHealthItemCount(lua_State* L)
+{
+    if (gameState == nullptr) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    int amount = 0;
+    TopdownScriptGetHealthItemCount(*gameState, amount);
+    lua_pushinteger(L, amount);
+    return 1;
+}
+
 static int Lua_setFlag(lua_State* L)
 {
     const char* name = luaL_checkstring(L, 1);
@@ -1633,6 +1658,8 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "setLoadedAmmo", Lua_setLoadedAmmo);
     lua_register(L, "reloadCurrentWeapon", Lua_reloadCurrentWeapon);
     lua_register(L, "isReloading", Lua_isReloading);
+    lua_register(L, "useHealthItem", Lua_useHealthItem);
+    lua_register(L, "getHealthItemCount", Lua_getHealthItemCount);
 
     lua_register(L, "walkTo", Lua_walkTo);
     lua_register(L, "runTo", Lua_runTo);

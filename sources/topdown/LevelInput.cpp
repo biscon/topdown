@@ -80,6 +80,23 @@ void TopdownHandleInput(GameState& state)
                 ConsumeEvent(ev);
                 break;
 
+            case KEY_Q:
+                if (!state.topdown.runtime.controlsEnabled || state.debug.console.open) {
+                    break;
+                }
+
+                if (TopdownPlayerUseHealthItem(state)) {
+                    TraceLog(
+                            LOG_INFO,
+                            "Used carried health item: %d/%d remaining",
+                            state.topdown.runtime.playerInventory.carriedHealthItems,
+                            state.topdown.runtime.playerInventory.maxCarriedHealthItems);
+                } else {
+                    TraceLog(LOG_INFO, "Cannot use carried health item right now");
+                }
+                ConsumeEvent(ev);
+                break;
+
             case KEY_ONE:
             case KEY_TWO:
             case KEY_THREE:

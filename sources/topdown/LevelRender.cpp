@@ -1726,6 +1726,43 @@ static void DrawHealthBar(GameState& state) {
             WHITE);
 }
 
+static void DrawHealthItemHud(GameState& state)
+{
+    const TopdownPlayerRuntime& player = state.topdown.runtime.player;
+    const TopdownPlayerInventoryRuntime& inventory = state.topdown.runtime.playerInventory;
+
+    const int maxItems = std::max(0, inventory.maxCarriedHealthItems);
+    const int carriedItems = std::clamp(inventory.carriedHealthItems, 0, maxItems);
+    const bool canUse =
+            TopdownPlayerCanUseHealthItem(state) &&
+            player.health < player.maxHealth;
+
+    static constexpr float kPanelX = 28.0f;
+    static constexpr float kPanelY = 68.0f;
+    static constexpr float kPanelW = 220.0f;
+    static constexpr float kPanelH = 46.0f;
+
+    Rectangle panel{kPanelX, kPanelY, kPanelW, kPanelH};
+    DrawRectangleRec(panel, Fade(BLACK, 0.55f));
+    DrawRectangleLinesEx(panel, 1.0f, Fade(WHITE, 0.18f));
+
+    const Color countColor = carriedItems > 0 ? WHITE : Color{150, 150, 150, 220};
+    DrawText(
+            TextFormat("Medkits: %d / %d", carriedItems, maxItems),
+            static_cast<int>(kPanelX + 12.0f),
+            static_cast<int>(kPanelY + 8.0f),
+            18,
+            countColor);
+
+    if (carriedItems > 0) {
+        DrawText(
+                canUse ? "Press Q to heal" : "Q heal: full health",
+                static_cast<int>(kPanelX + 12.0f),
+                static_cast<int>(kPanelY + 27.0f),
+                14,
+                canUse ? Color{120, 245, 150, 245} : Color{170, 170, 170, 210});
+    }
+}
 
 static const TopdownAuthoredTrigger* FindActiveInteractPromptTrigger(const GameState& state)
 {
@@ -1895,6 +1932,7 @@ void TopdownRenderUi(GameState& state)
     }
 
     DrawHealthBar(state);
+    DrawHealthItemHud(state);
     DrawCurrentWeaponAmmoHud(state);
     TopdownRenderSpeechBubbles(state);
     TopdownRenderNarrationPopups(state);
