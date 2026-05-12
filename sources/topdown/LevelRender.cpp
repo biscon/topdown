@@ -26,6 +26,7 @@
 #include "ui/NarrationPopups.h"
 #include "ui/TopdownSpeechBubbles.h"
 #include "topdown/TopdownItems.h"
+#include "topdown/LevelLoadScreen.h"
 
 static void BeginStencilWriteReplace()
 {
@@ -2117,4 +2118,5 @@ void TopdownRenderUi(GameState& state)
     TopdownRenderNarrationPopups(state);
     DrawInteractPrompt(state);
     DrawGameOver(state);
+    TopdownRenderLoadScreenOverlay(state);
 }

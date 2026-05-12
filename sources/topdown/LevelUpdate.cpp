@@ -22,6 +22,7 @@
 #include "ui/NarrationPopups.h"
 #include "ui/TopdownSpeechBubbles.h"
 #include "input/Input.h"
+#include "topdown/LevelLoadScreen.h"
 
 static bool IsPointInsideTrigger(
         const TopdownAuthoredTrigger& trigger,
@@ -265,6 +266,11 @@ static void PruneWorldEvents(GameState& state) {
 void TopdownUpdate(GameState& state, float dt)
 {
     if (!state.topdown.runtime.levelActive) {
+        return;
+    }
+
+    TopdownUpdateLoadScreenOverlay(state, dt);
+    if (TopdownLoadScreenBlocksLevelUpdate(state)) {
         return;
     }
 

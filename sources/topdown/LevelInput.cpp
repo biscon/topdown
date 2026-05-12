@@ -2,9 +2,14 @@
 #include "input/Input.h"
 #include "topdown/PlayerRegistry.h"
 #include "LevelCamera.h"
+#include "topdown/LevelLoadScreen.h"
 
 void TopdownHandleInput(GameState& state)
 {
+    if (TopdownLoadScreenConsumeInput(state)) {
+        return;
+    }
+
     for (auto& ev : FilterEvents(state.input, true, InputEventType::KeyPressed)) {
         switch (ev.key.key) {
             case KEY_F1:
