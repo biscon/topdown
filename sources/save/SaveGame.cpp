@@ -143,6 +143,12 @@ namespace
         std::vector<std::string> routeSpawnIds;
     };
 
+    struct SavedNpcColorSubstitutionRuntime {
+        bool present = false;
+        bool valid = false;
+        TopdownNpcResolvedColorSubstitution resolved;
+    };
+
     struct SavedNpcRuntime {
         std::string id;
         std::string assetId;
@@ -174,6 +180,7 @@ namespace
         float guardLookAtSoundRadians = 0.0f;
 
         SavedNpcPatrolRuntime patrol;
+        SavedNpcColorSubstitutionRuntime colorSubstitution;
     };
 
     struct SavedTopdownNpcsRuntime {
@@ -402,6 +409,75 @@ namespace
         c.b = static_cast<unsigned char>(j.value("b", 255));
         c.a = static_cast<unsigned char>(j.value("a", 255));
         return c;
+    }
+
+    static json SerializeNpcColorSet3(const TopdownNpcColorSet3& set)
+    {
+        json out = json::array();
+        for (int i = 0; i < 3; ++i) {
+            out.push_back(SerializeColor(set.colors[i]));
+        }
+        return out;
+    }
+
+    static json SerializeNpcColorSet4(const TopdownNpcColorSet4& set)
+    {
+        json out = json::array();
+        for (int i = 0; i < 4; ++i) {
+            out.push_back(SerializeColor(set.colors[i]));
+        }
+        return out;
+    }
+
+    static json SerializeNpcColorSet5(const TopdownNpcColorSet5& set)
+    {
+        json out = json::array();
+        for (int i = 0; i < 5; ++i) {
+            out.push_back(SerializeColor(set.colors[i]));
+        }
+        return out;
+    }
+
+    static bool DeserializeNpcColorSet3(const json& j, TopdownNpcColorSet3& out)
+    {
+        if (!j.is_array() || j.size() != 3) {
+            return false;
+        }
+        for (int i = 0; i < 3; ++i) {
+            if (!j[i].is_object()) {
+                return false;
+            }
+            out.colors[i] = DeserializeColor(j[i]);
+        }
+        return true;
+    }
+
+    static bool DeserializeNpcColorSet4(const json& j, TopdownNpcColorSet4& out)
+    {
+        if (!j.is_array() || j.size() != 4) {
+            return false;
+        }
+        for (int i = 0; i < 4; ++i) {
+            if (!j[i].is_object()) {
+                return false;
+            }
+            out.colors[i] = DeserializeColor(j[i]);
+        }
+        return true;
+    }
+
+    static bool DeserializeNpcColorSet5(const json& j, TopdownNpcColorSet5& out)
+    {
+        if (!j.is_array() || j.size() != 5) {
+            return false;
+        }
+        for (int i = 0; i < 5; ++i) {
+            if (!j[i].is_object()) {
+                return false;
+            }
+            out.colors[i] = DeserializeColor(j[i]);
+        }
+        return true;
     }
 
 
@@ -925,6 +1001,18 @@ namespace
             npcJson["engagementState"] = ToInt(npc.engagementState);
             npcJson["aiMode"] = ToInt(npc.aiMode);
 
+            json colorSubstitutionJson;
+            colorSubstitutionJson["active"] = npc.colorSubstitution.active;
+            colorSubstitutionJson["skin"] = SerializeNpcColorSet3(npc.colorSubstitution.dstSkin);
+            colorSubstitutionJson["hair"] = SerializeNpcColorSet3(npc.colorSubstitution.dstHair);
+            colorSubstitutionJson["chest"] = SerializeNpcColorSet5(npc.colorSubstitution.dstChest);
+            colorSubstitutionJson["legs"] = SerializeNpcColorSet4(npc.colorSubstitution.dstLegs);
+            colorSubstitutionJson["resolvedSkinPresetId"] = npc.colorSubstitution.resolvedSkinPresetId;
+            colorSubstitutionJson["resolvedHairPresetId"] = npc.colorSubstitution.resolvedHairPresetId;
+            colorSubstitutionJson["resolvedChestPresetId"] = npc.colorSubstitution.resolvedChestPresetId;
+            colorSubstitutionJson["resolvedLegsPresetId"] = npc.colorSubstitution.resolvedLegsPresetId;
+            npcJson["colorSubstitution"] = colorSubstitutionJson;
+
             const TopdownNpcPatrolState& patrol = npc.scriptBehavior.patrol;
             json patrolJson;
             patrolJson["active"] =
@@ -967,6 +1055,51 @@ namespace
             }
         }
 
+        return out;
+    }
+
+    static SavedNpcColorSubstitutionRuntime DeserializeNpcColorSubstitutionRuntime(
+            const json& j,
+            const std::string& npcId)
+    {
+        SavedNpcColorSubstitutionRuntime out;
+        out.present = true;
+
+        if (!j.is_object()) {
+            TraceLog(LOG_WARNING,
+                     "Saved NPC '%s' has malformed colorSubstitution block",
+                     npcId.c_str());
+            return out;
+        }
+
+        out.resolved.active = j.value("active", false);
+        if (!out.resolved.active) {
+            out.valid = true;
+            return out;
+        }
+
+        const bool hasRequiredArrays =
+                j.contains("skin") &&
+                j.contains("hair") &&
+                j.contains("chest") &&
+                j.contains("legs");
+        if (!hasRequiredArrays ||
+            !DeserializeNpcColorSet3(j["skin"], out.resolved.dstSkin) ||
+            !DeserializeNpcColorSet3(j["hair"], out.resolved.dstHair) ||
+            !DeserializeNpcColorSet5(j["chest"], out.resolved.dstChest) ||
+            !DeserializeNpcColorSet4(j["legs"], out.resolved.dstLegs)) {
+            TraceLog(LOG_WARNING,
+                     "Saved NPC '%s' has invalid active colorSubstitution colors",
+                     npcId.c_str());
+            out.resolved = {};
+            return out;
+        }
+
+        out.resolved.resolvedSkinPresetId = j.value("resolvedSkinPresetId", "");
+        out.resolved.resolvedHairPresetId = j.value("resolvedHairPresetId", "");
+        out.resolved.resolvedChestPresetId = j.value("resolvedChestPresetId", "");
+        out.resolved.resolvedLegsPresetId = j.value("resolvedLegsPresetId", "");
+        out.valid = true;
         return out;
     }
 
@@ -1019,6 +1152,12 @@ namespace
             npc.guardLookAtSoundRadians = npcJson.value("guardLookAtSoundRadians", npc.rotationRadians);
             npc.engagementState = ToNpcEngagementState(npcJson.value("engagementState", 0));
             npc.aiMode = ToNpcAiMode(npcJson.value("aiMode", 0));
+
+            if (npcJson.contains("colorSubstitution")) {
+                npc.colorSubstitution = DeserializeNpcColorSubstitutionRuntime(
+                        npcJson["colorSubstitution"],
+                        npc.id);
+            }
 
             if (npcJson.contains("patrol") && npcJson["patrol"].is_object()) {
                 npc.patrol = DeserializeNpcPatrolRuntime(npcJson["patrol"]);
@@ -1189,6 +1328,13 @@ namespace
             npc->hostile = savedNpc.hostile;
             npc->aiMode = savedNpc.aiMode;
             npc->engagementState = savedNpc.engagementState;
+            if (savedNpc.colorSubstitution.present) {
+                if (savedNpc.colorSubstitution.valid && savedNpc.colorSubstitution.resolved.active) {
+                    npc->colorSubstitution = savedNpc.colorSubstitution.resolved;
+                } else {
+                    npc->colorSubstitution = {};
+                }
+            }
             npc->guardHomePosition = savedNpc.guardHomePosition;
             npc->hasGuardHomePosition = savedNpc.hasGuardHomePosition;
             npc->guardLookAtSoundRadians = savedNpc.guardLookAtSoundRadians;

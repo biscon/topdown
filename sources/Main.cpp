@@ -17,6 +17,7 @@
 #include "topdown/BloodStampGeneration.h"
 #include "topdown/BloodRenderTarget.h"
 #include "topdown/TopdownPlayerVignette.h"
+#include "topdown/TopdownNpcColorSubstitutionShader.h"
 #include "topdown/TopdownRvo.h"
 #include "topdown/TopdownRenderTexture.h"
 #include "topdown/LevelLoadScreen.h"
@@ -209,6 +210,10 @@ int main()
         TraceLog(LOG_WARNING, "Topdown player vignette system failed to initialize");
     }
 
+    if (!InitTopdownNpcColorSubstitutionShader()) {
+        TraceLog(LOG_WARNING, "NPC color substitution shader failed to initialize");
+    }
+
     TopdownRvoInit(state);
 
     RenderTexture2D worldTarget = LoadTopdownRenderTextureWithStencil(INTERNAL_WIDTH, INTERNAL_HEIGHT);
@@ -375,6 +380,7 @@ int main()
     UnloadRenderTexture(uiTarget);
     ShutdownTopdownBloodRenderTargetSystem();
     ShutdownTopdownPlayerVignetteSystem();
+    ShutdownTopdownNpcColorSubstitutionShader();
     ShutdownEffectShaderRegistry();
     ShutdownCursor(state);
     UnloadFonts(state);

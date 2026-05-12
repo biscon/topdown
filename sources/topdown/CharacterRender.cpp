@@ -10,6 +10,7 @@
 #include "raymath.h"
 #include "TopdownHelpers.h"
 #include "NpcRegistry.h"
+#include "TopdownNpcColorSubstitutionShader.h"
 
 
 
@@ -420,6 +421,10 @@ void TopdownRenderNpcs(GameState& state)
                 static_cast<unsigned char>(alpha)
         };
 
+        const bool useColorSubstitutionShader = BeginTopdownNpcColorSubstitutionShader(
+                asset->colorSubstitution,
+                npc.colorSubstitution);
+
         if (npc.oneShotActive &&
             resolvedClip->spriteHandle == npc.oneShotClip.spriteHandle &&
             resolvedClip->clipIndex == npc.oneShotClip.clipIndex) {
@@ -451,6 +456,10 @@ void TopdownRenderNpcs(GameState& state)
                     npc.position,
                     npc.rotationRadians,
                     tint);
+        }
+
+        if (useColorSubstitutionShader) {
+            EndTopdownNpcColorSubstitutionShader();
         }
     }
 }
