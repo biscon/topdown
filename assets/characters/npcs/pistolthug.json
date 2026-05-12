@@ -104,6 +104,12 @@
                 "legs3" : "#285cc4",
                 "legs4" : "#249fde"
             },
+            "colors": {
+                "skin": "Random",
+                "hair": "Random",
+                "chest": "Red",
+                "legs": "Denim"
+            },
             "animations": [
                 {
                     "asepriteJson": "pistolthug/pistolthug.json",

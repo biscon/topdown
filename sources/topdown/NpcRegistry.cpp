@@ -1,5 +1,6 @@
 #include "topdown/NpcRegistry.h"
 
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <algorithm>
@@ -306,6 +307,592 @@ static void ReadNpcAttackEffectsConfig(
     ClampNpcAttackEffectsConfig(outCfg);
 }
 
+
+static int HexDigitValue(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+    return -1;
+}
+
+static bool ParseNpcHexColorString(const std::string& text, Color& outColor)
+{
+    const size_t start = (!text.empty() && text[0] == '#') ? 1 : 0;
+    if (text.size() - start != 6) {
+        return false;
+    }
+
+    unsigned char channels[3]{};
+    for (int channel = 0; channel < 3; ++channel) {
+        const int hi = HexDigitValue(text[start + channel * 2]);
+        const int lo = HexDigitValue(text[start + channel * 2 + 1]);
+        if (hi < 0 || lo < 0) {
+            return false;
+        }
+        channels[channel] = static_cast<unsigned char>((hi << 4) | lo);
+    }
+
+    outColor = Color{channels[0], channels[1], channels[2], static_cast<unsigned char>(255)};
+    return true;
+}
+
+static bool ReadRequiredNpcHexColor(
+        const json& colors,
+        const char* key,
+        const char* npcAssetId,
+        Color& outColor)
+{
+    auto it = colors.find(key);
+    if (it == colors.end() || !it->is_string()) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has invalid sourceColors: missing string '%s'",
+                 npcAssetId,
+                 key);
+        return false;
+    }
+
+    const std::string value = it->get<std::string>();
+    if (!ParseNpcHexColorString(value, outColor)) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has invalid source color '%s' for key '%s'",
+                 npcAssetId,
+                 value.c_str(),
+                 key);
+        return false;
+    }
+
+    return true;
+}
+
+static bool ReadNpcSourceColors(
+        const json& entry,
+        TopdownNpcAssetDefinition& def)
+{
+    auto it = entry.find("sourceColors");
+    if (it == entry.end()) {
+        return false;
+    }
+
+    if (!it->is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has invalid sourceColors block; color substitution disabled",
+                 def.assetId.c_str());
+        return false;
+    }
+
+    const json& colors = *it;
+    bool valid = true;
+
+    valid = ReadRequiredNpcHexColor(colors, "skin1", def.assetId.c_str(), def.colorSubstitution.sourceSkin.colors[0]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "skin2", def.assetId.c_str(), def.colorSubstitution.sourceSkin.colors[1]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "skin3", def.assetId.c_str(), def.colorSubstitution.sourceSkin.colors[2]) && valid;
+
+    valid = ReadRequiredNpcHexColor(colors, "hair1", def.assetId.c_str(), def.colorSubstitution.sourceHair.colors[0]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "hair2", def.assetId.c_str(), def.colorSubstitution.sourceHair.colors[1]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "hair3", def.assetId.c_str(), def.colorSubstitution.sourceHair.colors[2]) && valid;
+
+    valid = ReadRequiredNpcHexColor(colors, "chest1", def.assetId.c_str(), def.colorSubstitution.sourceChest.colors[0]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "chest2", def.assetId.c_str(), def.colorSubstitution.sourceChest.colors[1]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "chest3", def.assetId.c_str(), def.colorSubstitution.sourceChest.colors[2]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "chest4", def.assetId.c_str(), def.colorSubstitution.sourceChest.colors[3]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "chest5", def.assetId.c_str(), def.colorSubstitution.sourceChest.colors[4]) && valid;
+
+    valid = ReadRequiredNpcHexColor(colors, "legs1", def.assetId.c_str(), def.colorSubstitution.sourceLegs.colors[0]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "legs2", def.assetId.c_str(), def.colorSubstitution.sourceLegs.colors[1]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "legs3", def.assetId.c_str(), def.colorSubstitution.sourceLegs.colors[2]) && valid;
+    valid = ReadRequiredNpcHexColor(colors, "legs4", def.assetId.c_str(), def.colorSubstitution.sourceLegs.colors[3]) && valid;
+
+    if (!valid) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has incomplete or invalid sourceColors; color substitution disabled",
+                 def.assetId.c_str());
+    }
+
+    return valid;
+}
+
+static bool HasNpcColorPreset3(
+        const std::vector<TopdownNamedNpcColorSet3>& presets,
+        const std::string& name)
+{
+    for (const TopdownNamedNpcColorSet3& preset : presets) {
+        if (preset.name == name) return true;
+    }
+    return false;
+}
+
+static bool HasNpcColorPreset4(
+        const std::vector<TopdownNamedNpcColorSet4>& presets,
+        const std::string& name)
+{
+    for (const TopdownNamedNpcColorSet4& preset : presets) {
+        if (preset.name == name) return true;
+    }
+    return false;
+}
+
+static bool HasNpcColorPreset5(
+        const std::vector<TopdownNamedNpcColorSet5>& presets,
+        const std::string& name)
+{
+    for (const TopdownNamedNpcColorSet5& preset : presets) {
+        if (preset.name == name) return true;
+    }
+    return false;
+}
+
+static bool IsValidNpcRequestedPreset3(
+        const std::vector<TopdownNamedNpcColorSet3>& presets,
+        const std::string& name)
+{
+    return name == "Random" || HasNpcColorPreset3(presets, name);
+}
+
+static bool IsValidNpcRequestedPreset4(
+        const std::vector<TopdownNamedNpcColorSet4>& presets,
+        const std::string& name)
+{
+    return name == "Random" || HasNpcColorPreset4(presets, name);
+}
+
+static bool IsValidNpcRequestedPreset5(
+        const std::vector<TopdownNamedNpcColorSet5>& presets,
+        const std::string& name)
+{
+    return name == "Random" || HasNpcColorPreset5(presets, name);
+}
+
+static bool ReadRequiredNpcPresetId(
+        const json& colors,
+        const char* key,
+        const char* npcAssetId,
+        std::string& outPresetId)
+{
+    auto it = colors.find(key);
+    if (it == colors.end() || !it->is_string()) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has invalid colors: missing string '%s'",
+                 npcAssetId,
+                 key);
+        return false;
+    }
+
+    outPresetId = it->get<std::string>();
+    if (outPresetId.empty()) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has empty color preset id for '%s'",
+                 npcAssetId,
+                 key);
+        return false;
+    }
+
+    return true;
+}
+
+static bool ReadNpcRequestedColorPresets(
+        const json& entry,
+        const TopdownNpcColorPresetRegistry& registry,
+        TopdownNpcAssetDefinition& def)
+{
+    auto it = entry.find("colors");
+    if (it == entry.end()) {
+        return false;
+    }
+
+    if (!it->is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has invalid colors block; color substitution disabled",
+                 def.assetId.c_str());
+        return false;
+    }
+
+    const json& colors = *it;
+    bool valid = true;
+    valid = ReadRequiredNpcPresetId(colors, "skin", def.assetId.c_str(), def.colorSubstitution.skinPresetId) && valid;
+    valid = ReadRequiredNpcPresetId(colors, "hair", def.assetId.c_str(), def.colorSubstitution.hairPresetId) && valid;
+    valid = ReadRequiredNpcPresetId(colors, "chest", def.assetId.c_str(), def.colorSubstitution.chestPresetId) && valid;
+    valid = ReadRequiredNpcPresetId(colors, "legs", def.assetId.c_str(), def.colorSubstitution.legsPresetId) && valid;
+
+    if (!valid) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has incomplete colors block; color substitution disabled",
+                 def.assetId.c_str());
+        return false;
+    }
+
+    if (!registry.loaded) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' requested color presets, but NPC color preset registry is not loaded; color substitution disabled",
+                 def.assetId.c_str());
+        return false;
+    }
+
+    if (!IsValidNpcRequestedPreset3(registry.skinPresets, def.colorSubstitution.skinPresetId)) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' requested unknown skin color preset '%s'; color substitution disabled",
+                 def.assetId.c_str(),
+                 def.colorSubstitution.skinPresetId.c_str());
+        valid = false;
+    }
+    if (!IsValidNpcRequestedPreset3(registry.hairPresets, def.colorSubstitution.hairPresetId)) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' requested unknown hair color preset '%s'; color substitution disabled",
+                 def.assetId.c_str(),
+                 def.colorSubstitution.hairPresetId.c_str());
+        valid = false;
+    }
+    if (!IsValidNpcRequestedPreset5(registry.chestPresets, def.colorSubstitution.chestPresetId)) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' requested unknown chest color preset '%s'; color substitution disabled",
+                 def.assetId.c_str(),
+                 def.colorSubstitution.chestPresetId.c_str());
+        valid = false;
+    }
+    if (!IsValidNpcRequestedPreset4(registry.legsPresets, def.colorSubstitution.legsPresetId)) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' requested unknown legs color preset '%s'; color substitution disabled",
+                 def.assetId.c_str(),
+                 def.colorSubstitution.legsPresetId.c_str());
+        valid = false;
+    }
+
+    return valid;
+}
+
+static void ReadNpcColorSubstitutionConfig(
+        const json& entry,
+        const TopdownNpcColorPresetRegistry& registry,
+        TopdownNpcAssetDefinition& def)
+{
+    def.colorSubstitution = {};
+
+    const bool hasSourceColors = entry.contains("sourceColors");
+    const bool hasColors = entry.contains("colors");
+
+    if (!hasSourceColors && hasColors) {
+        TraceLog(LOG_WARNING,
+                 "NPC definition '%s' has colors without sourceColors; color substitution disabled",
+                 def.assetId.c_str());
+        return;
+    }
+
+    if (!hasSourceColors) {
+        return;
+    }
+
+    if (!hasColors) {
+        return;
+    }
+
+    const bool sourceValid = ReadNpcSourceColors(entry, def);
+    const bool presetsValid = ReadNpcRequestedColorPresets(entry, registry, def);
+
+    def.colorSubstitution.active = sourceValid && presetsValid;
+}
+
+static bool ParseNpcPresetColorArray(
+        const json& entry,
+        int requiredCount,
+        Color* outColors)
+{
+    if (!entry.is_array() || static_cast<int>(entry.size()) != requiredCount) {
+        return false;
+    }
+
+    for (int i = 0; i < requiredCount; ++i) {
+        if (!entry[i].is_string()) {
+            return false;
+        }
+
+        if (!ParseNpcHexColorString(entry[i].get<std::string>(), outColors[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool NpcPresetNameExists3(
+        const std::vector<TopdownNamedNpcColorSet3>& presets,
+        const std::string& name)
+{
+    return HasNpcColorPreset3(presets, name);
+}
+
+static bool NpcPresetNameExists4(
+        const std::vector<TopdownNamedNpcColorSet4>& presets,
+        const std::string& name)
+{
+    return HasNpcColorPreset4(presets, name);
+}
+
+static bool NpcPresetNameExists5(
+        const std::vector<TopdownNamedNpcColorSet5>& presets,
+        const std::string& name)
+{
+    return HasNpcColorPreset5(presets, name);
+}
+
+static void LoadNpcColorPresetCategory3(
+        const json& root,
+        const char* categoryName,
+        std::vector<TopdownNamedNpcColorSet3>& outPresets)
+{
+    auto categoryIt = root.find(categoryName);
+    if (categoryIt == root.end() || !categoryIt->is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC color preset registry missing object category '%s'",
+                 categoryName);
+        return;
+    }
+
+    for (auto presetIt = categoryIt->begin(); presetIt != categoryIt->end(); ++presetIt) {
+        const std::string name = presetIt.key();
+        if (NpcPresetNameExists3(outPresets, name)) {
+            TraceLog(LOG_WARNING,
+                     "Duplicate NPC %s color preset '%s'; skipping duplicate",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+
+        TopdownNamedNpcColorSet3 preset;
+        preset.name = name;
+        if (!ParseNpcPresetColorArray(*presetIt, 3, preset.set.colors)) {
+            TraceLog(LOG_WARNING,
+                     "NPC %s color preset '%s' has invalid color array; skipping",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+        outPresets.push_back(preset);
+    }
+}
+
+static void LoadNpcColorPresetCategory4(
+        const json& root,
+        const char* categoryName,
+        std::vector<TopdownNamedNpcColorSet4>& outPresets)
+{
+    auto categoryIt = root.find(categoryName);
+    if (categoryIt == root.end() || !categoryIt->is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC color preset registry missing object category '%s'",
+                 categoryName);
+        return;
+    }
+
+    for (auto presetIt = categoryIt->begin(); presetIt != categoryIt->end(); ++presetIt) {
+        const std::string name = presetIt.key();
+        if (NpcPresetNameExists4(outPresets, name)) {
+            TraceLog(LOG_WARNING,
+                     "Duplicate NPC %s color preset '%s'; skipping duplicate",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+
+        TopdownNamedNpcColorSet4 preset;
+        preset.name = name;
+        if (!ParseNpcPresetColorArray(*presetIt, 4, preset.set.colors)) {
+            TraceLog(LOG_WARNING,
+                     "NPC %s color preset '%s' has invalid color array; skipping",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+        outPresets.push_back(preset);
+    }
+}
+
+static void LoadNpcColorPresetCategory5(
+        const json& root,
+        const char* categoryName,
+        std::vector<TopdownNamedNpcColorSet5>& outPresets)
+{
+    auto categoryIt = root.find(categoryName);
+    if (categoryIt == root.end() || !categoryIt->is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC color preset registry missing object category '%s'",
+                 categoryName);
+        return;
+    }
+
+    for (auto presetIt = categoryIt->begin(); presetIt != categoryIt->end(); ++presetIt) {
+        const std::string name = presetIt.key();
+        if (NpcPresetNameExists5(outPresets, name)) {
+            TraceLog(LOG_WARNING,
+                     "Duplicate NPC %s color preset '%s'; skipping duplicate",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+
+        TopdownNamedNpcColorSet5 preset;
+        preset.name = name;
+        if (!ParseNpcPresetColorArray(*presetIt, 5, preset.set.colors)) {
+            TraceLog(LOG_WARNING,
+                     "NPC %s color preset '%s' has invalid color array; skipping",
+                     categoryName,
+                     name.c_str());
+            continue;
+        }
+        outPresets.push_back(preset);
+    }
+}
+
+static void LoadNpcColorPresetRegistry(GameState& state)
+{
+    TopdownNpcColorPresetRegistry& registry = state.topdown.npcColorPresets;
+    registry = {};
+
+    const fs::path jsonPath = fs::path(ASSETS_PATH "npc_color_presets.json");
+    if (!fs::exists(jsonPath) || !fs::is_regular_file(jsonPath)) {
+        TraceLog(LOG_WARNING,
+                 "NPC color preset registry missing: %s",
+                 jsonPath.string().c_str());
+        return;
+    }
+
+    json root;
+    try {
+        std::ifstream in(jsonPath);
+        if (!in.is_open()) {
+            TraceLog(LOG_WARNING,
+                     "Failed opening NPC color preset registry: %s",
+                     jsonPath.string().c_str());
+            return;
+        }
+        in >> root;
+    } catch (const std::exception& e) {
+        TraceLog(LOG_WARNING,
+                 "Failed parsing NPC color preset registry '%s': %s",
+                 jsonPath.string().c_str(),
+                 e.what());
+        return;
+    }
+
+    if (!root.is_object()) {
+        TraceLog(LOG_WARNING,
+                 "NPC color preset registry root must be an object: %s",
+                 jsonPath.string().c_str());
+        return;
+    }
+
+    LoadNpcColorPresetCategory3(root, "skin", registry.skinPresets);
+    LoadNpcColorPresetCategory3(root, "hair", registry.hairPresets);
+    LoadNpcColorPresetCategory5(root, "chest", registry.chestPresets);
+    LoadNpcColorPresetCategory4(root, "legs", registry.legsPresets);
+
+    registry.loaded = !registry.skinPresets.empty() &&
+            !registry.hairPresets.empty() &&
+            !registry.chestPresets.empty() &&
+            !registry.legsPresets.empty();
+
+    TraceLog(LOG_INFO,
+             "Loaded NPC color presets: skin=%d hair=%d chest=%d legs=%d loaded=%s",
+             static_cast<int>(registry.skinPresets.size()),
+             static_cast<int>(registry.hairPresets.size()),
+             static_cast<int>(registry.chestPresets.size()),
+             static_cast<int>(registry.legsPresets.size()),
+             registry.loaded ? "yes" : "no");
+}
+
+static const TopdownNamedNpcColorSet3* ResolveNpcColorPreset3(
+        const std::vector<TopdownNamedNpcColorSet3>& presets,
+        const std::string& requestedId)
+{
+    if (presets.empty()) return nullptr;
+
+    if (requestedId == "Random") {
+        return &presets[GetRandomValue(0, static_cast<int>(presets.size()) - 1)];
+    }
+
+    for (const TopdownNamedNpcColorSet3& preset : presets) {
+        if (preset.name == requestedId) return &preset;
+    }
+    return nullptr;
+}
+
+static const TopdownNamedNpcColorSet4* ResolveNpcColorPreset4(
+        const std::vector<TopdownNamedNpcColorSet4>& presets,
+        const std::string& requestedId)
+{
+    if (presets.empty()) return nullptr;
+
+    if (requestedId == "Random") {
+        return &presets[GetRandomValue(0, static_cast<int>(presets.size()) - 1)];
+    }
+
+    for (const TopdownNamedNpcColorSet4& preset : presets) {
+        if (preset.name == requestedId) return &preset;
+    }
+    return nullptr;
+}
+
+static const TopdownNamedNpcColorSet5* ResolveNpcColorPreset5(
+        const std::vector<TopdownNamedNpcColorSet5>& presets,
+        const std::string& requestedId)
+{
+    if (presets.empty()) return nullptr;
+
+    if (requestedId == "Random") {
+        return &presets[GetRandomValue(0, static_cast<int>(presets.size()) - 1)];
+    }
+
+    for (const TopdownNamedNpcColorSet5& preset : presets) {
+        if (preset.name == requestedId) return &preset;
+    }
+    return nullptr;
+}
+
+static bool ResolveNpcColorSubstitutionForSpawn(
+        const TopdownNpcColorPresetRegistry& registry,
+        const TopdownNpcAssetRuntime& asset,
+        TopdownNpcRuntime& npc)
+{
+    npc.colorSubstitution = {};
+
+    if (!asset.colorSubstitution.active) {
+        return true;
+    }
+
+    if (!registry.loaded) {
+        TraceLog(LOG_WARNING,
+                 "NPC '%s' asset '%s' has color substitution, but color preset registry is not loaded; disabling for this spawn",
+                 npc.id.c_str(),
+                 asset.assetId.c_str());
+        return false;
+    }
+
+    const TopdownNamedNpcColorSet3* skin = ResolveNpcColorPreset3(registry.skinPresets, asset.colorSubstitution.skinPresetId);
+    const TopdownNamedNpcColorSet3* hair = ResolveNpcColorPreset3(registry.hairPresets, asset.colorSubstitution.hairPresetId);
+    const TopdownNamedNpcColorSet5* chest = ResolveNpcColorPreset5(registry.chestPresets, asset.colorSubstitution.chestPresetId);
+    const TopdownNamedNpcColorSet4* legs = ResolveNpcColorPreset4(registry.legsPresets, asset.colorSubstitution.legsPresetId);
+
+    if (skin == nullptr || hair == nullptr || chest == nullptr || legs == nullptr) {
+        TraceLog(LOG_WARNING,
+                 "NPC '%s' asset '%s' failed resolving color presets; disabling for this spawn",
+                 npc.id.c_str(),
+                 asset.assetId.c_str());
+        npc.colorSubstitution = {};
+        return false;
+    }
+
+    npc.colorSubstitution.active = true;
+    npc.colorSubstitution.dstSkin = skin->set;
+    npc.colorSubstitution.dstHair = hair->set;
+    npc.colorSubstitution.dstChest = chest->set;
+    npc.colorSubstitution.dstLegs = legs->set;
+    npc.colorSubstitution.resolvedSkinPresetId = skin->name;
+    npc.colorSubstitution.resolvedHairPresetId = hair->name;
+    npc.colorSubstitution.resolvedChestPresetId = chest->name;
+    npc.colorSubstitution.resolvedLegsPresetId = legs->name;
+
+    return true;
+}
+
 static void ReadNpcSounds(
         const json& entry,
         TopdownNpcAssetDefinition& def)
@@ -494,6 +1081,7 @@ static void MergeNpcRegistryFile(
 
         TopdownNpcAssetDefinition def;
         def.assetId = entry.value("assetId", std::string());
+        ReadNpcColorSubstitutionConfig(entry, state.topdown.npcColorPresets, def);
         def.baseDrawScale = entry.value("baseDrawScale", 1.0f);
         def.collisionRadius = entry.value("collisionRadius", 32.0f);
         def.walkSpeed = entry.value("walkSpeed", 450.0f);
@@ -811,6 +1399,7 @@ bool TopdownScanNpcRegistry(GameState& state)
 {
     state.topdown.npcAssetRegistry.clear();
     state.topdown.npcAssets.clear();
+    LoadNpcColorPresetRegistry(state);
 
     const fs::path npcDir = fs::path(ASSETS_PATH "characters/npcs");
     if (!fs::exists(npcDir) || !fs::is_directory(npcDir)) {
@@ -944,6 +1533,7 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
     runtime.attackEffects = def->attackEffects;
 
     runtime.chaseRepathIntervalMs = def->chaseRepathIntervalMs;
+    runtime.colorSubstitution = def->colorSubstitution;
 
     for (const TopdownNpcAnimationSourceDefinition& animSource : def->animations) {
         SpriteAssetHandle spriteHandle = -1;
@@ -1154,6 +1744,7 @@ bool TopdownSpawnNpcRuntime(
     npc.attackEffects = asset->attackEffects;
 
     npc.chaseRepathIntervalMs = asset->chaseRepathIntervalMs;
+    ResolveNpcColorSubstitutionForSpawn(state.topdown.npcColorPresets, *asset, npc);
 
     npc.hasPlayerTarget = false;
     npc.lastKnownPlayerPosition = {};

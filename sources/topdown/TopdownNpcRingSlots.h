@@ -7,6 +7,7 @@
 
 struct TopdownNpcRingSlotBuildConfig {
     float candidatePadding = 16.0f;
+    float wallPadding = 38.0f;
     int maxRings = 3;
     float minRadiusStep = 12.0f;
     float raycastEpsilon = 0.001f;
@@ -23,6 +24,7 @@ bool TopdownCandidateOverlapsNpcBlockingGeometry(
         float npcRadius,
         const std::vector<TopdownSegment>& blockingSegments,
         float candidatePadding,
+        float wallPadding,
         int ignoreNpcHandle = -1);
 
 void TopdownCollectValidNpcRingSlots(
