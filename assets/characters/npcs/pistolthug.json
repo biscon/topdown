@@ -87,6 +87,23 @@
                 "muzzleSmokeSpreadDegrees": 95.0,
                 "muzzleSmokeForwardBias": 0.42
             },
+            "sourceColors": {
+                "skin1": "#8e5252",
+                "skin2": "#ba756a",
+                "skin3":  "#e9b5a3",
+                "hair1" : "#de9218",
+                "hair2" : "#f9a31b",
+                "hair3" : "#ffd541",
+                "chest1" : "#3b1725",
+                "chest2" : "#591223",
+                "chest3" : "#73172d",
+                "chest4" : "#b4202a",
+                "chest5" : "#df3e23",
+                "legs1" : "#143464",
+                "legs2" : "#20529e",
+                "legs3" : "#285cc4",
+                "legs4" : "#249fde"
+            },
             "animations": [
                 {
                     "asepriteJson": "pistolthug/pistolthug.json",
