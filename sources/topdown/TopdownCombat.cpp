@@ -358,6 +358,7 @@ static bool TryConsumePlayerLoadedAmmoForShot(
                  weaponConfig.equipmentSetId.c_str(),
                  loadedAmmo,
                  weaponConfig.ammoPerShot);
+        PlaySoundById(state, (GetRandomValue(0, 1) == 0) ? "dry_fire_01" : "dry_fire_02");
         return false;
     }
 

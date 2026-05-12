@@ -10274,7 +10274,7 @@
                 {
                  "height":0,
                  "id":247,
-                 "name":"ammo_1",
+                 "name":"ammo_pistol_1",
                  "opacity":1,
                  "point":true,
                  "properties":[
@@ -10327,6 +10327,44 @@
                  "width":0,
                  "x":778.833333333333,
                  "y":189.583333333333
+                }, 
+                {
+                 "height":0,
+                 "id":250,
+                 "name":"ammo_shotgun_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"shotgun_shells"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":730.666666666667,
+                 "y":992.666666666667
+                }, 
+                {
+                 "height":0,
+                 "id":251,
+                 "name":"ammo_rifle_1",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"itemId",
+                         "type":"string",
+                         "value":"rifle_mag"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":860,
+                 "y":986.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -10335,7 +10373,7 @@
          "y":0
         }],
  "nextlayerid":89,
- "nextobjectid":250,
+ "nextobjectid":252,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

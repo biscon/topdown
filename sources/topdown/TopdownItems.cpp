@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "raylib.h"
+#include "audio/Audio.h"
 #include "resources/TextureAsset.h"
 #include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownHelpers.h"
@@ -337,6 +338,7 @@ static bool TryPickupAmmoItem(
     }
 
     item.active = false;
+    PlaySoundById(state, "item_added");
     TraceLog(LOG_INFO,
              "Picked up ammo item '%s': +%d %s reserve ammo",
              item.id.c_str(),
@@ -362,6 +364,7 @@ static bool TryPickupHealthItem(
             def.healAmount);
 
     item.active = false;
+    PlaySoundById(state, "item_added");
     TraceLog(LOG_INFO,
              "Picked up health item '%s': carried %d/%d (heal %.1f)",
              item.id.c_str(),

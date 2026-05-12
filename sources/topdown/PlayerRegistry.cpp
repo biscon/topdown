@@ -225,6 +225,7 @@ static void ReadPlayerWeaponConfigs(
         cfg.magazineSize = std::max(0, entry.value("magazineSize", 0));
         cfg.ammoPerShot = std::max(0, entry.value("ammoPerShot", 0));
         cfg.reloadDurationMs = std::max(0.0f, entry.value("reloadDurationMs", 0.0f));
+        cfg.reloadSoundId = entry.value("reloadSound", std::string());
 
         if (cfg.ammoType.empty()) {
             cfg.magazineSize = 0;
@@ -1598,6 +1599,11 @@ bool TopdownPlayerStartReload(GameState& state)
     attack.reloadTimerMs = 0.0f;
     attack.reloadDurationMs = config->reloadDurationMs;
     attack.reloadEquipmentSetId = config->equipmentSetId;
+
+    if (!config->reloadSoundId.empty()) {
+        PlaySoundById(state, config->reloadSoundId);
+    }
+
     return true;
 }
 

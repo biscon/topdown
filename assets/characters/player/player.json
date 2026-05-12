@@ -131,7 +131,7 @@
             "magazineSize": 12,
             "ammoPerShot": 1,
             "reloadDurationMs": 900,
-            "reloadSound": "pistol_reload_01"
+            "reloadSound": "pistol_reload"
         },
         {
             "equipmentSetId": "shotgun",
@@ -204,7 +204,7 @@
             "magazineSize": 6,
             "ammoPerShot": 1,
             "reloadDurationMs": 1200,
-            "reloadSound": "shotgun_reload_01"
+            "reloadSound": "shotgun_reload"
         },
         {
             "equipmentSetId": "rifle",
@@ -279,7 +279,7 @@
             "magazineSize": 30,
             "ammoPerShot": 1,
             "reloadDurationMs": 1400,
-            "reloadSound": "rifle_reload_01"
+            "reloadSound": "rifle_reload"
         }
     ]
 }

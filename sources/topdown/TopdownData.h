@@ -901,6 +901,7 @@ struct TopdownPlayerWeaponConfig {
     int magazineSize = 0;
     int ammoPerShot = 0;
     float reloadDurationMs = 0.0f;
+    std::string reloadSoundId;
 
     TopdownTracerStyle tracerStyle = TopdownTracerStyle::None;
 
