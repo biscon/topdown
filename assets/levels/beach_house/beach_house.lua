@@ -31,7 +31,7 @@ function Level_onEnter()
         addEquipmentSet("handgun")
         equipEquipmentSet("handgun")
         addAmmo("pistol", 24)
-        setLoadedAmmo("handgun", 0)
+        setLoadedAmmo("handgun", 12)
     end
     --movePropPositionRelative("test_prop", 500, 0, 8000, "accelerateDecelerate")
 end
@@ -170,7 +170,8 @@ end
 function IntroNarration()
     disableControls()
     enableScriptCamera()
-    playSound("drama")
+    --playSound("drama")
+    playMusic("pistolero")
     delay(3000)
     panCameraTarget("intro_camera_1", 7000)
     showNarration("Coming Home", "Upon returning to my idyllic beach house, I noticed something was off.", 5)
@@ -290,6 +291,7 @@ end
 
 function Level_onExit()
     log("running onExit")
+    stopMusic()
 end
 
 -- Effect scripts -------------------------
