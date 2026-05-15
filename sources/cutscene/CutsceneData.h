@@ -30,8 +30,6 @@ struct CutsceneRuntimeImageLayer {
     bool active = false;
     std::string imageId;
     TextureHandle textureHandle = -1;
-    bool ownsTexture = false;
-
     float opacity = 0.0f;
     float targetOpacity = 0.0f;
     float fadeTimerMs = 0.0f;
