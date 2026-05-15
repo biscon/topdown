@@ -124,7 +124,56 @@ namespace
         state.cutscene.runtime = CutsceneRuntime{};
     }
 
-    static bool LoadFirstCutsceneImage(GameState& state, const CutsceneDefinition& definition)
+    static const CutsceneRuntimeLoadedImage* FindLoadedCutsceneImage(
+            const CutsceneRuntime& runtime,
+            const std::string& imageId)
+    {
+        for (const CutsceneRuntimeLoadedImage& image : runtime.loadedImages) {
+            if (image.imageId == imageId) {
+                return &image;
+            }
+        }
+
+        return nullptr;
+    }
+
+    static bool PreloadCutsceneImages(GameState& state, const CutsceneDefinition& definition)
+    {
+        CutsceneRuntime& runtime = state.cutscene.runtime;
+        runtime.loadedImages.clear();
+        runtime.loadedImages.reserve(definition.images.size());
+
+        TextureLoadSettings settings{};
+        settings.premultiplyAlpha = true;
+        settings.filter = TextureFilterMode::Point;
+        settings.wrap = TextureWrapMode::Clamp;
+
+        for (const CutsceneImageDefinition& image : definition.images) {
+            const TextureHandle textureHandle = LoadTextureAsset(
+                    state.resources,
+                    image.path.c_str(),
+                    settings,
+                    ResourceScope::Scene);
+
+            if (textureHandle < 0) {
+                TraceLog(LOG_ERROR,
+                         "Cutscene '%s' failed preloading image '%s' from %s",
+                         definition.cutsceneId.c_str(),
+                         image.id.c_str(),
+                         image.path.c_str());
+                return false;
+            }
+
+            CutsceneRuntimeLoadedImage loadedImage;
+            loadedImage.imageId = image.id;
+            loadedImage.textureHandle = textureHandle;
+            runtime.loadedImages.push_back(loadedImage);
+        }
+
+        return true;
+    }
+
+    static bool ShowFirstCutsceneImage(GameState& state, const CutsceneDefinition& definition)
     {
         if (definition.images.empty()) {
             TraceLog(LOG_WARNING,
@@ -133,32 +182,20 @@ namespace
             return false;
         }
 
+        CutsceneRuntime& runtime = state.cutscene.runtime;
         const CutsceneImageDefinition& image = definition.images.front();
-
-        TextureLoadSettings settings{};
-        settings.premultiplyAlpha = true;
-        settings.filter = TextureFilterMode::Point;
-        settings.wrap = TextureWrapMode::Clamp;
-
-        const TextureHandle textureHandle = LoadTextureAsset(
-                state.resources,
-                image.path.c_str(),
-                settings,
-                ResourceScope::Scene);
-
-        if (textureHandle < 0) {
-            TraceLog(LOG_ERROR,
-                     "Cutscene '%s' failed loading image '%s' from %s",
-                     definition.cutsceneId.c_str(),
-                     image.id.c_str(),
-                     image.path.c_str());
+        const CutsceneRuntimeLoadedImage* loadedImage = FindLoadedCutsceneImage(runtime, image.id);
+        if (loadedImage == nullptr || loadedImage->textureHandle < 0) {
+            TraceLog(LOG_WARNING,
+                     "Cutscene '%s' first image '%s' was not preloaded",
+                     runtime.cutsceneId.c_str(),
+                     image.id.c_str());
             return false;
         }
 
-        CutsceneRuntime& runtime = state.cutscene.runtime;
         runtime.imageA.active = true;
         runtime.imageA.imageId = image.id;
-        runtime.imageA.textureHandle = textureHandle;
+        runtime.imageA.textureHandle = loadedImage->textureHandle;
         runtime.imageA.opacity = 1.0f;
         runtime.imageA.targetOpacity = 1.0f;
         runtime.usingImageA = true;
@@ -264,6 +301,7 @@ bool CutsceneStart(GameState& state, const std::string& cutsceneId)
         return false;
     }
 
+    const bool wasAlreadyInCutsceneMode = (state.mode == GameMode::Cutscene);
     ResetCutsceneRuntime(state);
 
     CutsceneRuntime& runtime = state.cutscene.runtime;
@@ -273,6 +311,14 @@ bool CutsceneStart(GameState& state, const std::string& cutsceneId)
     runtime.scriptPath = definition->scriptPath;
     runtime.skipLevelId = definition->skipLevelId;
     runtime.skipSpawnId = definition->skipSpawnId;
+
+    if (!PreloadCutsceneImages(state, *definition)) {
+        ResetCutsceneRuntime(state);
+        if (wasAlreadyInCutsceneMode) {
+            state.mode = GameMode::Menu;
+        }
+        return false;
+    }
 
     state.mode = GameMode::Cutscene;
 
@@ -302,7 +348,7 @@ bool CutsceneStart(GameState& state, const std::string& cutsceneId)
     }
 
     if (!startedScript) {
-        if (!LoadFirstCutsceneImage(state, *definition)) {
+        if (!ShowFirstCutsceneImage(state, *definition)) {
             ResetCutsceneRuntime(state);
             state.mode = GameMode::Menu;
             return false;
@@ -345,45 +391,21 @@ bool CutsceneShowImage(GameState& state, const std::string& imageId, float fadeM
         return false;
     }
 
-    const CutsceneDefinition* definition = FindCutsceneDefinitionById(state, runtime.cutsceneId);
-    if (definition == nullptr) {
-        TraceLog(LOG_WARNING, "Cutscene '%s' has no active definition", runtime.cutsceneId.c_str());
-        return false;
-    }
-
-    const CutsceneImageDefinition* image = nullptr;
-    for (const CutsceneImageDefinition& candidate : definition->images) {
-        if (candidate.id == imageId) {
-            image = &candidate;
-            break;
-        }
-    }
-
+    const CutsceneRuntimeLoadedImage* image = FindLoadedCutsceneImage(runtime, imageId);
     if (image == nullptr) {
         TraceLog(LOG_WARNING,
-                 "Cutscene '%s' missing image id '%s'",
+                 "Cutscene '%s' missing preloaded image id '%s'",
                  runtime.cutsceneId.c_str(),
                  imageId.c_str());
         return false;
     }
 
-    TextureLoadSettings settings{};
-    settings.premultiplyAlpha = true;
-    settings.filter = TextureFilterMode::Point;
-    settings.wrap = TextureWrapMode::Clamp;
-
-    const TextureHandle textureHandle = LoadTextureAsset(
-            state.resources,
-            image->path.c_str(),
-            settings,
-            ResourceScope::Scene);
-
+    const TextureHandle textureHandle = image->textureHandle;
     if (textureHandle < 0) {
         TraceLog(LOG_WARNING,
-                 "Cutscene '%s' failed loading image '%s' from %s",
+                 "Cutscene '%s' preloaded image '%s' has an invalid texture handle",
                  runtime.cutsceneId.c_str(),
-                 imageId.c_str(),
-                 image->path.c_str());
+                 imageId.c_str());
         return false;
     }
 
