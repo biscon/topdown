@@ -1,0 +1,14 @@
+{
+    "cutsceneId": "post_beach_house",
+    "baseAssetScale": 3,
+    "script": "post_beach_house.lua",
+    "skip": {
+        "levelId": "chapel_road",
+        "spawnId": "default"
+    },
+    "images": {
+        "car_drive": "slide01.png",
+        "woman_phone": "slide02.png",
+        "chapel_road": "slide03.png"
+    }
+}
