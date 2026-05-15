@@ -8,7 +8,6 @@
 struct CutsceneImageDefinition {
     std::string id;
     std::string path;
-    TextureHandle textureHandle = -1;
 };
 
 struct CutsceneDefinition {
@@ -37,6 +36,11 @@ struct CutsceneRuntimeImageLayer {
     float fadeDurationMs = 0.0f;
 };
 
+struct CutsceneRuntimeLoadedImage {
+    std::string imageId;
+    TextureHandle textureHandle = -1;
+};
+
 struct CutsceneRuntimeText {
     bool active = false;
     std::string text;
@@ -58,6 +62,8 @@ struct CutsceneRuntime {
     std::string scriptPath;
     std::string skipLevelId;
     std::string skipSpawnId;
+
+    std::vector<CutsceneRuntimeLoadedImage> loadedImages;
 
     CutsceneRuntimeImageLayer imageA;
     CutsceneRuntimeImageLayer imageB;
