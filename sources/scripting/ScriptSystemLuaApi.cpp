@@ -757,6 +757,20 @@ static int Lua_changeLevel(lua_State* L)
     return 1;
 }
 
+static int Lua_startCutscene(lua_State* L)
+{
+    const char* cutsceneId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || cutsceneId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptStartCutscene(*gameState, std::string(cutsceneId));
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
 static int Lua_log(lua_State* L)
 {
     const char* text = luaL_checkstring(L, 1);
@@ -1765,6 +1779,8 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "speakNpc", Lua_speakNpc);
     lua_register(L, "speakProp", Lua_speakProp);
     lua_register(L, "changeLevel", Lua_changeLevel);
+    lua_register(L, "startCutscene", Lua_startCutscene);
+    lua_register(L, "cutsceneStart", Lua_startCutscene);
 
     lua_register(L, "startWalkTo", Lua_startWalkTo);
     lua_register(L, "startRunTo", Lua_startRunTo);
