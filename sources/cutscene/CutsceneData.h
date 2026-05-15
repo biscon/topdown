@@ -69,6 +69,7 @@ struct CutsceneRuntime {
     float blackFadeDurationMs = 0.0f;
 
     bool skipHeld = false;
+    bool completeRequested = false;
     float skipHoldMs = 0.0f;
     float skipRequiredMs = 1200.0f;
 };
