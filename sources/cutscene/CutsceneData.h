@@ -31,6 +31,7 @@ struct CutsceneRuntimeImageLayer {
     std::string imageId;
     TextureHandle textureHandle = -1;
     float opacity = 0.0f;
+    float fadeStartOpacity = 0.0f;
     float targetOpacity = 0.0f;
     float fadeTimerMs = 0.0f;
     float fadeDurationMs = 0.0f;
@@ -41,6 +42,7 @@ struct CutsceneRuntimeText {
     std::string text;
 
     float opacity = 0.0f;
+    float fadeStartOpacity = 0.0f;
     float targetOpacity = 0.0f;
     float fadeTimerMs = 0.0f;
     float fadeDurationMs = 0.0f;
@@ -64,6 +66,7 @@ struct CutsceneRuntime {
     CutsceneRuntimeText text;
 
     float blackOpacity = 1.0f;
+    float blackStartOpacity = 1.0f;
     float blackTargetOpacity = 0.0f;
     float blackFadeTimerMs = 0.0f;
     float blackFadeDurationMs = 0.0f;

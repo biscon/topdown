@@ -28,68 +28,70 @@ namespace
 
     static void StartLayerFade(CutsceneRuntimeImageLayer& layer, float targetOpacity, float fadeMs)
     {
+        layer.fadeStartOpacity = layer.opacity;
         layer.targetOpacity = Clamp01(targetOpacity);
-        layer.fadeDurationMs = ClampFadeMs(fadeMs);
         layer.fadeTimerMs = 0.0f;
+        layer.fadeDurationMs = ClampFadeMs(fadeMs);
         if (layer.fadeDurationMs <= 0.0f) {
             layer.opacity = layer.targetOpacity;
+            layer.fadeStartOpacity = layer.targetOpacity;
         }
     }
 
     static void StartTextFade(CutsceneRuntimeText& text, float targetOpacity, float fadeMs)
     {
+        text.fadeStartOpacity = text.opacity;
         text.targetOpacity = Clamp01(targetOpacity);
-        text.fadeDurationMs = ClampFadeMs(fadeMs);
         text.fadeTimerMs = 0.0f;
+        text.fadeDurationMs = ClampFadeMs(fadeMs);
         if (text.fadeDurationMs <= 0.0f) {
             text.opacity = text.targetOpacity;
+            text.fadeStartOpacity = text.targetOpacity;
         }
     }
 
     static void StartBlackFade(CutsceneRuntime& runtime, float targetOpacity, float fadeMs)
     {
+        runtime.blackStartOpacity = runtime.blackOpacity;
         runtime.blackTargetOpacity = Clamp01(targetOpacity);
-        runtime.blackFadeDurationMs = ClampFadeMs(fadeMs);
         runtime.blackFadeTimerMs = 0.0f;
+        runtime.blackFadeDurationMs = ClampFadeMs(fadeMs);
         if (runtime.blackFadeDurationMs <= 0.0f) {
             runtime.blackOpacity = runtime.blackTargetOpacity;
+            runtime.blackStartOpacity = runtime.blackTargetOpacity;
         }
     }
 
-    static bool IsFadeActive(float opacity, float targetOpacity, float fadeTimerMs, float fadeDurationMs)
+    static bool IsFadeActive(float fadeStartOpacity, float targetOpacity, float fadeTimerMs, float fadeDurationMs)
     {
-        return fadeDurationMs > 0.0f && fadeTimerMs < fadeDurationMs && std::fabs(opacity - targetOpacity) > 0.001f;
+        return fadeDurationMs > 0.0f &&
+               fadeTimerMs < fadeDurationMs &&
+               std::fabs(fadeStartOpacity - targetOpacity) > 0.001f;
     }
 
     static bool IsLayerFadeActive(const CutsceneRuntimeImageLayer& layer)
     {
-        return layer.active && IsFadeActive(layer.opacity, layer.targetOpacity, layer.fadeTimerMs, layer.fadeDurationMs);
+        return layer.active && IsFadeActive(layer.fadeStartOpacity, layer.targetOpacity, layer.fadeTimerMs, layer.fadeDurationMs);
     }
 
     static bool IsTextFadeActive(const CutsceneRuntimeText& text)
     {
-        return text.active && IsFadeActive(text.opacity, text.targetOpacity, text.fadeTimerMs, text.fadeDurationMs);
+        return text.active && IsFadeActive(text.fadeStartOpacity, text.targetOpacity, text.fadeTimerMs, text.fadeDurationMs);
     }
 
-    static void UpdateFadeValue(float& opacity, float targetOpacity, float& fadeTimerMs, float fadeDurationMs, float dtMs)
+    static void UpdateFadeValue(float& opacity, float fadeStartOpacity, float targetOpacity, float& fadeTimerMs, float fadeDurationMs, float dtMs)
     {
         if (fadeDurationMs <= 0.0f) {
             opacity = targetOpacity;
             return;
         }
 
-        if (fadeTimerMs >= fadeDurationMs) {
-            opacity = targetOpacity;
-            return;
-        }
-
-        const float startOpacity = opacity;
         fadeTimerMs = std::min(fadeDurationMs, fadeTimerMs + dtMs);
-        const float step = std::min(1.0f, dtMs / fadeDurationMs);
-        if (step >= 1.0f || fadeTimerMs >= fadeDurationMs) {
+        const float t = Clamp01(fadeTimerMs / fadeDurationMs);
+        if (t >= 1.0f) {
             opacity = targetOpacity;
         } else {
-            opacity = startOpacity + (targetOpacity - startOpacity) * step;
+            opacity = fadeStartOpacity + (targetOpacity - fadeStartOpacity) * t;
         }
     }
 
@@ -99,7 +101,7 @@ namespace
             return;
         }
 
-        UpdateFadeValue(layer.opacity, layer.targetOpacity, layer.fadeTimerMs, layer.fadeDurationMs, dtMs);
+        UpdateFadeValue(layer.opacity, layer.fadeStartOpacity, layer.targetOpacity, layer.fadeTimerMs, layer.fadeDurationMs, dtMs);
         if (layer.opacity <= 0.001f && layer.targetOpacity <= 0.001f && layer.fadeTimerMs >= layer.fadeDurationMs) {
             layer = CutsceneRuntimeImageLayer{};
         }
@@ -111,7 +113,7 @@ namespace
             return;
         }
 
-        UpdateFadeValue(text.opacity, text.targetOpacity, text.fadeTimerMs, text.fadeDurationMs, dtMs);
+        UpdateFadeValue(text.opacity, text.fadeStartOpacity, text.targetOpacity, text.fadeTimerMs, text.fadeDurationMs, dtMs);
         if (text.clearWhenFadeComplete && text.opacity <= 0.001f && text.fadeTimerMs >= text.fadeDurationMs) {
             text = CutsceneRuntimeText{};
         }
@@ -454,7 +456,7 @@ bool CutsceneHasActiveAction(const GameState& state)
     return IsLayerFadeActive(runtime.imageA) ||
            IsLayerFadeActive(runtime.imageB) ||
            IsTextFadeActive(runtime.text) ||
-           IsFadeActive(runtime.blackOpacity, runtime.blackTargetOpacity, runtime.blackFadeTimerMs, runtime.blackFadeDurationMs);
+           IsFadeActive(runtime.blackStartOpacity, runtime.blackTargetOpacity, runtime.blackFadeTimerMs, runtime.blackFadeDurationMs);
 }
 
 void CutsceneUpdate(GameState& state, float dt)
@@ -468,7 +470,7 @@ void CutsceneUpdate(GameState& state, float dt)
     UpdateImageLayer(runtime.imageA, dtMs);
     UpdateImageLayer(runtime.imageB, dtMs);
     UpdateText(runtime.text, dtMs);
-    UpdateFadeValue(runtime.blackOpacity, runtime.blackTargetOpacity, runtime.blackFadeTimerMs, runtime.blackFadeDurationMs, dtMs);
+    UpdateFadeValue(runtime.blackOpacity, runtime.blackStartOpacity, runtime.blackTargetOpacity, runtime.blackFadeTimerMs, runtime.blackFadeDurationMs, dtMs);
 
     if (runtime.skipHeld) {
         runtime.skipHoldMs = std::min(runtime.skipRequiredMs, runtime.skipHoldMs + dtMs);
@@ -524,15 +526,10 @@ void CutsceneRenderUi(GameState& state)
         return;
     }
 
-    const CutsceneRuntimeImageLayer& layerA = runtime.imageA;
-    const CutsceneRuntimeImageLayer& layerB = runtime.imageB;
-    if (layerA.active && layerB.active && layerA.opacity > layerB.opacity) {
-        DrawCutsceneImageLayer(state, layerB, runtime.baseAssetScale);
-        DrawCutsceneImageLayer(state, layerA, runtime.baseAssetScale);
-    } else {
-        DrawCutsceneImageLayer(state, layerA, runtime.baseAssetScale);
-        DrawCutsceneImageLayer(state, layerB, runtime.baseAssetScale);
-    }
+    const CutsceneRuntimeImageLayer& bottomLayer = runtime.usingImageA ? runtime.imageB : runtime.imageA;
+    const CutsceneRuntimeImageLayer& topLayer = runtime.usingImageA ? runtime.imageA : runtime.imageB;
+    DrawCutsceneImageLayer(state, bottomLayer, runtime.baseAssetScale);
+    DrawCutsceneImageLayer(state, topLayer, runtime.baseAssetScale);
 
     if (runtime.blackOpacity > 0.0f) {
         DrawRectangle(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT, Color{0, 0, 0, AlphaByte(runtime.blackOpacity)});
