@@ -22,6 +22,7 @@
 #include "topdown/TopdownRenderTexture.h"
 #include "topdown/LevelLoadScreen.h"
 #include "cutscene/CutsceneRegistry.h"
+#include "cutscene/CutsceneMode.h"
 #include "external/glfw/include/GLFW/glfw3.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
@@ -92,6 +93,10 @@ static Rectangle BuildShakenWorldDestRect(const GameState& state, const Rectangl
 
 static void ProcessGameModeInput(GameState& state)
 {
+    if (state.mode == GameMode::Cutscene) {
+        return;
+    }
+
     for (auto& ev : FilterEvents(state.input, true, InputEventType::KeyPressed)) {
         if (ev.key.key == KEY_ESCAPE) {
             if (state.mode == GameMode::TopDown) {
@@ -290,13 +295,18 @@ int main()
         FlushPendingDebugConsoleTraceLog(state);
 
         ProcessGameModeInput(state);
+        if (state.mode == GameMode::Cutscene) {
+            CutsceneHandleInput(state);
+        }
         UpdateDebugConsole(state, dt);
-        MenuUpdate(dt);
-        if (!TopdownLoadScreenBlocksLevelUpdate(state)) {
+        if (state.mode != GameMode::Cutscene) {
+            MenuUpdate(dt);
+        }
+        if (state.mode != GameMode::Cutscene && !TopdownLoadScreenBlocksLevelUpdate(state)) {
             ScriptSystemUpdate(state, dt);
         }
 
-        if (state.topdown.hasPendingLevelChange) {
+        if (state.mode != GameMode::Cutscene && state.topdown.hasPendingLevelChange) {
             const std::string levelId = state.topdown.pendingLevelId;
             const std::string spawnId = state.topdown.pendingSpawnId;
 
@@ -320,6 +330,10 @@ int main()
         }
 
         if(state.mode == GameMode::Menu) MenuHandleInput(state);
+
+        if (state.mode == GameMode::Cutscene) {
+            CutsceneUpdate(state, dt);
+        }
 
         if (state.mode == GameMode::TopDown) {
             TopdownHandleInput(state);
@@ -346,6 +360,9 @@ int main()
 
             BeginTextureMode(uiTarget);
             ClearBackground(BLANK);
+            if (state.mode == GameMode::Cutscene) {
+                CutsceneRenderUi(state);
+            }
             EndTextureMode();
         }
 
@@ -353,7 +370,9 @@ int main()
         if (state.mode == GameMode::Menu) {
             MenuRenderUi(state);
         }
-        MenuRenderOverlay();
+        if (state.mode != GameMode::Cutscene) {
+            MenuRenderOverlay();
+        }
         RenderDebugConsole(state);
         EndTextureMode();
 

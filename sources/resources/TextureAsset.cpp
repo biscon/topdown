@@ -134,3 +134,38 @@ const TextureResource* FindTextureResource(const ResourceData& resources, Textur
     }
     return &resources.textures.at(it->second);
 }
+
+void ReleaseTextureAsset(ResourceData& resources, TextureHandle handle)
+{
+    auto it = resources.textureIndexByHandle.find(handle);
+    if (it == resources.textureIndexByHandle.end()) {
+        return;
+    }
+
+    const size_t index = it->second;
+    if (index >= resources.textures.size()) {
+        resources.textureIndexByHandle.erase(it);
+        return;
+    }
+
+    TextureResource& resource = resources.textures[index];
+    if (resource.loaded && resource.texture.id != 0) {
+        UnloadTexture(resource.texture);
+    }
+
+    for (auto cacheIt = resources.textureHandleByPath.begin();
+         cacheIt != resources.textureHandleByPath.end(); ) {
+        if (cacheIt->second == handle) {
+            cacheIt = resources.textureHandleByPath.erase(cacheIt);
+        } else {
+            ++cacheIt;
+        }
+    }
+
+    resources.textures.erase(resources.textures.begin() + static_cast<long>(index));
+
+    resources.textureIndexByHandle.clear();
+    for (size_t i = 0; i < resources.textures.size(); ++i) {
+        resources.textureIndexByHandle[resources.textures[i].handle] = i;
+    }
+}

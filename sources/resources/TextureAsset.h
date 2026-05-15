@@ -15,3 +15,4 @@ TextureHandle LoadTextureAsset(
 
 TextureResource* FindTextureResource(ResourceData& resources, TextureHandle handle);
 const TextureResource* FindTextureResource(const ResourceData& resources, TextureHandle handle);
+void ReleaseTextureAsset(ResourceData& resources, TextureHandle handle);
