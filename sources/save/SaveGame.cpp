@@ -23,6 +23,7 @@
 #include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownNpcPatrol.h"
 #include "topdown/TopdownRvo.h"
+#include "cutscene/CutsceneMode.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -2166,6 +2167,10 @@ bool CanSaveGame(const GameState& state, std::string* outReason)
         }
         return false;
     };
+
+    if (state.mode == GameMode::Cutscene || CutsceneIsActive(state)) {
+        return fail("Cannot save during cutscene");
+    }
 
     const bool hasActiveTopdownLevel = state.topdown.runtime.levelActive;
     const bool isTopdownGameplay = state.mode == GameMode::TopDown;

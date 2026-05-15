@@ -7,6 +7,8 @@ bool ScriptIsWalkWaitComplete(GameState& state, const ScriptCoroutine& co)
     if (state.mode == GameMode::TopDown) {
         return !state.topdown.runtime.scriptedMove.active;
     }
+
+    return true;
 }
 
 bool ScriptIsSpeechWaitComplete(GameState& state)
@@ -14,6 +16,8 @@ bool ScriptIsSpeechWaitComplete(GameState& state)
     if (state.mode == GameMode::TopDown) {
         return true;
     }
+
+    return true;
 }
 
 bool ScriptTryConsumeDialogueResult(GameState& state, std::string& outResult)
