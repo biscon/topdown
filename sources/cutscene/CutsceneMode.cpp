@@ -2,11 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <filesystem>
-
 #include "cutscene/CutsceneRegistry.h"
 #include "input/Input.h"
 #include "resources/TextureAsset.h"
+#include "resources/Resources.h"
 #include "topdown/LevelRegistry.h"
 
 namespace
@@ -21,36 +20,9 @@ namespace
         return static_cast<unsigned char>(std::round(Clamp01(opacity) * 255.0f));
     }
 
-    static void ReleaseCutsceneImageLayer(GameState& state, CutsceneRuntimeImageLayer& layer)
-    {
-        if (layer.ownsTexture && layer.textureHandle > 0) {
-            ReleaseTextureAsset(state.resources, layer.textureHandle);
-        }
-        layer = CutsceneRuntimeImageLayer{};
-    }
-
     static void ResetCutsceneRuntime(GameState& state)
     {
-        ReleaseCutsceneImageLayer(state, state.cutscene.runtime.imageA);
-        ReleaseCutsceneImageLayer(state, state.cutscene.runtime.imageB);
         state.cutscene.runtime = CutsceneRuntime{};
-    }
-
-    static TextureHandle FindExistingTextureHandle(
-            const ResourceData& resources,
-            const std::string& path,
-            const TextureLoadSettings& settings)
-    {
-        const std::string normalizedPath = std::filesystem::path(path).lexically_normal().string();
-        for (const TextureResource& resource : resources.textures) {
-            if (resource.path == normalizedPath &&
-                resource.premultiplyAlpha == settings.premultiplyAlpha &&
-                resource.filterMode == settings.filter &&
-                resource.wrapMode == settings.wrap) {
-                return resource.handle;
-            }
-        }
-        return -1;
     }
 
     static bool LoadFirstCutsceneImage(GameState& state, const CutsceneDefinition& definition)
@@ -69,21 +41,13 @@ namespace
         settings.filter = TextureFilterMode::Point;
         settings.wrap = TextureWrapMode::Clamp;
 
-        const TextureHandle existingHandle = FindExistingTextureHandle(
+        const TextureHandle textureHandle = LoadTextureAsset(
                 state.resources,
-                image.path,
-                settings);
+                image.path.c_str(),
+                settings,
+                ResourceScope::Scene);
 
-        TextureHandle textureHandle = existingHandle;
-        if (textureHandle <= 0) {
-            textureHandle = LoadTextureAsset(
-                    state.resources,
-                    image.path.c_str(),
-                    settings,
-                    ResourceScope::Scene);
-        }
-
-        if (textureHandle <= 0) {
+        if (textureHandle < 0) {
             TraceLog(LOG_ERROR,
                      "Cutscene '%s' failed loading image '%s' from %s",
                      definition.cutsceneId.c_str(),
@@ -96,7 +60,6 @@ namespace
         runtime.imageA.active = true;
         runtime.imageA.imageId = image.id;
         runtime.imageA.textureHandle = textureHandle;
-        runtime.imageA.ownsTexture = existingHandle <= 0;
         runtime.imageA.opacity = 1.0f;
         runtime.imageA.targetOpacity = 1.0f;
         runtime.usingImageA = true;
@@ -107,7 +70,7 @@ namespace
 
     static void DrawCutsceneImageLayer(GameState& state, const CutsceneRuntimeImageLayer& layer, int baseAssetScale)
     {
-        if (!layer.active || layer.textureHandle <= 0 || layer.opacity <= 0.0f) {
+        if (!layer.active || layer.textureHandle < 0 || layer.opacity <= 0.0f) {
             return;
         }
 
@@ -150,8 +113,8 @@ namespace
         DrawRectangleRec(Rectangle{x, y, std::round(barWidth * progress), barHeight}, Color{236, 190, 98, 255});
 
         const char* label = "HOLD SPACE";
-        Font font = state.speechFont;
-        const float fontSize = 28.0f;
+        const Font& font = state.narrationBodyFont;
+        const float fontSize = 32.0f;
         const float spacing = 1.0f;
         const Vector2 textSize = MeasureTextEx(font, label, fontSize, spacing);
         const Vector2 textPos{std::round(x + barWidth - textSize.x), std::round(y - textSize.y - 8.0f)};
@@ -168,6 +131,7 @@ namespace
 
         if (levelId.empty()) {
             TraceLog(LOG_WARNING, "Cutscene ended without a skip target level; returning to menu");
+            UnloadSceneResources(state.resources);
             state.mode = GameMode::Menu;
             return;
         }
@@ -187,6 +151,7 @@ namespace
             state.mode = GameMode::TopDown;
         } else {
             TraceLog(LOG_ERROR, "Cutscene failed loading target topdown level: %s", levelId.c_str());
+            UnloadSceneResources(state.resources);
             state.mode = GameMode::Menu;
         }
     }
@@ -224,6 +189,7 @@ void CutsceneStop(GameState& state)
 {
     ResetCutsceneRuntime(state);
     if (state.mode == GameMode::Cutscene) {
+        UnloadSceneResources(state.resources);
         state.mode = GameMode::Menu;
     }
 }
