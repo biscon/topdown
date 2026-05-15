@@ -21,6 +21,7 @@
 #include "topdown/TopdownRvo.h"
 #include "topdown/TopdownRenderTexture.h"
 #include "topdown/LevelLoadScreen.h"
+#include "cutscene/CutsceneRegistry.h"
 #include "external/glfw/include/GLFW/glfw3.h"
 
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
@@ -241,6 +242,10 @@ int main()
 
     if (!TopdownScanLevelRegistry(state)) {
         TraceLog(LOG_WARNING, "Topdown level registry scan failed");
+    }
+
+    if (!CutsceneScanRegistry(state)) {
+        TraceLog(LOG_WARNING, "Cutscene registry scan failed");
     }
 
     if (!LoadTopdownPlayerCharacterAssets(state)) {
