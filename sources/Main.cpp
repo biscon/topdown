@@ -302,7 +302,7 @@ int main()
         if (state.mode != GameMode::Cutscene) {
             MenuUpdate(dt);
         }
-        if (state.mode != GameMode::Cutscene && !TopdownLoadScreenBlocksLevelUpdate(state)) {
+        if (state.mode == GameMode::Cutscene || !TopdownLoadScreenBlocksLevelUpdate(state)) {
             ScriptSystemUpdate(state, dt);
         }
 

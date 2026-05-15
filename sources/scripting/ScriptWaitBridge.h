@@ -7,3 +7,4 @@
 bool ScriptIsWalkWaitComplete(GameState& state, const ScriptCoroutine& co);
 bool ScriptIsSpeechWaitComplete(GameState& state);
 bool ScriptTryConsumeDialogueResult(GameState& state, std::string& outResult);
+bool ScriptIsCutsceneActionComplete(GameState& state);
