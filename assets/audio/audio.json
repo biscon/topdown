@@ -8,11 +8,11 @@
             "loop": false
         },
         {
-            "id": "dystopia",
-            "file": "music/dystopia.mp3",
+            "id": "dark_atmosphere",
+            "file": "music/dark_atmosphere.ogg",
             "type": "music",
-            "volume": 0.5,
-            "loop": true
+            "volume": 0.75,
+            "loop": false
         },
         {
             "id": "motivation",
@@ -104,13 +104,6 @@
             "file": "ambience/wind.ogg",
             "type": "sound",
             "volume": 0.75,
-            "loop": true
-        },
-        {
-            "id": "wind_ambience_inside",
-            "file": "ambience/wind_inside.ogg",
-            "type": "sound",
-            "volume": 0.6,
             "loop": true
         },
         {

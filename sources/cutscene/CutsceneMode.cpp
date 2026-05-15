@@ -564,7 +564,7 @@ void CutsceneRenderUi(GameState& state)
         const Vector2 textSize = MeasureTextEx(font, runtime.text.text.c_str(), fontSize, spacing);
         const Vector2 textPos{
                 std::round((static_cast<float>(INTERNAL_WIDTH) - textSize.x) * 0.5f),
-                std::round(static_cast<float>(INTERNAL_HEIGHT) * 0.78f)
+                std::round(static_cast<float>(INTERNAL_HEIGHT) * 0.88f)
         };
         const unsigned char alpha = AlphaByte(runtime.text.opacity);
         DrawTextEx(font, runtime.text.text.c_str(), Vector2{textPos.x + 2.0f, textPos.y + 2.0f}, fontSize, spacing, Color{0, 0, 0, alpha});
