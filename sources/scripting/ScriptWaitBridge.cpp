@@ -1,5 +1,7 @@
 #include "scripting/ScriptWaitBridge.h"
 
+#include "cutscene/CutsceneMode.h"
+
 
 bool ScriptIsWalkWaitComplete(GameState& state, const ScriptCoroutine& co)
 {
@@ -28,4 +30,14 @@ bool ScriptTryConsumeDialogueResult(GameState& state, std::string& outResult)
         return false;
     }
     return true;
+}
+
+
+bool ScriptIsCutsceneActionComplete(GameState& state)
+{
+    if (state.mode != GameMode::Cutscene) {
+        return true;
+    }
+
+    return !CutsceneHasActiveAction(state);
 }

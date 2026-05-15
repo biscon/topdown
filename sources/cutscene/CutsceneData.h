@@ -44,6 +44,7 @@ struct CutsceneRuntimeText {
     float targetOpacity = 0.0f;
     float fadeTimerMs = 0.0f;
     float fadeDurationMs = 0.0f;
+    bool clearWhenFadeComplete = false;
 };
 
 struct CutsceneRuntime {

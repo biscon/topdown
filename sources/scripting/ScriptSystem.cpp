@@ -22,6 +22,7 @@ static const char* ScriptWaitTypeToLabel(ScriptWaitType waitType)
         case ScriptWaitType::SpeechComplete: return "WAIT_SPEECH";
         case ScriptWaitType::DelayMs:        return "WAIT_DELAY";
         case ScriptWaitType::DialogueChoice: return "WAIT_DIALOGUE";
+        case ScriptWaitType::CutsceneActionComplete: return "WAIT_CUTSCENE";
         case ScriptWaitType::None:
         default:                             return "RUNNING";
     }
@@ -47,6 +48,7 @@ static std::string BuildCoroutineWaitLabel(const ScriptCoroutine& co, const Game
 
         case ScriptWaitType::SpeechComplete:
         case ScriptWaitType::DialogueChoice:
+        case ScriptWaitType::CutsceneActionComplete:
         case ScriptWaitType::None:
         default:
             break;
@@ -861,6 +863,10 @@ void ScriptSystemUpdate(GameState& state, float dt)
                     shouldResume = true;
                     dialogueResultConsumed = true;
                 }
+                break;
+
+            case ScriptWaitType::CutsceneActionComplete:
+                shouldResume = ScriptIsCutsceneActionComplete(state);
                 break;
 
             case ScriptWaitType::None:
