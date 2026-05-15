@@ -14,6 +14,17 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "utils/Interpolation.h"
 #include "TopdownHelpers.h"
+#include "cutscene/CutsceneMode.h"
+
+
+bool TopdownScriptStartCutscene(GameState& state, const std::string& cutsceneId)
+{
+    if (cutsceneId.empty()) {
+        return false;
+    }
+
+    return CutsceneStart(state, cutsceneId);
+}
 
 
 bool TopdownScriptAddEquipmentSet(GameState& state, const std::string& equipmentSetId)

@@ -5,6 +5,9 @@
 #include "data/GameState.h"
 #include "raylib.h"
 
+// Cutscenes
+bool TopdownScriptStartCutscene(GameState& state, const std::string& cutsceneId);
+
 // Controls
 bool TopdownScriptSetControlsEnabled(GameState& state, bool enabled);
 bool TopdownScriptShowNarration(

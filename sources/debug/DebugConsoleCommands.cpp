@@ -12,6 +12,7 @@
 #include "resources/TextureAsset.h"
 #include "render/EffectShaderRegistry.h"
 #include "topdown/LevelRegistry.h"
+#include "topdown/TopdownScriptCommands.h"
 
 static std::vector<std::string> SplitConsoleWords(const std::string& text)
 {
@@ -128,6 +129,7 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
         DebugConsoleAddLine(state, "  /clear", LIGHTGRAY);
         DebugConsoleAddLine(state, "  /copylast [numLines]", LIGHTGRAY);
         DebugConsoleAddLine(state, "  /goto <levelId>", LIGHTGRAY);
+        DebugConsoleAddLine(state, "  /cutscene <cutsceneId>", LIGHTGRAY);
         DebugConsoleAddLine(state, "  /reload", LIGHTGRAY);
         DebugConsoleAddLine(state, "  /levels", LIGHTGRAY);
         DebugConsoleAddLine(state, "  /resources", LIGHTGRAY);
@@ -228,6 +230,24 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
         } else {
             QueueTopdownLevelChange(state, levelId);
             DebugConsoleAddLine(state, "queued level load: " + levelId, SKYBLUE);
+        }
+
+        return true;
+    }
+
+    if (cmd == "/cutscene") {
+        if (args.size() < 2) {
+            DebugConsoleAddLine(state, "Usage: /cutscene <cutsceneId>", RED);
+            return true;
+        }
+
+        const std::string& cutsceneId = args[1];
+        if (TopdownScriptStartCutscene(state, cutsceneId)) {
+            TraceLog(LOG_INFO, "Started cutscene: %s", cutsceneId.c_str());
+            DebugConsoleAddLine(state, "Started cutscene: " + cutsceneId, SKYBLUE);
+        } else {
+            TraceLog(LOG_ERROR, "Failed starting cutscene: %s", cutsceneId.c_str());
+            DebugConsoleAddLine(state, "failed starting cutscene: " + cutsceneId, RED);
         }
 
         return true;
