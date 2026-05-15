@@ -653,8 +653,7 @@ static int Lua_cutsceneEnd(lua_State* L)
         return 1;
     }
 
-    CutsceneComplete(*gameState);
-    lua_pushboolean(L, 1);
+    lua_pushboolean(L, CutsceneRequestComplete(*gameState));
     return 1;
 }
 

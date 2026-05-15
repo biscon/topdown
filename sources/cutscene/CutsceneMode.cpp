@@ -325,6 +325,17 @@ void CutsceneComplete(GameState& state)
     CompleteCutsceneTarget(state);
 }
 
+bool CutsceneRequestComplete(GameState& state)
+{
+    CutsceneRuntime& runtime = state.cutscene.runtime;
+    if (!runtime.active) {
+        return false;
+    }
+
+    runtime.completeRequested = true;
+    return true;
+}
+
 bool CutsceneShowImage(GameState& state, const std::string& imageId, float fadeMs)
 {
     CutsceneRuntime& runtime = state.cutscene.runtime;
@@ -466,6 +477,12 @@ void CutsceneUpdate(GameState& state, float dt)
     }
 
     if (runtime.skipHoldMs >= runtime.skipRequiredMs) {
+        ScriptSystemStopFunction(state.script, "Cutscene_onEnter");
+        CompleteCutsceneTarget(state);
+        return;
+    }
+
+    if (runtime.completeRequested) {
         ScriptSystemStopFunction(state.script, "Cutscene_onEnter");
         CompleteCutsceneTarget(state);
         return;
