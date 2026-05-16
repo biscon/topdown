@@ -1,0 +1,98 @@
+enemy with taser that stuns the player allowing other melee to move in an attack if the player is not
+careful, should be easily recognizable to be fair.
+
+
+
+
+The player is a former ex-military retrieval operator for a prestigious private foundation.
+
+The foundation publicly runs clinics, retreats, youth programs, and crisis services for elite families.
+
+Secretly, its inner circle uses children and vulnerable people in ritualized blackmail initiations. The crimes are recorded and used to bind powerful people into a hidden network of mutual guilt.
+
+The cult doctrine says true rulers must prove they can sacrifice the future itself. The practical reality is simpler: anyone who crosses that line can be owned forever.
+
+Years ago, the player was ordered to retrieve a young girl who had escaped. He believed the usual lies until he found her and realized what he was really doing.
+
+He turned on his team, helped her disappear, and fled to the beach house.
+
+Now the foundation has found him because the old case is active again. They need to know what he took, who survived, and where the girl is.
+
+
+okay that gives me the following idea. The girl survived and she wants to come in contact with the player to rescue him (because he saved her all those years ago).
+The woman on the phone is not the girl but somebody related/working for the girl. Before the call is cut off she give the player a remote location to meet.
+
+After the first level we a simple "cutscene" in the form of some images with accompanying text, where the player wonders if its the girl and if should
+still be alive after all these years, explaining to the player (actual person playing the game) that he rescue her once, but intentionally vague about from what.
+
+after that we go to whatever remote meeting place the woman on the phone picked. player goes through a level with not hostiles
+when he get to the actual meeting place in the level a cutscene kicks in where he oversees the woman on the phone being interrogated
+by agents of the cult, the player cant tell the identity of the young woman but thinks it may be the young girl.
+The young woman gets shot/brutally murdered and the player gets to revenge her, upon examining the body he founds out
+that it is not the young girl (we gotta have to give her a name soon), he should then find another clue on her body
+before having to fight to get to the level exit (because his shootout alerted some other cult members nearby)
+
+I was thinking about injecting a whole level where you play as a younger "player" (gotta come up with a name for him too) at the point
+where the player see the young woman being interrogated and wonders if it was the young girl he saved all those years ago. But
+I think it might be too early in the story? what do you think?
+
+also what do you think about my ideas?
+
+
+player could think about the girl going to the meeting place through narration popups
+
+A child’s hand gripping his sleeve.
+
+Rain on concrete.
+
+A voice behind him: “Bring her back.”
+
+Gunfire in a white hallway.
+
+Then back to present.
+
+
+
+
+Years ago, Elias Ward worked retrieval for a private foundation tied to an elite cult.
+He was sent to recover a runaway child named Mara.
+When he found her, he realized she was not sick, dangerous, or kidnapped by enemies. She was escaping.
+He killed his own team and got her out.
+After that, he vanished to the beach house.
+Years later, a woman named Vera calls the old house phone. She claims Mara is alive and wants to meet, but the call is interrupted before she can explain.
+Vera gives Elias a remote meeting point.
+At the meeting, Elias arrives too late. Vera is being interrogated by cult agents. From a distance, he fears the woman might be Mara.
+She is murdered before he can reach her.
+After the fight, Elias discovers she is not Mara. On Vera’s body he finds a clue proving Mara may still be alive.
+
+Beach house escape
+→ narration cutscene on the road
+→ Vera’s meeting place: old funeral chapel
+→ quiet approach
+→ mini flashback fragments
+→ Vera murdered
+→ player confirms she is not Mara
+→ clue points to next level
+→ cult backup arrives
+→ escape
+
+
+interlude 1:
+
+Image 1:
+I left the house the way I came in.
+Only this time, I knew it wasn’t over.
+You don’t send that many men unless you’re trying to bury something.
+
+Image 2:
+The woman on the phone knew where to find me.
+That meant she was connected.
+To them...
+or to what I took from them.
+
+Image 3:
+And then there was the other thought.
+The one I’d spent years trying not to think...
+could she still be alive after all this time?
+
+
