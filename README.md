@@ -18,6 +18,24 @@ The engine is purpose-built for this game rather than being a general-purpose fr
 - Objective marker UI
 - raylib-based rendering/audio/input
 
+## How to Play
+
+Move through the level, survive the attack, and follow the objective marker when it appears.
+
+## Controls
+
+| Action | Control |
+|---|---|
+| Move | `W` `A` `S` `D` |
+| Aim | Mouse |
+| Attack / fire weapon | Left mouse button |
+| Select knife | `1` |
+| Select handgun | `2` |
+| Interact with doors, exits, phones, and other usable objects | `E` |
+| Use health kit | `Q` |
+
+Only the knife and handgun are available in the current demo.
+
 ## Build Requirements
 
 Required:
