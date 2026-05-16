@@ -311,6 +311,8 @@ int main()
             ScriptSystemUpdate(state, dt);
         }
 
+        CutsceneConsumePendingStart(state);
+
         if (state.mode != GameMode::Cutscene && state.topdown.hasPendingLevelChange) {
             const std::string levelId = state.topdown.pendingLevelId;
             const std::string spawnId = state.topdown.pendingSpawnId;

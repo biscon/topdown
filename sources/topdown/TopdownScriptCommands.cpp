@@ -23,7 +23,11 @@ bool TopdownScriptStartCutscene(GameState& state, const std::string& cutsceneId)
         return false;
     }
 
-    return CutsceneStart(state, cutsceneId);
+    const bool queued = CutsceneQueueStart(state, cutsceneId);
+    if (queued) {
+        TraceLog(LOG_INFO, "Queued cutscene start from Lua: %s", cutsceneId.c_str());
+    }
+    return queued;
 }
 
 

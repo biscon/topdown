@@ -4,6 +4,8 @@
 
 #include "data/GameState.h"
 
+bool CutsceneQueueStart(GameState& state, const std::string& cutsceneId);
+void CutsceneConsumePendingStart(GameState& state);
 bool CutsceneStart(GameState& state, const std::string& cutsceneId);
 void CutsceneStop(GameState& state);
 void CutsceneComplete(GameState& state);

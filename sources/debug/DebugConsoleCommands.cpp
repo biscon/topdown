@@ -12,7 +12,7 @@
 #include "resources/TextureAsset.h"
 #include "render/EffectShaderRegistry.h"
 #include "topdown/LevelRegistry.h"
-#include "topdown/TopdownScriptCommands.h"
+#include "cutscene/CutsceneMode.h"
 
 static std::vector<std::string> SplitConsoleWords(const std::string& text)
 {
@@ -242,7 +242,7 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
         }
 
         const std::string& cutsceneId = args[1];
-        if (TopdownScriptStartCutscene(state, cutsceneId)) {
+        if (CutsceneStart(state, cutsceneId)) {
             TraceLog(LOG_INFO, "Started cutscene: %s", cutsceneId.c_str());
             DebugConsoleAddLine(state, "Started cutscene: " + cutsceneId, SKYBLUE);
         } else {
