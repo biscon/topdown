@@ -23,6 +23,7 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "input/Input.h"
 #include "topdown/LevelLoadScreen.h"
+#include "topdown/TopdownObjectiveMarker.h"
 
 static bool IsPointInsideTrigger(
         const TopdownAuthoredTrigger& trigger,
@@ -315,6 +316,7 @@ void TopdownUpdate(GameState& state, float dt)
     TryHandleInteractiveTriggers(state);
     TopdownUpdateSpeechBubbles(state, dt);
     TopdownUpdateNarrationPopups(state, dt);
+    TopdownUpdateObjectiveMarker(state, dt);
 
     TopdownUpdatePlayerAnimation(state, dt);
     TopdownUpdateNpcAnimation(state, dt);

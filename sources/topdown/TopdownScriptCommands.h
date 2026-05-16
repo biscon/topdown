@@ -133,6 +133,15 @@ bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id
 bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled);
 bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat);
 
+// Objective marker
+bool TopdownScriptSetObjectiveTrigger(GameState& state, const std::string& triggerId);
+bool TopdownScriptSetObjectiveNpc(GameState& state, const std::string& npcId);
+bool TopdownScriptSetObjectiveProp(GameState& state, const std::string& propId);
+bool TopdownScriptSetObjectivePosition(GameState& state, Vector2 position);
+bool TopdownScriptClearObjective(GameState& state);
+bool TopdownScriptHasObjective(const GameState& state, bool& outActive);
+bool TopdownScriptResolveObjectivePosition(GameState& state, Vector2& outPosition);
+
 // Audio
 bool TopdownScriptPlaySound(GameState& state, const std::string& audioId);
 bool TopdownScriptStopSound(GameState& state, const std::string& audioId);

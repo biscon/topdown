@@ -23,7 +23,11 @@ bool TopdownScriptStartCutscene(GameState& state, const std::string& cutsceneId)
         return false;
     }
 
-    return CutsceneStart(state, cutsceneId);
+    const bool queued = CutsceneQueueStart(state, cutsceneId);
+    if (queued) {
+        TraceLog(LOG_INFO, "Queued cutscene start from Lua: %s", cutsceneId.c_str());
+    }
+    return queued;
 }
 
 
@@ -140,6 +144,22 @@ static TopdownRuntimeTrigger* FindTrigger(GameState& state, const std::string& i
     return nullptr;
 }
 
+static const TopdownRuntimeTrigger* FindTriggerConst(const GameState& state, const std::string& id)
+{
+    for (const TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
+        if (trigger.authoredIndex < 0 ||
+            trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            continue;
+        }
+
+        if (state.topdown.authored.triggers[trigger.authoredIndex].id == id) {
+            return &trigger;
+        }
+    }
+
+    return nullptr;
+}
+
 static TopdownNpcRuntime* FindNpc(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
@@ -158,6 +178,35 @@ static TopdownRuntimeProp* FindProp(GameState& state, const std::string& propId)
         }
     }
     return nullptr;
+}
+
+static const TopdownNpcRuntime* FindNpcConst(const GameState& state, const std::string& npcId)
+{
+    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
+        if (npc.active && npc.id == npcId) {
+            return &npc;
+        }
+    }
+    return nullptr;
+}
+
+static const TopdownRuntimeProp* FindPropConst(const GameState& state, const std::string& propId)
+{
+    for (const TopdownRuntimeProp& prop : state.topdown.runtime.props) {
+        if (prop.active && prop.id == propId) {
+            return &prop;
+        }
+    }
+    return nullptr;
+}
+
+static void SetObjectiveAnchor(GameState& state, TopdownObjectiveAnchorType anchorType, const std::string& anchorId)
+{
+    TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
+    objective = {};
+    objective.active = true;
+    objective.anchorType = anchorType;
+    objective.anchorId = anchorId;
 }
 
 static const SpriteClip* FindSpriteClipByName(const SpriteAssetResource& sprite, const std::string& clipName)
@@ -947,6 +996,126 @@ bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerI
 
     trigger->repeat = repeat;
     return true;
+}
+
+// --------------------------------------------------
+// Objective marker
+// --------------------------------------------------
+
+bool TopdownScriptSetObjectiveTrigger(GameState& state, const std::string& triggerId)
+{
+    if (triggerId.empty()) {
+        return false;
+    }
+
+    SetObjectiveAnchor(state, TopdownObjectiveAnchorType::Trigger, triggerId);
+    return true;
+}
+
+bool TopdownScriptSetObjectiveNpc(GameState& state, const std::string& npcId)
+{
+    if (npcId.empty()) {
+        return false;
+    }
+
+    SetObjectiveAnchor(state, TopdownObjectiveAnchorType::Npc, npcId);
+    return true;
+}
+
+bool TopdownScriptSetObjectiveProp(GameState& state, const std::string& propId)
+{
+    if (propId.empty()) {
+        return false;
+    }
+
+    SetObjectiveAnchor(state, TopdownObjectiveAnchorType::Prop, propId);
+    return true;
+}
+
+bool TopdownScriptSetObjectivePosition(GameState& state, Vector2 position)
+{
+    TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
+    objective = {};
+    objective.active = true;
+    objective.anchorType = TopdownObjectiveAnchorType::Position;
+    objective.position = position;
+    objective.hasResolvedPosition = true;
+    return true;
+}
+
+bool TopdownScriptClearObjective(GameState& state)
+{
+    state.topdown.runtime.objectiveMarker = {};
+    return true;
+}
+
+bool TopdownScriptHasObjective(const GameState& state, bool& outActive)
+{
+    outActive = state.topdown.runtime.objectiveMarker.active;
+    return true;
+}
+
+bool TopdownScriptResolveObjectivePosition(GameState& state, Vector2& outPosition)
+{
+    TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
+    if (!objective.active) {
+        return false;
+    }
+
+    switch (objective.anchorType) {
+    case TopdownObjectiveAnchorType::Position:
+        outPosition = objective.position;
+        objective.position = outPosition;
+        objective.hasResolvedPosition = true;
+        return true;
+
+    case TopdownObjectiveAnchorType::Trigger: {
+        const TopdownRuntimeTrigger* trigger = FindTriggerConst(state, objective.anchorId);
+        if (trigger == nullptr || trigger->authoredIndex < 0 ||
+            trigger->authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
+            objective.hasResolvedPosition = false;
+            return false;
+        }
+
+        const Rectangle rect = state.topdown.authored.triggers[trigger->authoredIndex].worldRect;
+        outPosition = Vector2{rect.x + rect.width * 0.5f, rect.y + rect.height * 0.5f};
+        objective.position = outPosition;
+        objective.hasResolvedPosition = true;
+        return true;
+    }
+
+    case TopdownObjectiveAnchorType::Npc: {
+        const TopdownNpcRuntime* npc = FindNpcConst(state, objective.anchorId);
+        if (npc == nullptr || !npc->visible || npc->dead || npc->corpse) {
+            objective.hasResolvedPosition = false;
+            return false;
+        }
+
+        outPosition = npc->position;
+        objective.position = outPosition;
+        objective.hasResolvedPosition = true;
+        return true;
+    }
+
+    case TopdownObjectiveAnchorType::Prop: {
+        const TopdownRuntimeProp* prop = FindPropConst(state, objective.anchorId);
+        if (prop == nullptr || !prop->visible) {
+            objective.hasResolvedPosition = false;
+            return false;
+        }
+
+        outPosition = prop->position;
+        objective.position = outPosition;
+        objective.hasResolvedPosition = true;
+        return true;
+    }
+
+    case TopdownObjectiveAnchorType::None:
+        break;
+    }
+
+    objective.hasResolvedPosition = false;
+    return false;
 }
 
 // Audio

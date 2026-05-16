@@ -154,6 +154,23 @@ struct TopdownSpeechBubbleRuntime {
     std::vector<TopdownSpeechBubbleEntry> entries;
 };
 
+enum class TopdownObjectiveAnchorType {
+    None,
+    Trigger,
+    Npc,
+    Prop,
+    Position
+};
+
+struct TopdownObjectiveMarkerRuntime {
+    bool active = false;
+    TopdownObjectiveAnchorType anchorType = TopdownObjectiveAnchorType::None;
+    std::string anchorId;
+    Vector2 position{};
+    bool hasResolvedPosition = false;
+    float animTimerMs = 0.0f;
+};
+
 struct TopdownSegment {
     Vector2 a{};
     Vector2 b{};
@@ -1731,6 +1748,7 @@ struct TopdownRuntimeData {
 
     std::vector<TopdownWorldEvent> worldEvents;
     TopdownSpeechBubbleRuntime speechBubbles;
+    TopdownObjectiveMarkerRuntime objectiveMarker;
     TopdownNarrationPopupsRuntime narrationPopups;
     TopdownLoadScreenOverlay loadScreenOverlay;
     float timeMs = 0.0f; // global timer, advances each frame
@@ -1749,6 +1767,7 @@ struct TopdownData {
 
     TopdownBloodStampLibrary bloodStampLibrary;
     TopdownItemRegistry itemRegistry;
+    TextureHandle objectiveMarkerTexture = -1;
 
     std::string currentLevelId;
     std::string currentLevelSaveName;

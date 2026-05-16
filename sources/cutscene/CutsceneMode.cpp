@@ -293,6 +293,47 @@ namespace
     }
 }
 
+bool CutsceneQueueStart(GameState& state, const std::string& cutsceneId)
+{
+    if (cutsceneId.empty()) {
+        TraceLog(LOG_WARNING, "Cannot queue cutscene start with empty id");
+        return false;
+    }
+
+    if (state.cutscene.hasPendingCutsceneStart) {
+        TraceLog(LOG_WARNING,
+                 "Replacing pending cutscene start '%s' with '%s'",
+                 state.cutscene.pendingCutsceneId.c_str(),
+                 cutsceneId.c_str());
+    }
+
+    state.cutscene.hasPendingCutsceneStart = true;
+    state.cutscene.pendingCutsceneId = cutsceneId;
+    return true;
+}
+
+void CutsceneConsumePendingStart(GameState& state)
+{
+    if (!state.cutscene.hasPendingCutsceneStart) {
+        return;
+    }
+
+    const std::string cutsceneId = state.cutscene.pendingCutsceneId;
+    state.cutscene.hasPendingCutsceneStart = false;
+    state.cutscene.pendingCutsceneId.clear();
+
+    if (state.mode == GameMode::Cutscene) {
+        TraceLog(LOG_WARNING,
+                 "Ignoring pending cutscene start '%s' because a cutscene is already active",
+                 cutsceneId.c_str());
+        return;
+    }
+
+    if (!CutsceneStart(state, cutsceneId)) {
+        TraceLog(LOG_ERROR, "Failed starting pending cutscene: %s", cutsceneId.c_str());
+    }
+}
+
 bool CutsceneStart(GameState& state, const std::string& cutsceneId)
 {
     const CutsceneDefinition* definition = FindCutsceneDefinitionById(state, cutsceneId);

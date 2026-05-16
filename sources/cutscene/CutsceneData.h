@@ -86,4 +86,7 @@ struct CutsceneRuntime {
 struct CutsceneData {
     std::vector<CutsceneDefinition> registry;
     CutsceneRuntime runtime;
+
+    bool hasPendingCutsceneStart = false;
+    std::string pendingCutsceneId;
 };
