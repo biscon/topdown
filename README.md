@@ -6,7 +6,7 @@ The project is a gritty, story-driven top-down shooter with real-time movement, 
 
 The engine is purpose-built for this game rather than being a general-purpose framework. Most systems are procedural/data-oriented C++ built around a central `GameState`.
 
-[![Watch the gameplay video](https://img.youtube.com/vi/PjFbpiZ0K7c/hqdefault.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID)
+[![Watch the gameplay video](https://img.youtube.com/vi/PjFbpiZ0K7c/hqdefault.jpg)](https://www.youtube.com/watch?v=PjFbpiZ0K7c)
 
 ## Features
 
