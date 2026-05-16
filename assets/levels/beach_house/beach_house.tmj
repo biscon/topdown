@@ -11977,6 +11977,39 @@
                  "width":122.666666666667,
                  "x":560,
                  "y":-274.666683333333
+                }, 
+                {
+                 "height":82.5,
+                 "id":270,
+                 "name":"escape_trigger",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"affects",
+                         "type":"string",
+                         "value":"player"
+                        }, 
+                        {
+                         "name":"delayMs",
+                         "type":"float",
+                         "value":0
+                        }, 
+                        {
+                         "name":"repeat",
+                         "type":"bool",
+                         "value":false
+                        }, 
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"OnEscapeTrigger"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":200.75,
+                 "x":711,
+                 "y":980.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -12973,7 +13006,7 @@
          "y":0
         }],
  "nextlayerid":143,
- "nextobjectid":270,
+ "nextobjectid":271,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

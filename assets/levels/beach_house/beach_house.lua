@@ -110,7 +110,6 @@ end
 
 function SpawnBackup2()
     log("Spawn backup 2")
-    playMusic("motivation", 20000)
     spawnNpcSmart("backup_b", "pistolthug", "living_room_window1", false, false)
     spawnNpcSmart("backup_c", "pistolthug", "living_room_window2", false, false)
     assignNpcPatrolRoute("backup_b", {"living_room_window1", "living_room_kitchen", "living_room_window2", "study"}, {loop = true,running = false, waitMs = 2500})
@@ -125,7 +124,6 @@ function SpawnBackup3()
     assignNpcPatrolRoute("backup_f", {"patrol_2_1", "patrol_2_3"}, {loop = true, running = false, waitMs = 2000})
     assignNpcPatrolRoute("backup_g", {"patrol_2_3", "patrol_2_1"}, {loop = true, running = false, waitMs = 2000})
 end
-
 
 
 function EscapeStartCutscene()
@@ -150,6 +148,7 @@ end
 
 function Level_phoneTrigger()
     log("phone triggered")
+    clearObjective()
     SetPhoneRinging(false)
     disableControls()
     enableScriptCamera()
@@ -164,6 +163,7 @@ function Level_bedroomTrigger()
     log("bedroom triggered")
     SetPhoneRinging(true)
     speakProp("phone", "RIIIIIIING!!!", YELLOW, 3000)
+    setObjectiveProp("phone")
     speakNpc("enemy_4", "Come get some!", CREAM)
 end
 
@@ -201,7 +201,17 @@ end
 
 function SetExitUnlocked(unlocked)
     setFlag("beach_house_exit_unlocked", unlocked)
-    -- setTriggerEnabled("exit_trigger", unlocked)
+    setTriggerEnabled("escape_trigger", unlocked)
+    if unlocked then
+        setObjectiveTrigger("escape_trigger")
+    end
+end
+
+function OnEscapeTrigger()
+    log("escape triggered start cutscene")
+    clearObjective()
+    StopBeachHouseAudioLoop()
+    startCutscene("post_beach_house")
 end
 
 function WalkAround()
@@ -357,6 +367,14 @@ function BeachHouseAudioLoop()
             delay(math.random(4000, 8000))
         end
     end
+end
+
+function StopBeachHouseAudioLoop()
+    --stopSound("meta")
+    stopScript("BeachHouseAudioLoop")
+    setSoundEmitterEnabled("seagull_emitter_1", false)
+    setSoundEmitterEnabled("seagull_emitter_2", false)
+
 end
 
 -- Utility ----------------------------------------------------------------------

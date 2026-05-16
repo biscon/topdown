@@ -21,6 +21,7 @@
 #include "topdown/TopdownRvo.h"
 #include "topdown/TopdownRenderTexture.h"
 #include "topdown/LevelLoadScreen.h"
+#include "topdown/TopdownObjectiveMarker.h"
 #include "cutscene/CutsceneRegistry.h"
 #include "cutscene/CutsceneMode.h"
 #include "external/glfw/include/GLFW/glfw3.h"
@@ -261,6 +262,10 @@ int main()
         TraceLog(LOG_WARNING, "Failed generating topdown blood stamp library");
     }
 
+    if (!LoadTopdownObjectiveMarker(state)) {
+        TraceLog(LOG_WARNING, "Topdown objective marker failed to load");
+    }
+
     MenuInit(&state);
     DebugConsoleInit(state);
     FlushPendingDebugConsoleTraceLog(state);
@@ -398,6 +403,7 @@ int main()
     ScriptSystemShutdown(state.script);
     DebugConsoleShutdown();
     ShutdownAudio(state);
+    UnloadTopdownObjectiveMarker(state);
     UnloadAllResources(state.resources);
     UnloadRenderTexture(worldTarget);
     UnloadRenderTexture(worldSampleTempTarget);

@@ -27,6 +27,7 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "topdown/TopdownItems.h"
 #include "topdown/LevelLoadScreen.h"
+#include "topdown/TopdownObjectiveMarker.h"
 
 static void BeginStencilWriteReplace()
 {
@@ -2111,6 +2112,7 @@ void TopdownRenderUi(GameState& state)
         DrawHealthItemHud(state);
         DrawCurrentWeaponAmmoHud(state);
         DrawTopCenterActionHud(state);
+        TopdownRenderObjectiveMarker(state);
         TopdownRenderSpeechBubbles(state);
         TopdownRenderNarrationPopups(state);
         DrawInteractPrompt(state);

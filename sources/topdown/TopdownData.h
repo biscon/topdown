@@ -1767,6 +1767,7 @@ struct TopdownData {
 
     TopdownBloodStampLibrary bloodStampLibrary;
     TopdownItemRegistry itemRegistry;
+    TextureHandle objectiveMarkerTexture = -1;
 
     std::string currentLevelId;
     std::string currentLevelSaveName;
