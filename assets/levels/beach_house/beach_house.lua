@@ -2,6 +2,7 @@ local Glow = require("effects.glow")
 
 function Level_onEnter()
     log("running onEnter")
+    stopMusic()
     startScript("TableLampGlowLoop")
     startScript("CeilingLampGlowLoop")
     startScript("StudyCeilingLampGlowLoop")
@@ -26,7 +27,7 @@ function Level_onEnter()
     RestoreLevel()
     if not flag("beach_house_init") then
         setFlag("beach_house_init", true)
-        --startScript("IntroNarration")
+        startScript("IntroNarration")
         SpawnAndAssignInitialPatrols()
         addEquipmentSet("handgun")
         equipEquipmentSet("handgun")
@@ -52,10 +53,12 @@ end
 
 function PhoneCallCutscene()
     setSoundEmitterEnabled("room_emitter_3", false)
+
     playSound("phone_pickup")
     delay(500)
     playSound("phone_noise")
     delay(500)
+
     sayNpc("phone", "...Good. You're still breathing.", MAGENTA, 1800)
 
     say("Who is this?", CREAM, 1200)
@@ -64,16 +67,15 @@ function PhoneCallCutscene()
 
     say("Then start talking.", CREAM, 1400)
 
-    sayNpc("phone", "The men you've been killing—", MAGENTA, 1800)
+    sayNpc("phone", "The men you've been killing...", MAGENTA, 1800)
     sayNpc("phone", "they were supposed to report in.", MAGENTA, 2200)
     sayNpc("phone", "They didn't.", MAGENTA, 1400)
 
-    say("So they send more.", CREAM, 1500)
+    say("So they noticed.", CREAM, 1400)
 
-    sayNpc("phone", "Not just more.", MAGENTA, 1500)
-    sayNpc("phone", "Better.", MAGENTA, 1200)
+    sayNpc("phone", "They noticed.", MAGENTA, 1200)
+    sayNpc("phone", "Now they're sending the people they trust with mistakes.", MAGENTA, 3200)
 
-    -- 🔥 tension beat + spawn
     delay(800)
 
     say("How many?", CREAM, 1200)
@@ -84,17 +86,27 @@ function PhoneCallCutscene()
 
     say("Why help me?", CREAM, 1400)
 
-    sayNpc("phone", "...Because if they find you, they start asking questions.", MAGENTA, 3000)
-    sayNpc("phone", "And I'm not ready for those yet.", MAGENTA, 2200)
+    sayNpc("phone", "Because this isn't about revenge.", MAGENTA, 2200)
+    sayNpc("phone", "They want to know what you remember.", MAGENTA, 2600)
+    sayNpc("phone", "And who you kept alive.", MAGENTA, 2200)
 
-    sayNpc("phone", "Move.", MAGENTA, 1000)
+    say("What did you say?", CREAM, 1400)
+
+    sayNpc("phone", "Old chapel. North coast road.", MAGENTA, 2200)
+    sayNpc("phone", "Come before dawn.", MAGENTA, 1500)
+
+    say("Is she alive?", CREAM, 1300)
+
+    sayNpc("phone", "...Move.", MAGENTA, 1000)
     sayNpc("phone", "They're already on their way.", MAGENTA, 2200)
+
     stopSound("phone_noise")
     playSound("dialtone")
     delay(1600)
     stopSound("dialtone")
     playSound("phone_put_down")
     delay(2000)
+
     setSoundEmitterEnabled("room_emitter_3", true)
 end
 
@@ -170,23 +182,28 @@ end
 function IntroNarration()
     disableControls()
     enableScriptCamera()
-    --playSound("drama")
-    playMusic("pistolero")
+
+    playSound("drama")
     delay(3000)
+
     panCameraTarget("intro_camera_1", 7000)
-    showNarration("Coming Home", "Upon returning to my idyllic beach house, I noticed something was off.", 5)
+    showNarration("Coming Home", "The beach house was supposed to be the place they would never find me.", 6)
     delay(7000)
+
     panCameraTarget("intro_camera_2", 7000)
-    showNarration("Coming Home", "At first, it was the cars - too many of them, all lined up along the pavement like they belonged to the same man.", 5)
+    showNarration("Coming Home", "Then I saw the cars.", 4)
     delay(7000)
+
     panCameraTarget("intro_camera_3", 5000)
-    showNarration("Coming Home", "Then there was the silence. Not the peaceful kind you pay good money for out here, but the kind that settles in when something's already gone wrong. I proceeded with caution.", 10)
+    showNarration("Coming Home", "Too many. Too still. Men waiting around a house that should have been empty.", 7)
     delay(5000)
+
     panCameraTarget("default", 5000)
     delay(5000)
+
     disableScriptCamera()
     enableControls()
-    stopMusic(20000)
+
 end
 
 function SetPhoneRinging(ringing)
