@@ -1399,6 +1399,83 @@ static int Lua_setTriggerRepeat(lua_State* L)
     return 1;
 }
 
+static int Lua_setObjectiveTrigger(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetObjectiveTrigger(*gameState, id) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setObjectiveNpc(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetObjectiveNpc(*gameState, id) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setObjectiveProp(lua_State* L)
+{
+    const char* id = luaL_checkstring(L, 1);
+
+    if (!gameState || !id) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetObjectiveProp(*gameState, id) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_setObjectivePosition(lua_State* L)
+{
+    const float x = static_cast<float>(luaL_checknumber(L, 1));
+    const float y = static_cast<float>(luaL_checknumber(L, 2));
+
+    if (!gameState) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptSetObjectivePosition(*gameState, Vector2{x, y}) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_clearObjective(lua_State* L)
+{
+    if (!gameState) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, TopdownScriptClearObjective(*gameState) ? 1 : 0);
+    return 1;
+}
+
+static int Lua_hasObjective(lua_State* L)
+{
+    if (!gameState) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    bool active = false;
+    const bool ok = TopdownScriptHasObjective(*gameState, active);
+    lua_pushboolean(L, ok ? (active ? 1 : 0) : 0);
+    return 1;
+}
+
 static int Lua_walkToSpawn(lua_State* L)
 {
     const char* spawnId = luaL_checkstring(L, 1);
@@ -1826,6 +1903,12 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "effectRegionOpacity", Lua_effectRegionOpacity);
     lua_register(L, "setTriggerEnabled", Lua_setTriggerEnabled);
     lua_register(L, "setTriggerRepeat", Lua_setTriggerRepeat);
+    lua_register(L, "setObjectiveTrigger", Lua_setObjectiveTrigger);
+    lua_register(L, "setObjectiveNpc", Lua_setObjectiveNpc);
+    lua_register(L, "setObjectiveProp", Lua_setObjectiveProp);
+    lua_register(L, "setObjectivePosition", Lua_setObjectivePosition);
+    lua_register(L, "clearObjective", Lua_clearObjective);
+    lua_register(L, "hasObjective", Lua_hasObjective);
 
     lua_register(L, "playSound", Lua_playSound);
     lua_register(L, "stopSound", Lua_stopSound);

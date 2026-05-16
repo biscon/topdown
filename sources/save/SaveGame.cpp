@@ -274,6 +274,14 @@ namespace
         int stampIndex = -1;
     };
 
+    struct SavedObjectiveMarkerRuntime {
+        bool active = false;
+        TopdownObjectiveAnchorType anchorType = TopdownObjectiveAnchorType::None;
+        std::string anchorId;
+        Vector2 position{};
+        bool hasResolvedPosition = false;
+    };
+
     struct SavedTopdownWorldRuntime {
         std::vector<SavedDoorRuntime> doors;
         std::vector<SavedWindowRuntime> windows;
@@ -284,6 +292,7 @@ namespace
         std::vector<SavedTriggerRuntime> triggers;
         std::vector<SavedEmitterRuntime> emitters;
         std::vector<SavedBloodDecalRuntime> bloodDecals;
+        SavedObjectiveMarkerRuntime objectiveMarker;
     };
 
     struct SaveRestoreData {
@@ -392,6 +401,13 @@ namespace
         return v;
     }
 
+    static bool IsVector2Object(const json& j)
+    {
+        return j.is_object() &&
+               (!j.contains("x") || j["x"].is_number()) &&
+               (!j.contains("y") || j["y"].is_number());
+    }
+
     static json SerializeColor(Color c)
     {
         json j;
@@ -489,6 +505,42 @@ namespace
     static int ToInt(TopdownNpcAiMode v) { return static_cast<int>(v); }
     static int ToInt(TopdownNpcEngagementState v) { return static_cast<int>(v); }
     static int ToInt(MoveInterpolation v) { return static_cast<int>(v); }
+
+    static const char* ToObjectiveAnchorTypeString(TopdownObjectiveAnchorType v)
+    {
+        switch (v) {
+        case TopdownObjectiveAnchorType::Trigger:
+            return "trigger";
+        case TopdownObjectiveAnchorType::Npc:
+            return "npc";
+        case TopdownObjectiveAnchorType::Prop:
+            return "prop";
+        case TopdownObjectiveAnchorType::Position:
+            return "position";
+        case TopdownObjectiveAnchorType::None:
+            break;
+        }
+
+        return "none";
+    }
+
+    static TopdownObjectiveAnchorType ToObjectiveAnchorType(const std::string& value)
+    {
+        if (value == "trigger") {
+            return TopdownObjectiveAnchorType::Trigger;
+        }
+        if (value == "npc") {
+            return TopdownObjectiveAnchorType::Npc;
+        }
+        if (value == "prop") {
+            return TopdownObjectiveAnchorType::Prop;
+        }
+        if (value == "position") {
+            return TopdownObjectiveAnchorType::Position;
+        }
+
+        return TopdownObjectiveAnchorType::None;
+    }
 
 
     static TopdownPlayerLifeState ToPlayerLifeState(int v)
@@ -1509,7 +1561,69 @@ namespace
             world["bloodDecals"].push_back(j);
         }
 
+        const TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
+        json objectiveJson;
+        objectiveJson["active"] = objective.active;
+        objectiveJson["anchorType"] = ToObjectiveAnchorTypeString(objective.anchorType);
+        objectiveJson["anchorId"] = objective.anchorId;
+        objectiveJson["position"] = SerializeVector2(objective.position);
+        objectiveJson["hasResolvedPosition"] = objective.hasResolvedPosition;
+        world["objectiveMarker"] = objectiveJson;
+
         outRoot["topdownWorld"] = world;
+    }
+
+    static bool DeserializeObjectiveMarkerRuntime(const json& j, SavedObjectiveMarkerRuntime& out)
+    {
+        out = {};
+
+        if (!j.is_object()) {
+            return false;
+        }
+
+        if (!j.contains("active") || !j["active"].is_boolean() ||
+            !j.contains("anchorType") || !j["anchorType"].is_string()) {
+            return false;
+        }
+
+        if (j.contains("anchorId") && !j["anchorId"].is_string()) {
+            return false;
+        }
+        if (j.contains("position") && !IsVector2Object(j["position"])) {
+            return false;
+        }
+        if (j.contains("hasResolvedPosition") && !j["hasResolvedPosition"].is_boolean()) {
+            return false;
+        }
+
+        out.active = j["active"].get<bool>();
+        out.anchorType = ToObjectiveAnchorType(j["anchorType"].get<std::string>());
+        out.anchorId = j.value("anchorId", "");
+        if (j.contains("position")) {
+            out.position = DeserializeVector2(j["position"]);
+        }
+        out.hasResolvedPosition = j.value("hasResolvedPosition", false);
+
+        if (!out.active) {
+            out = {};
+            return true;
+        }
+
+        if (out.anchorType == TopdownObjectiveAnchorType::None) {
+            return false;
+        }
+
+        if (out.anchorType == TopdownObjectiveAnchorType::Position) {
+            out.anchorId.clear();
+            out.hasResolvedPosition = true;
+            return true;
+        }
+
+        if (out.anchorId.empty()) {
+            return false;
+        }
+
+        return true;
     }
 
     static SavedTopdownWorldRuntime DeserializeTopdownWorldRuntime(const json& root)
@@ -1654,6 +1768,13 @@ namespace
                 decal.preferStreakStamp = j.value("preferStreakStamp", false);
                 decal.stampIndex = j.value("stampIndex", -1);
                 out.bloodDecals.push_back(decal);
+            }
+        }
+
+        if (world.contains("objectiveMarker")) {
+            if (!DeserializeObjectiveMarkerRuntime(world["objectiveMarker"], out.objectiveMarker)) {
+                TraceLog(LOG_WARNING, "Malformed objective marker save data; defaulting to inactive");
+                out.objectiveMarker = {};
             }
         }
 
@@ -1838,6 +1959,15 @@ namespace
             state.topdown.runtime.render.bloodDecals.push_back(decal);
         }
         MarkTopdownBloodRenderTargetDirty(state);
+
+        TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
+        objective = {};
+        objective.active = saved.objectiveMarker.active;
+        objective.anchorType = saved.objectiveMarker.anchorType;
+        objective.anchorId = saved.objectiveMarker.anchorId;
+        objective.position = saved.objectiveMarker.position;
+        objective.hasResolvedPosition = saved.objectiveMarker.hasResolvedPosition;
+        objective.animTimerMs = 0.0f;
     }
 
     static void SerializeScriptState(const GameState& state, json& outRoot)
