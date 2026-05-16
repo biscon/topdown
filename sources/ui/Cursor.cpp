@@ -256,6 +256,10 @@ void RenderCursor(const GameState& state, float scale)
         return;
     }
 
+    if (state.mode == GameMode::Cutscene) {
+        return;
+    }
+
     if (ShouldRenderAimCursor(state)) {
         RenderAimCursor(state, scale);
         return;

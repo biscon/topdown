@@ -8,6 +8,7 @@
 #include "audio/Audio.h"
 #include "topdown/LevelLoad.h"
 #include "topdown/TopdownScriptCommands.h"
+#include "cutscene/CutsceneMode.h"
 
 static bool ParseOptionalTalkColorAndDuration(
         lua_State* L,
@@ -574,6 +575,88 @@ static int Lua_delay(lua_State* L)
     return lua_yieldk(L, 0, 0, Lua_WaitContinuation);
 }
 
+static int YieldForCutsceneAction(lua_State* L, bool ok)
+{
+    if (!ok) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    if (!StartPendingWait(L, ScriptWaitType::CutsceneActionComplete, 0.0f)) {
+        return 1;
+    }
+
+    return lua_yieldk(L, 0, 0, Lua_WaitContinuation);
+}
+
+static int Lua_cutsceneShowImage(lua_State* L)
+{
+    const char* imageId = luaL_checkstring(L, 1);
+    const float fadeMs = static_cast<float>(luaL_optnumber(L, 2, 0.0));
+    if (gameState == nullptr || imageId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    return YieldForCutsceneAction(L, CutsceneShowImage(*gameState, std::string(imageId), fadeMs));
+}
+
+static int Lua_cutsceneShowText(lua_State* L)
+{
+    const char* text = luaL_checkstring(L, 1);
+    const float fadeMs = static_cast<float>(luaL_optnumber(L, 2, 0.0));
+    if (gameState == nullptr || text == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    return YieldForCutsceneAction(L, CutsceneShowText(*gameState, std::string(text), fadeMs));
+}
+
+static int Lua_cutsceneClearText(lua_State* L)
+{
+    const float fadeMs = static_cast<float>(luaL_optnumber(L, 1, 0.0));
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    return YieldForCutsceneAction(L, CutsceneClearText(*gameState, fadeMs));
+}
+
+static int Lua_cutsceneFadeFromBlack(lua_State* L)
+{
+    const float fadeMs = static_cast<float>(luaL_optnumber(L, 1, 0.0));
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    return YieldForCutsceneAction(L, CutsceneFadeFromBlack(*gameState, fadeMs));
+}
+
+static int Lua_cutsceneFadeToBlack(lua_State* L)
+{
+    const float fadeMs = static_cast<float>(luaL_optnumber(L, 1, 0.0));
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    return YieldForCutsceneAction(L, CutsceneFadeToBlack(*gameState, fadeMs));
+}
+
+static int Lua_cutsceneEnd(lua_State* L)
+{
+    if (gameState == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    lua_pushboolean(L, CutsceneRequestComplete(*gameState));
+    return 1;
+}
+
 static int Lua_showNarration(lua_State* L)
 {
     const char* title = luaL_checkstring(L, 1);
@@ -671,6 +754,20 @@ static int Lua_changeLevel(lua_State* L)
     gameState->topdown.pendingSpawnId = (spawnId != nullptr) ? spawnId : "";
 
     lua_pushboolean(L, 1);
+    return 1;
+}
+
+static int Lua_startCutscene(lua_State* L)
+{
+    const char* cutsceneId = luaL_checkstring(L, 1);
+
+    if (gameState == nullptr || cutsceneId == nullptr) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptStartCutscene(*gameState, std::string(cutsceneId));
+    lua_pushboolean(L, ok ? 1 : 0);
     return 1;
 }
 
@@ -1665,11 +1762,25 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "runTo", Lua_runTo);
 
     lua_register(L, "delay", Lua_delay);
+    lua_register(L, "cutsceneShowImage", Lua_cutsceneShowImage);
+    lua_register(L, "cutsceneShowText", Lua_cutsceneShowText);
+    lua_register(L, "cutsceneClearText", Lua_cutsceneClearText);
+    lua_register(L, "cutsceneFadeFromBlack", Lua_cutsceneFadeFromBlack);
+    lua_register(L, "cutsceneFadeToBlack", Lua_cutsceneFadeToBlack);
+    lua_register(L, "cutsceneEnd", Lua_cutsceneEnd);
+    lua_register(L, "showImage", Lua_cutsceneShowImage);
+    lua_register(L, "showText", Lua_cutsceneShowText);
+    lua_register(L, "clearText", Lua_cutsceneClearText);
+    lua_register(L, "fadeFromBlack", Lua_cutsceneFadeFromBlack);
+    lua_register(L, "fadeToBlack", Lua_cutsceneFadeToBlack);
+    lua_register(L, "endCutscene", Lua_cutsceneEnd);
     lua_register(L, "showNarration", Lua_showNarration);
     lua_register(L, "speak", Lua_speak);
     lua_register(L, "speakNpc", Lua_speakNpc);
     lua_register(L, "speakProp", Lua_speakProp);
     lua_register(L, "changeLevel", Lua_changeLevel);
+    lua_register(L, "startCutscene", Lua_startCutscene);
+    lua_register(L, "cutsceneStart", Lua_startCutscene);
 
     lua_register(L, "startWalkTo", Lua_startWalkTo);
     lua_register(L, "startRunTo", Lua_startRunTo);

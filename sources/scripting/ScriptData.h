@@ -11,7 +11,8 @@ enum class ScriptWaitType
     WalkComplete,
     SpeechComplete,
     DelayMs,
-    DialogueChoice
+    DialogueChoice,
+    CutsceneActionComplete
 };
 
 enum class ScriptCallResult

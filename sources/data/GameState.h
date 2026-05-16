@@ -11,6 +11,7 @@
 #include "audio/AudioData.h"
 #include "ui/CursorData.h"
 #include "topdown/TopdownData.h"
+#include "cutscene/CutsceneData.h"
 
 static constexpr int INTERNAL_WIDTH = 1920;
 static constexpr int INTERNAL_HEIGHT = 1080;
@@ -19,6 +20,7 @@ enum class GameMode {
     Menu,
     Game,
     TopDown,
+    Cutscene,
     Quit
 };
 
@@ -41,4 +43,5 @@ struct GameState {
     Font interactivePromptFont;
 
     TopdownData topdown;
+    CutsceneData cutscene;
 };
