@@ -17,7 +17,22 @@
 
 static GameState* game = nullptr;
 
-static constexpr Color MENU_BG_COLOR = Color{25, 25, 25, 255};
+static constexpr Color MENU_BG_COLOR = Color{34, 26, 20, 255};
+static constexpr Color MENU_PANEL_COLOR = Color{52, 38, 28, 230};
+static constexpr Color MENU_PANEL_HOVER_COLOR = Color{68, 50, 36, 240};
+static constexpr Color MENU_PANEL_SELECTED_COLOR = Color{74, 54, 38, 245};
+static constexpr Color MENU_BORDER_COLOR = Color{150, 110, 70, 255};
+static constexpr Color MENU_BORDER_DIM_COLOR = Color{90, 64, 44, 255};
+static constexpr Color MENU_ACCENT_COLOR = Color{196, 140, 70, 255};
+static constexpr Color MENU_TITLE_TEXT_COLOR = Color{250, 232, 200, 255};
+static constexpr Color MENU_BODY_TEXT_COLOR = Color{222, 200, 168, 255};
+static constexpr Color MENU_DISABLED_TEXT_COLOR = Color{118, 96, 76, 255};
+static constexpr Color MENU_SHADOW_COLOR = Color{12, 9, 7, 180};
+
+static constexpr float MENU_TITLE_FONT_SIZE = 42.0f;
+static constexpr float MENU_BODY_FONT_SIZE = 32.0f;
+static constexpr float MENU_FONT_SPACING = 1.0f;
+
 static constexpr int SAVE_SLOT_COUNT = 8;
 
 static std::string menuToastText;
@@ -70,17 +85,17 @@ static constexpr float MENU_TITLE_Y = 105.0f;
 static constexpr float MENU_CENTER_X = INTERNAL_WIDTH * 0.5f;
 static constexpr float MENU_CENTER_Y = INTERNAL_HEIGHT * 0.5f;
 
-static constexpr float MENU_ITEM_SPACING = 40.0f;
-static constexpr float MENU_ITEM_HEIGHT = 36.0f;
-static constexpr float MENU_MIN_ITEM_WIDTH = 560.0f;
-static constexpr float MENU_ITEM_SIDE_PADDING = 12.0f;
+static constexpr float MENU_ITEM_SPACING = 56.0f;
+static constexpr float MENU_ITEM_HEIGHT = 48.0f;
+static constexpr float MENU_MIN_ITEM_WIDTH = 760.0f;
+static constexpr float MENU_ITEM_SIDE_PADDING = 18.0f;
 
-static constexpr float SLIDER_TRACK_HEIGHT = 6.0f;
-static constexpr float SLIDER_KNOB_WIDTH = 10.0f;
-static constexpr float SLIDER_KNOB_EXTRA_HEIGHT = 4.0f;
-static constexpr float SLIDER_LABEL_WIDTH = 170.0f;
-static constexpr float SLIDER_VALUE_WIDTH = 56.0f;
-static constexpr float SLIDER_INNER_GAP = 12.0f;
+static constexpr float SLIDER_TRACK_HEIGHT = 8.0f;
+static constexpr float SLIDER_KNOB_WIDTH = 14.0f;
+static constexpr float SLIDER_KNOB_EXTRA_HEIGHT = 12.0f;
+static constexpr float SLIDER_LABEL_WIDTH = 240.0f;
+static constexpr float SLIDER_VALUE_WIDTH = 78.0f;
+static constexpr float SLIDER_INNER_GAP = 16.0f;
 static constexpr float MENU_HINT_GAP_ABOVE_ITEMS = 64.0f;
 
 static float Clamp01(float t)
@@ -95,6 +110,45 @@ static float ClampFloat(float v, float minValue, float maxValue)
     if (v < minValue) return minValue;
     if (v > maxValue) return maxValue;
     return v;
+}
+
+static Vector2 PixelSnap(Vector2 p)
+{
+    return Vector2{std::round(p.x), std::round(p.y)};
+}
+
+static Color WithAlpha(Color color, float alpha)
+{
+    alpha = ClampFloat(alpha, 0.0f, 1.0f);
+    color.a = static_cast<unsigned char>(static_cast<float>(color.a) * alpha);
+    return color;
+}
+
+static float GetMenuFirstItemY(const Menu& menu)
+{
+    const float desiredFirstY = MENU_CENTER_Y - static_cast<float>(menu.items.size()) * 0.5f * MENU_ITEM_SPACING;
+    const float minFirstY = MENU_TITLE_Y + MENU_TITLE_FONT_SIZE +
+            (menu.hint.empty() ? 42.0f : MENU_HINT_GAP_ABOVE_ITEMS);
+    return desiredFirstY < minFirstY ? minFirstY : desiredFirstY;
+}
+
+static Color GetMenuItemTextColor(const MenuItem& item, bool hovered)
+{
+    if (!item.enabled) {
+        return MENU_DISABLED_TEXT_COLOR;
+    }
+
+    if (hovered ||
+        (item.color.r == WHITE.r && item.color.g == WHITE.g && item.color.b == WHITE.b)) {
+        return MENU_ACCENT_COLOR;
+    }
+
+    return MENU_BODY_TEXT_COLOR;
+}
+
+static void DrawMenuText(Font font, const char* text, Vector2 position, float fontSize, Color color)
+{
+    DrawTextEx(font, text, PixelSnap(position), fontSize, MENU_FONT_SPACING, color);
 }
 
 static bool HasTopdownLoaded()
@@ -135,7 +189,7 @@ static void startNewGame()
 static Rectangle GetMenuItemRect(const Menu& menu, float itemWidth, int index)
 {
     const float x = MENU_CENTER_X - itemWidth * 0.5f;
-    const float y = MENU_CENTER_Y + (index - menu.items.size() * 0.5f) * MENU_ITEM_SPACING;
+    const float y = GetMenuFirstItemY(menu) + static_cast<float>(index) * MENU_ITEM_SPACING;
 
     return Rectangle{
             x,
@@ -150,13 +204,17 @@ static float ComputeMenuItemWidth(const Menu& menu)
     float itemWidth = 0.0f;
 
     for (const MenuItem& item : menu.items) {
-        const int textWidth = MeasureText(item.text.c_str(), 20);
-        if (static_cast<float>(textWidth) > itemWidth) {
-            itemWidth = static_cast<float>(textWidth);
+        const Vector2 textSize = MeasureTextEx(
+                game->narrationBodyFont,
+                item.text.c_str(),
+                MENU_BODY_FONT_SIZE,
+                MENU_FONT_SPACING);
+        if (textSize.x > itemWidth) {
+            itemWidth = textSize.x;
         }
     }
 
-    itemWidth += 120.0f;
+    itemWidth += 160.0f;
     if (itemWidth < MENU_MIN_ITEM_WIDTH) {
         itemWidth = MENU_MIN_ITEM_WIDTH;
     }
@@ -611,19 +669,30 @@ void MenuRenderUi(GameState& state)
             : GetMenuItemRect(*menu, itemWidth, 0);
 
     if (!menu->title.empty()) {
-        DrawText(menu->title.c_str(),
-                 static_cast<int>(MENU_CENTER_X - MeasureText(menu->title.c_str(), 40) * 0.5f),
-                 static_cast<int>(MENU_TITLE_Y),
-                 40,
-                 WHITE);
+        const Vector2 titleSize = MeasureTextEx(
+                state.narrationTitleFont,
+                menu->title.c_str(),
+                MENU_TITLE_FONT_SIZE,
+                MENU_FONT_SPACING);
+        DrawMenuText(state.narrationTitleFont,
+                     menu->title.c_str(),
+                     Vector2{MENU_CENTER_X - titleSize.x * 0.5f, MENU_TITLE_Y},
+                     MENU_TITLE_FONT_SIZE,
+                     MENU_TITLE_TEXT_COLOR);
     }
 
     if (!menu->hint.empty()) {
-        DrawText(menu->hint.c_str(),
-                 static_cast<int>(MENU_CENTER_X - MeasureText(menu->hint.c_str(), 30) * 0.5f),
-                 static_cast<int>(firstItemRect.y - MENU_HINT_GAP_ABOVE_ITEMS),
-                 30,
-                 LIGHTGRAY);
+        const Vector2 hintSize = MeasureTextEx(
+                state.narrationBodyFont,
+                menu->hint.c_str(),
+                MENU_BODY_FONT_SIZE,
+                MENU_FONT_SPACING);
+        DrawMenuText(state.narrationBodyFont,
+                     menu->hint.c_str(),
+                     Vector2{MENU_CENTER_X - hintSize.x * 0.5f,
+                             firstItemRect.y - MENU_HINT_GAP_ABOVE_ITEMS},
+                     MENU_BODY_FONT_SIZE,
+                     MENU_BODY_TEXT_COLOR);
     }
 
     const Vector2 mouse = GetMousePosition();
@@ -645,15 +714,31 @@ void MenuRenderUi(GameState& state)
 
         if (!item.isSlider) {
             const bool hovered = enabled && CheckCollisionPointRec(mouse, itemRect);
+            const bool selected = item.color.r == WHITE.r && item.color.g == WHITE.g && item.color.b == WHITE.b;
+            const Color panelColor = selected ? MENU_PANEL_SELECTED_COLOR :
+                    (hovered ? MENU_PANEL_HOVER_COLOR : MENU_PANEL_COLOR);
+            const Color borderColor = (hovered || selected) ? MENU_BORDER_COLOR : MENU_BORDER_DIM_COLOR;
+            const Color textColor = GetMenuItemTextColor(item, hovered);
+            const Vector2 textSize = MeasureTextEx(
+                    state.narrationBodyFont,
+                    item.text.c_str(),
+                    MENU_BODY_FONT_SIZE,
+                    MENU_FONT_SPACING);
 
-            DrawRectangleRec(itemRect, hovered ? Fade(WHITE, 0.10f) : Fade(WHITE, 0.05f));
-            DrawRectangleLinesEx(itemRect, 1.0f, hovered ? YELLOW : DARKGRAY);
+            DrawRectangleRounded(
+                    Rectangle{itemRect.x + 4.0f, itemRect.y + 4.0f, itemRect.width, itemRect.height},
+                    0.18f,
+                    8,
+                    MENU_SHADOW_COLOR);
+            DrawRectangleRounded(itemRect, 0.18f, 8, panelColor);
+            DrawRectangleRoundedLinesEx(itemRect, 0.18f, 8, 1.5f, borderColor);
 
-            DrawText(item.text.c_str(),
-                     static_cast<int>(itemRect.x + 10.0f),
-                     static_cast<int>(itemRect.y + 8.0f),
-                     20,
-                     enabled ? (hovered ? YELLOW : item.color) : DARKGRAY);
+            DrawMenuText(state.narrationBodyFont,
+                         item.text.c_str(),
+                         Vector2{itemRect.x + MENU_ITEM_SIDE_PADDING,
+                                 itemRect.y + (itemRect.height - textSize.y) * 0.5f},
+                         MENU_BODY_FONT_SIZE,
+                         textColor);
 
             if (clicked && enabled) {
                 PlaySoundById(state, "ui_click");
@@ -674,14 +759,30 @@ void MenuRenderUi(GameState& state)
 
         const bool hovered = enabled && CheckCollisionPointRec(mouse, sliderHitRect);
 
-        DrawRectangleRec(itemRect, hovered ? Fade(WHITE, 0.06f) : Fade(WHITE, 0.035f));
-        DrawRectangleLinesEx(itemRect, 1.0f, hovered ? YELLOW : DARKGRAY);
+        DrawRectangleRounded(
+                Rectangle{itemRect.x + 4.0f, itemRect.y + 4.0f, itemRect.width, itemRect.height},
+                0.18f,
+                8,
+                MENU_SHADOW_COLOR);
+        DrawRectangleRounded(itemRect, 0.18f, 8, hovered ? MENU_PANEL_HOVER_COLOR : MENU_PANEL_COLOR);
+        DrawRectangleRoundedLinesEx(
+                itemRect,
+                0.18f,
+                8,
+                1.5f,
+                hovered ? MENU_BORDER_COLOR : MENU_BORDER_DIM_COLOR);
 
-        DrawText(item.text.c_str(),
-                 static_cast<int>(itemRect.x + MENU_ITEM_SIDE_PADDING),
-                 static_cast<int>(itemRect.y + 8.0f),
-                 20,
-                 enabled ? (hovered ? YELLOW : item.color) : DARKGRAY);
+        const Vector2 labelSize = MeasureTextEx(
+                state.narrationBodyFont,
+                item.text.c_str(),
+                MENU_BODY_FONT_SIZE,
+                MENU_FONT_SPACING);
+        DrawMenuText(state.narrationBodyFont,
+                     item.text.c_str(),
+                     Vector2{itemRect.x + MENU_ITEM_SIDE_PADDING,
+                             itemRect.y + (itemRect.height - labelSize.y) * 0.5f},
+                     MENU_BODY_FONT_SIZE,
+                     GetMenuItemTextColor(item, hovered));
 
         const float rawValue = item.getValue ? item.getValue() : item.sliderMin;
         const float normalized =
@@ -689,27 +790,36 @@ void MenuRenderUi(GameState& state)
 
         const float knobCenterX = trackRect.x + normalized * trackRect.width;
 
-        DrawRectangle(static_cast<int>(trackRect.x),
-                      static_cast<int>(trackRect.y),
-                      static_cast<int>(trackRect.width),
-                      static_cast<int>(trackRect.height),
-                      DARKGRAY);
+        DrawRectangleRounded(trackRect, 0.5f, 6, MENU_BORDER_DIM_COLOR);
+        DrawRectangleRounded(
+                Rectangle{trackRect.x, trackRect.y, knobCenterX - trackRect.x, trackRect.height},
+                0.5f,
+                6,
+                MENU_ACCENT_COLOR);
 
-        DrawRectangle(static_cast<int>(knobCenterX - SLIDER_KNOB_WIDTH * 0.5f),
-                      static_cast<int>(trackRect.y - SLIDER_KNOB_EXTRA_HEIGHT * 0.5f),
-                      static_cast<int>(SLIDER_KNOB_WIDTH),
-                      static_cast<int>(trackRect.height + SLIDER_KNOB_EXTRA_HEIGHT),
-                      YELLOW);
+        DrawRectangleRounded(
+                Rectangle{knobCenterX - SLIDER_KNOB_WIDTH * 0.5f,
+                          trackRect.y - SLIDER_KNOB_EXTRA_HEIGHT * 0.5f,
+                          SLIDER_KNOB_WIDTH,
+                          trackRect.height + SLIDER_KNOB_EXTRA_HEIGHT},
+                0.4f,
+                6,
+                MENU_ACCENT_COLOR);
 
         char valueBuf[32];
         std::snprintf(valueBuf, sizeof(valueBuf), "%.2f", rawValue);
-        const int valueTextWidth = MeasureText(valueBuf, 20);
+        const Vector2 valueTextSize = MeasureTextEx(
+                state.narrationBodyFont,
+                valueBuf,
+                MENU_BODY_FONT_SIZE,
+                MENU_FONT_SPACING);
 
-        DrawText(valueBuf,
-                 static_cast<int>(valueRect.x + valueRect.width - valueTextWidth),
-                 static_cast<int>(itemRect.y + 8.0f),
-                 20,
-                 WHITE);
+        DrawMenuText(state.narrationBodyFont,
+                     valueBuf,
+                     Vector2{valueRect.x + valueRect.width - valueTextSize.x,
+                             itemRect.y + (itemRect.height - valueTextSize.y) * 0.5f},
+                     MENU_BODY_FONT_SIZE,
+                     hovered ? MENU_ACCENT_COLOR : MENU_BODY_TEXT_COLOR);
 
         if (enabled && hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             gDraggingSliderIndex = i;
@@ -757,28 +867,37 @@ void MenuRenderOverlay()
         alpha = ClampFloat(alpha, 0.0f, 1.0f);
     }
 
-    const int fontSize = 24;
-    const int paddingX = 18;
-    const int paddingY = 12;
+    if (game == nullptr) {
+        return;
+    }
 
-    const int textWidth = MeasureText(menuToastText.c_str(), fontSize);
-    const float boxWidth = static_cast<float>(textWidth + paddingX * 2);
-    const float boxHeight = static_cast<float>(fontSize + paddingY * 2);
+    const float paddingX = 24.0f;
+    const float paddingY = 14.0f;
+    const Vector2 textSize = MeasureTextEx(
+            game->narrationBodyFont,
+            menuToastText.c_str(),
+            MENU_BODY_FONT_SIZE,
+            MENU_FONT_SPACING);
+    const float boxWidth = textSize.x + paddingX * 2.0f;
+    const float boxHeight = textSize.y + paddingY * 2.0f;
 
-    const float x = static_cast<float>(INTERNAL_WIDTH) - boxWidth - 24.0f;
+    const float x = static_cast<float>(INTERNAL_WIDTH) * 0.5f - boxWidth * 0.5f;
     const float y = 24.0f;
 
-    const Color bg = Color{20, 20, 24, static_cast<unsigned char>(220.0f * alpha)};
-    const Color border = Color{180, 180, 200, static_cast<unsigned char>(255.0f * alpha)};
-    const Color textColor = Color{255, 255, 255, static_cast<unsigned char>(255.0f * alpha)};
+    const Rectangle boxRect = Rectangle{x, y, boxWidth, boxHeight};
+    const Color bg = WithAlpha(MENU_PANEL_COLOR, alpha);
+    const Color border = WithAlpha(MENU_BORDER_COLOR, alpha);
+    const Color textColor = WithAlpha(MENU_BODY_TEXT_COLOR, alpha);
+    const Color shadow = WithAlpha(MENU_SHADOW_COLOR, alpha);
 
-    DrawRectangleRounded(Rectangle{x, y, boxWidth, boxHeight}, 0.15f, 6, bg);
-    DrawRectangleRoundedLinesEx(Rectangle{x, y, boxWidth, boxHeight}, 0.15f, 6, 2.0f, border);
-    DrawText(menuToastText.c_str(),
-             static_cast<int>(x + paddingX),
-             static_cast<int>(y + paddingY),
-             fontSize,
-             textColor);
+    DrawRectangleRounded(Rectangle{x + 4.0f, y + 4.0f, boxWidth, boxHeight}, 0.18f, 8, shadow);
+    DrawRectangleRounded(boxRect, 0.18f, 8, bg);
+    DrawRectangleRoundedLinesEx(boxRect, 0.18f, 8, 2.0f, border);
+    DrawMenuText(game->narrationBodyFont,
+                 menuToastText.c_str(),
+                 Vector2{x + paddingX, y + paddingY},
+                 MENU_BODY_FONT_SIZE,
+                 textColor);
 }
 
 void MenuHandleInput(GameState& state)
