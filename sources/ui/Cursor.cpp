@@ -233,6 +233,7 @@ void ShutdownCursor(GameState &state) {
 }
 
 void UpdateCursor(GameState &state) {
+    HideCursor();
     if (state.mode == GameMode::TopDown && state.topdown.runtime.levelActive) {
         state.cursor.type = CursorType::Aim;
     } else {
