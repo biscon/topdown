@@ -6,25 +6,10 @@
 #include "Settings.h"
 #include "raylib.h"
 #include "utils/json.hpp"
-#include "data/GameState.h"
 
 
 void ApplySettings(SettingsData& settings)
 {
-    if (settings.availableResolutions.empty()) {
-        RefreshResolutions(settings);
-    }
-
-    if (settings.availableResolutions.empty()) {
-        settings.availableResolutions.push_back({1920, 1080});
-    }
-
-    if (settings.selectedResolutionIndex < 0 ||
-        settings.selectedResolutionIndex >= static_cast<int>(settings.availableResolutions.size())) {
-        settings.selectedResolutionIndex = 0;
-    }
-
-    const Resolution res = settings.availableResolutions[settings.selectedResolutionIndex];
     settings.monitor = GetCurrentMonitor();
 
     switch (settings.displayMode) {
@@ -41,7 +26,6 @@ void ApplySettings(SettingsData& settings)
         }
     }
 
-    settings.originalResolutionIndex = settings.selectedResolutionIndex;
     settings.originalDisplayMode = settings.displayMode;
 
     if (settings.fpsLock) {
@@ -55,7 +39,6 @@ void ApplySettings(SettingsData& settings)
 
 void SaveSettings(const SettingsData& settings) {
     nlohmann::json j;
-    j["resolutionIndex"] = settings.selectedResolutionIndex;
     j["displayMode"] = static_cast<int>(settings.displayMode);
     j["monitor"] = settings.monitor;
     j["showFPS"] = settings.showFPS;
@@ -70,36 +53,6 @@ void SaveSettings(const SettingsData& settings) {
     }
 }
 
-void RefreshResolutions(SettingsData& data)
-{
-    const int monitorCount = GetMonitorCount();
-    const int monitor = (monitorCount > 0) ? 0 : 0;
-    data.monitor = monitor;
-    data.availableResolutions.clear();
-
-    const int monWidth = GetMonitorWidth(monitor);
-    const int monHeight = GetMonitorHeight(monitor);
-
-    if (monWidth >= 1920 && monHeight >= 1080) {
-        data.availableResolutions.push_back({1920, 1080});
-    }
-    if (monWidth >= 2560 && monHeight >= 1440) {
-        data.availableResolutions.push_back({2560, 1440});
-    }
-    if (monWidth >= 3840 && monHeight >= 2160) {
-        data.availableResolutions.push_back({3840, 2160});
-    }
-
-    if (data.availableResolutions.empty()) {
-        data.availableResolutions.push_back({1920, 1080});
-    }
-
-    if (data.selectedResolutionIndex < 0 ||
-        data.selectedResolutionIndex >= static_cast<int>(data.availableResolutions.size())) {
-        data.selectedResolutionIndex = 0;
-    }
-}
-
 void InitSettings(SettingsData& data, const std::string &filename) {
     data.filename = filename;
     data.monitor = 0;
@@ -109,8 +62,6 @@ void InitSettings(SettingsData& data, const std::string &filename) {
         nlohmann::json j;
         file >> j;
 
-        data.selectedResolutionIndex = j.value("resolutionIndex", 0);
-
         const int savedDisplayMode = j.value("displayMode", 0);
         if (savedDisplayMode == 1 || savedDisplayMode == 2) {
             data.displayMode = DisplayMode::Borderless;
@@ -118,6 +69,9 @@ void InitSettings(SettingsData& data, const std::string &filename) {
             data.displayMode = DisplayMode::Windowed;
         }
 
+        if (j.contains("monitor")) {
+            j["monitor"].get_to(data.monitor);
+        }
         if (j.contains("showFPS")) {
             j["showFPS"].get_to(data.showFPS);
         }
@@ -135,7 +89,6 @@ void InitSettings(SettingsData& data, const std::string &filename) {
         }
     }
 
-    data.originalResolutionIndex = data.selectedResolutionIndex;
     data.originalDisplayMode = data.displayMode;
 }
 
