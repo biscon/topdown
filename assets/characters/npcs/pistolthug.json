@@ -14,7 +14,6 @@
             "rangedPelletCount": 1,
 
 
-
             "runSpeed": 480.0,
             "hurtStunMs": 600.0,
             "rangedMaxRange": 700.0,
@@ -26,8 +25,6 @@
             "rangedSpreadDegrees": 4.0,
             "attackCooldownMs": 900.0,
             "attackDamage": 22.0,
-
-
 
             "visionRange": 900.0,
             "hearingRange": 320.0,
