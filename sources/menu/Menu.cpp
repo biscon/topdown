@@ -235,6 +235,16 @@ static void PopMenuStackOneLevel()
     }
 }
 
+static void ReplaceCurrentMenu(MenuBuilder builder)
+{
+    if (menuStack.empty() || !builder) {
+        return;
+    }
+
+    menuStack.pop();
+    menuStack.push(builder());
+}
+
 static std::shared_ptr<Menu> createDisplayModeMenu()
 {
     auto menu = std::make_shared<Menu>();
@@ -250,6 +260,7 @@ static std::shared_ptr<Menu> createDisplayModeMenu()
             game->settings.needsApply = true;
             ApplySettings(game->settings);
             SaveSettings(game->settings);
+            ReplaceCurrentMenu(createDisplayModeMenu);
         };
         menu->items.push_back(item);
     }
@@ -263,6 +274,7 @@ static std::shared_ptr<Menu> createDisplayModeMenu()
             game->settings.needsApply = true;
             ApplySettings(game->settings);
             SaveSettings(game->settings);
+            ReplaceCurrentMenu(createDisplayModeMenu);
         };
         menu->items.push_back(item);
     }
@@ -298,6 +310,7 @@ static std::shared_ptr<Menu> createGraphicsMenu()
             game->settings.vsync = !game->settings.vsync;
             SaveSettings(game->settings);
             ShowMenuToast("VSync change requires restart");
+            ReplaceCurrentMenu(createGraphicsMenu);
         };
         menu->items.push_back(item);
     }
@@ -309,6 +322,7 @@ static std::shared_ptr<Menu> createGraphicsMenu()
             game->settings.fpsLock = !game->settings.fpsLock;
             ApplySettings(game->settings);
             SaveSettings(game->settings);
+            ReplaceCurrentMenu(createGraphicsMenu);
         };
         menu->items.push_back(item);
     }
@@ -319,6 +333,7 @@ static std::shared_ptr<Menu> createGraphicsMenu()
         item.action = [] {
             game->settings.showFPS = !game->settings.showFPS;
             SaveSettings(game->settings);
+            ReplaceCurrentMenu(createGraphicsMenu);
         };
         menu->items.push_back(item);
     }
