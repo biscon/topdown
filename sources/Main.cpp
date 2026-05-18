@@ -174,9 +174,6 @@ int main()
     if (state.settings.vsync) {
         flags |= FLAG_VSYNC_HINT;
     }
-#if defined(__APPLE__)
-    flags |= FLAG_WINDOW_HIGHDPI;
-#endif
     SetConfigFlags(flags);
 
     InstallDebugConsoleTraceLogHook();

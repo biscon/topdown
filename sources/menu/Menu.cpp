@@ -15,10 +15,6 @@
 #include "settings/Settings.h"
 #include "topdown/LevelRegistry.h"
 
-#if defined(__APPLE__)
-#include "platform/MacFullscreenBridge.h"
-#endif
-
 static GameState* game = nullptr;
 
 static constexpr Color MENU_BG_COLOR = Color{25, 25, 25, 255};
@@ -355,19 +351,6 @@ static std::shared_ptr<Menu> createGraphicsMenu()
         item.submenuBuilder = createDisplayModeMenu;
         menu->items.push_back(item);
     }
-
-#if defined(__APPLE__)
-    {
-        MenuItem item;
-        item.text = IsMacNativeFullscreenActive()
-                    ? "Exit Mac Fullscreen (Experimental)"
-                    : "Enter Mac Fullscreen (Experimental)";
-        item.action = [] {
-            ToggleMacNativeFullscreen();
-        };
-        menu->items.push_back(item);
-    }
-#endif
 
     {
         MenuItem item;
