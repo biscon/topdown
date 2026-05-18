@@ -17,15 +17,15 @@
 
             "runSpeed": 480.0,
             "hurtStunMs": 600.0,
-            "rangedSpreadDegrees": 8.0,
             "rangedMaxRange": 700.0,
-            "reactionTimeMs": 850.0,
-            "aimInaccuracyMinDegrees": 10.0,
-            "aimInaccuracyMaxDegrees": 18.0,
             "attackRange": 460.0,
-            "attackCooldownMs": 950.0,
-            "attackDamage": 22.0,
             "attackRecoverMs": 300.0,
+            "reactionTimeMs": 800.0,
+            "aimInaccuracyMinDegrees": 6.0,
+            "aimInaccuracyMaxDegrees": 11.0,
+            "rangedSpreadDegrees": 4.0,
+            "attackCooldownMs": 900.0,
+            "attackDamage": 22.0,
 
 
 
