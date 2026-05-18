@@ -268,7 +268,7 @@ static void DrawBlobShadowRotated(
     Color centerColor = { 0, 0, 0, alpha };
     Color outerColor  = { 0, 0, 0, 0 };
 
-    DrawCircleGradient(0, 0, baseRadius, centerColor, outerColor);
+    DrawCircleGradient({0,0}, baseRadius, centerColor, outerColor);
     rlPopMatrix();
 
     rlDrawRenderBatchActive();
@@ -402,7 +402,7 @@ void TopdownRenderNpcs(GameState& state)
         }
 
         const unsigned char shadowAlpha =
-                static_cast<unsigned char>(std::round((140.0f / 255.0f) * alpha));
+                static_cast<unsigned char>(std::round((180.0f / 255.0f) * alpha));
 
         DrawBlobShadowRotated(
                 state,
