@@ -5,8 +5,6 @@
             "baseDrawScale": 3.0,
             "collisionRadius": 38.0,
             "walkSpeed": 250.0,
-            "runSpeed": 550.0,
-            "hurtStunMs": 500.0,
             "maxHealth": 100.0,
             "corpseExpirationMs": -1.0,
             "hostile": true,
@@ -14,20 +12,28 @@
             "attackType": "ranged",
             "rangedTracerStyle": "handgun",
             "rangedPelletCount": 1,
-            "rangedSpreadDegrees": 6.0,
-            "rangedMaxRange": 750.0,
-            "reactionTimeMs": 400.0,
-            "aimInaccuracyMinDegrees": 8.0,
-            "aimInaccuracyMaxDegrees": 14.0,
+
+
+
+            "runSpeed": 480.0,
+            "hurtStunMs": 600.0,
+            "rangedSpreadDegrees": 8.0,
+            "rangedMaxRange": 700.0,
+            "reactionTimeMs": 850.0,
+            "aimInaccuracyMinDegrees": 10.0,
+            "aimInaccuracyMaxDegrees": 18.0,
+            "attackRange": 460.0,
+            "attackCooldownMs": 950.0,
+            "attackDamage": 22.0,
+            "attackRecoverMs": 300.0,
+
+
+
             "visionRange": 900.0,
             "hearingRange": 320.0,
             "gunshotHearingRange": 900.0,
             "visionHalfAngleDegrees": 70.0,
-            "attackRange": 520.0,
-            "attackCooldownMs": 800.0,
-            "attackDamage": 40.0,
             "attackHitNormalizedTime": 0.35,
-            "attackRecoverMs": 220.0,
             "chaseRepathIntervalMs": 250.0,
             "sounds": {
                 "attackStart": "pistol_shot",

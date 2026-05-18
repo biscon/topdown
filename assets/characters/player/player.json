@@ -19,9 +19,9 @@
     "rifle_rangedattack": { "originX": 94, "originY": 119, "muzzleX": 298, "muzzleY": 151 },
 
     "maxHealth": 100.0,
-    "hurtCooldownMs": 350.0,
-    "meleeHitSlowdownMs": 1000.0,
-    "meleeHitSlowdownMultiplier": 0.55,
+    "hurtCooldownMs": 500.0,
+    "meleeHitSlowdownMs": 700.0,
+    "meleeHitSlowdownMultiplier": 0.65,
 
     "weaponConfigs": [
         {
