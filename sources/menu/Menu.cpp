@@ -235,57 +235,6 @@ static void PopMenuStackOneLevel()
     }
 }
 
-static std::shared_ptr<Menu> createResolutionMenu()
-{
-    RefreshResolutions(game->settings);
-
-    auto menu = std::make_shared<Menu>();
-    menu->title = "Resolution";
-
-    if (game->settings.displayMode == DisplayMode::Borderless) {
-        menu->hint = "Borderless uses the desktop resolution.";
-
-        MenuItem back;
-        back.text = "Back";
-        back.action = [] {
-            PopMenuStackOneLevel();
-        };
-        menu->items.push_back(back);
-
-        return menu;
-    }
-
-    for (size_t i = 0; i < game->settings.availableResolutions.size(); ++i) {
-        const Resolution& availRes = game->settings.availableResolutions[i];
-
-        MenuItem item;
-        const bool selected = static_cast<int>(i) == game->settings.selectedResolutionIndex;
-        item.text =
-                (selected ? "< " : "  ") +
-                std::to_string(availRes.width) + " x " + std::to_string(availRes.height) +
-                (selected ? " >" : "");
-        item.color = selected ? WHITE : LIGHTGRAY;
-        item.action = [i] {
-            SettingsData& settings = game->settings;
-            settings.selectedResolutionIndex = static_cast<int>(i);
-            settings.needsApply = true;
-            ApplySettings(settings);
-            SaveSettings(settings);
-        };
-
-        menu->items.push_back(item);
-    }
-
-    MenuItem back;
-    back.text = "Back";
-    back.action = [] {
-        PopMenuStackOneLevel();
-    };
-    menu->items.push_back(back);
-
-    return menu;
-}
-
 static std::shared_ptr<Menu> createDisplayModeMenu()
 {
     auto menu = std::make_shared<Menu>();
@@ -333,16 +282,6 @@ static std::shared_ptr<Menu> createGraphicsMenu()
     auto menu = std::make_shared<Menu>();
     menu->title = "Graphics";
     menu->hint = "VSync changes require restart.";
-
-    {
-        MenuItem item;
-        item.text = game->settings.displayMode == DisplayMode::Borderless
-                    ? "Resolution (desktop controlled)"
-                    : "Resolution";
-        item.isSubmenu = true;
-        item.submenuBuilder = createResolutionMenu;
-        menu->items.push_back(item);
-    }
 
     {
         MenuItem item;

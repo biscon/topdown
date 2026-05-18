@@ -26,6 +26,15 @@
 #include "cutscene/CutsceneMode.h"
 #include "external/glfw/include/GLFW/glfw3.h"
 
+
+#if defined(__APPLE__)
+static constexpr int STARTUP_WINDOW_WIDTH = 1600;
+static constexpr int STARTUP_WINDOW_HEIGHT = 900;
+#else
+static constexpr int STARTUP_WINDOW_WIDTH = 1920;
+static constexpr int STARTUP_WINDOW_HEIGHT = 1080;
+#endif
+
 static Rectangle GetFullscreenSrcRect(const Texture2D& tex)
 {
     return Rectangle{
@@ -188,19 +197,20 @@ int main()
     GameState state;
     InitSettings(state.settings, "settings.json");
 
-    unsigned int flags = FLAG_WINDOW_HIGHDPI;
+    unsigned int flags = 0;
     if (state.settings.vsync) {
         flags |= FLAG_VSYNC_HINT;
     }
     SetConfigFlags(flags);
 
     InstallDebugConsoleTraceLogHook();
-    InitWindow(1920, 1080, "Adventure");
+
+    InitWindow(STARTUP_WINDOW_WIDTH, STARTUP_WINDOW_HEIGHT, "Game");
+    HideCursor();
 
     LogDisplayInfo("BEFORE APPLY");
 
     SetExitKey(0);
-    RefreshResolutions(state.settings);
     ApplySettings(state.settings);
 
     LogDisplayInfo("AFTER APPLY");
@@ -393,8 +403,7 @@ int main()
         Rectangle uiSrc = GetFullscreenSrcRect(uiTarget.texture);
         DrawTexturePro(uiTarget.texture, uiSrc, dst, {0,0}, 0.0f, WHITE);
 
-        float scale = dst.width / INTERNAL_WIDTH;
-        RenderCursor(state, scale);
+        RenderCursor(state, dst);
 
         if(state.settings.showFPS) DrawFPS(10, 10);
         EndDrawing();
@@ -419,6 +428,7 @@ int main()
     UnloadTopdownBloodRenderTarget(state);
     UnloadTopdownBloodStampLibrary(state.topdown.bloodStampLibrary);
     TopdownRvoShutdown(state);
+    ShowCursor();
     CloseWindow();
 
     return 0;

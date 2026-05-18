@@ -25,23 +25,6 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # -------------------------------
-# macOS native fullscreen bridge
-# -------------------------------
-if(APPLE)
-    enable_language(OBJCXX)
-
-    target_link_libraries(${PROJECT_NAME}
-            PRIVATE
-            "-framework Cocoa"
-            "-framework CoreFoundation"
-    )
-
-    target_sources(${PROJECT_NAME} PRIVATE
-            sources/platform/MacFullscreenBridge.mm
-    )
-endif()
-
-# -------------------------------
 # Build Type Flags
 # -------------------------------
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
