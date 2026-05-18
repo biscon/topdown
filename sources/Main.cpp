@@ -206,6 +206,7 @@ int main()
     InstallDebugConsoleTraceLogHook();
 
     InitWindow(STARTUP_WINDOW_WIDTH, STARTUP_WINDOW_HEIGHT, "Game");
+    HideCursor();
 
     LogDisplayInfo("BEFORE APPLY");
 
@@ -402,8 +403,7 @@ int main()
         Rectangle uiSrc = GetFullscreenSrcRect(uiTarget.texture);
         DrawTexturePro(uiTarget.texture, uiSrc, dst, {0,0}, 0.0f, WHITE);
 
-        float scale = dst.width / INTERNAL_WIDTH;
-        RenderCursor(state, scale);
+        RenderCursor(state, dst);
 
         if(state.settings.showFPS) DrawFPS(10, 10);
         EndDrawing();
@@ -428,6 +428,7 @@ int main()
     UnloadTopdownBloodRenderTarget(state);
     UnloadTopdownBloodStampLibrary(state.topdown.bloodStampLibrary);
     TopdownRvoShutdown(state);
+    ShowCursor();
     CloseWindow();
 
     return 0;

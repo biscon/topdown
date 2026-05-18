@@ -6,4 +6,4 @@ void InitCursor(GameState& state);
 void ShutdownCursor(GameState& state);
 
 void UpdateCursor(GameState& state);
-void RenderCursor(const GameState& state, float scale);
+void RenderCursor(const GameState& state, const Rectangle& presentationRect);

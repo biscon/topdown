@@ -9,200 +9,200 @@
 
 namespace {
 
-static constexpr float kAimCursorShadowOffset = 1.5f;
-static constexpr float kAimCursorLineThickness = 2.0f;
-static constexpr float kAimCursorBaseCenterGap = 6.0f;
-static constexpr float kAimCursorBaseArmLength = 14.0f;
-static constexpr float kAimCursorPulseSpeed = 6.0f;
-static constexpr float kAimCursorPulseAmplitude = 1.5f;
-static constexpr float kAimCursorScaleMultiplier = 2.0f;
+    static constexpr float kAimCursorShadowOffset = 1.5f;
+    static constexpr float kAimCursorLineThickness = 2.0f;
+    static constexpr float kAimCursorBaseCenterGap = 6.0f;
+    static constexpr float kAimCursorBaseArmLength = 14.0f;
+    static constexpr float kAimCursorPulseSpeed = 6.0f;
+    static constexpr float kAimCursorPulseAmplitude = 1.5f;
+    static constexpr float kAimCursorScaleMultiplier = 2.0f;
 
-static Texture2D LoadTexturePreMultiplied(const char* fileName)
-{
-    Image img = LoadImage(fileName);
-    if (img.data == nullptr) {
-        TraceLog(LOG_ERROR, "Failed to load image: %s", fileName);
-        return Texture2D{};
-    }
-
-    ImageAlphaPremultiply(&img);
-    Texture2D tex = LoadTextureFromImage(img);
-    UnloadImage(img);
-
-    if (tex.id != 0) {
-        SetTextureFilter(tex, TEXTURE_FILTER_POINT);
-    }
-
-    return tex;
-}
-
-enum class AimCursorColorState {
-    Neutral,
-    OverHostileInRange,
-    OutOfRange
-};
-
-bool ShouldRenderAimCursor(const GameState& state)
-{
-    return state.mode == GameMode::TopDown &&
-           state.topdown.runtime.levelActive &&
-           state.topdown.runtime.controlsEnabled &&
-           state.cursor.type == CursorType::Aim;
-}
-
-bool IsMouseOverHostileNpc(const GameState& state, Vector2 mouseWorld)
-{
-    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
-        if (!npc.active || !npc.visible || npc.dead || !npc.hostile) {
-            continue;
+    static Texture2D LoadTexturePreMultiplied(const char *fileName) {
+        Image img = LoadImage(fileName);
+        if (img.data == nullptr) {
+            TraceLog(LOG_ERROR, "Failed to load image: %s", fileName);
+            return Texture2D{};
         }
 
-        if (CheckCollisionPointCircle(mouseWorld, npc.position, npc.collisionRadius)) {
-            return true;
+        ImageAlphaPremultiply(&img);
+        Texture2D tex = LoadTextureFromImage(img);
+        UnloadImage(img);
+
+        if (tex.id != 0) {
+            SetTextureFilter(tex, TEXTURE_FILTER_POINT);
         }
+
+        return tex;
     }
 
-    return false;
-}
+    enum class AimCursorColorState {
+        Neutral,
+        OverHostileInRange,
+        OutOfRange
+    };
 
-bool IsMouseAimOutOfRange(const GameState& state, Vector2 mouseWorld)
-{
-    const TopdownRuntimeData& runtime = state.topdown.runtime;
-    const TopdownCharacterRuntime& character = runtime.playerCharacter;
+    bool ShouldRenderAimCursor(const GameState &state) {
+        return state.mode == GameMode::TopDown &&
+               state.topdown.runtime.levelActive &&
+               state.topdown.runtime.controlsEnabled &&
+               state.cursor.type == CursorType::Aim;
+    }
 
-    const TopdownPlayerWeaponConfig* weaponConfig =
-            FindTopdownPlayerWeaponConfigByEquipmentSetId(state, character.equippedSetId);
-    if (weaponConfig == nullptr || weaponConfig->maxRange <= 0.0f) {
+    bool IsMouseOverHostileNpc(const GameState &state, Vector2 mouseWorld) {
+        for (const TopdownNpcRuntime &npc: state.topdown.runtime.npcs) {
+            if (!npc.active || !npc.visible || npc.dead || !npc.hostile) {
+                continue;
+            }
+
+            if (CheckCollisionPointCircle(mouseWorld, npc.position, npc.collisionRadius)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
-    const Vector2 toAim = TopdownSub(mouseWorld, runtime.player.position);
-    const float distanceToAim = TopdownLength(toAim);
-    return distanceToAim > weaponConfig->maxRange;
-}
+    bool IsMouseAimOutOfRange(const GameState &state, Vector2 mouseWorld) {
+        const TopdownRuntimeData &runtime = state.topdown.runtime;
+        const TopdownCharacterRuntime &character = runtime.playerCharacter;
 
-AimCursorColorState EvaluateAimCursorColorState(const GameState& state)
-{
-    const Vector2 mouseWorld = GetMouseWorldPosition(state);
-    if (IsMouseAimOutOfRange(state, mouseWorld)) {
-        return AimCursorColorState::OutOfRange;
+        const TopdownPlayerWeaponConfig *weaponConfig =
+                FindTopdownPlayerWeaponConfigByEquipmentSetId(state, character.equippedSetId);
+        if (weaponConfig == nullptr || weaponConfig->maxRange <= 0.0f) {
+            return false;
+        }
+
+        const Vector2 toAim = TopdownSub(mouseWorld, runtime.player.position);
+        const float distanceToAim = TopdownLength(toAim);
+        return distanceToAim > weaponConfig->maxRange;
     }
 
-    if (IsMouseOverHostileNpc(state, mouseWorld)) {
-        return AimCursorColorState::OverHostileInRange;
+    AimCursorColorState EvaluateAimCursorColorState(const GameState &state) {
+        const Vector2 mouseWorld = GetMouseWorldPosition(state);
+        if (IsMouseAimOutOfRange(state, mouseWorld)) {
+            return AimCursorColorState::OutOfRange;
+        }
+
+        if (IsMouseOverHostileNpc(state, mouseWorld)) {
+            return AimCursorColorState::OverHostileInRange;
+        }
+
+        return AimCursorColorState::Neutral;
     }
 
-    return AimCursorColorState::Neutral;
-}
-
-Color GetAimCursorColor(AimCursorColorState colorState)
-{
-    switch (colorState) {
-        case AimCursorColorState::OutOfRange:
-            return RED;
-        case AimCursorColorState::OverHostileInRange:
-            return GREEN;
-        case AimCursorColorState::Neutral:
-        default:
-            return WHITE;
-    }
-}
-
-void DrawAimCursorCrosshair(Vector2 center, float pulseOffset, float scale, Color color)
-{
-    const float crosshairScale = scale * kAimCursorScaleMultiplier;
-    const float lineThickness = std::max(1.0f, kAimCursorLineThickness * crosshairScale);
-    const float centerGap = (kAimCursorBaseCenterGap + pulseOffset) * crosshairScale;
-    const float armLength = (kAimCursorBaseArmLength + pulseOffset) * crosshairScale;
-    const Vector2 shadowOffset{
-            kAimCursorShadowOffset * crosshairScale,
-            kAimCursorShadowOffset * crosshairScale
-    };
-
-    const auto drawCrosshair = [&](Vector2 offset, Color drawColor) {
-        DrawLineEx(
-                Vector2{center.x + offset.x, center.y - centerGap + offset.y},
-                Vector2{center.x + offset.x, center.y - armLength + offset.y},
-                lineThickness,
-                drawColor);
-        DrawLineEx(
-                Vector2{center.x + offset.x, center.y + centerGap + offset.y},
-                Vector2{center.x + offset.x, center.y + armLength + offset.y},
-                lineThickness,
-                drawColor);
-        DrawLineEx(
-                Vector2{center.x - centerGap + offset.x, center.y + offset.y},
-                Vector2{center.x - armLength + offset.x, center.y + offset.y},
-                lineThickness,
-                drawColor);
-        DrawLineEx(
-                Vector2{center.x + centerGap + offset.x, center.y + offset.y},
-                Vector2{center.x + armLength + offset.x, center.y + offset.y},
-                lineThickness,
-                drawColor);
-    };
-
-    drawCrosshair(shadowOffset, Fade(BLACK, 0.75f));
-    drawCrosshair(Vector2{}, color);
-}
-
-void RenderBitmapCursor(const GameState& state, float scale)
-{
-    const CursorData& cursor = state.cursor;
-
-    Vector2 mouse = GetMousePosition();
-
-    // convert internal → screen space
-    mouse.x *= scale;
-    mouse.y *= scale;
-
-    const Texture2D* tex = nullptr;
-    Vector2 hotspot{};
-
-    switch (cursor.type) {
-        case CursorType::Default:
-        case CursorType::Aim:
-            tex = &cursor.defaultTexture;
-            hotspot = cursor.defaultHotspot;
-            break;
-
-        case CursorType::Interact:
-            tex = &cursor.interactTexture;
-            hotspot = cursor.interactHotspot;
-            break;
+    Color GetAimCursorColor(AimCursorColorState colorState) {
+        switch (colorState) {
+            case AimCursorColorState::OutOfRange:
+                return RED;
+            case AimCursorColorState::OverHostileInRange:
+                return GREEN;
+            case AimCursorColorState::Neutral:
+            default:
+                return WHITE;
+        }
     }
 
-    if (!tex || tex->id == 0) {
-        return;
+    void DrawAimCursorCrosshair(Vector2 center, float pulseOffset, float scale, Color color) {
+        const float crosshairScale = scale * kAimCursorScaleMultiplier;
+        const float lineThickness = std::max(1.0f, kAimCursorLineThickness * crosshairScale);
+        const float centerGap = (kAimCursorBaseCenterGap + pulseOffset) * crosshairScale;
+        const float armLength = (kAimCursorBaseArmLength + pulseOffset) * crosshairScale;
+        const Vector2 shadowOffset{
+                kAimCursorShadowOffset * crosshairScale,
+                kAimCursorShadowOffset * crosshairScale
+        };
+
+        const auto drawCrosshair = [&](Vector2 offset, Color drawColor) {
+            DrawLineEx(
+                    Vector2{center.x + offset.x, center.y - centerGap + offset.y},
+                    Vector2{center.x + offset.x, center.y - armLength + offset.y},
+                    lineThickness,
+                    drawColor);
+            DrawLineEx(
+                    Vector2{center.x + offset.x, center.y + centerGap + offset.y},
+                    Vector2{center.x + offset.x, center.y + armLength + offset.y},
+                    lineThickness,
+                    drawColor);
+            DrawLineEx(
+                    Vector2{center.x - centerGap + offset.x, center.y + offset.y},
+                    Vector2{center.x - armLength + offset.x, center.y + offset.y},
+                    lineThickness,
+                    drawColor);
+            DrawLineEx(
+                    Vector2{center.x + centerGap + offset.x, center.y + offset.y},
+                    Vector2{center.x + armLength + offset.x, center.y + offset.y},
+                    lineThickness,
+                    drawColor);
+        };
+
+        drawCrosshair(shadowOffset, Fade(BLACK, 0.75f));
+        drawCrosshair(Vector2{}, color);
     }
 
-    Vector2 pos{
-            mouse.x - hotspot.x * scale,
-            mouse.y - hotspot.y * scale
-    };
-    BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
-    DrawTextureEx(*tex, pos, 0.0f, scale, WHITE);
-    EndBlendMode();
-}
+    void RenderBitmapCursor(const GameState &state, const Rectangle &presentationRect) {
+        const CursorData &cursor = state.cursor;
 
-void RenderAimCursor(const GameState& state, float scale)
-{
-    Vector2 mouse = GetMousePosition();
-    mouse.x *= scale;
-    mouse.y *= scale;
+        const float scaleX = presentationRect.width / static_cast<float>(INTERNAL_WIDTH);
+        const float scaleY = presentationRect.height / static_cast<float>(INTERNAL_HEIGHT);
 
-    const float pulsePhase = state.cursor.aimPulseTimeSeconds * kAimCursorPulseSpeed;
-    const float pulseOffset = std::sin(pulsePhase) * kAimCursorPulseAmplitude;
+        Vector2 mouse = GetMousePosition();
 
-    const AimCursorColorState colorState = EvaluateAimCursorColorState(state);
-    DrawAimCursorCrosshair(mouse, pulseOffset, scale, GetAimCursorColor(colorState));
-}
+        // internal -> screen/presentation space
+        mouse.x = presentationRect.x + mouse.x * scaleX;
+        mouse.y = presentationRect.y + mouse.y * scaleY;
+
+        const Texture2D *tex = nullptr;
+        Vector2 hotspot{};
+
+        switch (cursor.type) {
+            case CursorType::Default:
+            case CursorType::Aim:
+                tex = &cursor.defaultTexture;
+                hotspot = cursor.defaultHotspot;
+                break;
+
+            case CursorType::Interact:
+                tex = &cursor.interactTexture;
+                hotspot = cursor.interactHotspot;
+                break;
+        }
+
+        if (!tex || tex->id == 0) {
+            return;
+        }
+
+        Vector2 pos{
+                mouse.x - hotspot.x * scaleX,
+                mouse.y - hotspot.y * scaleY
+        };
+
+        BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
+        DrawTextureEx(*tex, pos, 0.0f, scaleX, WHITE);
+        EndBlendMode();
+    }
+
+    void RenderAimCursor(const GameState &state, const Rectangle &presentationRect) {
+        const float scaleX = presentationRect.width / static_cast<float>(INTERNAL_WIDTH);
+        const float scaleY = presentationRect.height / static_cast<float>(INTERNAL_HEIGHT);
+        const float scale = scaleX;
+
+        Vector2 mouse = GetMousePosition();
+
+        // internal -> screen/presentation space
+        mouse.x = presentationRect.x + mouse.x * scaleX;
+        mouse.y = presentationRect.y + mouse.y * scaleY;
+
+        const float pulsePhase = state.cursor.aimPulseTimeSeconds * kAimCursorPulseSpeed;
+        const float pulseOffset = std::sin(pulsePhase) * kAimCursorPulseAmplitude;
+
+        const AimCursorColorState colorState = EvaluateAimCursorColorState(state);
+        DrawAimCursorCrosshair(mouse, pulseOffset, scale, GetAimCursorColor(colorState));
+    }
 
 } // namespace
 
-void InitCursor(GameState& state)
-{
-    CursorData& cursor = state.cursor;
+void InitCursor(GameState &state) {
+    CursorData &cursor = state.cursor;
 
     cursor.defaultTexture = LoadTexturePreMultiplied(ASSETS_PATH "ui/cursor_default_small.png");
     cursor.interactTexture = LoadTexturePreMultiplied(ASSETS_PATH "ui/cursor_interact_small.png");
@@ -218,9 +218,8 @@ void InitCursor(GameState& state)
     cursor.initialized = true;
 }
 
-void ShutdownCursor(GameState& state)
-{
-    CursorData& cursor = state.cursor;
+void ShutdownCursor(GameState &state) {
+    CursorData &cursor = state.cursor;
 
     if (cursor.defaultTexture.id != 0) {
         UnloadTexture(cursor.defaultTexture);
@@ -233,14 +232,7 @@ void ShutdownCursor(GameState& state)
     ShowCursor();
 }
 
-void UpdateCursor(GameState& state)
-{
-    if (IsCursorOnScreen()) {
-        HideCursor();
-    } else {
-        ShowCursor();
-    }
-
+void UpdateCursor(GameState &state) {
     if (state.mode == GameMode::TopDown && state.topdown.runtime.levelActive) {
         state.cursor.type = CursorType::Aim;
     } else {
@@ -250,22 +242,21 @@ void UpdateCursor(GameState& state)
     state.cursor.aimPulseTimeSeconds += GetFrameTime();
 }
 
-void RenderCursor(const GameState& state, float scale)
-{
-    if (!IsCursorOnScreen()) {
-        return;
-    }
-
+void RenderCursor(const GameState &state, const Rectangle &presentationRect) {
     if (state.mode == GameMode::Cutscene) {
         return;
     }
 
     if (ShouldRenderAimCursor(state)) {
-        RenderAimCursor(state, scale);
+        RenderAimCursor(state, presentationRect);
         return;
     }
-    if(state.mode != GameMode::Menu && !state.topdown.runtime.controlsEnabled && !state.topdown.runtime.gameOverActive) {
+
+    if (state.mode != GameMode::Menu &&
+        !state.topdown.runtime.controlsEnabled &&
+        !state.topdown.runtime.gameOverActive) {
         return;
     }
-    RenderBitmapCursor(state, scale);
+
+    RenderBitmapCursor(state, presentationRect);
 }
