@@ -31,14 +31,12 @@ void ApplySettings(SettingsData& settings)
         case DisplayMode::Windowed: {
             ClearWindowState(FLAG_FULLSCREEN_MODE);
             ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-            //SetWindowSize(res.width, res.height);
             break;
         }
 
         case DisplayMode::Borderless: {
             ClearWindowState(FLAG_FULLSCREEN_MODE);
             SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-            //SetWindowSize(GetMonitorWidth(settings.monitor), GetMonitorHeight(settings.monitor));
             break;
         }
     }
