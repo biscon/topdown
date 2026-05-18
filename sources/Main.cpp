@@ -165,12 +165,30 @@ static void UnloadFonts(GameState& state) {
     if (state.dialogueFont.texture.id != 0) UnloadFont(state.dialogueFont);
 }
 
+static void LogDisplayInfo(const char* label)
+{
+    const int monitor = GetCurrentMonitor();
+    const Vector2 dpi = GetWindowScaleDPI();
+    const Vector2 monPos = GetMonitorPosition(monitor);
+
+    TraceLog(LOG_INFO, "==== DISPLAY INFO: %s ====", label);
+    TraceLog(LOG_INFO, "Monitor: %d", monitor);
+    TraceLog(LOG_INFO, "Monitor pos: %.0f, %.0f", monPos.x, monPos.y);
+    TraceLog(LOG_INFO, "Screen logical: %d x %d", GetScreenWidth(), GetScreenHeight());
+    TraceLog(LOG_INFO, "Render framebuffer: %d x %d", GetRenderWidth(), GetRenderHeight());
+    TraceLog(LOG_INFO, "DPI scale: %.2f x %.2f", dpi.x, dpi.y);
+    TraceLog(LOG_INFO, "Monitor size: %d x %d",
+             GetMonitorWidth(monitor),
+             GetMonitorHeight(monitor));
+    TraceLog(LOG_INFO, "===============================");
+}
+
 int main()
 {
     GameState state;
     InitSettings(state.settings, "settings.json");
 
-    unsigned int flags = 0;
+    unsigned int flags = FLAG_WINDOW_HIGHDPI;
     if (state.settings.vsync) {
         flags |= FLAG_VSYNC_HINT;
     }
@@ -179,28 +197,13 @@ int main()
     InstallDebugConsoleTraceLogHook();
     InitWindow(1920, 1080, "Adventure");
 
-    {
-        const int screenW = GetScreenWidth();
-        const int screenH = GetScreenHeight();
-        const int renderW = GetRenderWidth();
-        const int renderH = GetRenderHeight();
-        const Vector2 dpi = GetWindowScaleDPI();
-        const int monitor = GetCurrentMonitor();
-
-        TraceLog(LOG_INFO, "==== DISPLAY INFO ====");
-        TraceLog(LOG_INFO, "Monitor: %d", monitor);
-        TraceLog(LOG_INFO, "Screen (logical): %d x %d", screenW, screenH);
-        TraceLog(LOG_INFO, "Render (framebuffer): %d x %d", renderW, renderH);
-        TraceLog(LOG_INFO, "DPI scale: %.2f x %.2f", dpi.x, dpi.y);
-        TraceLog(LOG_INFO, "Monitor size: %d x %d",
-                 GetMonitorWidth(monitor),
-                 GetMonitorHeight(monitor));
-        TraceLog(LOG_INFO, "======================");
-    }
+    LogDisplayInfo("BEFORE APPLY");
 
     SetExitKey(0);
     RefreshResolutions(state.settings);
     ApplySettings(state.settings);
+
+    LogDisplayInfo("AFTER APPLY");
 
     if (!InitEffectShaderRegistry()) {
         TraceLog(LOG_WARNING, "One or more effect shaders failed to load");
