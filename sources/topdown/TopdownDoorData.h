@@ -26,6 +26,7 @@ struct TopdownAuthoredDoor {
     bool autoClose = false;
     float autoCloseStrength = 6.0f;
     float damping = 5.0f;
+    float pushResistance = 1.0f;
 
     float swingMinDegrees = -90.0f;
     float swingMaxDegrees = 90.0f;
@@ -58,6 +59,7 @@ struct TopdownRuntimeDoor {
     bool autoClose = false;
     float autoCloseStrength = 6.0f;
     float damping = 5.0f;
+    float pushResistance = 1.0f;
 
     std::string openSoundId;
     std::string closeSoundId;

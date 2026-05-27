@@ -133,6 +133,10 @@ bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id
 bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled);
 bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat);
 
+// Doors
+bool TopdownScriptSetDoorLocked(GameState& state, const std::string& doorId, bool locked);
+bool TopdownScriptIsDoorLocked(GameState& state, const std::string& doorId, bool& outLocked);
+
 // Objective marker
 bool TopdownScriptSetObjectiveTrigger(GameState& state, const std::string& triggerId);
 bool TopdownScriptSetObjectiveNpc(GameState& state, const std::string& npcId);

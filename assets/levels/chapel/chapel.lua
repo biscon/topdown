@@ -16,6 +16,8 @@ function Level_onEnter()
 
     addEquipmentSet("shotgun")
     addAmmo("shotgun", 12)
+
+    --setDoorLocked("left_cemetary_door", true)
 end
 
 function StreetLampGlowLoop()

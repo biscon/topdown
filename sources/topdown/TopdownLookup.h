@@ -18,6 +18,12 @@ TopdownRuntimeTrigger* TopdownFindRuntimeTriggerById(
 const TopdownRuntimeTrigger* TopdownFindRuntimeTriggerById(
         const GameState& state,
         const std::string& id);
+TopdownRuntimeDoor* TopdownFindRuntimeDoorById(
+        GameState& state,
+        const std::string& id);
+const TopdownRuntimeDoor* TopdownFindRuntimeDoorById(
+        const GameState& state,
+        const std::string& id);
 TopdownNpcRuntime* TopdownFindActiveNpcById(
         GameState& state,
         const std::string& npcId);
