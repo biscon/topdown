@@ -170,8 +170,7 @@ struct TopdownNpcAnimationSourceDefinition {
     Vector2 origin{};
 };
 
-struct TopdownNpcAssetDefinition {
-    std::string assetId;
+struct TopdownNpcMovementConfig {
     float baseDrawScale = 1.0f;
     float collisionRadius = 32.0f;
 
@@ -180,11 +179,16 @@ struct TopdownNpcAssetDefinition {
     float hurtStunMs = 0.0f;
     float maxHealth = 100.0f;
     float corpseExpirationMs = -1.0f;
+};
 
+struct TopdownNpcAiConfig {
     bool hostile = true;
     TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+    TopdownAttackType attackType = TopdownAttackType::None;
+    float chaseRepathIntervalMs = 250.0f;
+};
 
-    TopdownAttackType attackType;
+struct TopdownNpcRangedAttackConfig {
     TopdownTracerStyle rangedTracerStyle = TopdownTracerStyle::Handgun;
     int rangedPelletCount = 1;
     float rangedSpreadDegrees = 6.0f;
@@ -194,19 +198,21 @@ struct TopdownNpcAssetDefinition {
     float reactionTimeMs = 180.0f;
     float aimInaccuracyMinDegrees = 2.0f;
     float aimInaccuracyMaxDegrees = 10.0f;
+};
 
+struct TopdownNpcPerceptionConfig {
     float visionRange = 700.0f;
     float hearingRange = 220.0f;
     float gunshotHearingRange = 1000.0f;
     float visionHalfAngleDegrees = 65.0f;
+};
 
+struct TopdownNpcMeleeAttackConfig {
     float attackRange = 95.0f;
     float attackCooldownMs = 900.0f;
     float attackDamage = 25.0f;
     float attackHitNormalizedTime = 0.7f;
     float attackRecoverMs = 250.0f;
-
-    float chaseRepathIntervalMs = 250.0f;
 
     float meleeHitPosX = 0.0f;
     float meleeHitPosY = 0.0f;
@@ -215,6 +221,15 @@ struct TopdownNpcAssetDefinition {
     std::vector<std::string> hitReactionSoundIds;
 
     TopdownNpcAttackEffectsConfig attackEffects;
+};
+
+struct TopdownNpcAssetDefinition {
+    std::string assetId;
+    TopdownNpcMovementConfig movement;
+    TopdownNpcAiConfig ai;
+    TopdownNpcRangedAttackConfig rangedAttack;
+    TopdownNpcPerceptionConfig perception;
+    TopdownNpcMeleeAttackConfig meleeAttack;
 
     std::vector<TopdownNpcAnimationSourceDefinition> animations;
 
@@ -242,49 +257,11 @@ struct TopdownNpcAssetRuntime {
 
     std::vector<SpriteAssetHandle> spriteHandles;
 
-    float baseDrawScale = 1.0f;
-    float collisionRadius = 32.0f;
-
-    float walkSpeed = 450.0f;
-    float runSpeed = 700.0f;
-    float hurtStunMs = 0.0f;
-    float maxHealth = 100.0f;
-    float corpseExpirationMs = -1.0f;
-
-    bool hostile = true;
-    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
-
-    TopdownAttackType attackType;
-    TopdownTracerStyle rangedTracerStyle = TopdownTracerStyle::Handgun;
-    int rangedPelletCount = 1;
-    float rangedSpreadDegrees = 6.0f;
-    float rangedMaxRange = 800.0f;
-    TopdownBallisticImpactEffectConfig ballisticImpactEffects{};
-    TopdownMuzzleEffectConfig muzzleEffects{};
-    float reactionTimeMs = 180.0f;
-    float aimInaccuracyMinDegrees = 2.0f;
-    float aimInaccuracyMaxDegrees = 10.0f;
-
-    float visionRange = 700.0f;
-    float hearingRange = 220.0f;
-    float gunshotHearingRange = 1000.0f;
-    float visionHalfAngleDegrees = 65.0f;
-
-    float attackRange = 95.0f;
-    float attackCooldownMs = 900.0f;
-    float attackDamage = 25.0f;
-    float attackHitNormalizedTime = 0.7f;
-    float attackRecoverMs = 250.0f;
-
-    float chaseRepathIntervalMs = 250.0f;
-
-    float meleeHitPosX = 0.0f;
-    float meleeHitPosY = 0.0f;
-    std::string attackStartSoundId;
-    std::string attackConnectSoundId;
-    std::vector<std::string> hitReactionSoundIds;
-
-    TopdownNpcAttackEffectsConfig attackEffects;
+    TopdownNpcMovementConfig movement;
+    TopdownNpcAiConfig ai;
+    TopdownNpcRangedAttackConfig rangedAttack;
+    TopdownNpcPerceptionConfig perception;
+    TopdownNpcMeleeAttackConfig meleeAttack;
 
     TopdownNpcColorSubstitutionDefinition colorSubstitution;
 };
@@ -299,33 +276,22 @@ struct TopdownNpcRuntime {
     bool visible = true;
     bool dead = false;
     bool corpse = false;
-    bool hostile = true;
     bool persistentChase = false;
     bool guard = false;
 
-    TopdownNpcAiMode aiMode = TopdownNpcAiMode::None;
+    TopdownNpcMovementConfig movement;
+    TopdownNpcAiConfig ai;
+    TopdownNpcRangedAttackConfig rangedAttack;
+    TopdownNpcPerceptionConfig perception;
+    TopdownNpcMeleeAttackConfig meleeAttack;
 
     TopdownNpcEngagementState engagementState = TopdownNpcEngagementState::Unaware;
     TopdownNpcCombatState combatState = TopdownNpcCombatState::None;
 
     float health = 100.0f;
-    float corpseExpirationMs = -1.0f;
     float corpseElapsedMs = 0.0f;
-
-    float visionRange = 700.0f;
-    float hearingRange = 220.0f;
-    float gunshotHearingRange = 1000.0f;
-    float visionHalfAngleDegrees = 65.0f;
-
-    float attackRange = 95.0f;
     float preferredAttackRangeFactor = 0.9f;
-    float attackCooldownMs = 900.0f;
     float attackCooldownRemainingMs = 0.0f;
-    float attackDamage = 25.0f;
-    float attackHitNormalizedTime = 0.7f;
-    float attackRecoverMs = 250.0f;
-
-    float chaseRepathIntervalMs = 250.0f;
 
     bool hasPlayerTarget = false;
     Vector2 lastKnownPlayerPosition{};
@@ -348,8 +314,6 @@ struct TopdownNpcRuntime {
     Vector2 position{};
     Vector2 facing{1.0f, 0.0f};
     Vector2 currentVelocity{};
-
-    float collisionRadius = 32.0f;
 
     float rotationRadians = 0.0f;
 
@@ -376,14 +340,6 @@ struct TopdownNpcRuntime {
     bool moving = false;
     bool running = false;
     float painSoundCooldownMs = 0.0f;
-
-    float meleeHitPosX = 0.0f;
-    float meleeHitPosY = 0.0f;
-    std::string attackStartSoundId;
-    std::string attackConnectSoundId;
-    std::vector<std::string> hitReactionSoundIds;
-
-    TopdownNpcAttackEffectsConfig attackEffects;
 
     float chaseStuckTimerMs = 0.0f;
     Vector2 chaseStuckLastPosition{};

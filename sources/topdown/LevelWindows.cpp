@@ -202,23 +202,23 @@ static void SpawnWindowBreakParticles(
     const float hitAlong = window.horizontal ? hitPoint.x : hitPoint.y;
     const float centerAcross = (rectMinAcross + rectMaxAcross) * 0.5f;
 
-    for (int i = 0; i < window.breakParticleCount; ++i) {
+    for (int i = 0; i < window.breakParticles.count; ++i) {
         TopdownWindowGlassParticle particle;
         particle.active = true;
         particle.ageMs = 0.0f;
         particle.lifetimeMs = RandomRangeFloat(
-                window.breakParticleLifetimeMsMin,
-                window.breakParticleLifetimeMsMax);
+                window.breakParticles.lifetimeMsMin,
+                window.breakParticles.lifetimeMsMax);
         particle.size = RandomRangeFloat(
-                window.breakParticleSizeMin,
-                window.breakParticleSizeMax);
+                window.breakParticles.sizeMin,
+                window.breakParticles.sizeMax);
         particle.alpha = 1.0f;
 
         float along = hitAlong;
         if (RandomRangeFloat(0.0f, 1.0f) < 0.78f) {
             const float sign = (RandomRangeFloat(0.0f, 1.0f) < 0.5f) ? -1.0f : 1.0f;
             const float mag = RandomRangeFloat(0.0f, 1.0f);
-            along += sign * mag * mag * window.breakParticleSpreadAlongWindow;
+            along += sign * mag * mag * window.breakParticles.spreadAlongWindow;
         } else {
             along = RandomRangeFloat(rectMinAlong, rectMaxAlong);
         }
@@ -234,8 +234,8 @@ static void SpawnWindowBreakParticles(
         }
 
         const float speed = RandomRangeFloat(
-                window.breakParticleSpeedMin,
-                window.breakParticleSpeedMax);
+                window.breakParticles.speedMin,
+                window.breakParticles.speedMax);
 
         particle.velocity = TopdownAdd(
                 TopdownMul(shotDir, speed),
@@ -245,8 +245,8 @@ static void SpawnWindowBreakParticles(
 
         particle.color =
                 (GetRandomValue(0, 1) == 0)
-                ? window.breakParticleColor1
-                : window.breakParticleColor2;
+                ? window.breakParticles.color1
+                : window.breakParticles.color2;
 
         particle.rotationRadians = std::atan2(particle.velocity.y, particle.velocity.x);
 
@@ -280,16 +280,7 @@ TopdownRuntimeWindow TopdownBuildRuntimeWindowFromAuthored(
     runtime.outlineColor = authored.outlineColor;
     runtime.breakSoundId = authored.breakSoundId;
 
-    runtime.breakParticleCount = authored.breakParticleCount;
-    runtime.breakParticleSpeedMin = authored.breakParticleSpeedMin;
-    runtime.breakParticleSpeedMax = authored.breakParticleSpeedMax;
-    runtime.breakParticleLifetimeMsMin = authored.breakParticleLifetimeMsMin;
-    runtime.breakParticleLifetimeMsMax = authored.breakParticleLifetimeMsMax;
-    runtime.breakParticleSizeMin = authored.breakParticleSizeMin;
-    runtime.breakParticleSizeMax = authored.breakParticleSizeMax;
-    runtime.breakParticleSpreadAlongWindow = authored.breakParticleSpreadAlongWindow;
-    runtime.breakParticleColor1 = authored.breakParticleColor1;
-    runtime.breakParticleColor2 = authored.breakParticleColor2;
+    runtime.breakParticles = authored.breakParticles;
 
     runtime.polygon = TopdownBuildRectPolygon(
             authored.rectPosition.x,

@@ -197,7 +197,7 @@ void TopdownAlertNpcToPlayer(
         return;
     }
 
-    if (!npc.hostile) {
+    if (!npc.ai.hostile) {
         return;
     }
 
@@ -242,7 +242,7 @@ void TopdownAlertNearbyNpcs(
             continue;
         }
 
-        if (!otherNpc.hostile) {
+        if (!otherNpc.ai.hostile) {
             continue;
         }
 
@@ -405,7 +405,7 @@ static bool IsPlayerInsideNpcVisionCone(
     }
 
     const float cosThreshold =
-            std::cos(npc.visionHalfAngleDegrees * DEG2RAD);
+            std::cos(npc.perception.visionHalfAngleDegrees * DEG2RAD);
 
     return TopdownDot(facing, dirToPlayer) >= cosThreshold;
 }
@@ -464,7 +464,7 @@ bool TopdownNpcCanSeePlayer(
 
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
-    const float range = std::max(0.0f, npc.visionRange);
+    const float range = std::max(0.0f, npc.perception.visionRange);
 
     if (distSqr > range * range) {
         return false;
@@ -521,7 +521,7 @@ bool TopdownNpcCanHearPlayer(
         return false;
     }
 
-    float range = std::max(0.0f, npc.hearingRange);
+    float range = std::max(0.0f, npc.perception.hearingRange);
 
     /* Reducing hearing through doors is less fun
     if (HasDoorBetweenPoints(state, npc.position, player.position)) {
@@ -539,8 +539,8 @@ bool TopdownIsPlayerWithinNpcAttackRange(
 {
     const Vector2 delta = TopdownSub(player.position, npc.position);
     const float centerDist = TopdownLength(delta);
-    const float edgeDist = centerDist - player.radius - npc.collisionRadius;
-    return edgeDist <= npc.attackRange;
+    const float edgeDist = centerDist - player.radius - npc.movement.collisionRadius;
+    return edgeDist <= npc.meleeAttack.attackRange;
 }
 
 bool TopdownNpcHasLineOfSightToNpc(

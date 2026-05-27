@@ -309,7 +309,7 @@ namespace {
                         runtime,
                         targetSpawn.id,
                         targetSpawn.position,
-                        npc.collisionRadius,
+                        npc.movement.collisionRadius,
                         npc.handle);
             }
 

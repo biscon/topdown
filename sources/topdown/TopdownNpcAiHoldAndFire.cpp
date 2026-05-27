@@ -53,20 +53,20 @@ static void FireNpcHitscanWeapon(
     if (!TopdownComputeNpcMuzzleWorldPosition(state, npc, *asset, muzzleWorld)) {
         muzzleWorld = npc.position;
     }
-    const int pelletCount = std::max(1, asset->rangedPelletCount);
+    const int pelletCount = std::max(1, asset->rangedAttack.rangedPelletCount);
 
     SpawnMuzzleFlashEffectAnchoredToNpc(
             state,
             npc.handle,
             muzzleWorld,
             baseDir,
-            asset->muzzleEffects);
+            asset->rangedAttack.muzzleEffects);
 
     SpawnMuzzleSmokeParticles(
             state,
             muzzleWorld,
             baseDir,
-            asset->muzzleEffects);
+            asset->rangedAttack.muzzleEffects);
 
 
     // Make other npcs investigates this npcs gunshots
@@ -79,11 +79,11 @@ static void FireNpcHitscanWeapon(
 
     for (int i = 0; i < pelletCount; ++i) {
         const float dist = TopdownLength(toPlayer);
-        const float t = Clamp(dist / std::max(1.0f, asset->rangedMaxRange), 0.0f, 1.0f);
+        const float t = Clamp(dist / std::max(1.0f, asset->rangedAttack.rangedMaxRange), 0.0f, 1.0f);
 
         const float spreadDegrees =
-                Lerp(asset->aimInaccuracyMinDegrees,
-                     asset->aimInaccuracyMaxDegrees,
+                Lerp(asset->rangedAttack.aimInaccuracyMinDegrees,
+                     asset->rangedAttack.aimInaccuracyMaxDegrees,
                      t);
 
         const Vector2 shotDir =
@@ -95,7 +95,7 @@ static void FireNpcHitscanWeapon(
                         npc,
                         muzzleWorld,
                         shotDir,
-                        asset->rangedMaxRange);
+                        asset->rangedAttack.rangedMaxRange);
 
 
         AppendTracerEffectAnchoredToNpc(
@@ -103,7 +103,7 @@ static void FireNpcHitscanWeapon(
                 npc.handle,
                 muzzleWorld,
                 hit.point,
-                asset->rangedTracerStyle);
+                asset->rangedAttack.rangedTracerStyle);
 
 
         if (hit.type == TopdownShotHitType::Wall) {
@@ -111,7 +111,7 @@ static void FireNpcHitscanWeapon(
                     state,
                     hit.point,
                     hit.normal,
-                    asset->ballisticImpactEffects);
+                    asset->rangedAttack.ballisticImpactEffects);
             continue;
         }
 
@@ -120,7 +120,7 @@ static void FireNpcHitscanWeapon(
                     state,
                     hit.point,
                     hit.normal,
-                    asset->ballisticImpactEffects);
+                    asset->rangedAttack.ballisticImpactEffects);
             continue;
         }
 
@@ -136,13 +136,13 @@ static void FireNpcHitscanWeapon(
         if (hit.type == TopdownShotHitType::Player) {
             TopdownApplyDamageToPlayer(
                     state,
-                    asset->attackDamage,
+                    asset->meleeAttack.attackDamage,
                     npc.position);
 
-            if (!npc.attackConnectSoundId.empty()) {
+            if (!npc.meleeAttack.attackConnectSoundId.empty()) {
                 AudioPlaySoundAtPosition(
                         state,
-                        npc.attackConnectSoundId,
+                        npc.meleeAttack.attackConnectSoundId,
                         npc.position,
                         AUDIO_RADIUS_NPC_WEAPON,
                         RandomRangeFloat(0.95f, 1.05f));
@@ -152,13 +152,13 @@ static void FireNpcHitscanWeapon(
                     state,
                     hit.point,
                     shotDir,
-                    asset->attackEffects);
+                    asset->meleeAttack.attackEffects);
 
             QueueBloodSpatterDecals(
                     state,
                     hit.point,
                     shotDir,
-                    asset->attackEffects);
+                    asset->meleeAttack.attackEffects);
 
             continue;
         }
@@ -194,24 +194,24 @@ static void StartNpcRangedAttack(
     FireNpcHitscanWeapon(state, npc);
 
     npc.attackCooldownRemainingMs =
-            std::max(npc.attackCooldownRemainingMs, npc.attackCooldownMs);
+            std::max(npc.attackCooldownRemainingMs, npc.meleeAttack.attackCooldownMs);
 
     if (TopdownNpcClipRefIsValid(asset->rangedAttackClip)) {
         TopdownPlayNpcOneShotAnimation(npc, asset->rangedAttackClip);
         npc.attackAnimationDurationMs =
                 TopdownGetNpcClipDurationMs(state, asset->rangedAttackClip);
     } else {
-        npc.attackAnimationDurationMs = std::max(1.0f, npc.attackRecoverMs);
+        npc.attackAnimationDurationMs = std::max(1.0f, npc.meleeAttack.attackRecoverMs);
     }
 
     if (npc.attackAnimationDurationMs <= 0.0f) {
-        npc.attackAnimationDurationMs = std::max(1.0f, npc.attackRecoverMs);
+        npc.attackAnimationDurationMs = std::max(1.0f, npc.meleeAttack.attackRecoverMs);
     }
 
-    if (!npc.attackStartSoundId.empty()) {
+    if (!npc.meleeAttack.attackStartSoundId.empty()) {
         AudioPlaySoundAtPosition(
                 state,
-                npc.attackStartSoundId,
+                npc.meleeAttack.attackStartSoundId,
                 npc.position,
                 AUDIO_RADIUS_NPC_WEAPON,
                 RandomRangeFloat(0.95f, 1.05f));
@@ -283,7 +283,7 @@ static void UpdateNpcChasePathing(
                 chaseTarget,
                 TopdownNpcMoveOwner::Ai);
 
-        npc.repathTimerMs = std::max(1.0f, npc.chaseRepathIntervalMs);
+        npc.repathTimerMs = std::max(1.0f, npc.ai.chaseRepathIntervalMs);
     }
 }
 
@@ -358,7 +358,7 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
-    if (npc.dead || npc.corpse || !npc.hostile) {
+    if (npc.dead || npc.corpse || !npc.ai.hostile) {
         return;
     }
 
@@ -413,10 +413,10 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
 
     const Vector2 toPlayer = TopdownSub(player.position, npc.position);
     const float centerDist = TopdownLength(toPlayer);
-    const float edgeDist = centerDist - player.radius - npc.collisionRadius;
+    const float edgeDist = centerDist - player.radius - npc.movement.collisionRadius;
 
     const bool inAttackRange =
-            edgeDist <= asset->rangedMaxRange;
+            edgeDist <= asset->rangedAttack.rangedMaxRange;
 
     bool clearShot = false;
     if (perception.seesPlayer) {
@@ -430,7 +430,7 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
                 npc,
                 muzzleWorld,
                 player.position,
-                asset->rangedMaxRange);
+                asset->rangedAttack.rangedMaxRange);
     }
 
     const bool canTakeShot =
@@ -447,7 +447,7 @@ void TopdownNpcAiHoldAndFire_UpdateEngaged(
         intent = HoldAndFireCombatIntent::Attack;
     } else if (perception.seesPlayer) {
         const float desiredDistance =
-                npc.attackRange * npc.preferredAttackRangeFactor;
+                npc.meleeAttack.attackRange * npc.preferredAttackRangeFactor;
 
         const float tolerance = 20.0f;
 

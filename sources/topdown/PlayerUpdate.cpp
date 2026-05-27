@@ -428,7 +428,7 @@ static void UpdatePlayerMovementAndCollision(GameState& state, float dt)
                     player.velocity,
                     player.radius,
                     npc.position,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     preferredSeparation);
         }
     }

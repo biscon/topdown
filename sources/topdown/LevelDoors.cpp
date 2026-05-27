@@ -546,7 +546,7 @@ void ResolveNpcVsDoors(GameState& state, TopdownNpcRuntime& npc)
             if (ResolveCircleVsDoorCapsule(
                     npc.position,
                     npc.currentVelocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     door,
                     &leverT,
                     &normal,
@@ -577,7 +577,7 @@ void ResolveNpcKnockbackVsDoors(GameState& state, TopdownNpcRuntime& npc)
             if (ResolveCircleVsDoorCapsule(
                     npc.position,
                     npc.knockbackVelocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     door,
                     &leverT,
                     &normal,
@@ -679,7 +679,7 @@ void ApplyDoorMotionPushToNpcs(GameState& state, float dt)
             const Vector2 closest = ComputeDoorClosestPoint(door, npc.position, &leverT);
             const Vector2 delta = TopdownSub(npc.position, closest);
 
-            const float minDist = npc.collisionRadius + door.thickness * 0.5f + 2.0f;
+            const float minDist = npc.movement.collisionRadius + door.thickness * 0.5f + 2.0f;
             const float distSqr = TopdownLengthSqr(delta);
 
             if (distSqr > minDist * minDist) {

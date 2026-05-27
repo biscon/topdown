@@ -40,8 +40,8 @@ static bool TryBuildNpcMeleeHitWorldPosition(
 
     const float drawScale = sprite->baseDrawScale;
 
-    const float localX = (npc.meleeHitPosX - sprite->origin.x) * drawScale;
-    const float localY = (npc.meleeHitPosY - sprite->origin.y) * drawScale;
+    const float localX = (npc.meleeAttack.meleeHitPosX - sprite->origin.x) * drawScale;
+    const float localY = (npc.meleeAttack.meleeHitPosY - sprite->origin.y) * drawScale;
 
     const float radians = npc.rotationRadians;
     const Vector2 forward{ std::cos(radians), std::sin(radians) };
@@ -102,17 +102,17 @@ static void StartNpcAttack(
         npc.attackAnimationDurationMs =
                 TopdownGetNpcClipDurationMs(state, asset->meleeAttackClip);
     } else {
-        npc.attackAnimationDurationMs = std::max(1.0f, npc.attackRecoverMs);
+        npc.attackAnimationDurationMs = std::max(1.0f, npc.meleeAttack.attackRecoverMs);
     }
 
     if (npc.attackAnimationDurationMs <= 0.0f) {
-        npc.attackAnimationDurationMs = std::max(1.0f, npc.attackRecoverMs);
+        npc.attackAnimationDurationMs = std::max(1.0f, npc.meleeAttack.attackRecoverMs);
     }
 
-    if (!npc.attackStartSoundId.empty()) {
+    if (!npc.meleeAttack.attackStartSoundId.empty()) {
         AudioPlaySoundAtPosition(
                 state,
-                npc.attackStartSoundId,
+                npc.meleeAttack.attackStartSoundId,
                 npc.position,
                 AUDIO_RADIUS_NPC_WEAPON,
                 RandomRangeFloat(0.95f, 1.05f));
@@ -130,18 +130,18 @@ static bool UpdateNpcAttackState(
     const float normalizedTime = npc.attackStateTimeMs / durationMs;
 
     if (npc.attackHitPending && !npc.attackHitApplied) {
-        if (normalizedTime >= npc.attackHitNormalizedTime) {
+        if (normalizedTime >= npc.meleeAttack.attackHitNormalizedTime) {
             if (TopdownIsPlayerAlive(state) &&
                 TopdownIsPlayerWithinNpcAttackRange(npc, state.topdown.runtime.player)) {
                 TopdownApplyDamageToPlayer(
                         state,
-                        npc.attackDamage,
+                        npc.meleeAttack.attackDamage,
                         npc.position);
 
-                if (!npc.attackConnectSoundId.empty()) {
+                if (!npc.meleeAttack.attackConnectSoundId.empty()) {
                     AudioPlaySoundAtPosition(
                             state,
-                            npc.attackConnectSoundId,
+                            npc.meleeAttack.attackConnectSoundId,
                             npc.position,
                             AUDIO_RADIUS_NPC_WEAPON,
                             RandomRangeFloat(0.95f, 1.05f));
@@ -172,19 +172,19 @@ static bool UpdateNpcAttackState(
                         state,
                         bloodOrigin,
                         hitDir,
-                        npc.attackEffects);
+                        npc.meleeAttack.attackEffects);
 
                 QueueBloodSpatterDecals(
                         state,
                         bloodOrigin,
                         hitDir,
-                        npc.attackEffects);
+                        npc.meleeAttack.attackEffects);
             }
 
             npc.attackHitApplied = true;
             npc.attackHitPending = false;
             npc.attackCooldownRemainingMs =
-                    std::max(npc.attackCooldownRemainingMs, npc.attackCooldownMs);
+                    std::max(npc.attackCooldownRemainingMs, npc.meleeAttack.attackCooldownMs);
         }
     }
 
@@ -287,7 +287,7 @@ static void UpdateNpcChasePathing(
                 chaseTarget,
                 TopdownNpcMoveOwner::Ai);
 
-        npc.repathTimerMs = std::max(1.0f, npc.chaseRepathIntervalMs);
+        npc.repathTimerMs = std::max(1.0f, npc.ai.chaseRepathIntervalMs);
     }
 }
 
@@ -358,7 +358,7 @@ void TopdownNpcAiSeekAndDestroy_UpdateEngaged(
         const TopdownNpcPerceptionResult& perception,
         float dt)
 {
-    if (npc.dead || npc.corpse || !npc.hostile) {
+    if (npc.dead || npc.corpse || !npc.ai.hostile) {
         return;
     }
 

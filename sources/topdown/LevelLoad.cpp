@@ -895,68 +895,68 @@ static void ImportWindowLayer(
 
         window.breakSoundId = GetObjectPropertyString(obj, "breakSoundId", "");
 
-        window.breakParticleCount = static_cast<int>(
-                GetObjectPropertyFloat(obj, "breakParticleCount", static_cast<float>(window.breakParticleCount)));
+        window.breakParticles.count = static_cast<int>(
+                GetObjectPropertyFloat(obj, "breakParticleCount", static_cast<float>(window.breakParticles.count)));
 
-        window.breakParticleSpeedMin = GetObjectPropertyFloat(
+        window.breakParticles.speedMin = GetObjectPropertyFloat(
                 obj,
                 "breakParticleSpeedMin",
-                window.breakParticleSpeedMin);
+                window.breakParticles.speedMin);
 
-        window.breakParticleSpeedMax = GetObjectPropertyFloat(
+        window.breakParticles.speedMax = GetObjectPropertyFloat(
                 obj,
                 "breakParticleSpeedMax",
-                window.breakParticleSpeedMax);
+                window.breakParticles.speedMax);
 
-        window.breakParticleLifetimeMsMin = GetObjectPropertyFloat(
+        window.breakParticles.lifetimeMsMin = GetObjectPropertyFloat(
                 obj,
                 "breakParticleLifetimeMsMin",
-                window.breakParticleLifetimeMsMin);
+                window.breakParticles.lifetimeMsMin);
 
-        window.breakParticleLifetimeMsMax = GetObjectPropertyFloat(
+        window.breakParticles.lifetimeMsMax = GetObjectPropertyFloat(
                 obj,
                 "breakParticleLifetimeMsMax",
-                window.breakParticleLifetimeMsMax);
+                window.breakParticles.lifetimeMsMax);
 
-        window.breakParticleSizeMin = GetObjectPropertyFloat(
+        window.breakParticles.sizeMin = GetObjectPropertyFloat(
                 obj,
                 "breakParticleSizeMin",
-                window.breakParticleSizeMin);
+                window.breakParticles.sizeMin);
 
-        window.breakParticleSizeMax = GetObjectPropertyFloat(
+        window.breakParticles.sizeMax = GetObjectPropertyFloat(
                 obj,
                 "breakParticleSizeMax",
-                window.breakParticleSizeMax);
+                window.breakParticles.sizeMax);
 
-        window.breakParticleSpreadAlongWindow = GetObjectPropertyFloat(
+        window.breakParticles.spreadAlongWindow = GetObjectPropertyFloat(
                 obj,
                 "breakParticleSpreadAlongWindow",
-                window.breakParticleSpreadAlongWindow);
+                window.breakParticles.spreadAlongWindow);
 
-        window.breakParticleColor1 = GetObjectPropertyColor(
+        window.breakParticles.color1 = GetObjectPropertyColor(
                 obj,
                 "breakParticleColor1",
-                window.breakParticleColor1);
+                window.breakParticles.color1);
 
-        window.breakParticleColor2 = GetObjectPropertyColor(
+        window.breakParticles.color2 = GetObjectPropertyColor(
                 obj,
                 "breakParticleColor2",
-                window.breakParticleColor2);
+                window.breakParticles.color2);
 
-        if (window.breakParticleCount < 0) {
-            window.breakParticleCount = 0;
+        if (window.breakParticles.count < 0) {
+            window.breakParticles.count = 0;
         }
 
-        if (window.breakParticleSpeedMin > window.breakParticleSpeedMax) {
-            std::swap(window.breakParticleSpeedMin, window.breakParticleSpeedMax);
+        if (window.breakParticles.speedMin > window.breakParticles.speedMax) {
+            std::swap(window.breakParticles.speedMin, window.breakParticles.speedMax);
         }
 
-        if (window.breakParticleLifetimeMsMin > window.breakParticleLifetimeMsMax) {
-            std::swap(window.breakParticleLifetimeMsMin, window.breakParticleLifetimeMsMax);
+        if (window.breakParticles.lifetimeMsMin > window.breakParticles.lifetimeMsMax) {
+            std::swap(window.breakParticles.lifetimeMsMin, window.breakParticles.lifetimeMsMax);
         }
 
-        if (window.breakParticleSizeMin > window.breakParticleSizeMax) {
-            std::swap(window.breakParticleSizeMin, window.breakParticleSizeMax);
+        if (window.breakParticles.sizeMin > window.breakParticles.sizeMax) {
+            std::swap(window.breakParticles.sizeMin, window.breakParticles.sizeMax);
         }
 
         topdown.authored.windows.push_back(window);

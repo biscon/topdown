@@ -114,7 +114,7 @@ static void UpdateNpcReturningToGuardPost(GameState& state, TopdownNpcRuntime& n
 
 static void DispatchNpcInvestigatingExecution(GameState& state, TopdownNpcRuntime& npc,
                                               const TopdownNpcPerceptionResult& perception, float dt) {
-    switch (npc.aiMode) {
+    switch (npc.ai.aiMode) {
         case TopdownNpcAiMode::SeekAndDestroy:
             TopdownNpcAiSeekAndDestroy_UpdateInvestigating(state, npc, perception, dt);
             break;
@@ -131,7 +131,7 @@ static void DispatchNpcInvestigatingExecution(GameState& state, TopdownNpcRuntim
 
 static void DispatchNpcEngagedExecution(GameState& state, TopdownNpcRuntime& npc,
                                         const TopdownNpcPerceptionResult& perception, float dt) {
-    switch (npc.aiMode) {
+    switch (npc.ai.aiMode) {
         case TopdownNpcAiMode::SeekAndDestroy:
             TopdownNpcAiSeekAndDestroy_UpdateEngaged(state, npc, perception, dt);
             break;
@@ -189,7 +189,7 @@ static void UpdateNpcEngagementState(
 
     const float reactionTimeMs =
             (asset != nullptr && asset->loaded)
-            ? std::max(0.0f, asset->reactionTimeMs)
+            ? std::max(0.0f, asset->rangedAttack.reactionTimeMs)
             : 0.0f;
 
     if (perception.detectsPlayer) {
@@ -217,7 +217,7 @@ static void UpdateNpcEngagementState(
                 npc.engagementState = TopdownNpcEngagementState::Engaged;
 
                 const float nearbyAlertRadius =
-                        std::max(180.0f, npc.hearingRange);
+                        std::max(180.0f, npc.perception.hearingRange);
 
                 TopdownAlertNearbyNpcs(state, npc, nearbyAlertRadius);
             } else {

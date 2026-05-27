@@ -1045,14 +1045,14 @@ namespace
             npcJson["currentVelocity"] = SerializeVector2(npc.currentVelocity);
             npcJson["health"] = npc.health;
             npcJson["corpseElapsedMs"] = npc.corpseElapsedMs;
-            npcJson["hostile"] = npc.hostile;
+            npcJson["hostile"] = npc.ai.hostile;
             npcJson["persistentChase"] = npc.persistentChase;
             npcJson["guard"] = npc.guard;
             npcJson["guardHomePosition"] = SerializeVector2(npc.guardHomePosition);
             npcJson["hasGuardHomePosition"] = npc.hasGuardHomePosition;
             npcJson["guardLookAtSoundRadians"] = npc.guardLookAtSoundRadians;
             npcJson["engagementState"] = ToInt(npc.engagementState);
-            npcJson["aiMode"] = ToInt(npc.aiMode);
+            npcJson["aiMode"] = ToInt(npc.ai.aiMode);
 
             json colorSubstitutionJson;
             colorSubstitutionJson["active"] = npc.colorSubstitution.active;
@@ -1378,8 +1378,8 @@ namespace
             npc->corpseElapsedMs = savedNpc.corpseElapsedMs;
             npc->persistentChase = savedNpc.persistentChase;
             npc->guard = savedNpc.guard;
-            npc->hostile = savedNpc.hostile;
-            npc->aiMode = savedNpc.aiMode;
+            npc->ai.hostile = savedNpc.hostile;
+            npc->ai.aiMode = savedNpc.aiMode;
             npc->engagementState = savedNpc.engagementState;
             if (savedNpc.colorSubstitution.present) {
                 if (savedNpc.colorSubstitution.valid && savedNpc.colorSubstitution.resolved.active) {

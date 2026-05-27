@@ -202,7 +202,7 @@ static bool IsNpcInsidePlayerMeleeArc(
     // Closest point on NPC circle toward the player.
     Vector2 closestPointOnNpc = TopdownSub(
             npc.position,
-            TopdownMul(dirToCenter, npc.collisionRadius));
+            TopdownMul(dirToCenter, npc.movement.collisionRadius));
 
     Vector2 toHitPoint = TopdownSub(closestPointOnNpc, player.position);
     float hitPointDist = TopdownLength(toHitPoint);
@@ -797,7 +797,7 @@ static void ApplyPendingNpcShots(
 
         {
             const float nearbyAlertRadius =
-                    std::max(180.0f, pending.npc->hearingRange);
+                    std::max(180.0f, pending.npc->perception.hearingRange);
             TopdownAlertNearbyNpcs(state, *pending.npc, nearbyAlertRadius);
         }
 
@@ -861,7 +861,7 @@ static void ResolvePlayerMeleeNpcHit(
 
         {
             const float nearbyAlertRadius =
-                    std::max(180.0f, hitNpc.hearingRange);
+                    std::max(180.0f, hitNpc.perception.hearingRange);
             TopdownAlertNearbyNpcs(state, hitNpc, nearbyAlertRadius);
         }
 
@@ -910,7 +910,7 @@ static void ResolvePlayerMeleeNpcHit(
 
             bloodOrigin = TopdownSub(
                     hitNpc.position,
-                    TopdownMul(toNpc, hitNpc.collisionRadius * 0.65f));
+                    TopdownMul(toNpc, hitNpc.movement.collisionRadius * 0.65f));
         }
 
         SpawnBloodImpactParticles(

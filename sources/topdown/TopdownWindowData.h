@@ -6,6 +6,20 @@
 #include "raylib.h"
 #include "topdown/TopdownCoreData.h"
 
+struct TopdownWindowBreakParticleConfig {
+    int count = 24;
+    float speedMin = 80.0f;
+    float speedMax = 220.0f;
+    float lifetimeMsMin = 180.0f;
+    float lifetimeMsMax = 420.0f;
+    float sizeMin = 2.0f;
+    float sizeMax = 4.5f;
+    float spreadAlongWindow = 26.0f;
+
+    Color color1 = Color{210, 240, 250, 255};
+    Color color2 = Color{160, 210, 230, 255};
+};
+
 struct TopdownAuthoredWindow {
     int tiledObjectId = -1;
     std::string id;
@@ -20,18 +34,7 @@ struct TopdownAuthoredWindow {
     Color outlineColor = Color{23, 24, 25, 255};
 
     std::string breakSoundId;
-
-    int breakParticleCount = 24;
-    float breakParticleSpeedMin = 80.0f;
-    float breakParticleSpeedMax = 220.0f;
-    float breakParticleLifetimeMsMin = 180.0f;
-    float breakParticleLifetimeMsMax = 420.0f;
-    float breakParticleSizeMin = 2.0f;
-    float breakParticleSizeMax = 4.5f;
-    float breakParticleSpreadAlongWindow = 26.0f;
-
-    Color breakParticleColor1 = Color{210, 240, 250, 255};
-    Color breakParticleColor2 = Color{160, 210, 230, 255};
+    TopdownWindowBreakParticleConfig breakParticles;
 };
 
 struct TopdownRuntimeWindow {
@@ -57,18 +60,7 @@ struct TopdownRuntimeWindow {
     Color outlineColor = Color{23, 24, 25, 255};
 
     std::string breakSoundId;
-
-    int breakParticleCount = 24;
-    float breakParticleSpeedMin = 80.0f;
-    float breakParticleSpeedMax = 220.0f;
-    float breakParticleLifetimeMsMin = 180.0f;
-    float breakParticleLifetimeMsMax = 420.0f;
-    float breakParticleSizeMin = 2.0f;
-    float breakParticleSizeMax = 4.5f;
-    float breakParticleSpreadAlongWindow = 26.0f;
-
-    Color breakParticleColor1 = Color{210, 240, 250, 255};
-    Color breakParticleColor2 = Color{160, 210, 230, 255};
+    TopdownWindowBreakParticleConfig breakParticles;
 };
 
 struct TopdownWindowGlassParticle {

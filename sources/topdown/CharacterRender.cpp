@@ -317,8 +317,8 @@ static Rectangle BuildNpcRenderCullWorldRect(const TopdownNpcRuntime& npc)
 {
     static constexpr float kNpcRenderHalfExtentFallback = 192.0f;
 
-    const float radius = npc.collisionRadius > 0.0f
-            ? npc.collisionRadius
+    const float radius = npc.movement.collisionRadius > 0.0f
+            ? npc.movement.collisionRadius
             : kNpcRenderHalfExtentFallback;
 
     const float halfExtent = std::max(radius * 3.0f, kNpcRenderHalfExtentFallback);
@@ -386,8 +386,8 @@ void TopdownRenderNpcs(GameState& state)
 
         unsigned char alpha = 255;
 
-        if (npc.corpse && npc.corpseExpirationMs >= 0.0f) {
-            const float fadeStartMs = npc.corpseExpirationMs;
+        if (npc.corpse && npc.movement.corpseExpirationMs >= 0.0f) {
+            const float fadeStartMs = npc.movement.corpseExpirationMs;
             if (npc.corpseElapsedMs > fadeStartMs) {
                 const float fadeT = std::clamp(
                         (npc.corpseElapsedMs - fadeStartMs) / kCorpseFadeDurationMs,

@@ -904,14 +904,14 @@ static void ReadNpcSounds(
 
     const json& sounds = *it;
 
-    def.attackStartSoundId = sounds.value("attackStart", std::string());
-    def.attackConnectSoundId = sounds.value("attackConnect", std::string());
+    def.meleeAttack.attackStartSoundId = sounds.value("attackStart", std::string());
+    def.meleeAttack.attackConnectSoundId = sounds.value("attackConnect", std::string());
 
     auto hitReactionIt = sounds.find("hitReaction");
     if (hitReactionIt != sounds.end() && hitReactionIt->is_array()) {
         for (const auto& soundEntry : *hitReactionIt) {
             if (soundEntry.is_string()) {
-                def.hitReactionSoundIds.push_back(soundEntry.get<std::string>());
+                def.meleeAttack.hitReactionSoundIds.push_back(soundEntry.get<std::string>());
             }
         }
     }
@@ -1082,26 +1082,26 @@ static void MergeNpcRegistryFile(
         TopdownNpcAssetDefinition def;
         def.assetId = entry.value("assetId", std::string());
         ReadNpcColorSubstitutionConfig(entry, state.topdown.npcColorPresets, def);
-        def.baseDrawScale = entry.value("baseDrawScale", 1.0f);
-        def.collisionRadius = entry.value("collisionRadius", 32.0f);
-        def.walkSpeed = entry.value("walkSpeed", 450.0f);
-        def.runSpeed = entry.value("runSpeed", 700.0f);
-        def.hurtStunMs = entry.value("hurtStunMs", 0.0f);
-        def.maxHealth = entry.value("maxHealth", 100.0f);
-        def.corpseExpirationMs = entry.value("corpseExpirationMs", -1.0f);
+        def.movement.baseDrawScale = entry.value("baseDrawScale", 1.0f);
+        def.movement.collisionRadius = entry.value("collisionRadius", 32.0f);
+        def.movement.walkSpeed = entry.value("walkSpeed", 450.0f);
+        def.movement.runSpeed = entry.value("runSpeed", 700.0f);
+        def.movement.hurtStunMs = entry.value("hurtStunMs", 0.0f);
+        def.movement.maxHealth = entry.value("maxHealth", 100.0f);
+        def.movement.corpseExpirationMs = entry.value("corpseExpirationMs", -1.0f);
 
-        def.hostile = entry.value("hostile", true);
+        def.ai.hostile = entry.value("hostile", true);
 
         {
             const std::string aiModeStr =
                     entry.value("aiMode", std::string("none"));
 
-            if (!ParseNpcAiModeString(aiModeStr, def.aiMode)) {
+            if (!ParseNpcAiModeString(aiModeStr, def.ai.aiMode)) {
                 TraceLog(LOG_WARNING,
                          "NPC definition '%s' has invalid aiMode '%s', defaulting to none",
                          def.assetId.c_str(),
                          aiModeStr.c_str());
-                def.aiMode = TopdownNpcAiMode::None;
+                def.ai.aiMode = TopdownNpcAiMode::None;
             }
         }
 
@@ -1109,12 +1109,12 @@ static void MergeNpcRegistryFile(
             const std::string attackTypeStr =
                     entry.value("attackType", std::string("none"));
 
-            if (!ParseTopdownAttackTypeString(attackTypeStr, def.attackType)) {
+            if (!ParseTopdownAttackTypeString(attackTypeStr, def.ai.attackType)) {
                 TraceLog(LOG_WARNING,
                          "NPC definition '%s' has invalid attackType '%s', defaulting to none",
                          def.assetId.c_str(),
                          attackTypeStr.c_str());
-                def.attackType = TopdownAttackType::None;
+                def.ai.attackType = TopdownAttackType::None;
             }
         }
 
@@ -1122,191 +1122,191 @@ static void MergeNpcRegistryFile(
             const std::string tracerStyleStr =
                     entry.value("rangedTracerStyle", std::string("handgun"));
 
-            if (!ParseTopdownTracerStyleString(tracerStyleStr, def.rangedTracerStyle)) {
+            if (!ParseTopdownTracerStyleString(tracerStyleStr, def.rangedAttack.rangedTracerStyle)) {
                 TraceLog(LOG_WARNING,
                          "NPC definition '%s' has invalid rangedTracerStyle '%s', defaulting to handgun",
                          def.assetId.c_str(),
                          tracerStyleStr.c_str());
-                def.rangedTracerStyle = TopdownTracerStyle::Handgun;
+                def.rangedAttack.rangedTracerStyle = TopdownTracerStyle::Handgun;
             }
         }
 
-        def.rangedPelletCount = entry.value("rangedPelletCount", 1);
-        def.rangedSpreadDegrees = entry.value("rangedSpreadDegrees", 6.0f);
-        def.rangedMaxRange = entry.value("rangedMaxRange", 800.0f);
-        ReadNpcBallisticImpactEffectsConfig(entry, def.ballisticImpactEffects);
-        ReadNpcMuzzleEffectsConfig(entry, def.muzzleEffects);
-        def.reactionTimeMs = entry.value("reactionTimeMs", 180.0f);
-        def.aimInaccuracyMinDegrees = entry.value("aimInaccuracyMinDegrees", 2.0f);
-        def.aimInaccuracyMaxDegrees = entry.value("aimInaccuracyMaxDegrees", 10.0f);
+        def.rangedAttack.rangedPelletCount = entry.value("rangedPelletCount", 1);
+        def.rangedAttack.rangedSpreadDegrees = entry.value("rangedSpreadDegrees", 6.0f);
+        def.rangedAttack.rangedMaxRange = entry.value("rangedMaxRange", 800.0f);
+        ReadNpcBallisticImpactEffectsConfig(entry, def.rangedAttack.ballisticImpactEffects);
+        ReadNpcMuzzleEffectsConfig(entry, def.rangedAttack.muzzleEffects);
+        def.rangedAttack.reactionTimeMs = entry.value("reactionTimeMs", 180.0f);
+        def.rangedAttack.aimInaccuracyMinDegrees = entry.value("aimInaccuracyMinDegrees", 2.0f);
+        def.rangedAttack.aimInaccuracyMaxDegrees = entry.value("aimInaccuracyMaxDegrees", 10.0f);
 
-        def.visionRange = entry.value("visionRange", 700.0f);
-        def.hearingRange = entry.value("hearingRange", 220.0f);
-        def.gunshotHearingRange = entry.value("gunshotHearingRange", 1000.0f);
-        def.visionHalfAngleDegrees = entry.value("visionHalfAngleDegrees", 65.0f);
+        def.perception.visionRange = entry.value("visionRange", 700.0f);
+        def.perception.hearingRange = entry.value("hearingRange", 220.0f);
+        def.perception.gunshotHearingRange = entry.value("gunshotHearingRange", 1000.0f);
+        def.perception.visionHalfAngleDegrees = entry.value("visionHalfAngleDegrees", 65.0f);
 
-        def.attackRange = entry.value("attackRange", 95.0f);
-        def.attackCooldownMs = entry.value("attackCooldownMs", 900.0f);
-        def.attackDamage = entry.value("attackDamage", 25.0f);
-        def.attackHitNormalizedTime = entry.value("attackHitNormalizedTime", 0.7f);
-        def.attackRecoverMs = entry.value("attackRecoverMs", 250.0f);
-        def.meleeHitPosX = entry.value("meleeHitPosX", 0.0f);
-        def.meleeHitPosY = entry.value("meleeHitPosY", 0.0f);
+        def.meleeAttack.attackRange = entry.value("attackRange", 95.0f);
+        def.meleeAttack.attackCooldownMs = entry.value("attackCooldownMs", 900.0f);
+        def.meleeAttack.attackDamage = entry.value("attackDamage", 25.0f);
+        def.meleeAttack.attackHitNormalizedTime = entry.value("attackHitNormalizedTime", 0.7f);
+        def.meleeAttack.attackRecoverMs = entry.value("attackRecoverMs", 250.0f);
+        def.meleeAttack.meleeHitPosX = entry.value("meleeHitPosX", 0.0f);
+        def.meleeAttack.meleeHitPosY = entry.value("meleeHitPosY", 0.0f);
 
         ReadNpcSounds(entry, def);
-        ReadNpcAttackEffectsConfig(entry, def.attackEffects);
+        ReadNpcAttackEffectsConfig(entry, def.meleeAttack.attackEffects);
 
-        def.chaseRepathIntervalMs = entry.value("chaseRepathIntervalMs", 250.0f);
+        def.ai.chaseRepathIntervalMs = entry.value("chaseRepathIntervalMs", 250.0f);
 
-        if (def.hurtStunMs < 0.0f) {
+        if (def.movement.hurtStunMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has hurtStunMs < 0, clamping to 0",
                      def.assetId.c_str());
-            def.hurtStunMs = 0.0f;
+            def.movement.hurtStunMs = 0.0f;
         }
 
-        if (def.maxHealth <= 0.0f) {
+        if (def.movement.maxHealth <= 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has maxHealth <= 0, clamping to 1",
                      def.assetId.c_str());
-            def.maxHealth = 1.0f;
+            def.movement.maxHealth = 1.0f;
         }
 
-        if (def.corpseExpirationMs < 0.0f && def.corpseExpirationMs != -1.0f) {
+        if (def.movement.corpseExpirationMs < 0.0f && def.movement.corpseExpirationMs != -1.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has invalid corpseExpirationMs %.2f, using -1",
                      def.assetId.c_str(),
-                     def.corpseExpirationMs);
-            def.corpseExpirationMs = -1.0f;
+                     def.movement.corpseExpirationMs);
+            def.movement.corpseExpirationMs = -1.0f;
         }
 
-        if (def.visionRange < 0.0f) {
+        if (def.perception.visionRange < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has visionRange < 0, clamping to 0",
                      def.assetId.c_str());
-            def.visionRange = 0.0f;
+            def.perception.visionRange = 0.0f;
         }
 
-        if (def.hearingRange < 0.0f) {
+        if (def.perception.hearingRange < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has hearingRange < 0, clamping to 0",
                      def.assetId.c_str());
-            def.hearingRange = 0.0f;
+            def.perception.hearingRange = 0.0f;
         }
 
-        if (def.gunshotHearingRange < 0.0f) {
+        if (def.perception.gunshotHearingRange < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has gunshotHearingRange < 0, clamping to 0",
                      def.assetId.c_str());
-            def.gunshotHearingRange = 0.0f;
+            def.perception.gunshotHearingRange = 0.0f;
         }
 
-        if (def.visionHalfAngleDegrees < 0.0f) {
+        if (def.perception.visionHalfAngleDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has visionHalfAngleDegrees < 0, clamping to 0",
                      def.assetId.c_str());
-            def.visionHalfAngleDegrees = 0.0f;
-        } else if (def.visionHalfAngleDegrees > 180.0f) {
+            def.perception.visionHalfAngleDegrees = 0.0f;
+        } else if (def.perception.visionHalfAngleDegrees > 180.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has visionHalfAngleDegrees > 180, clamping to 180",
                      def.assetId.c_str());
-            def.visionHalfAngleDegrees = 180.0f;
+            def.perception.visionHalfAngleDegrees = 180.0f;
         }
 
-        if (def.attackRange < 0.0f) {
+        if (def.meleeAttack.attackRange < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackRange < 0, clamping to 0",
                      def.assetId.c_str());
-            def.attackRange = 0.0f;
+            def.meleeAttack.attackRange = 0.0f;
         }
 
-        if (def.attackCooldownMs < 0.0f) {
+        if (def.meleeAttack.attackCooldownMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackCooldownMs < 0, clamping to 0",
                      def.assetId.c_str());
-            def.attackCooldownMs = 0.0f;
+            def.meleeAttack.attackCooldownMs = 0.0f;
         }
 
-        if (def.attackDamage < 0.0f) {
+        if (def.meleeAttack.attackDamage < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackDamage < 0, clamping to 0",
                      def.assetId.c_str());
-            def.attackDamage = 0.0f;
+            def.meleeAttack.attackDamage = 0.0f;
         }
 
-        if (def.attackHitNormalizedTime < 0.0f) {
+        if (def.meleeAttack.attackHitNormalizedTime < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackHitNormalizedTime < 0, clamping to 0",
                      def.assetId.c_str());
-            def.attackHitNormalizedTime = 0.0f;
-        } else if (def.attackHitNormalizedTime > 1.0f) {
+            def.meleeAttack.attackHitNormalizedTime = 0.0f;
+        } else if (def.meleeAttack.attackHitNormalizedTime > 1.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackHitNormalizedTime > 1, clamping to 1",
                      def.assetId.c_str());
-            def.attackHitNormalizedTime = 1.0f;
+            def.meleeAttack.attackHitNormalizedTime = 1.0f;
         }
 
-        if (def.attackRecoverMs < 0.0f) {
+        if (def.meleeAttack.attackRecoverMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has attackRecoverMs < 0, clamping to 0",
                      def.assetId.c_str());
-            def.attackRecoverMs = 0.0f;
+            def.meleeAttack.attackRecoverMs = 0.0f;
         }
 
-        if (def.chaseRepathIntervalMs < 0.0f) {
+        if (def.ai.chaseRepathIntervalMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has chaseRepathIntervalMs < 0, clamping to 0",
                      def.assetId.c_str());
-            def.chaseRepathIntervalMs = 0.0f;
+            def.ai.chaseRepathIntervalMs = 0.0f;
         }
 
-        if (def.rangedPelletCount < 1) {
+        if (def.rangedAttack.rangedPelletCount < 1) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has rangedPelletCount < 1, clamping to 1",
                      def.assetId.c_str());
-            def.rangedPelletCount = 1;
+            def.rangedAttack.rangedPelletCount = 1;
         }
 
-        if (def.rangedSpreadDegrees < 0.0f) {
+        if (def.rangedAttack.rangedSpreadDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has rangedSpreadDegrees < 0, clamping to 0",
                      def.assetId.c_str());
-            def.rangedSpreadDegrees = 0.0f;
+            def.rangedAttack.rangedSpreadDegrees = 0.0f;
         }
 
-        if (def.rangedMaxRange < 0.0f) {
+        if (def.rangedAttack.rangedMaxRange < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has rangedMaxRange < 0, clamping to 0",
                      def.assetId.c_str());
-            def.rangedMaxRange = 0.0f;
+            def.rangedAttack.rangedMaxRange = 0.0f;
         }
 
-        if (def.reactionTimeMs < 0.0f) {
+        if (def.rangedAttack.reactionTimeMs < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has reactionTimeMs < 0, clamping to 0",
                      def.assetId.c_str());
-            def.reactionTimeMs = 0.0f;
+            def.rangedAttack.reactionTimeMs = 0.0f;
         }
 
-        if (def.aimInaccuracyMinDegrees < 0.0f) {
+        if (def.rangedAttack.aimInaccuracyMinDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has aimInaccuracyMinDegrees < 0, clamping to 0",
                      def.assetId.c_str());
-            def.aimInaccuracyMinDegrees = 0.0f;
+            def.rangedAttack.aimInaccuracyMinDegrees = 0.0f;
         }
 
-        if (def.aimInaccuracyMaxDegrees < 0.0f) {
+        if (def.rangedAttack.aimInaccuracyMaxDegrees < 0.0f) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has aimInaccuracyMaxDegrees < 0, clamping to 0",
                      def.assetId.c_str());
-            def.aimInaccuracyMaxDegrees = 0.0f;
+            def.rangedAttack.aimInaccuracyMaxDegrees = 0.0f;
         }
 
-        if (def.aimInaccuracyMaxDegrees < def.aimInaccuracyMinDegrees) {
+        if (def.rangedAttack.aimInaccuracyMaxDegrees < def.rangedAttack.aimInaccuracyMinDegrees) {
             TraceLog(LOG_WARNING,
                      "NPC definition '%s' has aimInaccuracyMaxDegrees < aimInaccuracyMinDegrees, clamping max up to min",
                      def.assetId.c_str());
-            def.aimInaccuracyMaxDegrees = def.aimInaccuracyMinDegrees;
+            def.rangedAttack.aimInaccuracyMaxDegrees = def.rangedAttack.aimInaccuracyMinDegrees;
         }
 
         if (def.assetId.empty()) {
@@ -1435,8 +1435,8 @@ bool TopdownScanNpcRegistry(GameState& state)
         TraceLog(LOG_INFO,
                  "  npc assetId=%s scale=%.3f radius=%.2f animSources=%d",
                  def.assetId.c_str(),
-                 def.baseDrawScale,
-                 def.collisionRadius,
+                 def.movement.baseDrawScale,
+                 def.movement.collisionRadius,
                  static_cast<int>(def.animations.size()));
     }
 
@@ -1493,46 +1493,11 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
 
     TopdownNpcAssetRuntime runtime;
     runtime.assetId = def->assetId;
-    runtime.baseDrawScale = def->baseDrawScale;
-    runtime.collisionRadius = def->collisionRadius;
-    runtime.walkSpeed = def->walkSpeed;
-    runtime.runSpeed = def->runSpeed;
-    runtime.hurtStunMs = def->hurtStunMs;
-    runtime.maxHealth = def->maxHealth;
-    runtime.corpseExpirationMs = def->corpseExpirationMs;
-    runtime.hostile = def->hostile;
-    runtime.aiMode = def->aiMode;
-
-    runtime.attackType = def->attackType;
-    runtime.rangedTracerStyle = def->rangedTracerStyle;
-    runtime.rangedPelletCount = def->rangedPelletCount;
-    runtime.rangedSpreadDegrees = def->rangedSpreadDegrees;
-    runtime.rangedMaxRange = def->rangedMaxRange;
-    runtime.ballisticImpactEffects = def->ballisticImpactEffects;
-    runtime.muzzleEffects = def->muzzleEffects;
-    runtime.reactionTimeMs = def->reactionTimeMs;
-    runtime.aimInaccuracyMinDegrees = def->aimInaccuracyMinDegrees;
-    runtime.aimInaccuracyMaxDegrees = def->aimInaccuracyMaxDegrees;
-
-    runtime.visionRange = def->visionRange;
-    runtime.hearingRange = def->hearingRange;
-    runtime.gunshotHearingRange = def->gunshotHearingRange;
-    runtime.visionHalfAngleDegrees = def->visionHalfAngleDegrees;
-
-    runtime.attackRange = def->attackRange;
-    runtime.attackCooldownMs = def->attackCooldownMs;
-    runtime.attackDamage = def->attackDamage;
-    runtime.attackHitNormalizedTime = def->attackHitNormalizedTime;
-    runtime.attackRecoverMs = def->attackRecoverMs;
-    runtime.meleeHitPosX = def->meleeHitPosX;
-    runtime.meleeHitPosY = def->meleeHitPosY;
-
-    runtime.attackStartSoundId = def->attackStartSoundId;
-    runtime.attackConnectSoundId = def->attackConnectSoundId;
-    runtime.hitReactionSoundIds = def->hitReactionSoundIds;
-    runtime.attackEffects = def->attackEffects;
-
-    runtime.chaseRepathIntervalMs = def->chaseRepathIntervalMs;
+    runtime.movement = def->movement;
+    runtime.ai = def->ai;
+    runtime.rangedAttack = def->rangedAttack;
+    runtime.perception = def->perception;
+    runtime.meleeAttack = def->meleeAttack;
     runtime.colorSubstitution = def->colorSubstitution;
 
     for (const TopdownNpcAnimationSourceDefinition& animSource : def->animations) {
@@ -1542,14 +1507,14 @@ bool EnsureTopdownNpcAssetLoaded(GameState& state, const std::string& assetId)
             spriteHandle = LoadSpriteAssetFromAsepriteJsonWithOrigin(
                     state.resources,
                     animSource.asepriteJsonPath.c_str(),
-                    def->baseDrawScale,
+                    def->movement.baseDrawScale,
                     animSource.origin,
                     ResourceScope::Scene);
         } else {
             spriteHandle = LoadSpriteAssetFromAsepriteJson(
                     state.resources,
                     animSource.asepriteJsonPath.c_str(),
-                    def->baseDrawScale,
+                    def->movement.baseDrawScale,
                     ResourceScope::Scene);
         }
 
@@ -1687,7 +1652,7 @@ bool TopdownSpawnNpcRuntime(
         if (!TryResolveSmartSpawnPosition(
                 state.topdown.runtime,
                 position,
-                asset->collisionRadius,
+                asset->movement.collisionRadius,
                 resolvedPosition)) {
             TraceLog(LOG_WARNING,
                      "Unable to find smart spawn position for NPC '%s' near %.1f, %.1f",
@@ -1709,41 +1674,25 @@ bool TopdownSpawnNpcRuntime(
     npc.dead = false;
     npc.corpse = false;
 
-    npc.health = asset->maxHealth;
-    npc.corpseExpirationMs = asset->corpseExpirationMs;
+    npc.movement = asset->movement;
+    npc.ai = asset->ai;
+    npc.rangedAttack = asset->rangedAttack;
+    npc.perception = asset->perception;
+    npc.meleeAttack = asset->meleeAttack;
+
+    npc.health = asset->movement.maxHealth;
     npc.corpseElapsedMs = 0.0f;
 
-    npc.hostile = asset->hostile;
     npc.persistentChase = persistentChase;
     npc.guard = guard;
-    npc.aiMode = asset->aiMode;
     npc.engagementState = guard
             ? TopdownNpcEngagementState::Guarding
             : TopdownNpcEngagementState::Unaware;
     npc.combatState = TopdownNpcCombatState::None;
 
-    npc.visionRange = asset->visionRange;
-    npc.hearingRange = asset->hearingRange;
-    npc.gunshotHearingRange = asset->gunshotHearingRange;
-    npc.visionHalfAngleDegrees = asset->visionHalfAngleDegrees;
-
-    npc.attackRange = asset->attackRange;
     npc.preferredAttackRangeFactor = RandomRangeFloat(0.8f, 1.0f);
-    npc.attackCooldownMs = asset->attackCooldownMs;
     npc.attackCooldownRemainingMs = 0.0f;
-    npc.attackDamage = asset->attackDamage;
-    npc.attackHitNormalizedTime = asset->attackHitNormalizedTime;
-    npc.attackRecoverMs = asset->attackRecoverMs;
-    npc.meleeHitPosX = asset->meleeHitPosX;
-    npc.meleeHitPosY = asset->meleeHitPosY;
 
-    npc.attackStartSoundId = asset->attackStartSoundId;
-    npc.attackConnectSoundId = asset->attackConnectSoundId;
-    npc.hitReactionSoundIds = asset->hitReactionSoundIds;
-
-    npc.attackEffects = asset->attackEffects;
-
-    npc.chaseRepathIntervalMs = asset->chaseRepathIntervalMs;
     ResolveNpcColorSubstitutionForSpawn(state.topdown.npcColorPresets, *asset, npc);
 
     npc.hasPlayerTarget = false;
@@ -1761,7 +1710,6 @@ bool TopdownSpawnNpcRuntime(
     npc.renderOpacity = 1.0f;
 
     npc.position = position;
-    npc.collisionRadius = asset->collisionRadius;
 
     const float radians = orientationDegrees * DEG2RAD;
     npc.facing.x = std::cos(radians);
