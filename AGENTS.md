@@ -17,6 +17,8 @@ The codebase also includes remnants of an older **point-and-click adventure engi
 ## Repository Map
 
 - `sources/topdown/` contains the primary top-down game systems.
+- `sources/topdown/TopdownData.h` is the root top-down data aggregation header.
+- `sources/topdown/Topdown*Data.h` headers contain subsystem-specific top-down data models.
 - `sources/nav/` contains project-owned Recast/Detour integration and query/build wrappers.
 - `sources/recast/`, `sources/detour/`, `sources/rvo2/`, `sources/clipper2/`, and `sources/lua/` are vendored third-party code.
 - `sources/scripting/` contains the Lua VM, coroutine wait system, and C++/Lua API bridge.
@@ -38,12 +40,9 @@ Useful commands from the repository root:
 ```sh
 cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build cmake-build-debug
-./buildDist.sh
 ```
 
-`./buildDist.sh` configures and builds the release package target into `cmake-build-release/dist`.
-
-There is no dedicated test target currently visible in the repository. For most code changes, at minimum verify that a Debug build compiles. For packaging or asset-path changes, run `./buildDist.sh`.
+There is no dedicated test target currently visible in the repository. For most code changes, verify that a Debug build compiles.
 
 Raylib is fetched by CMake `FetchContent`. Do not treat README dependency version text as authoritative if it conflicts with `CMakeLists.txt`.
 
@@ -77,14 +76,24 @@ Raylib is fetched by CMake `FetchContent`. Do not treat README dependency versio
 
 ### Data File Structure
 - The `*Data` pattern exists to avoid circular dependencies.
-- However:
-    - Do NOT put everything into a single monolithic header.
-    - Split data into **subsystem-specific headers** when appropriate:
-        - Example: `LevelRenderData.h`, `LevelCollisionData.h`, etc.
-- Keep a **root aggregation header** (e.g., `TopdownData.h`) that includes all subsystem data.
-- `TopdownData.h` is already very large. Do not add substantial new subsystem state directly to it unless the change is genuinely tiny.
-- Prefer new focused data headers such as `TopdownXData.h`, `LevelXData.h`, or similar, then include them from the root aggregation header.
-- Small enums and narrow structs may still live near their owning data when that is the clearest option.
+- Do NOT put everything into a single monolithic header.
+- Keep `TopdownData.h` as the root aggregation header that includes subsystem data headers and defines only cross-subsystem aggregate/root state.
+- Put subsystem-specific top-down data in focused headers such as:
+    - `TopdownCoreData.h`
+    - `TopdownLevelObjectData.h`
+    - `TopdownCollisionData.h`
+    - `TopdownRenderData.h`
+    - `TopdownPlayerData.h`
+    - `TopdownNpcData.h`
+    - `TopdownDoorData.h`
+    - `TopdownWindowData.h`
+    - `TopdownTriggerData.h`
+    - `TopdownItemData.h`
+    - `TopdownPropData.h`
+    - `TopdownNavData.h`
+- When adding data for an existing subsystem, extend that subsystem's `Topdown*Data.h` rather than `TopdownData.h`.
+- Add a new focused `Topdown*Data.h` when new data does not clearly belong to an existing subsystem.
+- Small root-level aggregate structs may remain in `TopdownData.h` only when they intentionally tie multiple subsystems together.
 
 ### Units and Coordinates
 - World positions are pixel-space `Vector2` values unless local code clearly says otherwise.
