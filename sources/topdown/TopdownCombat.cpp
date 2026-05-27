@@ -76,10 +76,7 @@ static Vector2 ClampMouseWorldToPlayerShootingDeadzone(
     Vector2 dir = TopdownNormalizeOrZero(delta);
 
     if (TopdownLengthSqr(dir) <= 0.000001f) {
-        dir = Vector2{
-                std::cos(character.upperRotationRadians),
-                std::sin(character.upperRotationRadians)
-        };
+        dir = TopdownDirectionFromAngle(character.upperRotationRadians);
         dir = TopdownNormalizeOrZero(dir);
     }
 
@@ -98,10 +95,7 @@ static Vector2 ComputePlayerWeaponMuzzleWorldPosition(
     const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
     const float radians = character.upperRotationRadians;
-    const Vector2 forward{
-            std::cos(radians),
-            std::sin(radians)
-    };
+    const Vector2 forward = TopdownDirectionFromAngle(radians);
     const Vector2 right{
             -forward.y,
             forward.x
@@ -142,10 +136,7 @@ static bool TryComputePlayerAttackAnimationMuzzleWorldPosition(
     const float localY = (animationEntry->muzzle.y - sprite->origin.y) * drawScale;
 
     const float radians = character.upperRotationRadians;
-    const Vector2 forward{
-            std::cos(radians),
-            std::sin(radians)
-    };
+    const Vector2 forward = TopdownDirectionFromAngle(radians);
     const Vector2 right{
             -forward.y,
             forward.x
@@ -211,10 +202,7 @@ static bool IsNpcInsidePlayerMeleeArc(
         return false;
     }
 
-    Vector2 attackForward{
-            std::cos(character.upperRotationRadians),
-            std::sin(character.upperRotationRadians)
-    };
+    Vector2 attackForward = TopdownDirectionFromAngle(character.upperRotationRadians);
     attackForward = TopdownNormalizeOrZero(attackForward);
 
     if (TopdownLengthSqr(attackForward) <= 0.000001f) {
@@ -472,10 +460,7 @@ static Vector2 BuildPlayerAttackAimDirection(const GameState& state)
 {
     const TopdownCharacterRuntime& character = state.topdown.runtime.playerCharacter;
 
-    Vector2 dir{
-            std::cos(character.upperRotationRadians),
-            std::sin(character.upperRotationRadians)
-    };
+    Vector2 dir = TopdownDirectionFromAngle(character.upperRotationRadians);
     dir = TopdownNormalizeOrZero(dir);
 
     if (TopdownLengthSqr(dir) <= 0.000001f) {

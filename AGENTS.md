@@ -65,6 +65,43 @@ Raylib is fetched by CMake `FetchContent`. Do not treat README dependency versio
 
 ---
 
+## Helpers and Utility Functions
+
+Before adding a new helper, search the project-owned code first:
+
+```sh
+rg "FunctionName|concept keywords" sources/topdown sources/audio sources/render sources/resources sources/scripting sources/save sources/settings sources/ui sources/nav
+```
+
+Do not search or refactor vendored source (`sources/recast/`, `sources/detour/`, `sources/lua/`, `sources/rvo2/`, `sources/clipper2/`) unless explicitly required.
+
+### Existing Top-Down Helpers
+- Use `sources/topdown/TopdownHelpers.h/.cpp` for general top-down math and geometry helpers:
+    - vector math (`TopdownAdd`, `TopdownSub`, `TopdownMul`, `TopdownDot`)
+    - length/distance (`TopdownLength`, `TopdownLengthSqr`, `TopdownDistanceSqr`)
+    - normalization (`TopdownNormalizeOrZero`)
+    - angle/trig helpers (`TopdownDirectionFromAngle`, `TopdownAngleFromDirection`, `TopdownNormalizeAngleRadians`, `RotateVector`)
+    - interpolation/scalar helpers (`TopdownClamp01`, `TopdownSmoothStep01`)
+    - polygon, segment, raycast, and world/screen helpers
+- Use `sources/topdown/TopdownLookup.h/.cpp` for common top-down lookup helpers, especially runtime/authored lookup by id/name. Prefer these over open-coded loops in scripts, UI, objective markers, or gameplay systems when the lookup is already represented there.
+- Use `sources/topdown/TopdownTiledProperties.h/.cpp` for Tiled object property reads and Tiled color parsing. Do not duplicate local `FindObjectProperty` / `GetObjectProperty*` helpers in loaders.
+- Use subsystem-specific helpers when they already exist, such as combat helpers in `TopdownCombatHelpers.h/.cpp`, NPC AI helpers in `TopdownNpcAiCommon.h/.cpp`, and resource lookup/loading helpers under `sources/resources/`.
+
+### Adding New Helpers
+- Add a helper to an existing helper file only when it is genuinely reusable across more than one local call site or clearly belongs to that helper's responsibility.
+- Keep one-off logic file-local with `static` or an anonymous namespace if it encodes local policy and is not likely to be reused.
+- Prefer focused helper files over broad utility dumps. For example:
+    - top-down math/geometry → `TopdownHelpers`
+    - top-down id/name lookup → `TopdownLookup`
+    - Tiled property parsing → `TopdownTiledProperties`
+    - resource handle/path/lifetime helpers → `sources/resources/`
+    - navigation conversions/query/build policy → `sources/nav/`
+- Keep helpers plain and explicit. Do not introduce template-heavy generic helpers, polymorphic utility classes, or broad "Utils" abstractions unless there is a concrete repeated pattern that justifies them.
+- In hot paths, helper calls must not hide allocation, container growth, or expensive copies. If a helper needs scratch storage, prefer caller-owned or runtime-owned buffers with reserved capacity.
+- Do not store returned raw pointers from lookup helpers in long-lived state. Use them immediately, or store stable integer handles/indices when persistence is needed.
+
+---
+
 ## Data Organization
 
 ### Authored vs Runtime Separation

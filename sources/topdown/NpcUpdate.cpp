@@ -223,17 +223,17 @@ static bool HasNpcPassedPathWaypoint(
 
 static float RotateAngleTowards(float current, float target, float maxStep)
 {
-    const float delta = NormalizeAngleRadians(target - current);
+    const float delta = TopdownNormalizeAngleRadians(target - current);
 
     if (std::fabs(delta) <= maxStep) {
         return target;
     }
 
     if (delta > 0.0f) {
-        return NormalizeAngleRadians(current + maxStep);
+        return TopdownNormalizeAngleRadians(current + maxStep);
     }
 
-    return NormalizeAngleRadians(current - maxStep);
+    return TopdownNormalizeAngleRadians(current - maxStep);
 }
 
 static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
@@ -330,10 +330,7 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
                 targetRotation,
                 turnSpeedRadiansPerSecond * dt);
 
-        npc.facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        npc.facing = TopdownDirectionFromAngle(npc.rotationRadians);
 
         npc.moving = true;
         npc.running = move.running;

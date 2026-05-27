@@ -41,10 +41,7 @@ static void UpdateGuardLookAtSound(TopdownNpcRuntime& npc, float dtMs)
     }
 
     npc.rotationRadians = npc.guardLookAtSoundRadians;
-    npc.facing = Vector2{
-            std::cos(npc.rotationRadians),
-            std::sin(npc.rotationRadians)
-    };
+    npc.facing = TopdownDirectionFromAngle(npc.rotationRadians);
 }
 
 static void ReturnGuardToPostOrPatrol(TopdownNpcRuntime& npc)

@@ -103,12 +103,6 @@ void UpsertSpeechBubble(
     runtime.entries.push_back(std::move(entry));
 }
 
-float SmoothStep01(float t)
-{
-    t = Clamp(t, 0.0f, 1.0f);
-    return t * t * (3.0f - 2.0f * t);
-}
-
 Color ScaleColorAlpha(const Color& color, float alpha01)
 {
     Color out = color;
@@ -258,10 +252,10 @@ float ComputeSpeechBubbleAlpha(const TopdownSpeechBubbleEntry& entry)
 
     float alpha = 1.0f;
     if (elapsed < fadeWindowMs) {
-        alpha = std::min(alpha, SmoothStep01(elapsed / fadeWindowMs));
+        alpha = std::min(alpha, TopdownSmoothStep01(elapsed / fadeWindowMs));
     }
     if (remaining < fadeWindowMs) {
-        alpha = std::min(alpha, SmoothStep01(remaining / fadeWindowMs));
+        alpha = std::min(alpha, TopdownSmoothStep01(remaining / fadeWindowMs));
     }
 
     return Clamp(alpha, 0.0f, 1.0f);

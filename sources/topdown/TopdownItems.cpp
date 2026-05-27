@@ -13,6 +13,7 @@
 #include "resources/TextureAsset.h"
 #include "topdown/PlayerRegistry.h"
 #include "topdown/TopdownHelpers.h"
+#include "topdown/TopdownTiledProperties.h"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -69,35 +70,6 @@ static bool ParseTopdownItemKind(const std::string& text, TopdownItemKind& outKi
 
     outKind = TopdownItemKind::Unknown;
     return false;
-}
-
-static const json* FindItemObjectProperty(const json& objectJson, const char* name)
-{
-    auto it = objectJson.find("properties");
-    if (it == objectJson.end() || !it->is_array()) {
-        return nullptr;
-    }
-
-    for (const auto& prop : *it) {
-        if (prop.is_object() && prop.value("name", std::string()) == name) {
-            return &prop;
-        }
-    }
-
-    return nullptr;
-}
-
-static std::string GetItemObjectPropertyString(
-        const json& objectJson,
-        const char* name,
-        const std::string& defaultValue = std::string())
-{
-    const json* prop = FindItemObjectProperty(objectJson, name);
-    if (prop == nullptr) {
-        return defaultValue;
-    }
-
-    return prop->value("value", defaultValue);
 }
 
 bool LoadTopdownItemDefinitions(GameState& state)
@@ -268,7 +240,7 @@ void ImportTopdownItemLayer(
         item.tiledObjectId = obj.value("id", -1);
         item.id = obj.value("name", std::string());
         if (item.id.empty()) {
-            item.id = GetItemObjectPropertyString(obj, "id", "");
+            item.id = TopdownGetTiledObjectPropertyString(obj, "id", "");
         }
         if (item.id.empty()) {
             item.id = "item_" + std::to_string(objectIndex);
@@ -278,7 +250,7 @@ void ImportTopdownItemLayer(
                      item.id.c_str());
         }
 
-        item.itemId = GetItemObjectPropertyString(obj, "itemId", "");
+        item.itemId = TopdownGetTiledObjectPropertyString(obj, "itemId", "");
         if (item.itemId.empty()) {
             TraceLog(LOG_WARNING,
                      "Skipping topdown item instance '%s' with missing itemId",
@@ -490,4 +462,3 @@ void TopdownRenderItems(GameState& state)
         DrawTexturePro(tex->texture, src, dst, origin, 0.0f, WHITE);
     }
 }
-

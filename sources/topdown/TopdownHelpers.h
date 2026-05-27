@@ -22,10 +22,16 @@ std::vector<Vector2> TopdownBuildRectPolygon(float x, float y, float width, floa
 float TopdownDot(Vector2 a, Vector2 b);
 float TopdownLengthSqr(Vector2 v);
 float TopdownLength(Vector2 v);
+float TopdownDistanceSqr(Vector2 a, Vector2 b);
 Vector2 TopdownAdd(Vector2 a, Vector2 b);
 Vector2 TopdownSub(Vector2 a, Vector2 b);
 Vector2 TopdownMul(Vector2 v, float s);
 Vector2 TopdownNormalizeOrZero(Vector2 v);
+float TopdownClamp01(float value);
+float TopdownSmoothStep01(float value);
+Vector2 TopdownDirectionFromAngle(float angleRadians);
+float TopdownAngleFromDirection(Vector2 direction);
+float TopdownNormalizeAngleRadians(float angleRadians);
 
 Vector2 TopdownClosestPointOnSegment(Vector2 p, const TopdownSegment& seg);
 bool TopdownPointInPolygon(Vector2 p, const std::vector<Vector2>& polygon);

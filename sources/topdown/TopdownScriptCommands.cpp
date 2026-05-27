@@ -14,6 +14,7 @@
 #include "ui/TopdownSpeechBubbles.h"
 #include "utils/Interpolation.h"
 #include "TopdownHelpers.h"
+#include "TopdownLookup.h"
 #include "cutscene/CutsceneMode.h"
 
 
@@ -109,97 +110,6 @@ bool TopdownScriptGetHealthItemCount(GameState& state, int& outAmount)
     return true;
 }
 
-static TopdownRuntimeImageLayer* FindLayer(GameState& state, const std::string& name)
-{
-    for (auto& l : state.topdown.runtime.render.bottomLayers) {
-        if (state.topdown.authored.imageLayers[l.authoredIndex].name == name) return &l;
-    }
-    for (auto& l : state.topdown.runtime.render.topLayers) {
-        if (state.topdown.authored.imageLayers[l.authoredIndex].name == name) return &l;
-    }
-    return nullptr;
-}
-
-static TopdownRuntimeEffectRegion* FindEffect(GameState& state, const std::string& id)
-{
-    for (auto& e : state.topdown.runtime.render.effectRegions) {
-        if (state.topdown.authored.effectRegions[e.authoredIndex].id == id) return &e;
-    }
-    return nullptr;
-}
-
-static TopdownRuntimeTrigger* FindTrigger(GameState& state, const std::string& id)
-{
-    for (TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
-        if (trigger.authoredIndex < 0 ||
-            trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
-            continue;
-        }
-
-        if (state.topdown.authored.triggers[trigger.authoredIndex].id == id) {
-            return &trigger;
-        }
-    }
-
-    return nullptr;
-}
-
-static const TopdownRuntimeTrigger* FindTriggerConst(const GameState& state, const std::string& id)
-{
-    for (const TopdownRuntimeTrigger& trigger : state.topdown.runtime.triggers) {
-        if (trigger.authoredIndex < 0 ||
-            trigger.authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
-            continue;
-        }
-
-        if (state.topdown.authored.triggers[trigger.authoredIndex].id == id) {
-            return &trigger;
-        }
-    }
-
-    return nullptr;
-}
-
-static TopdownNpcRuntime* FindNpc(GameState& state, const std::string& npcId)
-{
-    for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
-        if (npc.active && npc.id == npcId) {
-            return &npc;
-        }
-    }
-    return nullptr;
-}
-
-static TopdownRuntimeProp* FindProp(GameState& state, const std::string& propId)
-{
-    for (TopdownRuntimeProp& prop : state.topdown.runtime.props) {
-        if (prop.active && prop.id == propId) {
-            return &prop;
-        }
-    }
-    return nullptr;
-}
-
-static const TopdownNpcRuntime* FindNpcConst(const GameState& state, const std::string& npcId)
-{
-    for (const TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
-        if (npc.active && npc.id == npcId) {
-            return &npc;
-        }
-    }
-    return nullptr;
-}
-
-static const TopdownRuntimeProp* FindPropConst(const GameState& state, const std::string& propId)
-{
-    for (const TopdownRuntimeProp& prop : state.topdown.runtime.props) {
-        if (prop.active && prop.id == propId) {
-            return &prop;
-        }
-    }
-    return nullptr;
-}
-
 static void SetObjectiveAnchor(GameState& state, TopdownObjectiveAnchorType anchorType, const std::string& anchorId)
 {
     TopdownObjectiveMarkerRuntime& objective = state.topdown.runtime.objectiveMarker;
@@ -207,26 +117,6 @@ static void SetObjectiveAnchor(GameState& state, TopdownObjectiveAnchorType anch
     objective.active = true;
     objective.anchorType = anchorType;
     objective.anchorId = anchorId;
-}
-
-static const SpriteClip* FindSpriteClipByName(const SpriteAssetResource& sprite, const std::string& clipName)
-{
-    for (const SpriteClip& clip : sprite.clips) {
-        if (clip.name == clipName) {
-            return &clip;
-        }
-    }
-    return nullptr;
-}
-
-static const TopdownAuthoredSpawn* FindSpawn(GameState& state, const std::string& spawnId)
-{
-    for (const TopdownAuthoredSpawn& spawn : state.topdown.authored.spawns) {
-        if (spawn.id == spawnId) {
-            return &spawn;
-        }
-    }
-    return nullptr;
 }
 
 static bool BuildPath(
@@ -409,7 +299,7 @@ bool TopdownScriptDisableScriptCamera(GameState& state)
 
 bool TopdownScriptSetCameraTarget(GameState& state, const std::string& spawnId)
 {
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -422,7 +312,7 @@ bool TopdownScriptSetCameraTarget(GameState& state, const std::string& spawnId)
 
 bool TopdownScriptPanCameraTarget(GameState& state, const std::string& spawnId, float durationMs)
 {
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -456,7 +346,7 @@ bool TopdownScriptStartRunTo(GameState& state, Vector2 target)
 
 bool TopdownScriptStartWalkToSpawn(GameState& state, const std::string& spawnId)
 {
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -466,7 +356,7 @@ bool TopdownScriptStartWalkToSpawn(GameState& state, const std::string& spawnId)
 
 bool TopdownScriptStartRunToSpawn(GameState& state, const std::string& spawnId)
 {
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -490,12 +380,12 @@ bool TopdownScriptSpawnNpc(
         return false;
     }
 
-    if (FindNpc(state, npcId) != nullptr) {
+    if (TopdownFindActiveNpcById(state, npcId) != nullptr) {
         TraceLog(LOG_WARNING, "NPC with id '%s' already exists", npcId.c_str());
         return false;
     }
 
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         TraceLog(LOG_WARNING, "Spawn '%s' not found for NPC '%s'", spawnId.c_str(), npcId.c_str());
         return false;
@@ -524,12 +414,12 @@ bool TopdownScriptSpawnNpcSmart(
         return false;
     }
 
-    if (FindNpc(state, npcId) != nullptr) {
+    if (TopdownFindActiveNpcById(state, npcId) != nullptr) {
         TraceLog(LOG_WARNING, "NPC with id '%s' already exists", npcId.c_str());
         return false;
     }
 
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         TraceLog(LOG_WARNING, "Spawn '%s' not found for NPC '%s'", spawnId.c_str(), npcId.c_str());
         return false;
@@ -569,7 +459,7 @@ bool TopdownScriptRemoveNpc(GameState& state, const std::string& npcId)
 
 bool TopdownScriptStartWalkNpcTo(GameState& state, const std::string& npcId, Vector2 target)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
@@ -579,7 +469,7 @@ bool TopdownScriptStartWalkNpcTo(GameState& state, const std::string& npcId, Vec
 
 bool TopdownScriptStartRunNpcTo(GameState& state, const std::string& npcId, Vector2 target)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
@@ -589,12 +479,12 @@ bool TopdownScriptStartRunNpcTo(GameState& state, const std::string& npcId, Vect
 
 bool TopdownScriptStartWalkNpcToSpawn(GameState& state, const std::string& npcId, const std::string& spawnId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
 
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -604,12 +494,12 @@ bool TopdownScriptStartWalkNpcToSpawn(GameState& state, const std::string& npcId
 
 bool TopdownScriptStartRunNpcToSpawn(GameState& state, const std::string& npcId, const std::string& spawnId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
 
-    const TopdownAuthoredSpawn* spawn = FindSpawn(state, spawnId);
+    const TopdownAuthoredSpawn* spawn = TopdownFindAuthoredSpawnById(state, spawnId);
     if (spawn == nullptr) {
         return false;
     }
@@ -625,7 +515,7 @@ bool TopdownScriptAssignNpcPatrolRoute(
         bool running,
         float waitMs)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         TraceLog(LOG_WARNING, "assignNpcPatrolRoute: npc '%s' not found", npcId.c_str());
         return false;
@@ -641,7 +531,7 @@ bool TopdownScriptAssignNpcPatrolRoute(
 
 bool TopdownScriptClearNpcPatrol(GameState& state, const std::string& npcId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         TraceLog(LOG_WARNING, "clearNpcPatrol: npc '%s' not found", npcId.c_str());
         return false;
@@ -653,7 +543,7 @@ bool TopdownScriptClearNpcPatrol(GameState& state, const std::string& npcId)
 
 bool TopdownScriptPauseNpcPatrol(GameState& state, const std::string& npcId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         TraceLog(LOG_WARNING, "pauseNpcPatrol: npc '%s' not found", npcId.c_str());
         return false;
@@ -664,7 +554,7 @@ bool TopdownScriptPauseNpcPatrol(GameState& state, const std::string& npcId)
 
 bool TopdownScriptResumeNpcPatrol(GameState& state, const std::string& npcId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         TraceLog(LOG_WARNING, "resumeNpcPatrol: npc '%s' not found", npcId.c_str());
         return false;
@@ -679,7 +569,7 @@ bool TopdownScriptResumeNpcPatrol(GameState& state, const std::string& npcId)
 
 bool TopdownScriptSetNpcAnimation(GameState& state, const std::string& npcId, const std::string& animationName)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
@@ -705,7 +595,7 @@ bool TopdownScriptSetNpcAnimation(GameState& state, const std::string& npcId, co
 
 bool TopdownScriptClearNpcAnimation(GameState& state, const std::string& npcId)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
@@ -716,7 +606,7 @@ bool TopdownScriptClearNpcAnimation(GameState& state, const std::string& npcId)
 
 bool TopdownScriptPlayNpcAnimation(GameState& state, const std::string& npcId, const std::string& animationName)
 {
-    TopdownNpcRuntime* npc = FindNpc(state, npcId);
+    TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, npcId);
     if (npc == nullptr) {
         return false;
     }
@@ -746,13 +636,13 @@ bool TopdownScriptPlayNpcAnimation(GameState& state, const std::string& npcId, c
 
 bool TopdownScriptSetPropAnimation(GameState& state, const std::string& id, const std::string& animation)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr || prop->type != TopdownPropType::Sprite) {
         return false;
     }
 
     const SpriteAssetResource* sprite = FindSpriteAssetResource(state.resources, prop->spriteHandle);
-    if (sprite == nullptr || !sprite->loaded || FindSpriteClipByName(*sprite, animation) == nullptr) {
+    if (sprite == nullptr || !sprite->loaded || TopdownFindSpriteClipByName(*sprite, animation) == nullptr) {
         return false;
     }
 
@@ -767,7 +657,7 @@ bool TopdownScriptSetPropAnimation(GameState& state, const std::string& id, cons
 
 bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, const std::string& animation)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr || prop->type != TopdownPropType::Sprite) {
         return false;
     }
@@ -777,7 +667,7 @@ bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, con
         return false;
     }
 
-    const SpriteClip* clip = FindSpriteClipByName(*sprite, animation);
+    const SpriteClip* clip = TopdownFindSpriteClipByName(*sprite, animation);
     if (clip == nullptr) {
         return false;
     }
@@ -796,7 +686,7 @@ bool TopdownScriptPlayPropAnimation(GameState& state, const std::string& id, con
 
 bool TopdownScriptSetPropPosition(GameState& state, const std::string& id, Vector2 position)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr) {
         return false;
     }
@@ -815,7 +705,7 @@ bool TopdownScriptMovePropPosition(
         float durationMs,
         const std::string& interpolation)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr) {
         return false;
     }
@@ -849,7 +739,7 @@ bool TopdownScriptMovePropPositionRelative(
         float durationMs,
         const std::string& interpolation)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr) {
         return false;
     }
@@ -864,7 +754,7 @@ bool TopdownScriptMovePropPositionRelative(
 
 bool TopdownScriptSetPropVisible(GameState& state, const std::string& id, bool visible)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr) {
         return false;
     }
@@ -875,7 +765,7 @@ bool TopdownScriptSetPropVisible(GameState& state, const std::string& id, bool v
 
 bool TopdownScriptSetPropOpacity(GameState& state, const std::string& id, float opacity)
 {
-    TopdownRuntimeProp* prop = FindProp(state, id);
+    TopdownRuntimeProp* prop = TopdownFindActivePropById(state, id);
     if (prop == nullptr) {
         return false;
     }
@@ -890,7 +780,7 @@ bool TopdownScriptSetPropOpacity(GameState& state, const std::string& id, float 
 
 bool TopdownScriptSetImageLayerVisible(GameState& state, const std::string& name, bool visible)
 {
-    if (auto* l = FindLayer(state, name)) {
+    if (auto* l = TopdownFindRuntimeImageLayerByName(state, name)) {
         l->visible = visible;
         return true;
     }
@@ -899,7 +789,7 @@ bool TopdownScriptSetImageLayerVisible(GameState& state, const std::string& name
 
 bool TopdownScriptIsImageLayerVisible(GameState& state, const std::string& name, bool& outVisible)
 {
-    if (auto* l = FindLayer(state, name)) {
+    if (auto* l = TopdownFindRuntimeImageLayerByName(state, name)) {
         outVisible = l->visible;
         return true;
     }
@@ -908,7 +798,7 @@ bool TopdownScriptIsImageLayerVisible(GameState& state, const std::string& name,
 
 bool TopdownScriptSetImageLayerOpacity(GameState& state, const std::string& name, float opacity)
 {
-    if (auto* l = FindLayer(state, name)) {
+    if (auto* l = TopdownFindRuntimeImageLayerByName(state, name)) {
         l->opacity = opacity;
         return true;
     }
@@ -917,7 +807,7 @@ bool TopdownScriptSetImageLayerOpacity(GameState& state, const std::string& name
 
 bool TopdownScriptGetImageLayerOpacity(GameState& state, const std::string& name, float& outOpacity)
 {
-    if (auto* l = FindLayer(state, name)) {
+    if (auto* l = TopdownFindRuntimeImageLayerByName(state, name)) {
         outOpacity = l->opacity;
         return true;
     }
@@ -930,7 +820,7 @@ bool TopdownScriptGetImageLayerOpacity(GameState& state, const std::string& name
 
 bool TopdownScriptSetEffectRegionVisible(GameState& state, const std::string& id, bool visible)
 {
-    if (auto* e = FindEffect(state, id)) {
+    if (auto* e = TopdownFindRuntimeEffectRegionById(state, id)) {
         e->visible = visible;
         return true;
     }
@@ -939,7 +829,7 @@ bool TopdownScriptSetEffectRegionVisible(GameState& state, const std::string& id
 
 bool TopdownScriptIsEffectRegionVisible(GameState& state, const std::string& id, bool& outVisible)
 {
-    if (auto* e = FindEffect(state, id)) {
+    if (auto* e = TopdownFindRuntimeEffectRegionById(state, id)) {
         outVisible = e->visible;
         return true;
     }
@@ -948,7 +838,7 @@ bool TopdownScriptIsEffectRegionVisible(GameState& state, const std::string& id,
 
 bool TopdownScriptSetEffectRegionOpacity(GameState& state, const std::string& id, float opacity)
 {
-    if (auto* e = FindEffect(state, id)) {
+    if (auto* e = TopdownFindRuntimeEffectRegionById(state, id)) {
         e->opacity = opacity;
         return true;
     }
@@ -957,7 +847,7 @@ bool TopdownScriptSetEffectRegionOpacity(GameState& state, const std::string& id
 
 bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id, float& outOpacity)
 {
-    if (auto* e = FindEffect(state, id)) {
+    if (auto* e = TopdownFindRuntimeEffectRegionById(state, id)) {
         outOpacity = e->opacity;
         return true;
     }
@@ -970,7 +860,7 @@ bool TopdownScriptGetEffectRegionOpacity(GameState& state, const std::string& id
 
 bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& triggerId, bool enabled)
 {
-    TopdownRuntimeTrigger* trigger = FindTrigger(state, triggerId);
+    TopdownRuntimeTrigger* trigger = TopdownFindRuntimeTriggerById(state, triggerId);
     if (trigger == nullptr) {
         return false;
     }
@@ -989,7 +879,7 @@ bool TopdownScriptSetTriggerEnabled(GameState& state, const std::string& trigger
 
 bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerId, bool repeat)
 {
-    TopdownRuntimeTrigger* trigger = FindTrigger(state, triggerId);
+    TopdownRuntimeTrigger* trigger = TopdownFindRuntimeTriggerById(state, triggerId);
     if (trigger == nullptr) {
         return false;
     }
@@ -1070,7 +960,7 @@ bool TopdownScriptResolveObjectivePosition(GameState& state, Vector2& outPositio
         return true;
 
     case TopdownObjectiveAnchorType::Trigger: {
-        const TopdownRuntimeTrigger* trigger = FindTriggerConst(state, objective.anchorId);
+        const TopdownRuntimeTrigger* trigger = TopdownFindRuntimeTriggerById(state, objective.anchorId);
         if (trigger == nullptr || trigger->authoredIndex < 0 ||
             trigger->authoredIndex >= static_cast<int>(state.topdown.authored.triggers.size())) {
             objective.hasResolvedPosition = false;
@@ -1085,7 +975,7 @@ bool TopdownScriptResolveObjectivePosition(GameState& state, Vector2& outPositio
     }
 
     case TopdownObjectiveAnchorType::Npc: {
-        const TopdownNpcRuntime* npc = FindNpcConst(state, objective.anchorId);
+        const TopdownNpcRuntime* npc = TopdownFindActiveNpcById(state, objective.anchorId);
         if (npc == nullptr || !npc->visible || npc->dead || npc->corpse) {
             objective.hasResolvedPosition = false;
             return false;
@@ -1098,7 +988,7 @@ bool TopdownScriptResolveObjectivePosition(GameState& state, Vector2& outPositio
     }
 
     case TopdownObjectiveAnchorType::Prop: {
-        const TopdownRuntimeProp* prop = FindPropConst(state, objective.anchorId);
+        const TopdownRuntimeProp* prop = TopdownFindActivePropById(state, objective.anchorId);
         if (prop == nullptr || !prop->visible) {
             objective.hasResolvedPosition = false;
             return false;

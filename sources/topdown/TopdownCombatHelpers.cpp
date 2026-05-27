@@ -20,13 +20,7 @@ Vector2 ComputeShotDirectionWithSpread(
     const float halfSpreadRadians = spreadDegrees * 0.5f * DEG2RAD;
     const float randomAngle = GetRandomValue(-10000, 10000) / 10000.0f * halfSpreadRadians;
 
-    const float c = std::cos(randomAngle);
-    const float s = std::sin(randomAngle);
-
-    Vector2 dir{
-            baseDir.x * c - baseDir.y * s,
-            baseDir.x * s + baseDir.y * c
-    };
+    Vector2 dir = RotateVector(baseDir, randomAngle);
 
     return TopdownNormalizeOrZero(dir);
 }
@@ -566,10 +560,7 @@ bool TopdownComputeNpcMuzzleWorldPosition(
             (asset.rangedAttack.muzzleEffects.muzzleY - sprite->origin.y) * drawScale;
 
     const float radians = npc.rotationRadians;
-    const Vector2 forward{
-            std::cos(radians),
-            std::sin(radians)
-    };
+    const Vector2 forward = TopdownDirectionFromAngle(radians);
     const Vector2 right{
             -forward.y,
             forward.x
@@ -583,4 +574,3 @@ bool TopdownComputeNpcMuzzleWorldPosition(
 
     return true;
 }
-

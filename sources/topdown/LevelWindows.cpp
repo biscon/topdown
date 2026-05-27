@@ -599,10 +599,7 @@ void TopdownRenderWindowGlassParticles(const GameState& state)
             continue;
         }
 
-        Vector2 dir{
-                std::cos(particle.rotationRadians),
-                std::sin(particle.rotationRadians)
-        };
+        Vector2 dir = TopdownDirectionFromAngle(particle.rotationRadians);
 
         if (TopdownLengthSqr(dir) <= 0.000001f) {
             dir = TopdownNormalizeOrZero(particle.velocity);

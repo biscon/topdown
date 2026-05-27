@@ -1712,8 +1712,7 @@ bool TopdownSpawnNpcRuntime(
     npc.position = position;
 
     const float radians = orientationDegrees * DEG2RAD;
-    npc.facing.x = std::cos(radians);
-    npc.facing.y = std::sin(radians);
+    npc.facing = TopdownDirectionFromAngle(radians);
     npc.rotationRadians = radians;
     npc.guardHomePosition = position;
     npc.hasGuardHomePosition = true;

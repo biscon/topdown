@@ -87,10 +87,7 @@ void TopdownBeginNpcSearchState(
 
     Vector2 facing = TopdownNormalizeOrZero(npc.facing);
     if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        facing = TopdownDirectionFromAngle(npc.rotationRadians);
         facing = TopdownNormalizeOrZero(facing);
     }
 
@@ -136,12 +133,6 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
     return movedTooLittle;
 }
 
-static float SmoothStep01(float t)
-{
-    t = Clamp(t, 0.0f, 1.0f);
-    return t * t * (3.0f - 2.0f * t);
-}
-
 TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt)
@@ -157,31 +148,25 @@ TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
     float signedOffsetRadians = 0.0f;
 
     if (totalT < (1.0f / 3.0f)) {
-        const float t = SmoothStep01(totalT / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01(totalT / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
     } else if (totalT < (2.0f / 3.0f)) {
-        const float t = SmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(-halfSweepRadians, halfSweepRadians, t);
     } else {
-        const float t = SmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(halfSweepRadians, 0.0f, t);
     }
 
     const float newAngle =
-            NormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
+            TopdownNormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
 
     npc.rotationRadians = newAngle;
-    npc.facing = Vector2{
-            std::cos(newAngle),
-            std::sin(newAngle)
-    };
+    npc.facing = TopdownDirectionFromAngle(newAngle);
 
     if (npc.searchStateTimeMs >= durationMs) {
         npc.rotationRadians = npc.searchBaseFacingRadians;
-        npc.facing = Vector2{
-                std::cos(npc.searchBaseFacingRadians),
-                std::sin(npc.searchBaseFacingRadians)
-        };
+        npc.facing = TopdownDirectionFromAngle(npc.searchBaseFacingRadians);
 
         return TopdownNpcSearchUpdateResult::Finished;
     }
@@ -393,10 +378,7 @@ static bool IsPlayerInsideNpcVisionCone(
 
     Vector2 facing = TopdownNormalizeOrZero(npc.facing);
     if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        facing = TopdownDirectionFromAngle(npc.rotationRadians);
         facing = TopdownNormalizeOrZero(facing);
     }
 

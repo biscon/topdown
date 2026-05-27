@@ -25,6 +25,11 @@ float TopdownLength(Vector2 v)
     return std::sqrt(TopdownLengthSqr(v));
 }
 
+float TopdownDistanceSqr(Vector2 a, Vector2 b)
+{
+    return TopdownLengthSqr(TopdownSub(a, b));
+}
+
 Vector2 TopdownAdd(Vector2 a, Vector2 b)
 {
     return Vector2{a.x + b.x, a.y + b.y};
@@ -48,6 +53,43 @@ Vector2 TopdownNormalizeOrZero(Vector2 v)
     }
 
     return Vector2{v.x / len, v.y / len};
+}
+
+float TopdownClamp01(float value)
+{
+    return Clamp(value, 0.0f, 1.0f);
+}
+
+float TopdownSmoothStep01(float value)
+{
+    const float t = TopdownClamp01(value);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+Vector2 TopdownDirectionFromAngle(float angleRadians)
+{
+    return Vector2{
+            std::cos(angleRadians),
+            std::sin(angleRadians)
+    };
+}
+
+float TopdownAngleFromDirection(Vector2 direction)
+{
+    return std::atan2(direction.y, direction.x);
+}
+
+float TopdownNormalizeAngleRadians(float angleRadians)
+{
+    static constexpr float kPi = 3.14159265358979323846f;
+
+    while (angleRadians <= -kPi) {
+        angleRadians += 2.0f * kPi;
+    }
+    while (angleRadians > kPi) {
+        angleRadians -= 2.0f * kPi;
+    }
+    return angleRadians;
 }
 
 float TopdownSignedPolygonArea(const std::vector<Vector2>& points)
@@ -388,10 +430,7 @@ Vector2 TopdownPerpRight(Vector2 v)
 
 Vector2 TopdownGetDoorDirection(float angleRadians)
 {
-    return Vector2{
-            std::cos(angleRadians),
-            std::sin(angleRadians)
-    };
+    return TopdownDirectionFromAngle(angleRadians);
 }
 
 TopdownSegment TopdownBuildDoorCenterSegment(const TopdownRuntimeDoor& door)

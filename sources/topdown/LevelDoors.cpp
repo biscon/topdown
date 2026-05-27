@@ -33,7 +33,7 @@ static float TopdownCross(Vector2 a, Vector2 b)
 
 static float ComputeDoorRelativeAngle(const TopdownRuntimeDoor& door)
 {
-    return NormalizeAngleRadians(door.angleRadians - door.closedAngleRadians);
+    return TopdownNormalizeAngleRadians(door.angleRadians - door.closedAngleRadians);
 }
 
 static float ComputeDoorWorldMinAngle(const TopdownRuntimeDoor& door)
@@ -467,7 +467,7 @@ void TopdownUpdateDoors(GameState& state, float dt)
 
         if (door.autoClose) {
             const float angleError =
-                    NormalizeAngleRadians(door.closedAngleRadians - door.angleRadians);
+                    TopdownNormalizeAngleRadians(door.closedAngleRadians - door.angleRadians);
 
             door.angularVelocity += angleError * door.autoCloseStrength * dt;
         }

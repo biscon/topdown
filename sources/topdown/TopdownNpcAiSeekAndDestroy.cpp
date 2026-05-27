@@ -44,7 +44,7 @@ static bool TryBuildNpcMeleeHitWorldPosition(
     const float localY = (npc.meleeAttack.meleeHitPosY - sprite->origin.y) * drawScale;
 
     const float radians = npc.rotationRadians;
-    const Vector2 forward{ std::cos(radians), std::sin(radians) };
+    const Vector2 forward = TopdownDirectionFromAngle(radians);
     const Vector2 right{ -forward.y, forward.x };
 
     outWorldPos = TopdownAdd(
@@ -67,7 +67,7 @@ static Vector2 BuildNpcMeleeFallbackImpactPointOnPlayer(
         toPlayer = npc.facing;
     }
     if (TopdownLengthSqr(toPlayer) <= 0.000001f) {
-        toPlayer = Vector2{ std::cos(npc.rotationRadians), std::sin(npc.rotationRadians) };
+        toPlayer = TopdownDirectionFromAngle(npc.rotationRadians);
     }
     if (TopdownLengthSqr(toPlayer) <= 0.000001f) {
         toPlayer = Vector2{1.0f, 0.0f};
@@ -154,10 +154,7 @@ static bool UpdateNpcAttackState(
                     hitDir = npc.facing;
                 }
                 if (TopdownLengthSqr(hitDir) <= 0.000001f) {
-                    hitDir = Vector2{
-                            std::cos(npc.rotationRadians),
-                            std::sin(npc.rotationRadians)
-                    };
+                    hitDir = TopdownDirectionFromAngle(npc.rotationRadians);
                 }
                 if (TopdownLengthSqr(hitDir) <= 0.000001f) {
                     hitDir = Vector2{1.0f, 0.0f};

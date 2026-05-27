@@ -234,32 +234,19 @@ float MoveTowardsFloat(float current, float target, float maxDelta)
     return std::max(current - maxDelta, target);
 }
 
-float NormalizeAngleRadians(float angle)
-{
-    static constexpr float kPi = 3.14159265358979323846f;
-
-    while (angle <= -kPi) {
-        angle += 2.0f * kPi;
-    }
-    while (angle > kPi) {
-        angle -= 2.0f * kPi;
-    }
-    return angle;
-}
-
 float MoveTowardsAngle(float current, float target, float maxDelta)
 {
-    float delta = NormalizeAngleRadians(target - current);
+    float delta = TopdownNormalizeAngleRadians(target - current);
 
     if (std::fabs(delta) <= maxDelta) {
         return target;
     }
 
     if (delta > 0.0f) {
-        return NormalizeAngleRadians(current + maxDelta);
+        return TopdownNormalizeAngleRadians(current + maxDelta);
     }
 
-    return NormalizeAngleRadians(current - maxDelta);
+    return TopdownNormalizeAngleRadians(current - maxDelta);
 }
 
 void ResolveCircleVsCircle(
