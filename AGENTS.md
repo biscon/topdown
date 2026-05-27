@@ -14,6 +14,41 @@ The codebase also includes remnants of an older **point-and-click adventure engi
 
 ---
 
+## Repository Map
+
+- `sources/topdown/` contains the primary top-down game systems.
+- `sources/nav/` contains project-owned Recast/Detour integration and query/build wrappers.
+- `sources/recast/`, `sources/detour/`, `sources/rvo2/`, `sources/clipper2/`, and `sources/lua/` are vendored third-party code.
+- `sources/scripting/` contains the Lua VM, coroutine wait system, and C++/Lua API bridge.
+- `sources/resources/` owns texture, sprite, sound, and music resource handles/lifetimes.
+- `sources/audio/`, `sources/render/`, `sources/input/`, `sources/ui/`, `sources/debug/`, `sources/save/`, and `sources/settings/` are shared engine subsystems.
+- `assets/levels/<level_id>/` contains top-down level data (`.json`, `.tmj`, `.lua`, local audio/shadow/effect assets).
+- `assets/scenes/` contains older adventure/scene data. Treat it as compile-only legacy data unless explicitly instructed.
+- `assets/scripts/` contains reusable Lua modules loaded through `require`.
+- `assets/shaders/` contains GLSL shader files referenced by rendering/effect systems.
+
+---
+
+## Build and Verification
+
+This is a CMake C++17 project. `CMakeLists.txt` is authoritative for compiler settings and dependency versions.
+
+Useful commands from the repository root:
+
+```sh
+cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build cmake-build-debug
+./buildDist.sh
+```
+
+`./buildDist.sh` configures and builds the release package target into `cmake-build-release/dist`.
+
+There is no dedicated test target currently visible in the repository. For most code changes, at minimum verify that a Debug build compiles. For packaging or asset-path changes, run `./buildDist.sh`.
+
+Raylib is fetched by CMake `FetchContent`. Do not treat README dependency version text as authoritative if it conflicts with `CMakeLists.txt`.
+
+---
+
 ## Core Architecture Principles
 
 ### Data-Oriented Design
@@ -47,6 +82,16 @@ The codebase also includes remnants of an older **point-and-click adventure engi
     - Split data into **subsystem-specific headers** when appropriate:
         - Example: `LevelRenderData.h`, `LevelCollisionData.h`, etc.
 - Keep a **root aggregation header** (e.g., `TopdownData.h`) that includes all subsystem data.
+- `TopdownData.h` is already very large. Do not add substantial new subsystem state directly to it unless the change is genuinely tiny.
+- Prefer new focused data headers such as `TopdownXData.h`, `LevelXData.h`, or similar, then include them from the root aggregation header.
+- Small enums and narrow structs may still live near their owning data when that is the clearest option.
+
+### Units and Coordinates
+- World positions are pixel-space `Vector2` values unless local code clearly says otherwise.
+- The internal render resolution is fixed at `INTERNAL_WIDTH` x `INTERNAL_HEIGHT` (`1920 x 1080`).
+- `dt` values are seconds.
+- Most gameplay timers are stored in milliseconds. Name millisecond fields with an `Ms` suffix.
+- Prefer radians for runtime orientation when interacting with movement/render math, and degrees only where authored data or UI explicitly uses degrees.
 
 ---
 
@@ -116,6 +161,14 @@ Dynamic allocation is acceptable in non-hot-path code such as:
 - one-time preprocessing
 - editor/debug-only tooling
 
+### Scratch Buffers in Hot Paths
+- For per-frame collision, AI, rendering, trigger, and steering work, prefer:
+    - runtime-owned scratch vectors with reserved capacity,
+    - reused local buffers that do not grow after warm-up,
+    - or carefully scoped `thread_local` scratch buffers where ownership is obvious.
+- Do not build new temporary vectors inside nested frame loops unless the maximum cost is small, bounded, and clear.
+- If adding a vector that is expected to grow during loading/setup, reserve capacity when the expected size is known or easy to estimate.
+
 ### Avoid Unnecessary Copies
 - Do not copy large structs, vectors, or buffers unnecessarily, especially in per-frame code.
 - Prefer mutating runtime data directly when appropriate.
@@ -157,9 +210,43 @@ Bad:
 
 - Respect existing rendering structure and passes.
 - Do not arbitrarily move rendering into unrelated files.
+- Keep world rendering in `LevelRender.cpp` or focused rendering subsystem files.
+- Keep debug rendering in debug-specific render files when practical.
+- Effect shader definitions live under `sources/render/`; shader assets live under `assets/shaders/`.
+- Respect the fixed internal render target and presentation scaling handled by `Main.cpp`.
 - If multiple small features exist (e.g., doors, windows):
     - Group them logically if it improves structure (e.g., “interactables”)
     - Avoid fragmentation into too many tiny files
+
+---
+
+## Resources and Assets
+
+- Use `ASSETS_PATH` for runtime asset paths.
+- Debug/development builds use an absolute path to the repository `assets/` folder.
+- Release builds expect `./assets/` next to the executable; the package target copies assets into `cmake-build-release/dist`.
+- Prefer `ResourceScope::Scene` for level-specific assets that should be unloaded on level changes.
+- Prefer `ResourceScope::Global` for shared registries, player/common assets, UI assets, and other resources that intentionally survive level changes.
+- Do not leak scene-specific assets into global scope just to avoid reloading unless there is a clear reason.
+- Do not delete, regenerate, normalize, or replace art/audio/settings files unless explicitly requested.
+- Treat untracked binary assets and `settings.json` as user work unless the user says otherwise.
+
+---
+
+## Lua Scripting
+
+Lua is used for level scripts, reusable script modules, cutscene flow, and scripted gameplay events.
+
+When adding or changing a top-down Lua command, check all relevant layers:
+
+- C++ command declaration in `sources/topdown/TopdownScriptCommands.h`
+- C++ command implementation in `sources/topdown/TopdownScriptCommands.cpp`
+- Lua binding and argument validation in `sources/scripting/ScriptSystemLuaApi.cpp`
+- Level scripts or documentation if the command is user-facing
+
+Blocking script commands may yield Lua coroutines and resume through the script wait system. Keep command behavior compatible with coroutine waits, foreground hooks, and pending script starts.
+
+Lua `require` paths are configured in `ScriptSystem.cpp` and include reusable modules under `assets/scripts/`.
 
 ---
 
@@ -207,6 +294,8 @@ These are vendored directly into the repository:
 Guidelines:
 - Prefer using these libraries over reinventing functionality.
 - Do not replace them without explicit instruction.
+- Avoid editing vendored third-party source unless the task explicitly requires it or the project cannot compile otherwise.
+- Put project-specific wrappers, conversions, and policy in project-owned files such as `sources/nav/` or `sources/topdown/`.
 
 ---
 
