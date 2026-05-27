@@ -20,13 +20,7 @@ Vector2 ComputeShotDirectionWithSpread(
     const float halfSpreadRadians = spreadDegrees * 0.5f * DEG2RAD;
     const float randomAngle = GetRandomValue(-10000, 10000) / 10000.0f * halfSpreadRadians;
 
-    const float c = std::cos(randomAngle);
-    const float s = std::sin(randomAngle);
-
-    Vector2 dir{
-            baseDir.x * c - baseDir.y * s,
-            baseDir.x * s + baseDir.y * c
-    };
+    Vector2 dir = RotateVector(baseDir, randomAngle);
 
     return TopdownNormalizeOrZero(dir);
 }
@@ -57,7 +51,7 @@ TopdownShotHitResult FindFirstHitscanHit(
                 origin,
                 dir,
                 npc.position,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 result.distance,
                 hitDistance,
                 hitPoint,
@@ -253,11 +247,11 @@ static void PlayNpcHitReactionSound(
         return;
     }
 
-    if (!npc.hitReactionSoundIds.empty()) {
-        const int idx = GetRandomValue(0, static_cast<int>(npc.hitReactionSoundIds.size()) - 1);
+    if (!npc.meleeAttack.hitReactionSoundIds.empty()) {
+        const int idx = GetRandomValue(0, static_cast<int>(npc.meleeAttack.hitReactionSoundIds.size()) - 1);
         AudioPlaySoundAtPosition(
                 state,
-                npc.hitReactionSoundIds[idx],
+                npc.meleeAttack.hitReactionSoundIds[idx],
                 npc.position,
                 AUDIO_RADIUS_NPC,
                 RandomRangeFloat(0.92f, 1.08f));
@@ -301,7 +295,7 @@ void ApplyNpcHitReaction(
         return;
     }
 
-    npc.hurtStunRemainingMs = std::max(npc.hurtStunRemainingMs, asset->hurtStunMs);
+    npc.hurtStunRemainingMs = std::max(npc.hurtStunRemainingMs, asset->movement.hurtStunMs);
 
     npc.move = {};
     npc.moving = false;
@@ -379,7 +373,7 @@ TopdownShotHitResult FindFirstNpcHitscanHit(
                 origin,
                 dir,
                 npc.position,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 result.distance,
                 hitDistance,
                 hitPoint,
@@ -561,15 +555,12 @@ bool TopdownComputeNpcMuzzleWorldPosition(
     const float drawScale = sprite->baseDrawScale;
 
     const float localX =
-            (asset.muzzleEffects.muzzleX - sprite->origin.x) * drawScale;
+            (asset.rangedAttack.muzzleEffects.muzzleX - sprite->origin.x) * drawScale;
     const float localY =
-            (asset.muzzleEffects.muzzleY - sprite->origin.y) * drawScale;
+            (asset.rangedAttack.muzzleEffects.muzzleY - sprite->origin.y) * drawScale;
 
     const float radians = npc.rotationRadians;
-    const Vector2 forward{
-            std::cos(radians),
-            std::sin(radians)
-    };
+    const Vector2 forward = TopdownDirectionFromAngle(radians);
     const Vector2 right{
             -forward.y,
             forward.x
@@ -583,4 +574,3 @@ bool TopdownComputeNpcMuzzleWorldPosition(
 
     return true;
 }
-

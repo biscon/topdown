@@ -17,6 +17,8 @@ The codebase also includes remnants of an older **point-and-click adventure engi
 ## Repository Map
 
 - `sources/topdown/` contains the primary top-down game systems.
+- `sources/topdown/TopdownData.h` is the root top-down data aggregation header.
+- `sources/topdown/Topdown*Data.h` headers contain subsystem-specific top-down data models.
 - `sources/nav/` contains project-owned Recast/Detour integration and query/build wrappers.
 - `sources/recast/`, `sources/detour/`, `sources/rvo2/`, `sources/clipper2/`, and `sources/lua/` are vendored third-party code.
 - `sources/scripting/` contains the Lua VM, coroutine wait system, and C++/Lua API bridge.
@@ -38,12 +40,9 @@ Useful commands from the repository root:
 ```sh
 cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build cmake-build-debug
-./buildDist.sh
 ```
 
-`./buildDist.sh` configures and builds the release package target into `cmake-build-release/dist`.
-
-There is no dedicated test target currently visible in the repository. For most code changes, at minimum verify that a Debug build compiles. For packaging or asset-path changes, run `./buildDist.sh`.
+There is no dedicated test target currently visible in the repository. For most code changes, verify that a Debug build compiles.
 
 Raylib is fetched by CMake `FetchContent`. Do not treat README dependency version text as authoritative if it conflicts with `CMakeLists.txt`.
 
@@ -66,6 +65,43 @@ Raylib is fetched by CMake `FetchContent`. Do not treat README dependency versio
 
 ---
 
+## Helpers and Utility Functions
+
+Before adding a new helper, search the project-owned code first:
+
+```sh
+rg "FunctionName|concept keywords" sources/topdown sources/audio sources/render sources/resources sources/scripting sources/save sources/settings sources/ui sources/nav
+```
+
+Do not search or refactor vendored source (`sources/recast/`, `sources/detour/`, `sources/lua/`, `sources/rvo2/`, `sources/clipper2/`) unless explicitly required.
+
+### Existing Top-Down Helpers
+- Use `sources/topdown/TopdownHelpers.h/.cpp` for general top-down math and geometry helpers:
+    - vector math (`TopdownAdd`, `TopdownSub`, `TopdownMul`, `TopdownDot`)
+    - length/distance (`TopdownLength`, `TopdownLengthSqr`, `TopdownDistanceSqr`)
+    - normalization (`TopdownNormalizeOrZero`)
+    - angle/trig helpers (`TopdownDirectionFromAngle`, `TopdownAngleFromDirection`, `TopdownNormalizeAngleRadians`, `RotateVector`)
+    - interpolation/scalar helpers (`TopdownClamp01`, `TopdownSmoothStep01`)
+    - polygon, segment, raycast, and world/screen helpers
+- Use `sources/topdown/TopdownLookup.h/.cpp` for common top-down lookup helpers, especially runtime/authored lookup by id/name. Prefer these over open-coded loops in scripts, UI, objective markers, or gameplay systems when the lookup is already represented there.
+- Use `sources/topdown/TopdownTiledProperties.h/.cpp` for Tiled object property reads and Tiled color parsing. Do not duplicate local `FindObjectProperty` / `GetObjectProperty*` helpers in loaders.
+- Use subsystem-specific helpers when they already exist, such as combat helpers in `TopdownCombatHelpers.h/.cpp`, NPC AI helpers in `TopdownNpcAiCommon.h/.cpp`, and resource lookup/loading helpers under `sources/resources/`.
+
+### Adding New Helpers
+- Add a helper to an existing helper file only when it is genuinely reusable across more than one local call site or clearly belongs to that helper's responsibility.
+- Keep one-off logic file-local with `static` or an anonymous namespace if it encodes local policy and is not likely to be reused.
+- Prefer focused helper files over broad utility dumps. For example:
+    - top-down math/geometry → `TopdownHelpers`
+    - top-down id/name lookup → `TopdownLookup`
+    - Tiled property parsing → `TopdownTiledProperties`
+    - resource handle/path/lifetime helpers → `sources/resources/`
+    - navigation conversions/query/build policy → `sources/nav/`
+- Keep helpers plain and explicit. Do not introduce template-heavy generic helpers, polymorphic utility classes, or broad "Utils" abstractions unless there is a concrete repeated pattern that justifies them.
+- In hot paths, helper calls must not hide allocation, container growth, or expensive copies. If a helper needs scratch storage, prefer caller-owned or runtime-owned buffers with reserved capacity.
+- Do not store returned raw pointers from lookup helpers in long-lived state. Use them immediately, or store stable integer handles/indices when persistence is needed.
+
+---
+
 ## Data Organization
 
 ### Authored vs Runtime Separation
@@ -77,14 +113,24 @@ Raylib is fetched by CMake `FetchContent`. Do not treat README dependency versio
 
 ### Data File Structure
 - The `*Data` pattern exists to avoid circular dependencies.
-- However:
-    - Do NOT put everything into a single monolithic header.
-    - Split data into **subsystem-specific headers** when appropriate:
-        - Example: `LevelRenderData.h`, `LevelCollisionData.h`, etc.
-- Keep a **root aggregation header** (e.g., `TopdownData.h`) that includes all subsystem data.
-- `TopdownData.h` is already very large. Do not add substantial new subsystem state directly to it unless the change is genuinely tiny.
-- Prefer new focused data headers such as `TopdownXData.h`, `LevelXData.h`, or similar, then include them from the root aggregation header.
-- Small enums and narrow structs may still live near their owning data when that is the clearest option.
+- Do NOT put everything into a single monolithic header.
+- Keep `TopdownData.h` as the root aggregation header that includes subsystem data headers and defines only cross-subsystem aggregate/root state.
+- Put subsystem-specific top-down data in focused headers such as:
+    - `TopdownCoreData.h`
+    - `TopdownLevelObjectData.h`
+    - `TopdownCollisionData.h`
+    - `TopdownRenderData.h`
+    - `TopdownPlayerData.h`
+    - `TopdownNpcData.h`
+    - `TopdownDoorData.h`
+    - `TopdownWindowData.h`
+    - `TopdownTriggerData.h`
+    - `TopdownItemData.h`
+    - `TopdownPropData.h`
+    - `TopdownNavData.h`
+- When adding data for an existing subsystem, extend that subsystem's `Topdown*Data.h` rather than `TopdownData.h`.
+- Add a new focused `Topdown*Data.h` when new data does not clearly belong to an existing subsystem.
+- Small root-level aggregate structs may remain in `TopdownData.h` only when they intentionally tie multiple subsystems together.
 
 ### Units and Coordinates
 - World positions are pixel-space `Vector2` values unless local code clearly says otherwise.

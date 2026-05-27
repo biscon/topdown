@@ -78,7 +78,7 @@ bool TopdownCandidateOverlapsNpcBlockingGeometry(
             continue;
         }
 
-        const float minDist = npc.collisionRadius + npcClearance;
+        const float minDist = npc.movement.collisionRadius + npcClearance;
         const float minDistSqr = minDist * minDist;
         const Vector2 delta = TopdownSub(candidate, npc.position);
         if (TopdownLengthSqr(delta) < minDistSqr) {

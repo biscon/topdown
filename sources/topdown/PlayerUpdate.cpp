@@ -280,10 +280,7 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
             runtime.desiredAimRadians = std::atan2(aimDelta.y, aimDelta.x);
         }
 
-        Vector2 aimFacing{
-                std::cos(runtime.desiredAimRadians),
-                std::sin(runtime.desiredAimRadians)
-        };
+        Vector2 aimFacing = TopdownDirectionFromAngle(runtime.desiredAimRadians);
         aimFacing = TopdownNormalizeOrZero(aimFacing);
         if (TopdownLengthSqr(aimFacing) > 0.000001f) {
             player.facing = aimFacing;
@@ -294,7 +291,7 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
                 runtime.desiredAimRadians,
                 runtime.turnSpeedRadians * dt);
 
-        float upperDelta = NormalizeAngleRadians(runtime.desiredAimRadians - runtime.bodyFacingRadians);
+        float upperDelta = TopdownNormalizeAngleRadians(runtime.desiredAimRadians - runtime.bodyFacingRadians);
         upperDelta = ClampFloat(
                 upperDelta,
                 -runtime.maxUpperBodyTwistRadians,
@@ -324,10 +321,7 @@ void TopdownUpdatePlayerAnimation(GameState& state, float dt)
         locomotionMoveDir = player.velocity;
     }
 
-    Vector2 locomotionAimForward{
-            std::cos(runtime.upperRotationRadians),
-            std::sin(runtime.upperRotationRadians)
-    };
+    Vector2 locomotionAimForward = TopdownDirectionFromAngle(runtime.upperRotationRadians);
 
     runtime.locomotion = ClassifyLocomotionWithHysteresis(
             locomotionMoveDir,
@@ -428,7 +422,7 @@ static void UpdatePlayerMovementAndCollision(GameState& state, float dt)
                     player.velocity,
                     player.radius,
                     npc.position,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     preferredSeparation);
         }
     }

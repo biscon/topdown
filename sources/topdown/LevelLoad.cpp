@@ -9,6 +9,7 @@
 #include "resources/TextureAsset.h"
 #include "resources/AsepriteAsset.h"
 #include "topdown/TopdownHelpers.h"
+#include "topdown/TopdownTiledProperties.h"
 #include "utils/json.hpp"
 #include "resources/Resources.h"
 #include "LevelCamera.h"
@@ -201,94 +202,9 @@ static const char* TopdownDoorHingeSideToString(TopdownDoorHingeSide side)
     return "unknown";
 }
 
-static float ReadOptionalFloatProperty(const json& obj, const char* propertyName, float defaultValue)
-{
-    auto propsIt = obj.find("properties");
-    if (propsIt == obj.end() || !propsIt->is_array()) {
-        return defaultValue;
-    }
-
-    for (const auto& prop : *propsIt) {
-        if (!prop.is_object()) {
-            continue;
-        }
-
-        if (prop.value("name", std::string()) != propertyName) {
-            continue;
-        }
-
-        if (prop.contains("value") && prop["value"].is_number()) {
-            return prop["value"].get<float>();
-        }
-    }
-
-    return defaultValue;
-}
-
-static const nlohmann::json* FindObjectProperty(
-        const nlohmann::json& objectJson,
-        const char* name)
-{
-    auto it = objectJson.find("properties");
-    if (it == objectJson.end() || !it->is_array()) {
-        return nullptr;
-    }
-
-    for (const auto& prop : *it) {
-        if (prop.value("name", std::string()) == name) {
-            return &prop;
-        }
-    }
-
-    return nullptr;
-}
-
-static bool GetObjectPropertyBool(
-        const nlohmann::json& objectJson,
-        const char* name,
-        bool defaultValue)
-{
-    const nlohmann::json* prop = FindObjectProperty(objectJson, name);
-    if (prop == nullptr) {
-        return defaultValue;
-    }
-    return prop->value("value", defaultValue);
-}
-
-static float GetObjectPropertyFloat(
-        const nlohmann::json& objectJson,
-        const char* name,
-        float defaultValue)
-{
-    const nlohmann::json* prop = FindObjectProperty(objectJson, name);
-    if (prop == nullptr) {
-        return defaultValue;
-    }
-    return prop->value("value", defaultValue);
-}
-
-static std::string GetObjectPropertyString(
-        const nlohmann::json& objectJson,
-        const char* name,
-        const std::string& defaultValue)
-{
-    const nlohmann::json* prop = FindObjectProperty(objectJson, name);
-    if (prop == nullptr) {
-        return defaultValue;
-    }
-    return prop->value("value", defaultValue);
-}
-
 static float Cross2D(Vector2 a, Vector2 b)
 {
     return a.x * b.y - a.y * b.x;
-}
-
-static float DistanceSqr(Vector2 a, Vector2 b)
-{
-    const float dx = a.x - b.x;
-    const float dy = a.y - b.y;
-    return dx * dx + dy * dy;
 }
 
 static bool IntersectRayWithSegment(
@@ -330,95 +246,6 @@ static bool IntersectRayWithSegment(
             origin.y + dir.y * t
     };
     return true;
-}
-
-static int HexDigitValue(char c)
-{
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
-    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
-    return -1;
-}
-
-static bool ParseTiledColorString(const std::string& s, Color& outColor)
-{
-    // Support both:
-    //   #RRGGBB
-    //   #AARRGGBB
-
-    if (s.empty() || s[0] != '#') {
-        return false;
-    }
-
-    auto readByte = [&](int index, unsigned char& outByte) -> bool {
-        const int hi = HexDigitValue(s[index]);
-        const int lo = HexDigitValue(s[index + 1]);
-        if (hi < 0 || lo < 0) {
-            return false;
-        }
-        outByte = static_cast<unsigned char>((hi << 4) | lo);
-        return true;
-    };
-
-    unsigned char a = 255;
-    unsigned char r = 255;
-    unsigned char g = 255;
-    unsigned char b = 255;
-
-    if (s.size() == 7) {
-        if (!readByte(1, r)) return false;
-        if (!readByte(3, g)) return false;
-        if (!readByte(5, b)) return false;
-
-        outColor = Color{ r, g, b, 255 };
-        return true;
-    }
-
-    if (s.size() == 9) {
-        if (!readByte(1, a)) return false;
-        if (!readByte(3, r)) return false;
-        if (!readByte(5, g)) return false;
-        if (!readByte(7, b)) return false;
-
-        outColor = Color{ r, g, b, a };
-        return true;
-    }
-
-    return false;
-}
-
-static Color GetLayerTintColor(const json& layer, Color defaultValue)
-{
-    const std::string value = layer.value("tintcolor", std::string());
-    if (value.empty()) {
-        return defaultValue;
-    }
-
-    Color parsed{};
-    if (!ParseTiledColorString(value, parsed)) {
-        return defaultValue;
-    }
-
-    return parsed;
-}
-
-static Color GetObjectPropertyColor(
-        const nlohmann::json& objectJson,
-        const char* name,
-        Color defaultValue)
-{
-    const nlohmann::json* prop = FindObjectProperty(objectJson, name);
-    if (prop == nullptr) {
-        return defaultValue;
-    }
-
-    const std::string value = prop->value("value", std::string());
-    Color parsed{};
-    if (!ParseTiledColorString(value, parsed)) {
-        return defaultValue;
-    }
-
-    return parsed;
 }
 
 static std::vector<Vector2> BuildWorldPolygonFromTiledPolygon(
@@ -613,7 +440,7 @@ static void ImportSpawnLayer(
         spawn.position.x = (obj.value("x", 0.0f) + layerOffX) * scale;
         spawn.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
 
-        spawn.orientationDegrees = ReadOptionalFloatProperty(obj, "orientation", 0.0f);
+        spawn.orientationDegrees = TopdownGetTiledObjectPropertyFloat(obj, "orientation", 0.0f);
         spawn.visible = obj.value("visible", true);
 
         topdown.authored.spawns.push_back(spawn);
@@ -645,10 +472,10 @@ static void ImportNpcLayer(
 
         npc.position.x = (obj.value("x", 0.0f) + layerOffX) * scale;
         npc.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
-        npc.orientationDegrees = ReadOptionalFloatProperty(obj, "orientation", 0.0f);
-        npc.assetId = GetObjectPropertyString(obj, "assetId", "");
-        npc.persistentChase = GetObjectPropertyBool(obj, "persistentChase", false);
-        npc.guard = GetObjectPropertyBool(obj, "guard", false);
+        npc.orientationDegrees = TopdownGetTiledObjectPropertyFloat(obj, "orientation", 0.0f);
+        npc.assetId = TopdownGetTiledObjectPropertyString(obj, "assetId", "");
+        npc.persistentChase = TopdownGetTiledObjectPropertyBool(obj, "persistentChase", false);
+        npc.guard = TopdownGetTiledObjectPropertyBool(obj, "guard", false);
 
         if (npc.id.empty()) {
             TraceLog(LOG_WARNING,
@@ -689,11 +516,11 @@ static void ImportSoundEmitterLayer(
         emitter.id = obj.value("name", std::string());
         emitter.position.x = (obj.value("x", 0.0f) + layerOffX) * scale;
         emitter.position.y = (obj.value("y", 0.0f) + layerOffY) * scale;
-        emitter.soundId = GetObjectPropertyString(obj, "sound", "");
-        emitter.loop = GetObjectPropertyBool(obj, "loop", false);
-        emitter.radius = GetObjectPropertyFloat(obj, "radius", 0.0f);
-        emitter.volume = GetObjectPropertyFloat(obj, "volume", 1.0f);
-        emitter.pan = GetObjectPropertyBool(obj, "pan", false);
+        emitter.soundId = TopdownGetTiledObjectPropertyString(obj, "sound", "");
+        emitter.loop = TopdownGetTiledObjectPropertyBool(obj, "loop", false);
+        emitter.radius = TopdownGetTiledObjectPropertyFloat(obj, "radius", 0.0f);
+        emitter.volume = TopdownGetTiledObjectPropertyFloat(obj, "volume", 1.0f);
+        emitter.pan = TopdownGetTiledObjectPropertyBool(obj, "pan", false);
         emitter.enabled = obj.value("visible", true);
 
         soundEmitters.push_back(emitter);
@@ -751,7 +578,7 @@ static void ImportDoorLayer(
         door.rectSize.y = height * scale;
 
         const std::string hingeSideStr =
-                GetObjectPropertyString(obj, "hingeSide", "");
+                TopdownGetTiledObjectPropertyString(obj, "hingeSide", "");
         if (!ParseTopdownDoorHingeSide(hingeSideStr, door.hingeSide)) {
             TraceLog(LOG_WARNING,
                      "Skipping topdown door '%s': invalid or missing hingeSide '%s'",
@@ -779,11 +606,11 @@ static void ImportDoorLayer(
             continue;
         }
 
-        door.locked = GetObjectPropertyBool(obj, "locked", false);
+        door.locked = TopdownGetTiledObjectPropertyBool(obj, "locked", false);
 
-        door.autoClose = GetObjectPropertyBool(obj, "autoClose", false);
-        door.autoCloseStrength = GetObjectPropertyFloat(obj, "autoCloseStrength", 6.0f);
-        door.damping = GetObjectPropertyFloat(obj, "damping", 5.0f);
+        door.autoClose = TopdownGetTiledObjectPropertyBool(obj, "autoClose", false);
+        door.autoCloseStrength = TopdownGetTiledObjectPropertyFloat(obj, "autoCloseStrength", 6.0f);
+        door.damping = TopdownGetTiledObjectPropertyFloat(obj, "damping", 5.0f);
 
         if (door.autoCloseStrength < 0.0f) {
             TraceLog(LOG_WARNING,
@@ -801,8 +628,8 @@ static void ImportDoorLayer(
             door.damping = 0.0f;
         }
 
-        door.swingMinDegrees = GetObjectPropertyFloat(obj, "swingMinDeg", -90.0f);
-        door.swingMaxDegrees = GetObjectPropertyFloat(obj, "swingMaxDeg", 90.0f);
+        door.swingMinDegrees = TopdownGetTiledObjectPropertyFloat(obj, "swingMinDeg", -90.0f);
+        door.swingMaxDegrees = TopdownGetTiledObjectPropertyFloat(obj, "swingMaxDeg", 90.0f);
 
         if (door.swingMinDegrees > door.swingMaxDegrees) {
             TraceLog(LOG_WARNING,
@@ -811,15 +638,15 @@ static void ImportDoorLayer(
             std::swap(door.swingMinDegrees, door.swingMaxDegrees);
         }
 
-        door.openSoundId = GetObjectPropertyString(obj, "openSoundId", "");
-        door.closeSoundId = GetObjectPropertyString(obj, "closeSoundId", "");
+        door.openSoundId = TopdownGetTiledObjectPropertyString(obj, "openSoundId", "");
+        door.closeSoundId = TopdownGetTiledObjectPropertyString(obj, "closeSoundId", "");
 
-        door.color = GetObjectPropertyColor(
+        door.color = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "color",
                 Color{92, 58, 34, 255});
 
-        door.outlineColor = GetObjectPropertyColor(
+        door.outlineColor = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "outlineColor",
                 BLACK);
@@ -878,85 +705,85 @@ static void ImportWindowLayer(
         window.rectSize.y = height * scale;
         window.horizontal = window.rectSize.x >= window.rectSize.y;
 
-        window.color1 = GetObjectPropertyColor(
+        window.color1 = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "color1",
                 Color{138, 196, 195, 255});
 
-        window.color2 = GetObjectPropertyColor(
+        window.color2 = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "color2",
                 Color{100, 135, 140, 255});
 
-        window.outlineColor = GetObjectPropertyColor(
+        window.outlineColor = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "outlineColor",
                 Color{23, 24, 25, 255});
 
-        window.breakSoundId = GetObjectPropertyString(obj, "breakSoundId", "");
+        window.breakSoundId = TopdownGetTiledObjectPropertyString(obj, "breakSoundId", "");
 
-        window.breakParticleCount = static_cast<int>(
-                GetObjectPropertyFloat(obj, "breakParticleCount", static_cast<float>(window.breakParticleCount)));
+        window.breakParticles.count = static_cast<int>(
+                TopdownGetTiledObjectPropertyFloat(obj, "breakParticleCount", static_cast<float>(window.breakParticles.count)));
 
-        window.breakParticleSpeedMin = GetObjectPropertyFloat(
+        window.breakParticles.speedMin = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleSpeedMin",
-                window.breakParticleSpeedMin);
+                window.breakParticles.speedMin);
 
-        window.breakParticleSpeedMax = GetObjectPropertyFloat(
+        window.breakParticles.speedMax = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleSpeedMax",
-                window.breakParticleSpeedMax);
+                window.breakParticles.speedMax);
 
-        window.breakParticleLifetimeMsMin = GetObjectPropertyFloat(
+        window.breakParticles.lifetimeMsMin = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleLifetimeMsMin",
-                window.breakParticleLifetimeMsMin);
+                window.breakParticles.lifetimeMsMin);
 
-        window.breakParticleLifetimeMsMax = GetObjectPropertyFloat(
+        window.breakParticles.lifetimeMsMax = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleLifetimeMsMax",
-                window.breakParticleLifetimeMsMax);
+                window.breakParticles.lifetimeMsMax);
 
-        window.breakParticleSizeMin = GetObjectPropertyFloat(
+        window.breakParticles.sizeMin = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleSizeMin",
-                window.breakParticleSizeMin);
+                window.breakParticles.sizeMin);
 
-        window.breakParticleSizeMax = GetObjectPropertyFloat(
+        window.breakParticles.sizeMax = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleSizeMax",
-                window.breakParticleSizeMax);
+                window.breakParticles.sizeMax);
 
-        window.breakParticleSpreadAlongWindow = GetObjectPropertyFloat(
+        window.breakParticles.spreadAlongWindow = TopdownGetTiledObjectPropertyFloat(
                 obj,
                 "breakParticleSpreadAlongWindow",
-                window.breakParticleSpreadAlongWindow);
+                window.breakParticles.spreadAlongWindow);
 
-        window.breakParticleColor1 = GetObjectPropertyColor(
+        window.breakParticles.color1 = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "breakParticleColor1",
-                window.breakParticleColor1);
+                window.breakParticles.color1);
 
-        window.breakParticleColor2 = GetObjectPropertyColor(
+        window.breakParticles.color2 = TopdownGetTiledObjectPropertyColor(
                 obj,
                 "breakParticleColor2",
-                window.breakParticleColor2);
+                window.breakParticles.color2);
 
-        if (window.breakParticleCount < 0) {
-            window.breakParticleCount = 0;
+        if (window.breakParticles.count < 0) {
+            window.breakParticles.count = 0;
         }
 
-        if (window.breakParticleSpeedMin > window.breakParticleSpeedMax) {
-            std::swap(window.breakParticleSpeedMin, window.breakParticleSpeedMax);
+        if (window.breakParticles.speedMin > window.breakParticles.speedMax) {
+            std::swap(window.breakParticles.speedMin, window.breakParticles.speedMax);
         }
 
-        if (window.breakParticleLifetimeMsMin > window.breakParticleLifetimeMsMax) {
-            std::swap(window.breakParticleLifetimeMsMin, window.breakParticleLifetimeMsMax);
+        if (window.breakParticles.lifetimeMsMin > window.breakParticles.lifetimeMsMax) {
+            std::swap(window.breakParticles.lifetimeMsMin, window.breakParticles.lifetimeMsMax);
         }
 
-        if (window.breakParticleSizeMin > window.breakParticleSizeMax) {
-            std::swap(window.breakParticleSizeMin, window.breakParticleSizeMax);
+        if (window.breakParticles.sizeMin > window.breakParticles.sizeMax) {
+            std::swap(window.breakParticles.sizeMin, window.breakParticles.sizeMax);
         }
 
         topdown.authored.windows.push_back(window);
@@ -992,13 +819,13 @@ static void ImportPropLayer(
         prop.position.y = obj.value("y", 0.0f) * scale;
         prop.opacity = obj.value("opacity", 1.0f);
 
-        const std::string assetRel = GetObjectPropertyString(obj, "asset", "");
+        const std::string assetRel = TopdownGetTiledObjectPropertyString(obj, "asset", "");
         if (assetRel.empty()) {
             TraceLog(LOG_WARNING, "Topdown prop '%s' missing required asset; skipping", prop.id.c_str());
             continue;
         }
 
-        const std::string typeStr = GetObjectPropertyString(obj, "type", "image");
+        const std::string typeStr = TopdownGetTiledObjectPropertyString(obj, "type", "image");
         if (!ParseTopdownPropType(typeStr, prop.type)) {
             TraceLog(LOG_WARNING,
                      "Invalid topdown prop type '%s' on '%s', defaulting to image",
@@ -1007,12 +834,12 @@ static void ImportPropLayer(
             prop.type = TopdownPropType::Image;
         }
 
-        prop.flipX = GetObjectPropertyBool(obj, "flipX", false);
-        prop.animation = GetObjectPropertyString(obj, "animation", "");
-        prop.loop = GetObjectPropertyBool(obj, "loop", false);
+        prop.flipX = TopdownGetTiledObjectPropertyBool(obj, "flipX", false);
+        prop.animation = TopdownGetTiledObjectPropertyString(obj, "animation", "");
+        prop.loop = TopdownGetTiledObjectPropertyBool(obj, "loop", false);
 
         const std::string placementStr =
-                GetObjectPropertyString(obj, "placement", "after_bottom");
+                TopdownGetTiledObjectPropertyString(obj, "placement", "after_bottom");
         if (!ParseTopdownEffectPlacement(placementStr, prop.placement)) {
             TraceLog(LOG_WARNING,
                      "Invalid topdown prop placement '%s' on '%s', defaulting to after_bottom",
@@ -1021,15 +848,15 @@ static void ImportPropLayer(
             prop.placement = TopdownEffectPlacement::AfterBottom;
         }
 
-        prop.sortIndex = GetObjectPropertyFloat(obj, "sortIndex", 0.0f);
+        prop.sortIndex = TopdownGetTiledObjectPropertyFloat(obj, "sortIndex", 0.0f);
         prop.opacity = std::clamp(prop.opacity, 0.0f, 1.0f);
 
-        const bool hasOriginOverrideX = FindObjectProperty(obj, "originOverrideX") != nullptr;
-        const bool hasOriginOverrideY = FindObjectProperty(obj, "originOverrideY") != nullptr;
+        const bool hasOriginOverrideX = TopdownFindTiledObjectProperty(obj, "originOverrideX") != nullptr;
+        const bool hasOriginOverrideY = TopdownFindTiledObjectProperty(obj, "originOverrideY") != nullptr;
         if (hasOriginOverrideX && hasOriginOverrideY) {
             prop.hasOriginOverride = true;
-            prop.originOverride.x = GetObjectPropertyFloat(obj, "originOverrideX", 0.0f) * scale;
-            prop.originOverride.y = GetObjectPropertyFloat(obj, "originOverrideY", 0.0f) * scale;
+            prop.originOverride.x = TopdownGetTiledObjectPropertyFloat(obj, "originOverrideX", 0.0f) * scale;
+            prop.originOverride.y = TopdownGetTiledObjectPropertyFloat(obj, "originOverrideY", 0.0f) * scale;
         }
 
         const fs::path resolved = (levelDir / assetRel).lexically_normal();
@@ -1197,10 +1024,10 @@ static void ImportEffectRegionLayer(
         effect.visible = obj.value("visible", true);
         effect.opacity = obj.value("opacity", 1.0f);
 
-        effect.tint = GetObjectPropertyColor(obj, "tintColor", WHITE);
+        effect.tint = TopdownGetTiledObjectPropertyColor(obj, "tintColor", WHITE);
 
         const std::string placementStr =
-                GetObjectPropertyString(obj, "placement", "after_bottom");
+                TopdownGetTiledObjectPropertyString(obj, "placement", "after_bottom");
         if (!ParseTopdownEffectPlacement(placementStr, effect.placement)) {
             TraceLog(LOG_WARNING,
                      "Invalid topdown effect region placement '%s' on '%s', defaulting to after_bottom",
@@ -1210,10 +1037,10 @@ static void ImportEffectRegionLayer(
         }
 
         effect.sortIndex = static_cast<int>(
-                GetObjectPropertyFloat(obj, "sortIndex", 0.0f));
+                TopdownGetTiledObjectPropertyFloat(obj, "sortIndex", 0.0f));
 
         const std::string blendModeStr =
-                GetObjectPropertyString(obj, "blendMode", "normal");
+                TopdownGetTiledObjectPropertyString(obj, "blendMode", "normal");
         if (!ParseEffectBlendModeString(blendModeStr, effect.blendMode)) {
             TraceLog(LOG_WARNING,
                      "Invalid topdown effect region blendMode '%s' on '%s', defaulting to normal",
@@ -1223,10 +1050,10 @@ static void ImportEffectRegionLayer(
         }
 
         effect.occludedByWalls =
-                GetObjectPropertyBool(obj, "occludedByWalls", false);
+                TopdownGetTiledObjectPropertyBool(obj, "occludedByWalls", false);
 
         effect.shaderIdString =
-                GetObjectPropertyString(obj, "shaderId", "");
+                TopdownGetTiledObjectPropertyString(obj, "shaderId", "");
         if (!ParseEffectShaderTypeString(effect.shaderIdString, effect.shaderType)) {
             TraceLog(LOG_WARNING,
                      "Invalid topdown effect region shaderId '%s' on '%s', defaulting to none",
@@ -1237,7 +1064,7 @@ static void ImportEffectRegionLayer(
         }
 
         const std::string assetRel =
-                GetObjectPropertyString(obj, "asset", "");
+                TopdownGetTiledObjectPropertyString(obj, "asset", "");
         if (!assetRel.empty()) {
             const fs::path resolved = (levelDir / assetRel).lexically_normal();
             effect.imagePath = NormalizePath(resolved);
@@ -1264,12 +1091,12 @@ static void ImportEffectRegionLayer(
         }
 
         const float occlusionOriginX =
-                GetObjectPropertyFloat(obj, "occlusionOriginX", 0.0f);
+                TopdownGetTiledObjectPropertyFloat(obj, "occlusionOriginX", 0.0f);
         const float occlusionOriginY =
-                GetObjectPropertyFloat(obj, "occlusionOriginY", 0.0f);
+                TopdownGetTiledObjectPropertyFloat(obj, "occlusionOriginY", 0.0f);
 
-        const bool hasOcclusionOriginX = FindObjectProperty(obj, "occlusionOriginX") != nullptr;
-        const bool hasOcclusionOriginY = FindObjectProperty(obj, "occlusionOriginY") != nullptr;
+        const bool hasOcclusionOriginX = TopdownFindTiledObjectProperty(obj, "occlusionOriginX") != nullptr;
+        const bool hasOcclusionOriginY = TopdownFindTiledObjectProperty(obj, "occlusionOriginY") != nullptr;
 
         if (hasOcclusionOriginX != hasOcclusionOriginY) {
             TraceLog(LOG_WARNING,
@@ -1281,23 +1108,23 @@ static void ImportEffectRegionLayer(
             effect.occlusionOrigin.y = occlusionOriginY * scale;
         }
 
-        effect.shaderParams.scrollSpeed.x = GetObjectPropertyFloat(obj, "scrollSpeedX", effect.shaderParams.scrollSpeed.x);
-        effect.shaderParams.scrollSpeed.y = GetObjectPropertyFloat(obj, "scrollSpeedY", effect.shaderParams.scrollSpeed.y);
-        effect.shaderParams.uvScale.x = GetObjectPropertyFloat(obj, "uvScaleX", effect.shaderParams.uvScale.x);
-        effect.shaderParams.uvScale.y = GetObjectPropertyFloat(obj, "uvScaleY", effect.shaderParams.uvScale.y);
-        effect.shaderParams.distortionAmount.x = GetObjectPropertyFloat(obj, "distortionX", effect.shaderParams.distortionAmount.x);
-        effect.shaderParams.distortionAmount.y = GetObjectPropertyFloat(obj, "distortionY", effect.shaderParams.distortionAmount.y);
-        effect.shaderParams.noiseScrollSpeed.x = GetObjectPropertyFloat(obj, "noiseSpeedX", effect.shaderParams.noiseScrollSpeed.x);
-        effect.shaderParams.noiseScrollSpeed.y = GetObjectPropertyFloat(obj, "noiseSpeedY", effect.shaderParams.noiseScrollSpeed.y);
-        effect.shaderParams.intensity = GetObjectPropertyFloat(obj, "intensity", effect.shaderParams.intensity);
-        effect.shaderParams.phaseOffset = GetObjectPropertyFloat(obj, "phaseOffset", effect.shaderParams.phaseOffset);
-        effect.shaderParams.brightness = GetObjectPropertyFloat(obj, "brightness", effect.shaderParams.brightness);
-        effect.shaderParams.contrast = GetObjectPropertyFloat(obj, "contrast", effect.shaderParams.contrast);
-        effect.shaderParams.saturation = GetObjectPropertyFloat(obj, "saturation", effect.shaderParams.saturation);
-        effect.shaderParams.tintR = GetObjectPropertyFloat(obj, "tintR", effect.shaderParams.tintR);
-        effect.shaderParams.tintG = GetObjectPropertyFloat(obj, "tintG", effect.shaderParams.tintG);
-        effect.shaderParams.tintB = GetObjectPropertyFloat(obj, "tintB", effect.shaderParams.tintB);
-        effect.shaderParams.softness = GetObjectPropertyFloat(obj, "softness", effect.shaderParams.softness);
+        effect.shaderParams.scrollSpeed.x = TopdownGetTiledObjectPropertyFloat(obj, "scrollSpeedX", effect.shaderParams.scrollSpeed.x);
+        effect.shaderParams.scrollSpeed.y = TopdownGetTiledObjectPropertyFloat(obj, "scrollSpeedY", effect.shaderParams.scrollSpeed.y);
+        effect.shaderParams.uvScale.x = TopdownGetTiledObjectPropertyFloat(obj, "uvScaleX", effect.shaderParams.uvScale.x);
+        effect.shaderParams.uvScale.y = TopdownGetTiledObjectPropertyFloat(obj, "uvScaleY", effect.shaderParams.uvScale.y);
+        effect.shaderParams.distortionAmount.x = TopdownGetTiledObjectPropertyFloat(obj, "distortionX", effect.shaderParams.distortionAmount.x);
+        effect.shaderParams.distortionAmount.y = TopdownGetTiledObjectPropertyFloat(obj, "distortionY", effect.shaderParams.distortionAmount.y);
+        effect.shaderParams.noiseScrollSpeed.x = TopdownGetTiledObjectPropertyFloat(obj, "noiseSpeedX", effect.shaderParams.noiseScrollSpeed.x);
+        effect.shaderParams.noiseScrollSpeed.y = TopdownGetTiledObjectPropertyFloat(obj, "noiseSpeedY", effect.shaderParams.noiseScrollSpeed.y);
+        effect.shaderParams.intensity = TopdownGetTiledObjectPropertyFloat(obj, "intensity", effect.shaderParams.intensity);
+        effect.shaderParams.phaseOffset = TopdownGetTiledObjectPropertyFloat(obj, "phaseOffset", effect.shaderParams.phaseOffset);
+        effect.shaderParams.brightness = TopdownGetTiledObjectPropertyFloat(obj, "brightness", effect.shaderParams.brightness);
+        effect.shaderParams.contrast = TopdownGetTiledObjectPropertyFloat(obj, "contrast", effect.shaderParams.contrast);
+        effect.shaderParams.saturation = TopdownGetTiledObjectPropertyFloat(obj, "saturation", effect.shaderParams.saturation);
+        effect.shaderParams.tintR = TopdownGetTiledObjectPropertyFloat(obj, "tintR", effect.shaderParams.tintR);
+        effect.shaderParams.tintG = TopdownGetTiledObjectPropertyFloat(obj, "tintG", effect.shaderParams.tintG);
+        effect.shaderParams.tintB = TopdownGetTiledObjectPropertyFloat(obj, "tintB", effect.shaderParams.tintB);
+        effect.shaderParams.softness = TopdownGetTiledObjectPropertyFloat(obj, "softness", effect.shaderParams.softness);
 
         state.topdown.authored.effectRegions.push_back(effect);
     }
@@ -1366,11 +1193,11 @@ static void ImportTriggerLayer(
         }
 
         trigger.visible = obj.value("visible", true);
-        trigger.script = GetObjectPropertyString(obj, "script", "");
-        trigger.repeat = GetObjectPropertyBool(obj, "repeat", false);
-        trigger.delayMs = GetObjectPropertyFloat(obj, "delayMs", 0.0f);
-        trigger.interact = GetObjectPropertyBool(obj, "interact", false);
-        trigger.displayName = GetObjectPropertyString(obj, "displayName", "");
+        trigger.script = TopdownGetTiledObjectPropertyString(obj, "script", "");
+        trigger.repeat = TopdownGetTiledObjectPropertyBool(obj, "repeat", false);
+        trigger.delayMs = TopdownGetTiledObjectPropertyFloat(obj, "delayMs", 0.0f);
+        trigger.interact = TopdownGetTiledObjectPropertyBool(obj, "interact", false);
+        trigger.displayName = TopdownGetTiledObjectPropertyString(obj, "displayName", "");
 
         if (trigger.delayMs < 0.0f) {
             TraceLog(LOG_WARNING,
@@ -1380,7 +1207,7 @@ static void ImportTriggerLayer(
             trigger.delayMs = 0.0f;
         }
 
-        const std::string affectsStr = GetObjectPropertyString(obj, "affects", "player");
+        const std::string affectsStr = TopdownGetTiledObjectPropertyString(obj, "affects", "player");
         if (!ParseTopdownTriggerAffects(affectsStr, trigger.affects)) {
             TraceLog(LOG_WARNING,
                      "Topdown trigger '%s' has invalid affects '%s'; defaulting to player",
@@ -1429,7 +1256,7 @@ static void ImportImageGroup(
         img.name = layer.value("name", std::string());
         img.visible = layer.value("visible", true);
         img.opacity = layer.value("opacity", 1.0f);
-        img.tint = GetLayerTintColor(layer, WHITE);
+        img.tint = TopdownGetTiledLayerTintColor(layer, WHITE);
 
         const std::string blendModeStr = layer.value("mode", std::string());
         if (!ParseEffectBlendModeString(blendModeStr, img.blendMode)) {
@@ -1440,7 +1267,7 @@ static void ImportImageGroup(
             img.blendMode = EffectBlendMode::Normal;
         }
 
-        img.shaderIdString = GetObjectPropertyString(layer, "shaderId", "");
+        img.shaderIdString = TopdownGetTiledObjectPropertyString(layer, "shaderId", "");
         if (!ParseEffectShaderTypeString(img.shaderIdString, img.shaderType)) {
             TraceLog(LOG_WARNING,
                      "Unsupported shaderId '%s' on topdown image layer '%s', falling back to none",
@@ -1456,7 +1283,7 @@ static void ImportImageGroup(
         img.imageSize.x = layer.value("imagewidth", 0.0f) * scale;
         img.imageSize.y = layer.value("imageheight", 0.0f) * scale;
 
-        img.scale = GetObjectPropertyFloat(layer, "scale", 1.0f);
+        img.scale = TopdownGetTiledObjectPropertyFloat(layer, "scale", 1.0f);
         if (img.scale <= 0.0f) {
             TraceLog(LOG_WARNING,
                      "Topdown image layer '%s' has invalid scale %.3f, falling back to 1.0",
@@ -1465,23 +1292,23 @@ static void ImportImageGroup(
             img.scale = 1.0f;
         }
 
-        img.shaderParams.scrollSpeed.x = GetObjectPropertyFloat(layer, "scrollSpeedX", img.shaderParams.scrollSpeed.x);
-        img.shaderParams.scrollSpeed.y = GetObjectPropertyFloat(layer, "scrollSpeedY", img.shaderParams.scrollSpeed.y);
-        img.shaderParams.uvScale.x = GetObjectPropertyFloat(layer, "uvScaleX", img.shaderParams.uvScale.x);
-        img.shaderParams.uvScale.y = GetObjectPropertyFloat(layer, "uvScaleY", img.shaderParams.uvScale.y);
-        img.shaderParams.distortionAmount.x = GetObjectPropertyFloat(layer, "distortionX", img.shaderParams.distortionAmount.x);
-        img.shaderParams.distortionAmount.y = GetObjectPropertyFloat(layer, "distortionY", img.shaderParams.distortionAmount.y);
-        img.shaderParams.noiseScrollSpeed.x = GetObjectPropertyFloat(layer, "noiseSpeedX", img.shaderParams.noiseScrollSpeed.x);
-        img.shaderParams.noiseScrollSpeed.y = GetObjectPropertyFloat(layer, "noiseSpeedY", img.shaderParams.noiseScrollSpeed.y);
-        img.shaderParams.intensity = GetObjectPropertyFloat(layer, "intensity", img.shaderParams.intensity);
-        img.shaderParams.phaseOffset = GetObjectPropertyFloat(layer, "phaseOffset", img.shaderParams.phaseOffset);
-        img.shaderParams.brightness = GetObjectPropertyFloat(layer, "brightness", img.shaderParams.brightness);
-        img.shaderParams.contrast = GetObjectPropertyFloat(layer, "contrast", img.shaderParams.contrast);
-        img.shaderParams.saturation = GetObjectPropertyFloat(layer, "saturation", img.shaderParams.saturation);
-        img.shaderParams.tintR = GetObjectPropertyFloat(layer, "tintR", img.shaderParams.tintR);
-        img.shaderParams.tintG = GetObjectPropertyFloat(layer, "tintG", img.shaderParams.tintG);
-        img.shaderParams.tintB = GetObjectPropertyFloat(layer, "tintB", img.shaderParams.tintB);
-        img.shaderParams.softness = GetObjectPropertyFloat(layer, "softness", img.shaderParams.softness);
+        img.shaderParams.scrollSpeed.x = TopdownGetTiledObjectPropertyFloat(layer, "scrollSpeedX", img.shaderParams.scrollSpeed.x);
+        img.shaderParams.scrollSpeed.y = TopdownGetTiledObjectPropertyFloat(layer, "scrollSpeedY", img.shaderParams.scrollSpeed.y);
+        img.shaderParams.uvScale.x = TopdownGetTiledObjectPropertyFloat(layer, "uvScaleX", img.shaderParams.uvScale.x);
+        img.shaderParams.uvScale.y = TopdownGetTiledObjectPropertyFloat(layer, "uvScaleY", img.shaderParams.uvScale.y);
+        img.shaderParams.distortionAmount.x = TopdownGetTiledObjectPropertyFloat(layer, "distortionX", img.shaderParams.distortionAmount.x);
+        img.shaderParams.distortionAmount.y = TopdownGetTiledObjectPropertyFloat(layer, "distortionY", img.shaderParams.distortionAmount.y);
+        img.shaderParams.noiseScrollSpeed.x = TopdownGetTiledObjectPropertyFloat(layer, "noiseSpeedX", img.shaderParams.noiseScrollSpeed.x);
+        img.shaderParams.noiseScrollSpeed.y = TopdownGetTiledObjectPropertyFloat(layer, "noiseSpeedY", img.shaderParams.noiseScrollSpeed.y);
+        img.shaderParams.intensity = TopdownGetTiledObjectPropertyFloat(layer, "intensity", img.shaderParams.intensity);
+        img.shaderParams.phaseOffset = TopdownGetTiledObjectPropertyFloat(layer, "phaseOffset", img.shaderParams.phaseOffset);
+        img.shaderParams.brightness = TopdownGetTiledObjectPropertyFloat(layer, "brightness", img.shaderParams.brightness);
+        img.shaderParams.contrast = TopdownGetTiledObjectPropertyFloat(layer, "contrast", img.shaderParams.contrast);
+        img.shaderParams.saturation = TopdownGetTiledObjectPropertyFloat(layer, "saturation", img.shaderParams.saturation);
+        img.shaderParams.tintR = TopdownGetTiledObjectPropertyFloat(layer, "tintR", img.shaderParams.tintR);
+        img.shaderParams.tintG = TopdownGetTiledObjectPropertyFloat(layer, "tintG", img.shaderParams.tintG);
+        img.shaderParams.tintB = TopdownGetTiledObjectPropertyFloat(layer, "tintB", img.shaderParams.tintB);
+        img.shaderParams.softness = TopdownGetTiledObjectPropertyFloat(layer, "softness", img.shaderParams.softness);
 
         if (!imageRel.empty()) {
             const fs::path resolved = (sceneDir / imageRel).lexically_normal();
@@ -1966,10 +1793,7 @@ static bool BuildWallOcclusionPolygon(
     }
 
     for (float angle : rayAngles) {
-        const Vector2 dir{
-                std::cos(angle),
-                std::sin(angle)
-        };
+        const Vector2 dir = TopdownDirectionFromAngle(angle);
 
         bool foundHit = false;
         float bestT = 0.0f;
@@ -2015,7 +1839,7 @@ static bool BuildWallOcclusionPolygon(
 
     for (const TopdownOcclusionHitPoint& hit : hits) {
         if (!outPolygon.empty() &&
-            DistanceSqr(outPolygon.back(), hit.point) <= kPointMergeDistanceSqr) {
+            TopdownDistanceSqr(outPolygon.back(), hit.point) <= kPointMergeDistanceSqr) {
             continue;
         }
 
@@ -2023,7 +1847,7 @@ static bool BuildWallOcclusionPolygon(
     }
 
     if (outPolygon.size() >= 2 &&
-        DistanceSqr(outPolygon.front(), outPolygon.back()) <= kPointMergeDistanceSqr) {
+        TopdownDistanceSqr(outPolygon.front(), outPolygon.back()) <= kPointMergeDistanceSqr) {
         outPolygon.pop_back();
     }
 
@@ -2447,8 +2271,7 @@ static void BuildRuntimeFromAuthored(TopdownData& topdown)
         topdown.runtime.player.position = spawn->position;
 
         const float radians = spawn->orientationDegrees * DEG2RAD;
-        topdown.runtime.player.facing.x = std::cos(radians);
-        topdown.runtime.player.facing.y = std::sin(radians);
+        topdown.runtime.player.facing = TopdownDirectionFromAngle(radians);
     } else if (!topdown.authored.levelBoundary.empty()) {
         topdown.runtime.player.position = topdown.authored.levelBoundary[0];
     }

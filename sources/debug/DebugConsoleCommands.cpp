@@ -192,7 +192,7 @@ bool ExecuteConsoleSlashCommand(GameState& state, const std::string& line)
 
         if (state.topdown.runtime.aiFrozen) {
             for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {
-                if (!npc.active || !npc.hostile) {
+                if (!npc.active || !npc.ai.hostile) {
                     continue;
                 }
 

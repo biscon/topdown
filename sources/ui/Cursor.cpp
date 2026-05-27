@@ -50,11 +50,11 @@ namespace {
 
     bool IsMouseOverHostileNpc(const GameState &state, Vector2 mouseWorld) {
         for (const TopdownNpcRuntime &npc: state.topdown.runtime.npcs) {
-            if (!npc.active || !npc.visible || npc.dead || !npc.hostile) {
+            if (!npc.active || !npc.visible || npc.dead || !npc.ai.hostile) {
                 continue;
             }
 
-            if (CheckCollisionPointCircle(mouseWorld, npc.position, npc.collisionRadius)) {
+            if (CheckCollisionPointCircle(mouseWorld, npc.position, npc.movement.collisionRadius)) {
                 return true;
             }
         }

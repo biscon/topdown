@@ -159,7 +159,7 @@ static void AddNpcAgents(GameState& state)
             continue;
         }
 
-        rvo.sim->setAgentRadius(id, npc.collisionRadius);
+        rvo.sim->setAgentRadius(id, npc.movement.collisionRadius);
 
         TopdownRvoAgent agent;
         agent.npcHandle = npc.handle;
@@ -198,8 +198,8 @@ static Vector2 BuildNpcFallbackPreferredVelocity(
     }
 
     const TopdownNpcAssetRuntime* asset = FindNpcAssetForRvo(state, npc);
-    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
-    const float runSpeed = asset ? asset->runSpeed : 700.0f;
+    const float walkSpeed = asset ? asset->movement.walkSpeed : 450.0f;
+    const float runSpeed = asset ? asset->movement.runSpeed : 700.0f;
     const float maxSpeed = npc.move.running ? runSpeed : walkSpeed;
 
     const float desiredSpeed = std::min(
@@ -274,7 +274,7 @@ void TopdownRvoSync(GameState& state)
         }
 
         sim.setAgentPosition(agent.rvoId, ToRvo(npc->position));
-        sim.setAgentRadius(agent.rvoId, npc->collisionRadius);
+        sim.setAgentRadius(agent.rvoId, npc->movement.collisionRadius);
 
         if (!npc->active ||
             npc->dead ||
@@ -289,8 +289,8 @@ void TopdownRvoSync(GameState& state)
         }
 
         const TopdownNpcAssetRuntime* asset = FindNpcAssetForRvo(state, *npc);
-        const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
-        const float runSpeed = asset ? asset->runSpeed : 700.0f;
+        const float walkSpeed = asset ? asset->movement.walkSpeed : 450.0f;
+        const float runSpeed = asset ? asset->movement.runSpeed : 700.0f;
         const float maxSpeed = npc->move.running ? runSpeed : walkSpeed;
 
         Vector2 pref = BuildNpcFallbackPreferredVelocity(state, *npc);

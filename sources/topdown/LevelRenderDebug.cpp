@@ -813,44 +813,44 @@ static void DrawNpcAiDebug(const GameState& state)
         const Vector2 npcScreen = TopdownWorldToScreen(state, npc.position);
 
         const Color baseColor =
-                npc.hostile
+                npc.ai.hostile
                 ? Color{0, 0, 255, 255}
                 : Color{110, 220, 255, 255};
 
-        if (npc.visionRange > 0.0f) {
+        if (npc.perception.visionRange > 0.0f) {
             DrawCircleLines(
                     static_cast<int>(std::round(npcScreen.x)),
                     static_cast<int>(std::round(npcScreen.y)),
-                    npc.visionRange,
+                    npc.perception.visionRange,
                     Color{255, 140, 0, 90});
         }
 
-        if (npc.hearingRange > 0.0f) {
+        if (npc.perception.hearingRange > 0.0f) {
             DrawCircleLines(
                     static_cast<int>(std::round(npcScreen.x)),
                     static_cast<int>(std::round(npcScreen.y)),
-                    npc.hearingRange,
+                    npc.perception.hearingRange,
                     Color{80, 180, 255, 90});
         }
 
-        if (npc.attackRange > 0.0f) {
+        if (npc.meleeAttack.attackRange > 0.0f) {
             DrawCircleLines(
                     static_cast<int>(std::round(npcScreen.x)),
                     static_cast<int>(std::round(npcScreen.y)),
-                    npc.collisionRadius + player.radius + npc.attackRange,
+                    npc.movement.collisionRadius + player.radius + npc.meleeAttack.attackRange,
                     Color{180, 40, 255, 120});
         }
 
         const float facingAngle = std::atan2(npc.facing.y, npc.facing.x);
-        const float halfAngle = npc.visionHalfAngleDegrees * DEG2RAD;
+        const float halfAngle = npc.perception.visionHalfAngleDegrees * DEG2RAD;
 
         Vector2 leftRay{
-                npc.position.x + std::cos(facingAngle - halfAngle) * std::min(npc.visionRange, 160.0f),
-                npc.position.y + std::sin(facingAngle - halfAngle) * std::min(npc.visionRange, 160.0f)
+                npc.position.x + std::cos(facingAngle - halfAngle) * std::min(npc.perception.visionRange, 160.0f),
+                npc.position.y + std::sin(facingAngle - halfAngle) * std::min(npc.perception.visionRange, 160.0f)
         };
         Vector2 rightRay{
-                npc.position.x + std::cos(facingAngle + halfAngle) * std::min(npc.visionRange, 160.0f),
-                npc.position.y + std::sin(facingAngle + halfAngle) * std::min(npc.visionRange, 160.0f)
+                npc.position.x + std::cos(facingAngle + halfAngle) * std::min(npc.perception.visionRange, 160.0f),
+                npc.position.y + std::sin(facingAngle + halfAngle) * std::min(npc.perception.visionRange, 160.0f)
         };
 
         DrawLineEx(
@@ -919,8 +919,8 @@ static void DrawNpcAiDebug(const GameState& state)
 
         DrawText(
                 TextFormat("ai=%s  hostile=%s  persistent=%s",
-                           TopdownNpcAiModeToString(npc.aiMode),
-                           npc.hostile ? "yes" : "no",
+                           TopdownNpcAiModeToString(npc.ai.aiMode),
+                           npc.ai.hostile ? "yes" : "no",
                            npc.persistentChase ? "yes" : "no"),
                 static_cast<int>(npcScreen.x + 10.0f),
                 static_cast<int>(npcScreen.y + 34.0f),
@@ -992,7 +992,7 @@ static void DrawNpcDebug(const GameState& state)
         DrawCircleLines(
                 static_cast<int>(std::round(npcScreen.x)),
                 static_cast<int>(std::round(npcScreen.y)),
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 color);
 
         Vector2 facingTip{
@@ -1176,7 +1176,7 @@ static bool DebugIsNpcInsideMeleeArc(
 
     Vector2 closestPointOnNpc = TopdownSub(
             npc.position,
-            TopdownMul(dirToCenter, npc.collisionRadius));
+            TopdownMul(dirToCenter, npc.movement.collisionRadius));
 
     Vector2 toHitPoint = TopdownSub(closestPointOnNpc, player.position);
     const float hitPointDist = TopdownLength(toHitPoint);
@@ -1296,7 +1296,7 @@ static void DrawMeleeArcDebug(
         DrawCircleLines(
                 static_cast<int>(std::round(npcScreen.x)),
                 static_cast<int>(std::round(npcScreen.y)),
-                npc.collisionRadius + 4.0f,
+                npc.movement.collisionRadius + 4.0f,
                 color);
     }
 
@@ -1306,12 +1306,12 @@ static void DrawMeleeArcDebug(
         DrawCircleLines(
                 static_cast<int>(std::round(bestScreen.x)),
                 static_cast<int>(std::round(bestScreen.y)),
-                best->collisionRadius + 10.0f,
+                best->movement.collisionRadius + 10.0f,
                 WHITE);
 
         DrawText(
                 label,
-                static_cast<int>(bestScreen.x + best->collisionRadius + 12.0f),
+                static_cast<int>(bestScreen.x + best->movement.collisionRadius + 12.0f),
                 static_cast<int>(bestScreen.y - 8.0f),
                 16,
                 color);

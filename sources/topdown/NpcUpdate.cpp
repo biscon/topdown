@@ -53,8 +53,8 @@ static Vector2 BuildNpcFallbackPathVelocity(
     }
 
     const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
-    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
-    const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
+    const float walkSpeed = asset ? asset->movement.walkSpeed : 450.0f;
+    const float runSpeed  = asset ? asset->movement.runSpeed  : 700.0f;
     const float maxSpeed = npc.move.running ? runSpeed : walkSpeed;
 
     const float speed = std::min(std::max(0.0f, npc.move.currentSpeed), maxSpeed);
@@ -63,7 +63,7 @@ static Vector2 BuildNpcFallbackPathVelocity(
     /*
     const float lookaheadDistance = std::max(
             80.0f,
-            npc.collisionRadius * 3.0f);
+            npc.movement.collisionRadius * 3.0f);
 
     const Vector2 steeringTarget =
             TopdownBuildNpcPathSteeringTarget(npc, lookaheadDistance);
@@ -132,7 +132,7 @@ static void UpdateNpcMovementAndCollision(
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
         const Rectangle queryBounds = BuildNpcMovementCollisionQueryBounds(
                 npc.position,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 velocity,
                 dt);
 
@@ -151,7 +151,7 @@ static void UpdateNpcMovementAndCollision(
             ResolveCircleVsSegment(
                     npc.position,
                     velocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     segments[segmentIndex]);
         }
 
@@ -175,7 +175,7 @@ static void UpdateNpcMovementAndCollision(
             ResolveCircleVsCircle(
                     npc.position,
                     velocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     state.topdown.runtime.player.position,
                     state.topdown.runtime.player.radius,
                     preferredVsPlayer);
@@ -223,17 +223,17 @@ static bool HasNpcPassedPathWaypoint(
 
 static float RotateAngleTowards(float current, float target, float maxStep)
 {
-    const float delta = NormalizeAngleRadians(target - current);
+    const float delta = TopdownNormalizeAngleRadians(target - current);
 
     if (std::fabs(delta) <= maxStep) {
         return target;
     }
 
     if (delta > 0.0f) {
-        return NormalizeAngleRadians(current + maxStep);
+        return TopdownNormalizeAngleRadians(current + maxStep);
     }
 
-    return NormalizeAngleRadians(current - maxStep);
+    return TopdownNormalizeAngleRadians(current - maxStep);
 }
 
 static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& npc, float dt)
@@ -292,8 +292,8 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
     }
 
     const TopdownNpcAssetRuntime* asset = FindTopdownNpcAssetRuntime(state, npc.assetId);
-    const float walkSpeed = asset ? asset->walkSpeed : 450.0f;
-    const float runSpeed  = asset ? asset->runSpeed  : 700.0f;
+    const float walkSpeed = asset ? asset->movement.walkSpeed : 450.0f;
+    const float runSpeed  = asset ? asset->movement.runSpeed  : 700.0f;
     const float maxSpeed = move.running ? runSpeed : walkSpeed;
 
     float targetSpeed = maxSpeed;
@@ -330,10 +330,7 @@ static void PrepareSingleNpcPathMovement(GameState& state, TopdownNpcRuntime& np
                 targetRotation,
                 turnSpeedRadiansPerSecond * dt);
 
-        npc.facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        npc.facing = TopdownDirectionFromAngle(npc.rotationRadians);
 
         npc.moving = true;
         npc.running = move.running;
@@ -462,7 +459,7 @@ static void UpdateNpcKnockbackAndCollision(
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
         const Rectangle queryBounds = BuildNpcMovementCollisionQueryBounds(
                 npc.position,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 velocity,
                 dt);
 
@@ -480,7 +477,7 @@ static void UpdateNpcKnockbackAndCollision(
             ResolveCircleVsSegment(
                     npc.position,
                     velocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     segments[segmentIndex]);
         }
 
@@ -498,7 +495,7 @@ static void UpdateNpcKnockbackAndCollision(
         ResolveCircleVsCircle(
                 npc.position,
                 velocity,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 state.topdown.runtime.player.position,
                 state.topdown.runtime.player.radius,
                 preferredVsPlayer);
@@ -522,9 +519,9 @@ static void UpdateNpcKnockbackAndCollision(
             ResolveCircleVsCircle(
                     npc.position,
                     velocity,
-                    npc.collisionRadius,
+                    npc.movement.collisionRadius,
                     otherNpc.position,
-                    otherNpc.collisionRadius,
+                    otherNpc.movement.collisionRadius,
                     preferredVsNpc);
         }
     }
@@ -690,11 +687,11 @@ static void TopdownUpdateNpcDeathAndCorpseLifecycle(GameState& state, float dtMs
             }
         }
 
-        if (npc.corpse && npc.corpseExpirationMs >= 0.0f) {
+        if (npc.corpse && npc.movement.corpseExpirationMs >= 0.0f) {
             npc.corpseElapsedMs += dtMs;
 
             const float totalLifetimeMs =
-                    npc.corpseExpirationMs + kCorpseFadeDurationMs;
+                    npc.movement.corpseExpirationMs + kCorpseFadeDurationMs;
 
             if (npc.corpseElapsedMs >= totalLifetimeMs) {
                 npc.active = false;

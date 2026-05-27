@@ -399,7 +399,7 @@ bool TopdownBeginNpcInvestigationState(
         context = CreateInvestigationContext(
                 runtime,
                 npc.investigationPosition,
-                npc.collisionRadius,
+                npc.movement.collisionRadius,
                 npc.handle);
     } else {
         TraceLog(LOG_INFO, "Reusing existing investigation context");

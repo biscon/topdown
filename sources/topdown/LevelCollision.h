@@ -6,7 +6,6 @@ static constexpr int kCollisionIterations = 4;
 
 Vector2 MoveTowardsVector(Vector2 current, Vector2 target, float maxDelta);
 float MoveTowardsFloat(float current, float target, float maxDelta);
-float NormalizeAngleRadians(float angle);
 float MoveTowardsAngle(float current, float target, float maxDelta);
 void ResolveCircleVsCircle(
         Vector2& position,

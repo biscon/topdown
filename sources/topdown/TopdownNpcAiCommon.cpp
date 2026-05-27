@@ -87,10 +87,7 @@ void TopdownBeginNpcSearchState(
 
     Vector2 facing = TopdownNormalizeOrZero(npc.facing);
     if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        facing = TopdownDirectionFromAngle(npc.rotationRadians);
         facing = TopdownNormalizeOrZero(facing);
     }
 
@@ -136,12 +133,6 @@ bool TopdownUpdateNpcChaseStuckWatchdog(
     return movedTooLittle;
 }
 
-static float SmoothStep01(float t)
-{
-    t = Clamp(t, 0.0f, 1.0f);
-    return t * t * (3.0f - 2.0f * t);
-}
-
 TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
         TopdownNpcRuntime& npc,
         float dt)
@@ -157,31 +148,25 @@ TopdownNpcSearchUpdateResult TopdownUpdateNpcSearchState(
     float signedOffsetRadians = 0.0f;
 
     if (totalT < (1.0f / 3.0f)) {
-        const float t = SmoothStep01(totalT / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01(totalT / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(0.0f, -halfSweepRadians, t);
     } else if (totalT < (2.0f / 3.0f)) {
-        const float t = SmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01((totalT - (1.0f / 3.0f)) / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(-halfSweepRadians, halfSweepRadians, t);
     } else {
-        const float t = SmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
+        const float t = TopdownSmoothStep01((totalT - (2.0f / 3.0f)) / (1.0f / 3.0f));
         signedOffsetRadians = Lerp(halfSweepRadians, 0.0f, t);
     }
 
     const float newAngle =
-            NormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
+            TopdownNormalizeAngleRadians(npc.searchBaseFacingRadians + signedOffsetRadians);
 
     npc.rotationRadians = newAngle;
-    npc.facing = Vector2{
-            std::cos(newAngle),
-            std::sin(newAngle)
-    };
+    npc.facing = TopdownDirectionFromAngle(newAngle);
 
     if (npc.searchStateTimeMs >= durationMs) {
         npc.rotationRadians = npc.searchBaseFacingRadians;
-        npc.facing = Vector2{
-                std::cos(npc.searchBaseFacingRadians),
-                std::sin(npc.searchBaseFacingRadians)
-        };
+        npc.facing = TopdownDirectionFromAngle(npc.searchBaseFacingRadians);
 
         return TopdownNpcSearchUpdateResult::Finished;
     }
@@ -197,7 +182,7 @@ void TopdownAlertNpcToPlayer(
         return;
     }
 
-    if (!npc.hostile) {
+    if (!npc.ai.hostile) {
         return;
     }
 
@@ -242,7 +227,7 @@ void TopdownAlertNearbyNpcs(
             continue;
         }
 
-        if (!otherNpc.hostile) {
+        if (!otherNpc.ai.hostile) {
             continue;
         }
 
@@ -393,10 +378,7 @@ static bool IsPlayerInsideNpcVisionCone(
 
     Vector2 facing = TopdownNormalizeOrZero(npc.facing);
     if (TopdownLengthSqr(facing) <= 0.000001f) {
-        facing = Vector2{
-                std::cos(npc.rotationRadians),
-                std::sin(npc.rotationRadians)
-        };
+        facing = TopdownDirectionFromAngle(npc.rotationRadians);
         facing = TopdownNormalizeOrZero(facing);
     }
 
@@ -405,7 +387,7 @@ static bool IsPlayerInsideNpcVisionCone(
     }
 
     const float cosThreshold =
-            std::cos(npc.visionHalfAngleDegrees * DEG2RAD);
+            std::cos(npc.perception.visionHalfAngleDegrees * DEG2RAD);
 
     return TopdownDot(facing, dirToPlayer) >= cosThreshold;
 }
@@ -464,7 +446,7 @@ bool TopdownNpcCanSeePlayer(
 
     const TopdownPlayerRuntime& player = state.topdown.runtime.player;
     const float distSqr = TopdownLengthSqr(TopdownSub(player.position, npc.position));
-    const float range = std::max(0.0f, npc.visionRange);
+    const float range = std::max(0.0f, npc.perception.visionRange);
 
     if (distSqr > range * range) {
         return false;
@@ -521,7 +503,7 @@ bool TopdownNpcCanHearPlayer(
         return false;
     }
 
-    float range = std::max(0.0f, npc.hearingRange);
+    float range = std::max(0.0f, npc.perception.hearingRange);
 
     /* Reducing hearing through doors is less fun
     if (HasDoorBetweenPoints(state, npc.position, player.position)) {
@@ -539,8 +521,8 @@ bool TopdownIsPlayerWithinNpcAttackRange(
 {
     const Vector2 delta = TopdownSub(player.position, npc.position);
     const float centerDist = TopdownLength(delta);
-    const float edgeDist = centerDist - player.radius - npc.collisionRadius;
-    return edgeDist <= npc.attackRange;
+    const float edgeDist = centerDist - player.radius - npc.movement.collisionRadius;
+    return edgeDist <= npc.meleeAttack.attackRange;
 }
 
 bool TopdownNpcHasLineOfSightToNpc(
