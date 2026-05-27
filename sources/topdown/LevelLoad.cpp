@@ -611,6 +611,7 @@ static void ImportDoorLayer(
         door.autoClose = TopdownGetTiledObjectPropertyBool(obj, "autoClose", false);
         door.autoCloseStrength = TopdownGetTiledObjectPropertyFloat(obj, "autoCloseStrength", 6.0f);
         door.damping = TopdownGetTiledObjectPropertyFloat(obj, "damping", 5.0f);
+        door.pushResistance = TopdownGetTiledObjectPropertyFloat(obj, "pushResistance", 1.0f);
 
         if (door.autoCloseStrength < 0.0f) {
             TraceLog(LOG_WARNING,
@@ -626,6 +627,14 @@ static void ImportDoorLayer(
                      door.id.c_str(),
                      door.damping);
             door.damping = 0.0f;
+        }
+
+        if (door.pushResistance <= 0.0f) {
+            TraceLog(LOG_WARNING,
+                     "Topdown door '%s' has non-positive pushResistance %.3f; clamping to 0.01",
+                     door.id.c_str(),
+                     door.pushResistance);
+            door.pushResistance = 0.01f;
         }
 
         door.swingMinDegrees = TopdownGetTiledObjectPropertyFloat(obj, "swingMinDeg", -90.0f);
@@ -1983,6 +1992,7 @@ static TopdownRuntimeDoor BuildRuntimeDoorFromAuthored(
     runtime.autoClose = authored.autoClose;
     runtime.autoCloseStrength = authored.autoCloseStrength;
     runtime.damping = authored.damping;
+    runtime.pushResistance = authored.pushResistance;
 
     runtime.swingMinRadians = authored.swingMinDegrees * DEG2RAD;
     runtime.swingMaxRadians = authored.swingMaxDegrees * DEG2RAD;

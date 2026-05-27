@@ -1399,6 +1399,36 @@ static int Lua_setTriggerRepeat(lua_State* L)
     return 1;
 }
 
+static int Lua_setDoorLocked(lua_State* L)
+{
+    const char* doorId = luaL_checkstring(L, 1);
+    const bool locked = lua_toboolean(L, 2) != 0;
+
+    if (!gameState || !doorId) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    const bool ok = TopdownScriptSetDoorLocked(*gameState, doorId, locked);
+    lua_pushboolean(L, ok ? 1 : 0);
+    return 1;
+}
+
+static int Lua_doorLocked(lua_State* L)
+{
+    const char* doorId = luaL_checkstring(L, 1);
+
+    if (!gameState || !doorId) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    bool locked = false;
+    const bool ok = TopdownScriptIsDoorLocked(*gameState, doorId, locked);
+    lua_pushboolean(L, ok ? (locked ? 1 : 0) : 0);
+    return 1;
+}
+
 static int Lua_setObjectiveTrigger(lua_State* L)
 {
     const char* id = luaL_checkstring(L, 1);
@@ -1903,6 +1933,8 @@ void RegisterLuaAPI(lua_State* L)
     lua_register(L, "effectRegionOpacity", Lua_effectRegionOpacity);
     lua_register(L, "setTriggerEnabled", Lua_setTriggerEnabled);
     lua_register(L, "setTriggerRepeat", Lua_setTriggerRepeat);
+    lua_register(L, "setDoorLocked", Lua_setDoorLocked);
+    lua_register(L, "doorLocked", Lua_doorLocked);
     lua_register(L, "setObjectiveTrigger", Lua_setObjectiveTrigger);
     lua_register(L, "setObjectiveNpc", Lua_setObjectiveNpc);
     lua_register(L, "setObjectiveProp", Lua_setObjectiveProp);

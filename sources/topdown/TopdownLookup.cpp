@@ -80,6 +80,32 @@ const TopdownRuntimeTrigger* TopdownFindRuntimeTriggerById(
     return nullptr;
 }
 
+TopdownRuntimeDoor* TopdownFindRuntimeDoorById(
+        GameState& state,
+        const std::string& id)
+{
+    for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+        if (door.id == id) {
+            return &door;
+        }
+    }
+
+    return nullptr;
+}
+
+const TopdownRuntimeDoor* TopdownFindRuntimeDoorById(
+        const GameState& state,
+        const std::string& id)
+{
+    for (const TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
+        if (door.id == id) {
+            return &door;
+        }
+    }
+
+    return nullptr;
+}
+
 TopdownNpcRuntime* TopdownFindActiveNpcById(GameState& state, const std::string& npcId)
 {
     for (TopdownNpcRuntime& npc : state.topdown.runtime.npcs) {

@@ -1507,9 +1507,10 @@ static void DrawDoorDebug(const GameState& state)
                 slabColor);
 
         DrawText(
-                TextFormat("len=%.1f  thick=%.1f  autoClose=%s  locked=%s",
+                TextFormat("len=%.1f  thick=%.1f  pushRes=%.2f  autoClose=%s  locked=%s",
                            runtime.length,
                            runtime.thickness,
+                           runtime.pushResistance,
                            runtime.autoClose ? "yes" : "no",
                            runtime.locked ? "yes" : "no"),
                 static_cast<int>(labelPos.x),

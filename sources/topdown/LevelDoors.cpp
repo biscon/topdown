@@ -15,6 +15,7 @@ static constexpr float kDoorOpenSoundMinAngularSpeed = 0.8f;
 static constexpr float kDoorCloseSoundMinAngularSpeed = 0.5f;
 
 static constexpr float kDoorPushTorqueScale = 0.00026f;
+static constexpr float kDoorMinPushResistance = 0.01f;
 static constexpr float kDoorMotionPushPlayerScale = 0.55f;
 static constexpr float kDoorMotionPushNpcScale = 1.5f;
 static constexpr float kDoorNpcKnockbackScale = 0.18f;
@@ -217,12 +218,14 @@ static void ApplyAngularImpulseFromActor(
     const float pushStrength =
             towardDoorSpeed +
             penetration * 35.0f;
+    const float resistanceScale = 1.0f / std::max(door.pushResistance, kDoorMinPushResistance);
 
     door.angularVelocity +=
             tangentialSign *
             leverArm *
             pushStrength *
-            kDoorPushTorqueScale;
+            kDoorPushTorqueScale *
+            resistanceScale;
 }
 
 static Vector2 ComputeDoorPointVelocity(
@@ -504,7 +507,7 @@ void ResolvePlayerVsDoors(GameState& state)
 
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
         for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
-            if (!door.visible || door.locked) {
+            if (!door.visible) {
                 continue;
             }
 
@@ -520,12 +523,14 @@ void ResolvePlayerVsDoors(GameState& state)
                     &leverT,
                     &normal,
                     &penetration)) {
-                ApplyAngularImpulseFromActor(
-                        door,
-                        player.velocity,
-                        normal,
-                        leverT,
-                        penetration);
+                if (!door.locked) {
+                    ApplyAngularImpulseFromActor(
+                            door,
+                            player.velocity,
+                            normal,
+                            leverT,
+                            penetration);
+                }
             }
         }
     }
@@ -535,7 +540,7 @@ void ResolveNpcVsDoors(GameState& state, TopdownNpcRuntime& npc)
 {
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
         for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
-            if (!door.visible || door.locked) {
+            if (!door.visible) {
                 continue;
             }
 
@@ -551,12 +556,14 @@ void ResolveNpcVsDoors(GameState& state, TopdownNpcRuntime& npc)
                     &leverT,
                     &normal,
                     &penetration)) {
-                ApplyAngularImpulseFromActor(
-                        door,
-                        npc.currentVelocity,
-                        normal,
-                        leverT,
-                        penetration);
+                if (!door.locked) {
+                    ApplyAngularImpulseFromActor(
+                            door,
+                            npc.currentVelocity,
+                            normal,
+                            leverT,
+                            penetration);
+                }
             }
         }
     }
@@ -566,7 +573,7 @@ void ResolveNpcKnockbackVsDoors(GameState& state, TopdownNpcRuntime& npc)
 {
     for (int iteration = 0; iteration < kCollisionIterations; ++iteration) {
         for (TopdownRuntimeDoor& door : state.topdown.runtime.doors) {
-            if (!door.visible || door.locked) {
+            if (!door.visible) {
                 continue;
             }
 
@@ -582,12 +589,14 @@ void ResolveNpcKnockbackVsDoors(GameState& state, TopdownNpcRuntime& npc)
                     &leverT,
                     &normal,
                     &penetration)) {
-                ApplyAngularImpulseFromActor(
-                        door,
-                        npc.knockbackVelocity,
-                        normal,
-                        leverT,
-                        penetration);
+                if (!door.locked) {
+                    ApplyAngularImpulseFromActor(
+                            door,
+                            npc.knockbackVelocity,
+                            normal,
+                            leverT,
+                            penetration);
+                }
             }
         }
     }

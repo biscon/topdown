@@ -889,6 +889,47 @@ bool TopdownScriptSetTriggerRepeat(GameState& state, const std::string& triggerI
 }
 
 // --------------------------------------------------
+// Doors
+// --------------------------------------------------
+
+bool TopdownScriptSetDoorLocked(GameState& state, const std::string& doorId, bool locked)
+{
+    if (doorId.empty()) {
+        return false;
+    }
+
+    TopdownRuntimeDoor* door = TopdownFindRuntimeDoorById(state, doorId);
+    if (door == nullptr) {
+        return false;
+    }
+
+    door->locked = locked;
+    if (locked) {
+        door->angleRadians = door->closedAngleRadians;
+        door->angularVelocity = 0.0f;
+        door->wasNearClosed = true;
+        door->openSoundPlayedThisSwing = false;
+    }
+
+    return true;
+}
+
+bool TopdownScriptIsDoorLocked(GameState& state, const std::string& doorId, bool& outLocked)
+{
+    if (doorId.empty()) {
+        return false;
+    }
+
+    const TopdownRuntimeDoor* door = TopdownFindRuntimeDoorById(state, doorId);
+    if (door == nullptr) {
+        return false;
+    }
+
+    outLocked = door->locked;
+    return true;
+}
+
+// --------------------------------------------------
 // Objective marker
 // --------------------------------------------------
 
